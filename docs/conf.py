@@ -334,10 +334,10 @@ texinfo_documents = [
     (
         master_doc,
         'IDAES',
-        u'IDAES Examples Documentation',
+        u'IDAES PSE Examples',
         author,
         'IDAES',
-        'One line description of project.',
+        'IDAES Process Systems Engineering toolkit',
         'Miscellaneous',
     )
 ]
