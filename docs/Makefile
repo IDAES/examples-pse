@@ -10,6 +10,8 @@ SPHINXOPTS    = -w sphinx-errors.txt -T
 SPHINXBUILD   = sphinx-build
 BUILDDIR      = ./build
 SCRIPTDIR     = scripts
+SOURCEDIR     = .
+ALLSPHINXOPTS = $(SPHINXOPTS) $(SOURCEDIR)
 
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(SPHINXOPTS) .
@@ -48,58 +50,13 @@ clean:
 
 allclean: clean
 	rm -rf $(BUILDDIR)/*
-	rm -f tutorials/Module_*.rst tutorials/*.html
 
 all: html
 	@echo "** Build finished"
 
-html: tutorials
+html:
 	SPHINX=1 $(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)
 	@echo "** HTML docs are in $(BUILDDIR)"
-
-### 
-# This section builds the workshop tutorials into the
-# documentation (html only). It is not executed by default, so the
-# process that builds for distribution should add, explicitly,
-# a "tutorials" target.
-###
-
-tutorials: tutorial_setup tutorial_nb tutorial_imgs
-
-tutorial_setup:
-	@mkdir -p $(BUILDDIR)/tutorials
-	@mkdir -p ./tutorials
-
-tutorial_nb: ../workshops/Module_*/*_Solution.ipynb
-	@for nbfile in $^ ; do \
-		echo "** Execute and convert: $$nbfile"; \
-		name=$$(basename $$nbfile .ipynb); \
-		title=$$(echo $$name | sed "s/_/ /g"); \
-		cmd="jupyter nbconvert --to html_embed -y --output-dir=./tutorials $$nbfile"; \
-		if [[ -n "$${READTHEDOCS+x}" ]]; then \
-			echo "Generating static tutorials for ReadTheDocs..."; \
-			echo "  $$cmd"; \
-			$$cmd; \
-		else \
-			$$cmd --execute 2>/dev/null; \
-			if [[ "$$?" -ne 0 ]]; then \
-				echo "** Execute notebook failed: creating static"; \
-				$${cmd}; \
-			fi; \
-		fi; \
-		echo -e "$${title}:\n==================================================\n" > ./tutorials/$${name}.rst; \
-		echo -e ".. raw:: html\n    :file: $${name}.html\n" >> ./tutorials/$${name}.rst; \
-	done \
-
-tutorial_imgs: ../workshops/Module_*/*.png
-	@echo "** Copy images from ../examples/workshops/* to $(BUILDDIR)/tutorials"
-	@for f in $^; do \
-		cp $$f $(BUILDDIR)/tutorials; \
-	done
-
-###
-# End of tutorials section
-###
 
 .PHONY: dirhtml
 dirhtml:
