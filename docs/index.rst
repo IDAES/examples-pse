@@ -42,19 +42,6 @@ Contents
 .. toctree::
     :maxdepth: 2
 
-    install/index
-    standards
-    core/index
-    models/index
-    property_models/index
-    vis/index
-    dmf/index
-    apps/index	      
-    version
-    tutorials
-    developer/index
-    Modules <apidoc/modules>
-    glossary
     license
     copyright
 
