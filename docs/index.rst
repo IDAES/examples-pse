@@ -1,21 +1,13 @@
 .. index::
     pair: idaes;Home
 
-Institute for the Design of Advanced Energy Systems (IDAES)
-===========================================================
+Institute for the Design of Advanced Energy Systems (IDAES) Examples
+====================================================================
 
-Project Goals
--------------
-The Institute for the Design of Advanced Energy Systems (IDAES) will be the
-world’s premier resource for the development and analysis of innovative
-advanced energy systems through the use of process systems engineering tools
-and approaches. IDAES and its capabilities will be applicable to the development
-of the full range of advanced fossil energy systems, including chemical looping
-and other transformational |CO2| capture technologies, as well as integration with
-other new technologies such as supercritical |CO2|. In addition, the tools and
-capabilities will be applicable to renewable energy development, such as
-biofuels, green chemistry, Nuclear and Environmental Management, such as the
-design of complex, integrated waste treatment facilities.
+This is the documentation for the *examples*, including workshop tutorials,
+for the IDAES Process Systems Engineering (IDAES-PSE) toolkit.
+This is complentary to the main documentation for the
+`IDAES-PSE project <https://idaes-pse.readthedocs.io/>`_.
 
 Collaborating institutions
 --------------------------
@@ -41,6 +33,7 @@ Contents
 
 .. toctree::
     :maxdepth: 2
+
 
     license
     copyright
