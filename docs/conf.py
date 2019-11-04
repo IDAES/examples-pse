@@ -42,7 +42,6 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.autosectionlabel',
-    'sphinxarg.ext',
     'sphinx.ext.doctest',
 ]
 
