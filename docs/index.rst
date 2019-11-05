@@ -36,6 +36,7 @@ Contents
 
 
     Tutorials <tutorials/index>
+    Surrogate modeling <surrogate/index>
     license
     copyright
 
