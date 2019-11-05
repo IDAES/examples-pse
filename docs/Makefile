@@ -13,6 +13,11 @@ SCRIPTDIR     = scripts
 SOURCEDIR     = .
 ALLSPHINXOPTS = $(SPHINXOPTS) $(SOURCEDIR)
 
+# Notebook building script
+NBHTML = ./build_notebook_html.py
+NBHTMLKERNEL  = $(CONDA_DEFAULT_ENV)
+NBHTMLOPTS = --continue -v --kernel=$(NBHTMLKERNEL)
+
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(SPHINXOPTS) .
 
@@ -51,15 +56,20 @@ clean:
 allclean: clean
 	rm -rf $(BUILDDIR)/*
 
-all: html
+all: html notebooks
 	@echo "** Build finished"
 
 html:
 	SPHINX=1 $(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)
 	@echo "** HTML docs are in $(BUILDDIR)"
 
-#tutorials:
-#./build_tutorial_html.py ../src/workshops tutorials
+notebooks:
+	# workshop tutorials
+	@mkdir -p $(BUILDDIR)/tutorials
+	$(NBHTML) $(NBHTMLOPTS) ../src/workshops $(BUILDDIR)/tutorials
+	# surrogate modeling tools
+	@mkdir -p $(BUILDDIR)/surrogate
+	$(NBHTML) $(NBHTMLOPTS) ../src/surrogate $(BUILDDIR)/surrogate
 
 .PHONY: dirhtml
 dirhtml:
