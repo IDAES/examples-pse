@@ -35,6 +35,7 @@ Contents
     :maxdepth: 2
 
 
+    Tutorials <tutorials/index>
     license
     copyright
 

@@ -58,6 +58,9 @@ html:
 	SPHINX=1 $(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)
 	@echo "** HTML docs are in $(BUILDDIR)"
 
+#tutorials:
+#./build_tutorial_html.py ../src/workshops tutorials
+
 .PHONY: dirhtml
 dirhtml:
 	mkdir -p $(BUILDDIR)/dirhtml
