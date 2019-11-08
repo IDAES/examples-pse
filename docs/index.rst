@@ -37,6 +37,7 @@ Contents
 
     Tutorials <tutorials/index>
     Surrogate modeling <surrogate/index>
+    Property packages <properties/index>
     license
     copyright
 

@@ -17,6 +17,7 @@ ALLSPHINXOPTS = $(SPHINXOPTS) $(SOURCEDIR)
 NBCMD = ./build_notebooks.py
 NBKERNEL  = $(CONDA_DEFAULT_ENV)
 NBOPTS = --continue -vv --kernel=$(NBKERNEL)
+NBTESTOPTS = --test -v --kernel=$(NBKERNEL)
 
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(SPHINXOPTS) .
@@ -53,7 +54,7 @@ help:
 clean:
 	rm -f sphinx-build.log
 
-allclean: clean
+allclean: clean nbclean
 	rm -rf $(BUILDDIR)/*
 
 all: notebooks html latexpdf
@@ -67,7 +68,15 @@ notebooks:
 	for ofmt in html rst; do \
 		$(NBCMD) $(NBOPTS) --match Solution --format=$$ofmt ../src/workshops tutorials; \
 		$(NBCMD) $(NBOPTS) --format=$$ofmt ../src/surrogate surrogate; \
+		$(NBCMD) $(NBOPTS) --match Solution --format=$$ofmt \
+		    ../src/properties/Workshop_Module_2_DMF properties/Workshop_DMF; \
 	done
+
+.PHONY: nbclean
+nbclean:
+	rm -f tutorials/Module_?_*/Module_*.{rst,html}
+	rm -f tutorials/Module_?_*/output_*.png
+
 
 .PHONY: dirhtml
 dirhtml:
