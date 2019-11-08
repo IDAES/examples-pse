@@ -30,13 +30,15 @@ class NotebookFormatError(NotebookError):
 
 
 def convert(
-    srcdir: pathlib.Path = None, outdir: pathlib.Path = None, options: dict = None
+    srcdir: pathlib.Path = None, outdir: pathlib.Path = None,
+        test: bool = False, options: dict = None
 ):
     """Convert notebooks under `srcdir`, placing output in `outdir`.
 
     Args:
         srcdir: Input directory
         outdir: Output directory
+        test: Run in 'test' mode
         options: Options controlling the conversion:
             * "continue": if true, continue if there is an error executing the
               notebook; if false, raise NotebookError
@@ -49,6 +51,10 @@ def convert(
     Returns:
         None
     """
+    ep_kw = {}
+    if options["kernel"]:
+        ep_kw["kernel_name"] = options["kernel"]
+    ep = ExecutePreprocessor(timeout=600, **ep_kw)
     if options["format"] == "html":
         exp = HTMLExporter()
     elif options["format"] == "rst":
@@ -56,19 +62,20 @@ def convert(
     else:
         raise ValueError(f"Invalid output format: {options['fmt']}")
     wrt = FilesWriter()
-    wrt.build_directory = str(outdir)
-    ep_kw = {}
-    if options["kernel"]:
-        ep_kw["kernel_name"] = options["kernel"]
-    ep = ExecutePreprocessor(timeout=600, **ep_kw)
 
-    _convert(srcdir, outdir, wrt, exp, ep, options)
+    test_errors = [] if test else None
+    _convert(srcdir, outdir, wrt, exp, ep, options, test_errors)
+
+    return test_errors
 
 
-def _convert(srcdir, outdir, wrt, exp, ep, options):
+def _convert(srcdir, outdir, wrt, exp, ep, options, test_errors):
     """Recurse through directory, converting notebooks.
     """
     _log.debug(f"looking for notebooks in {srcdir}")
+
+    if test_errors is None:
+        wrt.build_directory = str(outdir)
 
     for entry in srcdir.iterdir():
         filename = entry.parts[-1]
@@ -77,10 +84,22 @@ def _convert(srcdir, outdir, wrt, exp, ep, options):
             continue  # e.g. .ipynb_checkpoints
         if entry.is_dir():
             new_outdir = outdir / entry.parts[-1]
-            _convert(entry, new_outdir, wrt, exp, ep, options)
+            _convert(entry, new_outdir, wrt, exp, ep, options, test_errors)
         elif entry.suffix == ".ipynb":
             if options["pat"] and not options["pat"].search(filename):
                 _log.debug(f"does not match {options['pat']}, skip {entry}")
+                continue
+
+            if test_errors is not None:  # testing mode
+                _log.info(f"testing '{entry}'")
+                try:
+                    nb = nbformat.read(str(entry), as_version=4)
+                    try:
+                        ep.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
+                    except (CellExecutionError, NameError) as err:
+                        test_errors.append(f"'{entry}' execution error: {err}")
+                except (nbformat.reader.NotJSONError, AttributeError) as err:
+                    test_errors.append(f"'{entry}' parse error: {err}")
                 continue
 
             _log.info(f"converting '{entry}' to {options['format']}")
@@ -132,6 +151,7 @@ def main():
     ap.add_argument("--format", dest="fmt", choices=["html", "rst"], default="html")
     ap.add_argument("--kernel", dest="kernel", default="")
     ap.add_argument("--match", dest="match", default=None)
+    ap.add_argument("--test", dest="test", action="store_true", default=False)
     args = ap.parse_args()
 
     if args.vb > 1:
@@ -141,26 +161,38 @@ def main():
     srcdir = pathlib.Path(args.source_dir)
     if not srcdir.exists():
         _log.fatal(f"source directory does not exist: {srcdir}")
+        return -1
     outdir = pathlib.Path(args.output_dir)
     if not outdir.exists():
-        _log.fatal(f"output directory does not exist: {outdir}")
+        _log.warning(f"output directory does not exist: {outdir}")
 
     options = {
         "continue": args.cont,
         "kernel": args.kernel,
         "format": args.fmt,
-        "pat": re.compile(args.match) if args.match else None,
+        "pat": re.compile(args.match) if args.match else None
     }
+    test_mode = args.test
 
-    status_code = 0
+    status_code, te = 0, None
     try:
-        convert(srcdir=srcdir, outdir=outdir, options=options)
+        te = convert(srcdir=srcdir, outdir=outdir, options=options, test=test_mode)
     except ValueError as err:
         _log.fatal(f"error converting notebooks: {err}")
         status_code = 1
     except NotebookError as err:
         _log.fatal(f"error running notebook: {err}")
         status_code = 2
+
+    if test_mode:
+        if te:
+            errlist = "\n".join([f"[ERROR {i + 1}] {s}" for i, s in enumerate(te)])
+            _log.error(f"{len(te):d} test error(s):\n{errlist}")
+            status_code = len(te)
+        else:
+            _log.info(f"all tests passed")
+            status_code = 0
+
     return status_code
 
 
