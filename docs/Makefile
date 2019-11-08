@@ -14,9 +14,9 @@ SOURCEDIR     = .
 ALLSPHINXOPTS = $(SPHINXOPTS) $(SOURCEDIR)
 
 # Notebook building script
-NBHTML = ./build_notebook_html.py
-NBHTMLKERNEL  = $(CONDA_DEFAULT_ENV)
-NBHTMLOPTS = --continue -v --kernel=$(NBHTMLKERNEL)
+NBCMD = ./build_notebooks.py
+NBKERNEL  = $(CONDA_DEFAULT_ENV)
+NBOPTS = --continue -vv --kernel=$(NBKERNEL)
 
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(SPHINXOPTS) .
@@ -56,7 +56,7 @@ clean:
 allclean: clean
 	rm -rf $(BUILDDIR)/*
 
-all: html notebooks
+all: notebooks html latexpdf
 	@echo "** Build finished"
 
 html:
@@ -64,12 +64,10 @@ html:
 	@echo "** HTML docs are in $(BUILDDIR)"
 
 notebooks:
-	# workshop tutorials
-	@mkdir -p $(BUILDDIR)/tutorials
-	$(NBHTML) $(NBHTMLOPTS) ../src/workshops $(BUILDDIR)/tutorials
-	# surrogate modeling tools
-	@mkdir -p $(BUILDDIR)/surrogate
-	$(NBHTML) $(NBHTMLOPTS) ../src/surrogate $(BUILDDIR)/surrogate
+	for ofmt in html rst; do \
+		$(NBCMD) $(NBOPTS) --match Solution --format=$$ofmt ../src/workshops tutorials; \
+		$(NBCMD) $(NBOPTS) --format=$$ofmt ../src/surrogate surrogate; \
+	done
 
 .PHONY: dirhtml
 dirhtml:
