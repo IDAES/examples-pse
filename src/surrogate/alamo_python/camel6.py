@@ -16,29 +16,41 @@
 # This problem utilizes ALAMO's sampling features
 from idaes.surrogate import alamopy
 
-#Import additional python modules for creating the synthetic data
+# Import additional python modules for creating the synthetic data
 import math
 import examples
 import numpy as np
 
+
 def main():
     # Specify number of poitns to be used in the training set
     # Validation data can be provided optionally
-    ndata=10
-    x = np.random.uniform([-2,-1],[2,1],(ndata,2))
-    z = [0]*ndata
+    ndata = 10
+    x = np.random.uniform([-2, -1], [2, 1], (ndata, 2))
+    z = [0] * ndata
     # specify simulator as examples.sixcamel
     sim = examples.sixcamel
     for i in range(ndata):
-        z[i]=sim(x[i][0],x[i][1])
+        z[i] = sim(x[i][0], x[i][1])
 
     # Use alamopy's python function wrapper to avoid using ALAMO's I/O format
     almsim = alamopy.wrapwriter(sim)
     # Call alamo through the alamopy wrapper
-    res = alamopy.doalamo(x,z,almname='cam6',monomialpower=(1,2,3,4,5,6),multi2power=(1,2),simulator=almsim, expandoutput=True,maxiter=20,cvfun=True)
-#    print res
-    print('Model: {}'.format(res['model']))
+    res = alamopy.doalamo(
+        x,
+        z,
+        almname="cam6",
+        monomialpower=(1, 2, 3, 4, 5, 6),
+        multi2power=(1, 2),
+        simulator=almsim,
+        expandoutput=True,
+        maxiter=20,
+        cvfun=True,
+    )
+    #    print res
+    print("Model: {}".format(res["model"]))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     np.random.seed(100)
     main()
