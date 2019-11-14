@@ -3,6 +3,7 @@ import argparse
 import logging
 import pathlib
 import re
+import shutil
 import sys
 
 #
@@ -28,6 +29,7 @@ class NotebookExecError(NotebookError):
 class NotebookFormatError(NotebookError):
     pass
 
+IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
 
 def convert(
     srcdir: pathlib.Path = None, outdir: pathlib.Path = None,
@@ -74,8 +76,11 @@ def _convert(srcdir, outdir, wrt, exp, ep, options, test_errors):
     """
     _log.debug(f"looking for notebooks in {srcdir}")
 
-    if test_errors is None:
+    if test_errors is None:  # conversion mode (not test-only)
         wrt.build_directory = str(outdir)
+        img_dir = str(outdir)
+    else:
+        img_dir = None
 
     for entry in srcdir.iterdir():
         filename = entry.parts[-1]
@@ -138,6 +143,9 @@ def _convert(srcdir, outdir, wrt, exp, ep, options, test_errors):
                 _log.debug(f"exporting '{entry}'")
                 (body, resources) = exp.from_notebook_node(nb)
                 wrt.write(body, resources, notebook_name=entry.stem)
+        elif entry.suffix in IMAGE_SUFFIXES:
+            _log.debug(f"copying image '{entry}' to output dir '{outdir}'")
+            shutil.copy(entry, img_dir)
 
     _log.debug(f"leaving {srcdir}")
 

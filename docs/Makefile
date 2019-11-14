@@ -57,7 +57,7 @@ clean:
 allclean: clean nbclean
 	rm -rf $(BUILDDIR)/*
 
-all: notebooks html latexpdf
+all: notebooks html latexpdf notebookimgs
 	@echo "** Build finished"
 
 html:
@@ -65,6 +65,7 @@ html:
 	@echo "** HTML docs are in $(BUILDDIR)"
 
 notebooks:
+	# generate the notebooks
 	for ofmt in html rst; do \
 		$(NBCMD) $(NBOPTS) --match Solution --format=$$ofmt ../src/workshops tutorials; \
 		$(NBCMD) $(NBOPTS) --format=$$ofmt ../src/surrogate surrogate; \

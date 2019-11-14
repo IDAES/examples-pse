@@ -14,7 +14,7 @@ Module 0: Welcome
 .. only:: html
 
     .. image:: /_static/thumbs/tut_m0.png
-        :target: tutorials/Module_0_Welcome/index.html
+        :target: tutorials/Module_0_Welcome/Module_0_Welcome_Solution.html
 
 Tutorial introduction and welcome.
 
@@ -23,7 +23,7 @@ Module 1: Flash unit
 .. only:: html
 
     .. image:: /_static/thumbs/tut_m1.png
-        :target: tutorials/Module_1_Flash_Unit/index.html
+        :target: tutorials/Module_1_Flash_Unit/Module_1_Flash_Unit_Solution.html
 
 A flowsheet with a flash
 tank that performs separation of Benzene and Toluene.
@@ -34,10 +34,20 @@ Module 2: Hydrodealkylation
 .. only:: html
 
     .. image:: /_static/thumbs/tut_m2.png
-        :target: tutorials/Module_2_Flowsheet/index.html
+        :target: tutorials/Module_2_Flowsheet/Module_2_Flowsheet_Solution.html
 
 Toluene reacted with Hydrogen gas, based on the 1967 AIChE Student Contest problem.
 
+
+Module 3: Custom Unit Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. only:: html
+
+    .. image:: /_static/thumbs/tut_m3.png
+        :target: tutorials/Module_3_Custom_Unit_Model/index.html
+
+Create a custom "unit model" for a heater.
 
 Surrogate modeling
 ------------------
