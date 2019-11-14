@@ -1,51 +1,50 @@
-.. index::
-    pair: idaes;Home
+Example gallery
+===============
 
-Institute for the Design of Advanced Energy Systems (IDAES) Examples
-====================================================================
-
-This is the documentation for the *examples*, including workshop tutorials,
+Below are thumbnails with links to Jupyter Notebook examples
 for the IDAES Process Systems Engineering (IDAES-PSE) toolkit.
-This is complentary to the main documentation for the
+This is complementary to the main documentation for the
 `IDAES-PSE project <https://idaes-pse.readthedocs.io/>`_.
 
-Collaborating institutions
---------------------------
-The IDAES team is comprised of collaborators from the following institutions:
+Tutorials
+---------
 
-* National Energy Technology Laboratory (Lead)
-* Sandia National Laboratory
-* Lawrence Berkeley National Laboratory
-* Carnegie-Mellon University (subcontract to LBNL)
-* West Virginia University (subcontract to LBNL)
+Module 0: Welcome
+^^^^^^^^^^^^^^^^^
+.. only:: html
 
-Contact, contributions and more information
--------------------------------------------
-General, background and overview information is available at the `IDAES main
-website <https://www.idaes.org>`_.  Framework development happens at our `GitHub
-repo <https://github.com/IDAES/idaes-pse>`_ where you can `report issues/bugs
-<https://github.com/IDAES/idaes-pse/issues>`_ or `make contributions
-<https://github.com/IDAES/idaes-pse/pulls>`_.  For further enquiries, send an
-email to: <idaes-support@idaes.org>
+    .. image:: /_static/thumbs/tut_m0.png
+        :target: tutorials/Module_0_Welcome/index.html
 
-Contents
---------
+Tutorial introduction and welcome.
 
-.. toctree::
-    :maxdepth: 2
+Module 1: Flash unit
+^^^^^^^^^^^^^^^^^^^^
+.. only:: html
+
+    .. image:: /_static/thumbs/tut_m1.png
+        :target: tutorials/Module_1_Flash_Unit/index.html
+
+A flowsheet with a flash
+tank that performs separation of Benzene and Toluene.
+
+Module 2: Hydrodealkylation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. only:: html
+
+    .. image:: /_static/thumbs/tut_m2.png
+        :target: tutorials/Module_2_Flowsheet/index.html
+
+Toluene reacted with Hydrogen gas, based on the 1967 AIChE Student Contest problem.
 
 
-    Tutorials <tutorials/index>
-    Surrogate modeling <surrogate/index>
-    Property packages <properties/index>
-    license
-    copyright
+Surrogate modeling
+------------------
+<surrogate/index>
 
-Indices and tables
-==================
+Property packages
+-----------------
+<properties/index>
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
-.. |CO2| replace:: CO\ :sub:`2`

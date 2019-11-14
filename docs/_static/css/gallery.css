@@ -1,0 +1,102 @@
+/*
+ * Main CSS file for theme
+ */
+@import "../basic.css";
+
+html {
+    background-color: #eeeeee;
+}
+
+body {
+    background-color: white;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Hide generated table of contents */
+.toctree-wrapper {
+    display: none;
+}
+/* Hide sidebar */
+.sphinxsidebar {
+   display: none;
+}
+/* Hide level one heading (page title) */
+h1 {
+    display: none;
+}
+/* Indent main content */
+.document {
+    padding: 25px;
+    height: auto;
+}
+/* Center text in first section,
+ which is the text under the title.
+ */
+.body > .section > p {
+    text-align: center;
+}
+
+/* Size of thumbnails */
+.body .section img {
+    max-height: 150px;
+    max-width: 250px;
+}
+/* Display a given sub-section in a row */
+.body > .section > .section .section {
+    display: inline-block;
+    vertical-align: top;
+    margin: 0;
+    padding: 0 50px;
+    /*border-right: 1px solid grey;*/
+}
+/* Style of contained elements in the row */
+.body > .section > .section > .section > p {
+    max-width: 200px;
+}
+.body > .section > .section > .section {
+    height: 300px;
+}
+.body > .section > .section > .section:hover {
+    background-color: #D3EEFB;
+}
+/* Decorate gallery sections */
+.body > .section > .section > h2 {
+    border-bottom: 2px solid lightgrey;
+    color: #f37d44;
+}
+.body > .section > .section > h2 a {
+    display: none;
+}
+
+/*
+Added classes and ids
+*/
+/* Top of the page */
+#topbanner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: white;
+    padding-left: 25px;
+}
+#topbanner img {
+    max-height: 100px;
+}
+#pagetitle {
+    margin-left: 50px;
+    color: #20A0D0;
+    font-family: 'Arimo', sans-serif;
+    font-weight: 700;
+    font-size: 250%;
+}
+/* Bottom of the page */
+#bottombanner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: #eeeeee;
+    padding-left: 25px;
+}
+#contactinfo {
+    margin-left: 20px;
+}
