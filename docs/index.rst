@@ -47,14 +47,31 @@ Module 3: Custom Unit Model
     .. image:: /_static/thumbs/tut_m3.png
         :target: tutorials/Module_3_Custom_Unit_Model/index.html
 
-Create a custom "unit model" for a heater.
+    Create a custom "unit model" for a heater.
 
 Surrogate modeling
 ------------------
-<surrogate/index>
+
+ALAMO Six-hump Camel
+^^^^^^^^^^^^^^^^^^^^
+.. only:: html
+
+    .. image:: /_static/thumbs/ala_six.png
+        :target: surrogate/alamo_python/sixhumcamel.html
+
+ALAMO surrogate model of the "six hump camel" function.
 
 Property packages
 -----------------
-<properties/index>
+
+DMF Properties Flowsheet
+^^^^^^^^^^^^^^^^^^^^^^^^
+.. only:: html
+
+    .. image:: /_static/thumbs/prp_m2dmf.png
+        :target: properties/Workshop_DMF/Module_2_Flowsheet_DMF_Solution.html
+
+    Tutorial module 2 (Hydroealkalyation) using the DMF for material properties.
+
 
 
