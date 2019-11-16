@@ -66,11 +66,13 @@ html:
 
 notebooks:
 	# generate the notebooks
-	for ofmt in html rst; do \
-		$(NBCMD) $(NBOPTS) --match Solution --format=$$ofmt ../src/workshops tutorials; \
-		$(NBCMD) $(NBOPTS) --format=$$ofmt ../src/surrogate surrogate; \
-		$(NBCMD) $(NBOPTS) --match Solution --format=$$ofmt \
-		    ../src/properties/Workshop_Module_2_DMF properties/Workshop_DMF; \
+	for ofmt in html rst; do 													\
+		$(NBCMD) $(NBOPTS) --match Solution --format=$$ofmt 					\
+			../src/workshops tutorials; 										\
+		$(NBCMD) $(NBOPTS) --format=$$ofmt 										\
+			../src/surrogate surrogate; 										\
+		$(NBCMD) $(NBOPTS) --match Solution --format=$$ofmt 					\
+		    ../src/properties/Workshop_Module_2_DMF properties/Workshop_DMF;	\
 	done
 
 .PHONY: nbclean

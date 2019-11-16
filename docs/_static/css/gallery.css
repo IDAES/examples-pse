@@ -41,28 +41,53 @@ h1 {
     max-height: 150px;
     max-width: 250px;
 }
+/* Erase the phony "content" container name */
+.body > .section > .section > .section h3 {
+    display: none;
+}
 /* Display a given sub-section in a row */
-.body > .section > .section .section {
-    display: inline-block;
-    vertical-align: top;
+.body > .section > .section > .section {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
     margin: 0;
     padding: 0 50px;
-    /*border-right: 1px solid grey;*/
-}
-/* Style of contained elements in the row */
-.body > .section > .section > .section > p {
+    background-color: white;
     max-width: 200px;
 }
-.body > .section > .section > .section {
-    height: 300px;
+/* items in the row */
+.body > .section > .section > .section > .section {
+    flex-grow: 1;
+    margin-right: 20px;
+    box-shadow: 5px 5px 8px lightgrey;
+    border-top: 1px solid lightgrey;
+    border-left: 1px solid lightgrey;
+    padding: 0.5em;
+    /* this is also a flex container */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
 }
-.body > .section > .section > .section:hover {
+/* a) title */
+.body > .section > .section > .section > .section h4 {
+    margin: 5px 0;
+}
+/* b) thumbnail */
+/* c) hover */
+.body > .section > .section > .section > .section:hover {
     background-color: #D3EEFB;
 }
-/* Decorate gallery sections */
+/* d) caption */
+.body > .section > .section > .section > .section p {
+    color: #333333;
+    min-width: 250px;
+}
+/* Title for a gallery section */
 .body > .section > .section > h2 {
-    border-bottom: 2px solid lightgrey;
+    /*border-bottom: 2px solid lightgrey;*/
     color: #f37d44;
+    margin: 1em 0 0.5em 0;
 }
 .body > .section > .section > h2 a {
     display: none;

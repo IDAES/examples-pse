@@ -29,17 +29,23 @@ class NotebookExecError(NotebookError):
 class NotebookFormatError(NotebookError):
     pass
 
+
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
 
+
 def convert(
-    srcdir: pathlib.Path = None, outdir: pathlib.Path = None,
-        test: bool = False, options: dict = None
+    srcdir: pathlib.Path = None,
+    outdir: pathlib.Path = None,
+    htmldir: pathlib.Path = None,
+    test: bool = False,
+    options: dict = None,
 ):
     """Convert notebooks under `srcdir`, placing output in `outdir`.
 
     Args:
         srcdir: Input directory
         outdir: Output directory
+        htmldir: Where HTML files will end up (Sphinx build directory)
         test: Run in 'test' mode
         options: Options controlling the conversion:
             * "continue": if true, continue if there is an error executing the
@@ -66,21 +72,18 @@ def convert(
     wrt = FilesWriter()
 
     test_errors = [] if test else None
-    _convert(srcdir, outdir, wrt, exp, ep, options, test_errors)
+    _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors)
 
     return test_errors
 
 
-def _convert(srcdir, outdir, wrt, exp, ep, options, test_errors):
+def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors):
     """Recurse through directory, converting notebooks.
     """
     _log.debug(f"looking for notebooks in {srcdir}")
 
     if test_errors is None:  # conversion mode (not test-only)
         wrt.build_directory = str(outdir)
-        img_dir = str(outdir)
-    else:
-        img_dir = None
 
     for entry in srcdir.iterdir():
         filename = entry.parts[-1]
@@ -89,7 +92,8 @@ def _convert(srcdir, outdir, wrt, exp, ep, options, test_errors):
             continue  # e.g. .ipynb_checkpoints
         if entry.is_dir():
             new_outdir = outdir / entry.parts[-1]
-            _convert(entry, new_outdir, wrt, exp, ep, options, test_errors)
+            new_htmldir = htmldir / entry.parts[-1]
+            _convert(entry, new_outdir, new_htmldir, wrt, exp, ep, options, test_errors)
         elif entry.suffix == ".ipynb":
             if options["pat"] and not options["pat"].search(filename):
                 _log.debug(f"does not match {options['pat']}, skip {entry}")
@@ -144,8 +148,8 @@ def _convert(srcdir, outdir, wrt, exp, ep, options, test_errors):
                 (body, resources) = exp.from_notebook_node(nb)
                 wrt.write(body, resources, notebook_name=entry.stem)
         elif entry.suffix in IMAGE_SUFFIXES:
-            _log.debug(f"copying image '{entry}' to output dir '{outdir}'")
-            shutil.copy(entry, img_dir)
+            _log.debug(f"copying image '{entry}' to html output dir '{htmldir}'")
+            shutil.copy(entry, htmldir)
 
     _log.debug(f"leaving {srcdir}")
 
@@ -154,37 +158,49 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("source_dir")
     ap.add_argument("output_dir")
-    ap.add_argument("-v", "--verbose", action="count", dest="vb", default=0)
+    ap.add_argument("--html-dir")
     ap.add_argument("--continue", dest="cont", action="store_true", default=False)
     ap.add_argument("--format", dest="fmt", choices=["html", "rst"], default="html")
     ap.add_argument("--kernel", dest="kernel", default="")
     ap.add_argument("--match", dest="match", default=None)
     ap.add_argument("--test", dest="test", action="store_true", default=False)
+    ap.add_argument("-v", "--verbose", action="count", dest="vb", default=0)
     args = ap.parse_args()
 
     if args.vb > 1:
         _log.setLevel(logging.DEBUG)
     elif args.vb > 0:
         _log.setLevel(logging.INFO)
+
     srcdir = pathlib.Path(args.source_dir)
     if not srcdir.exists():
         _log.fatal(f"source directory does not exist: {srcdir}")
         return -1
+
     outdir = pathlib.Path(args.output_dir)
     if not outdir.exists():
         _log.warning(f"output directory does not exist: {outdir}")
+
+    if args.html_dir is None:
+        htdir = pathlib.Path("build") / outdir
+    else:
+        htdir = pathlib.Path(args.html_dir)
+    if not htdir.exists():
+        _log.warning(f"HTML (build) directory does not exist: {htdir}")
 
     options = {
         "continue": args.cont,
         "kernel": args.kernel,
         "format": args.fmt,
-        "pat": re.compile(args.match) if args.match else None
+        "pat": re.compile(args.match) if args.match else None,
     }
     test_mode = args.test
 
     status_code, te = 0, None
     try:
-        te = convert(srcdir=srcdir, outdir=outdir, options=options, test=test_mode)
+        te = convert(
+            srcdir=srcdir, outdir=outdir, htmldir=htdir, options=options, test=test_mode
+        )
     except ValueError as err:
         _log.fatal(f"error converting notebooks: {err}")
         status_code = 1
