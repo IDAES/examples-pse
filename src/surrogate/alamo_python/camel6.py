@@ -23,6 +23,13 @@ import numpy as np
 
 
 def main():
+    if not alamopy.has_alamo():
+        return False
+    _main()
+    return True
+
+
+def _main():
     # Specify number of poitns to be used in the training set
     # Validation data can be provided optionally
     ndata = 10

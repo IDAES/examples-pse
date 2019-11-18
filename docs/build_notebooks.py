@@ -147,7 +147,7 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors):
                 _log.debug(f"exporting '{entry}'")
                 (body, resources) = exp.from_notebook_node(nb)
                 wrt.write(body, resources, notebook_name=entry.stem)
-        elif entry.suffix in IMAGE_SUFFIXES:
+        elif test_errors is None and entry.suffix in IMAGE_SUFFIXES:
             _log.debug(f"copying image '{entry}' to html output dir '{htmldir}'")
             shutil.copy(entry, htmldir)
 
