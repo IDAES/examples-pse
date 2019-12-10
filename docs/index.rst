@@ -1,4 +1,4 @@
-Example gallery
+Examples gallery
 ===============
 
 .. only:: latex or latexpdf or text
