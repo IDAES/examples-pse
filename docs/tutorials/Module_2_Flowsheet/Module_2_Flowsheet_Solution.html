@@ -13116,9 +13116,7 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Overview">Overview<a class="anchor-link" href="#Overview">&#182;</a></h2><p>This notebook is based on a workshop tutorial originally given at FOCAPD in 2019.
-It demonstrated the following capabilities:</p>
-<ul>
+<h2 id="Learning-outcomes">Learning outcomes<a class="anchor-link" href="#Learning-outcomes">&#182;</a></h2><ul>
 <li>Construct a steady-state flowsheet using the IDAES unit model library</li>
 <li>Connecting unit models in a  flowsheet using Arcs</li>
 <li>Using the SequentialDecomposition tool to initialize a flowsheet with recycle</li>
@@ -13129,18 +13127,6 @@ It demonstrated the following capabilities:</p>
 </ul>
 </li>
 </ul>
-<p>Changes were made to use the notebook to demonstrate use of the IDAES Data Management Framework (DMF):</p>
-<ul>
-<li>The underlying Python modules were adapted to use the DMF for loading property data</li>
-<li>The optimization problem was removed to shorten the example</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Problem-Statement">Problem Statement<a class="anchor-link" href="#Problem-Statement">&#182;</a></h2><p>Hydrodealkylation is a chemical reaction that often involves reacting
 an aromatic hydrocarbon in the presence of hydrogen gas to form a
 simpler aromatic hydrocarbon devoid of functional groups,. In this
@@ -13158,18 +13144,6 @@ McGraw-Hill.</p>
 <li>hda_reaction.py</li>
 </ul>
 <p>The state variables chosen for the property package are <strong>flows of component by phase, temperature and pressure</strong>. The components considered are: <strong>toluene, hydrogen, benzene and methane</strong>. Therefore, every stream has 8 flow variables, 1 temperature and 1 pressure variable.</p>
-<h3 id="Data-Management-Framework">Data Management Framework<a class="anchor-link" href="#Data-Management-Framework">&#182;</a></h3><p>In this version of the example, the DMF "workspace" is used to store these state variables. This involves the use of additional files:</p>
-<ul>
-<li>config.yaml - DMF Configuration</li>
-<li>resourcedb.json - The DMF's file-based datastore, where the values and their provenance are stored.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <p><img src="module_2_flowsheet.png" alt=""></p>
 
 </div>
@@ -13391,120 +13365,6 @@ Now, import the remaining unit models highlighted in blue above and run the cell
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Viewing-imported-properties-with-the-DMF">Viewing imported properties with the DMF<a class="anchor-link" href="#Viewing-imported-properties-with-the-DMF">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Since the property package above used the DMF to load the constant values used for calculating property values, we can look at the provenance and data programmatically.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.dmf.resource</span> <span class="k">import</span> <span class="n">TidyUnitData</span> <span class="k">as</span> <span class="n">TDU</span>
-<span class="n">prop_name</span> <span class="o">=</span> <span class="s1">&#39;dh_vap&#39;</span>
-<span class="n">rsrc</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="o">.</span><span class="n">get_property_resource</span><span class="p">(</span><span class="n">prop_name</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Property </span><span class="si">{prop_name}</span><span class="s2"> source: {rsrc.formatted_source()}&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Property </span><span class="si">{prop_name}</span><span class="s2"> data:&quot;</span><span class="p">)</span>
-<span class="n">TDU</span><span class="p">(</span><span class="n">rsrc</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">table</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>Property dh_vap source: Reid, R. C., Prausnitz, J. M., &amp; Poling, B. E. (1987). The properties of gases and liquids. ISBN: 9780070517998 Date: 1987
-Property dh_vap data:
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt output_prompt">Out[9]:</div>
-
-
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>compound</th>
-      <th>value</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>benzene</td>
-      <td>33870.0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>toluene</td>
-      <td>38262.0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>hydrogen</td>
-      <td>0.0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>methane</td>
-      <td>0.0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>diphenyl</td>
-      <td>62710.0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Adding-Unit-Models">Adding Unit Models<a class="anchor-link" href="#Adding-Unit-Models">&#182;</a></h2><p>Let us start adding the unit models we have imported to the flowsheet. Here, we are adding the Mixer (assigned a name M101) and a Heater (assigned a name H101). Note that, all unit models need to be given a property package argument. In addition to that, there are several arguments depending on the unit model, please refer to the documentation for more details (<a href="https://idaes-pse.readthedocs.io/en/latest/models/index.html">https://idaes-pse.readthedocs.io/en/latest/models/index.html</a>). For example, the Mixer unit model here is given a <code>list</code> consisting of names to the three inlets.</p>
 
 </div>
@@ -13512,7 +13372,7 @@ Property dh_vap data:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span> <span class="o">=</span> <span class="n">Mixer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
@@ -13547,7 +13407,7 @@ Let us now add the StoichiometricReactor(assign the name R101) and pass the foll
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span> <span class="o">=</span> <span class="n">StoichiometricReactor</span><span class="p">(</span>
@@ -13578,7 +13438,7 @@ Let us now add the StoichiometricReactor(assign the name R101) and pass the foll
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span> <span class="o">=</span> <span class="n">Flash</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
@@ -13601,7 +13461,7 @@ Let us now add the StoichiometricReactor(assign the name R101) and pass the foll
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span> <span class="o">=</span> <span class="n">Splitter</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
@@ -13634,7 +13494,7 @@ Let us now add the StoichiometricReactor(assign the name R101) and pass the foll
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s03</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
@@ -13658,7 +13518,7 @@ Now, connect the H101 outlet to the R101 inlet using the cell above as a guide.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s04</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
@@ -13679,7 +13539,7 @@ Now, connect the H101 outlet to the R101 inlet using the cell above as a guide.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s05</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
@@ -13705,7 +13565,7 @@ Now, connect the H101 outlet to the R101 inlet using the cell above as a guide.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">TransformationFactory</span><span class="p">(</span><span class="s2">&quot;network.expand_arcs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
@@ -13735,7 +13595,7 @@ Now, connect the H101 outlet to the R101 inlet using the cell above as a guide.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">purity</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span>
@@ -13759,7 +13619,7 @@ Now, connect the H101 outlet to the R101 inlet using the cell above as a guide.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cooling_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="mf">0.212e-7</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span>
@@ -13786,7 +13646,7 @@ Note that the heat duty is in units of watt (J/s).</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="mf">2.2e-7</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
@@ -13808,7 +13668,7 @@ Note that the heat duty is in units of watt (J/s).</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span>
@@ -13831,7 +13691,7 @@ Note that the heat duty is in units of watt (J/s).</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
@@ -13851,7 +13711,7 @@ Note that the heat duty is in units of watt (J/s).</p>
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>49
+<pre>29
 </pre>
 </div>
 </div>
@@ -13870,7 +13730,7 @@ Note that the heat duty is in units of watt (J/s).</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
@@ -13907,7 +13767,7 @@ Note that the heat duty is in units of watt (J/s).</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
@@ -13937,7 +13797,7 @@ Note that the heat duty is in units of watt (J/s).</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">600</span><span class="p">)</span>
@@ -13958,7 +13818,7 @@ Note that the heat duty is in units of watt (J/s).</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
@@ -13988,7 +13848,7 @@ Note that the heat duty is in units of watt (J/s).</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">325.0</span><span class="p">)</span>
@@ -14018,7 +13878,7 @@ Use Shift+Enter to run the cell once you have typed in your code.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">375</span><span class="p">)</span>
@@ -14040,7 +13900,7 @@ Use Shift+Enter to run the cell once you have typed in your code.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;purge&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
@@ -14066,7 +13926,7 @@ Use Shift+Enter to run the cell once you have typed in your code.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
@@ -14086,7 +13946,7 @@ Use Shift+Enter to run the cell once you have typed in your code.
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>20
+<pre>0
 </pre>
 </div>
 </div>
@@ -14114,7 +13974,7 @@ Use Shift+Enter to run the cell once you have typed in your code.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">seq</span> <span class="o">=</span> <span class="n">SequentialDecomposition</span><span class="p">()</span>
@@ -14143,7 +14003,7 @@ Use Shift+Enter to run the cell once you have typed in your code.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[32]:</div>
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">heuristic_tear_set</span><span class="p">:</span>
@@ -14183,7 +14043,7 @@ Use Shift+Enter to run the cell once you have typed in your code.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[33]:</div>
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
@@ -14229,7 +14089,7 @@ fs.M101
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[34]:</div>
+<div class="prompt input_prompt">In&nbsp;[33]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">tear_guesses</span> <span class="o">=</span> <span class="p">{</span>
@@ -14264,7 +14124,7 @@ fs.M101
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[35]:</div>
+<div class="prompt input_prompt">In&nbsp;[34]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">function</span><span class="p">(</span><span class="n">unit</span><span class="p">):</span>
@@ -14286,7 +14146,7 @@ fs.M101
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[36]:</div>
+<div class="prompt input_prompt">In&nbsp;[35]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">seq</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">function</span><span class="p">)</span>
@@ -14306,111 +14166,111 @@ fs.M101
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-2019-12-10 09:05:21 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 1 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 2 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.F102 Initialisation Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-2019-12-10 09:05:21 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-2019-12-10 09:05:22 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-2019-12-10 09:05:23 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-2019-12-10 09:05:24 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-2019-12-10 09:05:25 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+<pre>2019-12-10 09:04:01 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+2019-12-10 09:04:01 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+2019-12-10 09:04:01 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+2019-12-10 09:04:01 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+2019-12-10 09:04:01 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+2019-12-10 09:04:01 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+2019-12-10 09:04:01 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 1 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 2 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.F102 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+2019-12-10 09:04:02 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+2019-12-10 09:04:03 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+2019-12-10 09:04:04 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+2019-12-10 09:04:04 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+2019-12-10 09:04:05 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+2019-12-10 09:04:05 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+2019-12-10 09:04:05 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+2019-12-10 09:04:05 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
 WARNING: Wegstein failed to converge in 5 iterations
-2019-12-10 09:05:25 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 1 Complete.
-2019-12-10 09:05:25 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 2 Complete.
-2019-12-10 09:05:25 - INFO - idaes.core.unit_model - fs.F102 Initialisation Complete.
+2019-12-10 09:04:05 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 1 Complete.
+2019-12-10 09:04:05 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 2 Complete.
+2019-12-10 09:04:05 - INFO - idaes.core.unit_model - fs.F102 Initialisation Complete.
 </pre>
 </div>
 </div>
@@ -14435,7 +14295,7 @@ Use Shift+Enter to run the cell once you have typed in your code.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[37]:</div>
+<div class="prompt input_prompt">In&nbsp;[36]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Create the solver object</span>
@@ -14443,7 +14303,463 @@ Use Shift+Enter to run the cell once you have typed in your code.
 <span class="n">solver</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tol&#39;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="s1">&#39;max_iter&#39;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">}</span>
 
 <span class="c1"># Solve the model</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[37]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># For testing purposes</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="k">import</span> <span class="n">TerminationCondition</span>
+<span class="k">assert</span> <span class="n">results</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Analyze-the-results-of-the-square-problem">Analyze the results of the square problem<a class="anchor-link" href="#Analyze-the-results-of-the-square-problem">&#182;</a></h2><p>What is the total operating cost?</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[38]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;operating cost = $&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>operating cost = $ 419122.33876779437
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>For this operating cost, what is the amount of benzene we are able to produce and what purity we are able to achieve?</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[39]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;benzene purity = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">purity</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+====================================================================================
+Unit : fs.F102                                                             Time: 0.0
+------------------------------------------------------------------------------------
+    Unit Performance
+
+    Variables: 
+
+    Key             : Value       : Fixed : Bounds
+          Heat Duty :      7352.5 : False : (None, None)
+    Pressure Change : -2.0000e+05 :  True : (None, None)
+
+------------------------------------------------------------------------------------
+    Stream Table
+                                               Inlet    Vapor Outlet  Liquid Outlet
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;benzene&#39;)     0.20460   1.0000e-08      0.062620  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;toluene&#39;)    0.062520   1.0000e-08      0.032257  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;hydrogen&#39;) 2.6712e-07   1.0000e-08    9.4877e-08  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;methane&#39;)  2.6712e-07   1.0000e-08    9.4877e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;benzene&#39;)  1.0000e-08      0.14198    1.0000e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;toluene&#39;)  1.0000e-08     0.030264    1.0000e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;hydrogen&#39;) 1.0000e-08   1.8224e-07    1.0000e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;methane&#39;)  1.0000e-08   1.8224e-07    1.0000e-08  
+    temperature                                 325.00       375.00        375.00  
+    pressure                                3.5000e+05   1.5000e+05    1.5000e+05  
+====================================================================================
+
+benzene purity =  0.8242962943918914
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Next, let's look at how much benzene we are loosing with the light gases out of F101. IDAES has tools for creating stream tables based on the <code>Arcs</code> and/or <code>Ports</code> in a flowsheet. Let us create and print a simple stream table showing the stream leaving the reactor and the vapor stream from F101.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+How much benzene are we loosing in the F101 vapor outlet stream?
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[40]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.core.util.tables</span> <span class="k">import</span> <span class="n">create_stream_table_dataframe</span><span class="p">,</span> <span class="n">stream_table_dataframe_to_string</span>
+
+<span class="n">st</span> <span class="o">=</span> <span class="n">create_stream_table_dataframe</span><span class="p">({</span><span class="s2">&quot;Reactor&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s05</span><span class="p">,</span> <span class="s2">&quot;Light Gases&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s06</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">stream_table_dataframe_to_string</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>                                          Reactor   Light Gases
+flow_mol_phase_comp (&#39;Liq&#39;, &#39;benzene&#39;)  1.2993e-07  1.0000e-08 
+flow_mol_phase_comp (&#39;Liq&#39;, &#39;toluene&#39;)  8.4147e-07  1.0000e-08 
+flow_mol_phase_comp (&#39;Liq&#39;, &#39;hydrogen&#39;) 1.0000e-08  1.0000e-08 
+flow_mol_phase_comp (&#39;Liq&#39;, &#39;methane&#39;)  1.0000e-08  1.0000e-08 
+flow_mol_phase_comp (&#39;Vap&#39;, &#39;benzene&#39;)     0.35374     0.14915 
+flow_mol_phase_comp (&#39;Vap&#39;, &#39;toluene&#39;)    0.078129    0.015610 
+flow_mol_phase_comp (&#39;Vap&#39;, &#39;hydrogen&#39;)    0.32821     0.32821 
+flow_mol_phase_comp (&#39;Vap&#39;, &#39;methane&#39;)      1.2721      1.2721 
+temperature                                 771.85      325.00 
+pressure                                3.5000e+05  3.5000e+05 
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+You can querry additional variables here if you like. 
+
+Use Shift+Enter to run the cell once you have typed in your code. 
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Optimization">Optimization<a class="anchor-link" href="#Optimization">&#182;</a></h2><p>We saw from the results above that the total operating cost for the base case was $419,122 per year. We are producing 0.142 mol/s of benzene at a purity of 82\%. However, we are losing around 42\% of benzene in F101 vapor outlet stream.</p>
+<p>Let us try to minimize this cost such that:</p>
+<ul>
+<li>we are producing at least 0.15 mol/s of benzene in F102 vapor outlet i.e. our product stream</li>
+<li>purity of benzne i.e. the mole fraction of benzene in F102 vapor outlet is at least 80%</li>
+<li>restricting the benzene loss in F101 vapor outlet to less than 20%</li>
+</ul>
+<p>For this problem, our decision variables are as follows:</p>
+<ul>
+<li>H101 outlet temperature</li>
+<li>R101 cooling duty provided</li>
+<li>F101 outlet temperature</li>
+<li>F102 outlet temperature</li>
+<li>F102 deltaP in the flash tank</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let us declare our objective function for this problem.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[41]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now, we need to unfix the decision variables as we had solved a square problem (degrees of freedom = 0) until now.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[42]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Let us now unfix the remaining variable which is F102 pressure drop (F102.deltaP) 
+
+Use Shift+Enter to run the cell once you have typed in your code. 
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[43]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Next, we need to set bounds on these decision variables to values shown below:</p>
+<ul>
+<li>H101 outlet temperature [500, 600] K</li>
+<li>R101 outlet temperature [600, 800] K</li>
+<li>F101 outlet temperature [298, 450] K</li>
+<li>F102 outlet temperature [298, 450] K</li>
+<li>F102 outlet pressure [105000, 110000] Pa</li>
+</ul>
+<p>Let us first set the variable bound for the H101 outlet temperature as shown below:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[44]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">600</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Now, set the variable bound for the R101 outlet temperature.
+
+Use Shift+Enter to run the cell once you have typed in your code. 
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[45]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">600</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">800</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let us fix the bounds for the rest of the decision variables.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[46]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">298.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">450.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">298.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">450.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">105000</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">110000</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now, the only things left to define are our constraints on overhead loss in F101, product flow rate and purity in F102. Let us first look at defining a constraint for the overhead loss in F101 where we are restricting the benzene leaving the vapor stream to less than 20 \% of the benzene available in the reactor outlet.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[47]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">overhead_loss</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+        <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span> <span class="o">&lt;=</span>
+        <span class="mf">0.20</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Now, add the constraint such that we are producing at least 0.15 mol/s of benzene in the product stream which is the vapor outlet of F102. Let us name this constraint as m.fs.product_flow. 
+
+Use Shift+Enter to run the cell once you have typed in your code. 
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[48]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">product_flow</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+        <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span> <span class="o">&gt;=</span>
+        <span class="mf">0.15</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let us add the final constraint on product purity or the mole fraction of benzene in the product stream such that it is at least greater than 80%.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[49]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">product_purity</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">purity</span> <span class="o">&gt;=</span> <span class="mf">0.80</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We have now defined the optimization problem and we are now ready to solve this problem.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[50]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -14484,436 +14800,66 @@ This version of Ipopt was compiled using HSL, a collection of Fortran codes
 
 This is Ipopt version 3.12.13, running with linear solver ma27.
 
-Number of nonzeros in equality constraint Jacobian...:      994
-Number of nonzeros in inequality constraint Jacobian.:        0
-Number of nonzeros in Lagrangian Hessian.............:      898
+Number of nonzeros in equality constraint Jacobian...:     1048
+Number of nonzeros in inequality constraint Jacobian.:        5
+Number of nonzeros in Lagrangian Hessian.............:      901
 
-Total number of variables............................:      326
+Total number of variables............................:      343
                      variables with only lower bounds:        0
-                variables with lower and upper bounds:      146
+                variables with lower and upper bounds:      149
                      variables with only upper bounds:        0
-Total number of equality constraints.................:      306
-Total number of inequality constraints...............:        0
-        inequality constraints with only lower bounds:        0
+Total number of equality constraints.................:      338
+Total number of inequality constraints...............:        3
+        inequality constraints with only lower bounds:        2
    inequality constraints with lower and upper bounds:        0
-        inequality constraints with only upper bounds:        0
+        inequality constraints with only upper bounds:        1
 
 iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-   0  0.0000000e+00 4.21e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-   1  0.0000000e+00 3.05e+04 1.21e+02  -1.0 2.26e+04    -  9.15e-01 1.86e-01h  1
-   2  0.0000000e+00 1.41e+04 5.72e+02  -1.0 1.66e+04    -  9.89e-01 4.77e-01h  1
-   3  0.0000000e+00 1.38e+04 9.90e+04  -1.0 1.60e+04    -  9.90e-01 1.55e-02h  6
-   4  0.0000000e+00 1.37e+04 3.00e+05  -1.0 1.35e+04    -  1.00e+00 7.75e-03h  7
-   5  0.0000000e+00 1.36e+04 7.03e+05  -1.0 1.16e+04    -  1.00e+00 7.76e-03h  7
-   6  0.0000000e+00 1.36e+04 1.51e+06  -1.0 1.27e+04    -  1.00e+00 3.88e-03h  8
-   7  0.0000000e+00 1.35e+04 3.11e+06  -1.0 1.46e+04    -  1.00e+00 3.89e-03h  8
-   8  0.0000000e+00 1.35e+04 6.28e+06  -1.0 1.77e+04    -  1.00e+00 1.95e-03h  9
-   9  0.0000000e+00 1.35e+04 1.25e+07  -1.0 2.85e+04    -  1.00e+00 1.97e-03h  9
+   0  4.1912234e+05 2.99e+05 6.94e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  4.1628396e+05 2.99e+05 6.94e+00  -1.0 4.82e+09    -  1.80e-05 5.83e-06f  1
+   2  4.1616769e+05 2.99e+05 1.60e+02  -1.0 1.45e+09    -  5.86e-04 1.47e-05f  1
+   3  4.0783429e+05 2.94e+05 4.85e+02  -1.0 1.35e+09    -  2.61e-04 9.35e-04f  1
+   4  2.9670827e+05 2.83e+06 6.94e+02  -1.0 4.75e+08    -  7.35e-05 1.50e-03f  1
+   5  2.9557701e+05 2.82e+06 4.95e+04  -1.0 1.90e+08    -  1.88e-01 1.04e-03f  1
+   6  2.9452502e+05 2.72e+06 4.63e+05  -1.0 4.40e+07    -  1.88e-01 3.46e-02f  1
+   7  2.9632753e+05 2.13e+06 4.47e+05  -1.0 1.47e+07    -  7.61e-02 2.19e-01h  1
+   8  2.9636923e+05 2.12e+06 4.45e+05  -1.0 5.86e+06    -  6.38e-01 3.38e-03h  1
+   9  2.9647019e+05 2.10e+06 4.42e+05  -1.0 6.53e+06    -  7.25e-01 7.18e-03h  1
 iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-  10  0.0000000e+00 1.35e+04 2.44e+07  -1.0 5.98e+04    -  1.00e+00 9.94e-04h 10
-  11  0.0000000e+00 1.34e+04 4.69e+07  -1.0 9.91e+04    -  1.00e+00 4.83e-04h 11
-  12  0.0000000e+00 1.34e+04 8.93e+07  -1.0 1.24e+05    -  1.00e+00 4.07e-04h 11
-  13  0.0000000e+00 7.48e+05 1.01e+08  -1.0 1.28e+05    -  1.00e+00 4.07e-01w  1
-  14  0.0000000e+00 3.93e+05 1.91e+08  -1.0 2.70e+04    -  6.78e-01 4.91e-01w  1
-  15  0.0000000e+00 2.54e+05 1.96e+08  -1.0 6.63e+04    -  4.89e-01 4.37e-01w  1
-  16  0.0000000e+00 1.34e+04 1.70e+08  -1.0 1.77e+04    -  1.00e+00 3.97e-04h 10
-  17  0.0000000e+00 1.34e+04 3.23e+08  -1.0 1.23e+05    -  1.00e+00 4.08e-04h 11
-  18  0.0000000e+00 1.34e+04 6.15e+08  -1.0 1.15e+05    -  1.00e+00 4.29e-04h 11
-  19  0.0000000e+00 1.34e+04 1.12e+09  -1.0 1.08e+05    -  9.03e-01 4.51e-04h 11
+  10  2.9958737e+05 1.63e+06 4.17e+05  -1.0 6.56e+06    -  3.55e-02 2.24e-01h  1
+  11  3.0436334e+05 9.49e+05 6.96e+05  -1.0 5.55e+06    -  9.46e-01 4.19e-01h  1
+  12  3.0792618e+05 5.00e+05 4.56e+06  -1.0 4.03e+06    -  9.90e-01 4.73e-01h  1
+  13  3.0931998e+05 3.46e+05 1.59e+08  -1.0 2.67e+06    -  1.00e+00 3.08e-01h  2
+  14  3.1261432e+05 5.80e+05 1.20e+11  -1.0 2.00e+06    -  1.00e+00 9.78e-01H  1
+  15  3.1271509e+05 2.42e+05 8.71e+08  -1.0 1.43e+05    -  1.00e+00 5.84e-01h  1
+  16  3.1278603e+05 2.73e+03 3.26e+11  -1.0 5.97e+04    -  1.00e+00 9.90e-01h  1
+  17  3.1278674e+05 1.79e-01 3.96e+09  -1.0 6.18e+02    -  1.00e+00 1.00e+00h  1
+  18  3.1278674e+05 1.91e-06 3.15e+05  -1.0 5.18e-03    -  1.00e+00 1.00e+00h  1
+  19  3.1278634e+05 3.47e-05 1.62e+06  -3.8 2.02e+02    -  1.00e+00 1.00e+00f  1
 iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-  20  0.0000000e+00 1.34e+04 2.15e+09  -1.0 1.03e+05    -  1.00e+00 4.68e-04h 11
-  21  0.0000000e+00 1.34e+04 2.92e+09  -1.0 9.87e+04    -  3.93e-01 4.81e-04h 11
-  22  0.0000000e+00 1.34e+04 5.60e+09  -1.0 9.73e+04    -  1.00e+00 4.86e-04h 11
-  23  0.0000000e+00 1.34e+04 7.69e+09  -1.0 9.53e+04    -  4.07e-01 4.93e-04h 11
-  24  0.0000000e+00 1.34e+04 1.48e+10  -1.0 9.45e+04    -  1.00e+00 4.96e-04h 11
-  25  0.0000000e+00 1.34e+04 2.04e+10  -1.0 9.36e+04    -  4.13e-01 4.99e-04h 11
-  26  0.0000000e+00 8.25e+05 1.91e+10  -1.0 9.31e+04    -  1.00e+00 5.12e-01w  1
-  27  0.0000000e+00 4.02e+05 4.76e+10  -1.0 2.28e+04    -  6.55e-01 5.20e-01w  1
-  28  0.0000000e+00 1.09e+05 1.49e+12  -1.0 1.14e+04    -  1.97e-01 7.36e-01w  1
-  29  0.0000000e+00 1.34e+04 3.92e+10  -1.0 4.00e+03    -  1.00e+00 5.00e-04h 10
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-  30  0.0000000e+00 1.34e+04 5.42e+10  -1.0 9.27e+04    -  4.16e-01 5.01e-04h 11
-  31  0.0000000e+00 1.34e+04 1.04e+11  -1.0 9.24e+04    -  1.00e+00 5.02e-04h 11
-  32  0.0000000e+00 1.34e+04 1.44e+11  -1.0 9.22e+04    -  4.18e-01 5.02e-04h 11
-  33  0.0000000e+00 1.33e+04 2.77e+11  -1.0 9.19e+04    -  1.00e+00 5.03e-04h 11
-  34  0.0000000e+00 1.33e+04 3.84e+11  -1.0 9.19e+04    -  4.19e-01 5.03e-04h 11
-  35  0.0000000e+00 1.33e+04 7.39e+11  -1.0 9.16e+04    -  1.00e+00 5.03e-04h 11
-  36  0.0000000e+00 1.33e+04 1.03e+12  -1.0 9.16e+04    -  4.20e-01 5.03e-04h 11
-  37  0.0000000e+00 1.33e+04 1.97e+12  -1.0 9.14e+04    -  1.00e+00 5.03e-04h 11
-  38  0.0000000e+00 1.33e+04 2.74e+12  -1.0 9.13e+04    -  4.21e-01 5.03e-04h 11
-  39  0.0000000e+00 8.13e+05 2.55e+12  -1.0 9.11e+04    -  1.00e+00 5.15e-01w  1
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-  40  0.0000000e+00 3.78e+05 6.76e+12  -1.0 2.26e+04    -  6.54e-01 5.43e-01w  1
-  41  0.0000000e+00 2.66e+05 2.46e+13  -1.0 7.80e+03    -  1.20e-01 2.98e-01w  1
-  42  0.0000000e+00 1.33e+04 5.26e+12  -1.0 7.84e+03    -  1.00e+00 5.03e-04h 10
-  43  0.0000000e+00 1.33e+04 7.30e+12  -1.0 9.11e+04    -  4.22e-01 5.03e-04h 11
-  44  0.0000000e+00 1.33e+04 1.40e+13  -1.0 9.09e+04    -  1.00e+00 5.03e-04h 11
-  45  0.0000000e+00 1.33e+04 1.95e+13  -1.0 9.09e+04    -  4.22e-01 5.03e-04h 11
-  46  0.0000000e+00 1.33e+04 3.75e+13  -1.0 9.07e+04    -  1.00e+00 5.03e-04h 11
-  47  0.0000000e+00 1.33e+04 5.22e+13  -1.0 9.07e+04    -  4.23e-01 5.03e-04h 11
-  48  0.0000000e+00 1.33e+04 1.00e+14  -1.0 9.05e+04    -  1.00e+00 5.03e-04h 11
-  49  0.0000000e+00 1.33e+04 1.40e+14  -1.0 9.05e+04    -  4.24e-01 5.03e-04h 11
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-  50  0.0000000e+00 1.33e+04 2.68e+14  -1.0 9.03e+04    -  1.00e+00 5.03e-04h 11
-  51  0.0000000e+00 1.32e+04 3.73e+14  -1.0 9.03e+04    -  4.24e-01 5.03e-04h 11
-  52  0.0000000e+00 7.98e+05 3.49e+14  -1.0 9.01e+04    -  1.00e+00 5.15e-01w  1
-  53  0.0000000e+00 3.71e+05 9.23e+14  -1.0 2.25e+04    -  6.55e-01 5.43e-01w  1
-  54  0.0000000e+00 2.62e+05 3.29e+15  -1.0 7.71e+03    -  1.19e-01 2.95e-01w  1
-  55  0.0000000e+00 1.32e+04 7.18e+14  -1.0 7.82e+03    -  1.00e+00 5.03e-04h 10
-  56  0.0000000e+00 1.32e+04 1.00e+15  -1.0 9.01e+04    -  4.25e-01 5.03e-04h 11
-  57  0.0000000e+00 1.32e+04 1.13e+15  -1.0 8.99e+04    -  1.00e+00 5.03e-04h 11
-  58  0.0000000e+00 1.32e+04 1.13e+15  -1.0 3.94e+04    -  8.00e-01 1.97e-03h  9
-  59  0.0000000e+00 1.32e+04 1.13e+15  -1.0 3.15e+04    -  1.00e+00 1.97e-03h  9
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-  60  0.0000000e+00 1.31e+04 1.13e+15  -1.0 2.96e+04    -  9.52e-01 1.97e-03h  9
-  61  0.0000000e+00 1.31e+04 1.13e+15  -1.0 2.94e+04    -  1.00e+00 1.97e-03h  9
-  62  0.0000000e+00 1.31e+04 1.13e+15  -1.0 2.94e+04    -  9.56e-01 1.97e-03h  9
-  63  0.0000000e+00 1.31e+04 1.13e+15  -1.0 2.93e+04    -  1.00e+00 1.97e-03h  9
-  64  0.0000000e+00 1.30e+04 1.13e+15  -1.0 2.92e+04    -  9.60e-01 1.97e-03h  9
-  65  0.0000000e+00 2.85e+05 1.11e+15  -1.0 2.91e+04    -  1.00e+00 5.04e-01w  1
-  66  0.0000000e+00 1.32e+05 2.90e+15  -1.0 3.76e+04    -  6.63e-01 5.44e-01w  1
-  67  0.0000000e+00 4.04e+05 4.78e+16  -1.0 6.00e+04    -  1.19e-01 5.55e-01w  1
-  68  0.0000000e+00 1.30e+04 1.13e+15  -1.0 4.31e+03    -  1.00e+00 1.97e-03h  8
-  69  0.0000000e+00 1.30e+04 1.13e+15  -1.0 2.90e+04    -  9.64e-01 1.97e-03h  9
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-  70  0.0000000e+00 1.30e+04 1.13e+15  -1.0 2.90e+04    -  1.00e+00 1.97e-03h  9
-  71  0.0000000e+00 1.29e+04 1.13e+15  -1.0 2.89e+04    -  9.68e-01 1.97e-03h  9
-  72  0.0000000e+00 1.29e+04 1.13e+15  -1.0 2.88e+04    -  1.00e+00 1.97e-03h  9
-  73  0.0000000e+00 1.29e+04 1.13e+15  -1.0 2.87e+04    -  9.72e-01 1.97e-03h  9
-  74  0.0000000e+00 1.29e+04 1.13e+15  -1.0 2.86e+04    -  1.00e+00 1.97e-03h  9
-  75  0.0000000e+00 1.28e+04 1.13e+15  -1.0 2.86e+04    -  9.76e-01 1.97e-03h  9
-  76  0.0000000e+00 1.28e+04 1.13e+15  -1.0 2.85e+04    -  1.00e+00 1.97e-03h  9
-  77  0.0000000e+00 1.28e+04 1.13e+15  -1.0 2.84e+04    -  9.80e-01 1.97e-03h  9
-  78  0.0000000e+00 2.81e+05 1.14e+15  -1.0 2.83e+04    -  1.00e+00 5.04e-01w  1
-  79  0.0000000e+00 1.30e+05 3.02e+15  -1.0 3.72e+04    -  6.59e-01 5.45e-01w  1
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-  80  0.0000000e+00 3.85e+05 4.73e+16  -1.0 6.09e+04    -  1.17e-01 5.42e-01w  1
-  81  0.0000000e+00 1.28e+04 1.13e+15  -1.0 4.31e+03    -  1.00e+00 1.97e-03h  8
-  82  0.0000000e+00 1.27e+04 1.13e+15  -1.0 2.83e+04    -  9.84e-01 1.97e-03h  9
-  83  0.0000000e+00 1.27e+04 1.13e+15  -1.0 2.82e+04    -  1.00e+00 1.97e-03h  9
-  84  0.0000000e+00 1.27e+04 1.13e+15  -1.0 2.81e+04    -  9.88e-01 1.97e-03h  9
-  85  0.0000000e+00 1.27e+04 1.13e+15  -1.0 2.80e+04    -  1.00e+00 1.97e-03h  9
-  86  0.0000000e+00 1.26e+04 1.13e+15  -1.0 2.79e+04    -  9.92e-01 1.97e-03h  9
-  87  0.0000000e+00 1.26e+04 1.13e+15  -1.0 2.79e+04    -  1.00e+00 1.97e-03h  9
-  88  0.0000000e+00 1.26e+04 1.13e+15  -1.0 2.78e+04    -  9.96e-01 1.97e-03h  9
-  89  0.0000000e+00 1.26e+04 1.13e+15  -1.0 2.77e+04    -  1.00e+00 1.97e-03h  9
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-  90  0.0000000e+00 1.25e+04 1.13e+15  -1.0 2.76e+04    -  9.99e-01 1.97e-03h  9
-  91  0.0000000e+00 2.69e+05 1.16e+15  -1.0 2.76e+04    -  1.00e+00 5.04e-01w  1
-  92  0.0000000e+00 1.24e+05 3.14e+15  -1.0 3.67e+04    -  6.55e-01 5.47e-01w  1
-  93  0.0000000e+00 3.72e+05 4.70e+16  -1.0 6.17e+04    -  1.14e-01 5.30e-01w  1
-  94  0.0000000e+00 1.25e+04 1.13e+15  -1.0 4.31e+03    -  1.00e+00 1.97e-03h  8
-  95  0.0000000e+00 1.25e+04 1.13e+15  -1.0 2.75e+04    -  1.00e+00 1.97e-03h  9
-  96  0.0000000e+00 1.25e+04 1.13e+15  -1.0 2.74e+04    -  1.00e+00 1.97e-03h  9
-  97  0.0000000e+00 1.24e+04 1.13e+15  -1.0 2.73e+04    -  1.00e+00 1.97e-03h  9
-  98  0.0000000e+00 1.24e+04 1.13e+15  -1.0 2.73e+04    -  1.00e+00 1.97e-03h  9
-  99  0.0000000e+00 1.24e+04 1.13e+15  -1.0 2.72e+04    -  1.00e+00 1.97e-03h  9
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 100  0.0000000e+00 1.24e+04 1.13e+15  -1.0 2.71e+04    -  1.00e+00 1.97e-03h  9
- 101  0.0000000e+00 1.23e+04 1.13e+15  -1.0 2.70e+04    -  1.00e+00 1.97e-03h  9
- 102  0.0000000e+00 1.23e+04 1.13e+15  -1.0 2.70e+04    -  1.00e+00 1.97e-03h  9
- 103  0.0000000e+00 1.23e+04 1.13e+15  -1.0 2.69e+04    -  1.00e+00 1.97e-03h  9
- 104  0.0000000e+00 2.58e+05 1.19e+15  -1.0 2.68e+04    -  1.00e+00 5.03e-01w  1
- 105  0.0000000e+00 1.19e+05 3.27e+15  -1.0 3.63e+04    -  6.51e-01 5.48e-01w  1
- 106  0.0000000e+00 3.59e+05 4.73e+16  -1.0 6.22e+04    -  1.12e-01 5.20e-01w  1
- 107  0.0000000e+00 1.23e+04 1.13e+15  -1.0 4.30e+03    -  1.00e+00 1.97e-03h  8
- 108  0.0000000e+00 1.23e+04 1.13e+15  -1.0 2.67e+04    -  1.00e+00 1.97e-03h  9
- 109  0.0000000e+00 1.22e+04 1.13e+15  -1.0 2.67e+04    -  1.00e+00 1.97e-03h  9
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 110  0.0000000e+00 1.22e+04 1.13e+15  -1.0 2.66e+04    -  1.00e+00 1.97e-03h  9
- 111  0.0000000e+00 1.22e+04 1.13e+15  -1.0 2.65e+04    -  1.00e+00 1.97e-03h  9
- 112  0.0000000e+00 1.22e+04 1.13e+15  -1.0 2.65e+04    -  1.00e+00 1.97e-03h  9
- 113  0.0000000e+00 1.21e+04 1.13e+15  -1.0 2.64e+04    -  1.00e+00 1.97e-03h  9
- 114  0.0000000e+00 1.21e+04 1.14e+15  -1.0 2.63e+04    -  1.00e+00 1.97e-03h  9
- 115  0.0000000e+00 1.21e+04 1.14e+15  -1.0 2.62e+04    -  1.00e+00 1.97e-03h  9
- 116  0.0000000e+00 1.21e+04 1.14e+15  -1.0 2.62e+04    -  1.00e+00 1.97e-03h  9
- 117  0.0000000e+00 2.48e+05 1.21e+15  -1.0 2.61e+04    -  1.00e+00 5.03e-01w  1
- 118  0.0000000e+00 1.14e+05 3.41e+15  -1.0 3.59e+04    -  6.47e-01 5.50e-01w  1
- 119  0.0000000e+00 3.46e+05 5.02e+16  -1.0 6.12e+04    -  1.10e-01 5.21e-01w  1
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 120  0.0000000e+00 1.20e+04 1.14e+15  -1.0 4.25e+03    -  1.00e+00 1.97e-03h  8
- 121  0.0000000e+00 1.20e+04 1.14e+15  -1.0 2.60e+04    -  1.00e+00 1.97e-03h  9
- 122  0.0000000e+00 1.20e+04 1.14e+15  -1.0 2.60e+04    -  1.00e+00 1.97e-03h  9
- 123  0.0000000e+00 1.20e+04 1.14e+15  -1.0 2.59e+04    -  1.00e+00 1.97e-03h  9
- 124  0.0000000e+00 1.19e+04 1.14e+15  -1.0 2.58e+04    -  1.00e+00 1.97e-03h  9
- 125  0.0000000e+00 1.19e+04 1.14e+15  -1.0 2.57e+04    -  1.00e+00 1.97e-03h  9
- 126  0.0000000e+00 1.19e+04 1.14e+15  -1.0 2.57e+04    -  1.00e+00 1.97e-03h  9
- 127  0.0000000e+00 1.19e+04 1.14e+15  -1.0 2.56e+04    -  1.00e+00 1.97e-03h  9
- 128  0.0000000e+00 1.19e+04 1.14e+15  -1.0 2.55e+04    -  1.00e+00 1.97e-03h  9
- 129  0.0000000e+00 1.18e+04 1.14e+15  -1.0 2.55e+04    -  1.00e+00 1.97e-03h  9
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 130  0.0000000e+00 2.38e+05 1.24e+15  -1.0 2.54e+04    -  1.00e+00 5.03e-01w  1
- 131  0.0000000e+00 1.09e+05 3.56e+15  -1.0 3.56e+04    -  6.43e-01 5.51e-01w  1
- 132  0.0000000e+00 3.31e+05 6.55e+16  -1.0 5.53e+04    -  1.08e-01 5.63e-01w  1
- 133  0.0000000e+00 1.18e+04 1.14e+15  -1.0 4.08e+03    -  1.00e+00 1.97e-03h  8
- 134  0.0000000e+00 1.18e+04 1.14e+15  -1.0 2.53e+04    -  1.00e+00 1.97e-03h  9
- 135  0.0000000e+00 1.18e+04 1.14e+15  -1.0 2.52e+04    -  1.00e+00 1.97e-03h  9
- 136  0.0000000e+00 1.17e+04 1.14e+15  -1.0 2.52e+04    -  1.00e+00 1.97e-03h  9
- 137  0.0000000e+00 1.17e+04 1.14e+15  -1.0 2.51e+04    -  1.00e+00 1.97e-03h  9
- 138  0.0000000e+00 1.17e+04 1.14e+15  -1.0 2.50e+04    -  1.00e+00 1.97e-03h  9
- 139  0.0000000e+00 1.17e+04 1.15e+15  -1.0 2.49e+04    -  1.00e+00 1.97e-03h  9
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 140  0.0000000e+00 1.16e+04 1.15e+15  -1.0 2.49e+04    -  1.00e+00 1.97e-03h  9
- 141  0.0000000e+00 1.16e+04 1.15e+15  -1.0 2.48e+04    -  1.00e+00 1.97e-03h  9
- 142  0.0000000e+00 1.16e+04 1.15e+15  -1.0 2.47e+04    -  1.00e+00 1.97e-03h  9
- 143  0.0000000e+00 2.28e+05 1.27e+15  -1.0 2.46e+04    -  1.00e+00 5.03e-01w  1
- 144  0.0000000e+00 1.04e+05 3.72e+15  -1.0 3.53e+04    -  6.37e-01 5.53e-01w  1
- 145  0.0000000e+00 3.08e+05 1.85e+17  -1.0 3.85e+04    -  1.07e-01 7.55e-01w  1
- 146  0.0000000e+00 1.16e+04 1.15e+15  -1.0 4.52e+03    -  1.00e+00 1.97e-03h  8
- 147  0.0000000e+00 1.16e+04 1.15e+15  -1.0 2.46e+04    -  1.00e+00 1.97e-03h  9
- 148  0.0000000e+00 1.15e+04 1.15e+15  -1.0 2.45e+04    -  1.00e+00 1.97e-03h  9
- 149  0.0000000e+00 1.15e+04 1.15e+15  -1.0 2.44e+04    -  1.00e+00 1.97e-03h  9
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 150  0.0000000e+00 1.15e+04 1.15e+15  -1.0 2.43e+04    -  1.00e+00 1.97e-03h  9
- 151  0.0000000e+00 1.15e+04 1.15e+15  -1.0 2.42e+04    -  1.00e+00 1.97e-03h  9
- 152  0.0000000e+00 1.14e+04 1.15e+15  -1.0 2.41e+04    -  1.00e+00 1.97e-03h  9
- 153  0.0000000e+00 1.14e+04 1.15e+15  -1.0 2.40e+04    -  1.00e+00 1.97e-03h  9
- 154  0.0000000e+00 1.14e+04 1.15e+15  -1.0 2.40e+04    -  1.00e+00 1.97e-03h  9
- 155  0.0000000e+00 1.14e+04 1.15e+15  -1.0 2.39e+04    -  1.00e+00 1.96e-03h  9
- 156  0.0000000e+00 2.17e+05 1.30e+15  -1.0 2.37e+04    -  1.00e+00 5.03e-01w  1
- 157  0.0000000e+00 9.99e+04 3.90e+15  -1.0 3.57e+04    -  6.24e-01 5.54e-01w  1
- 158  0.0000000e+00 1.31e+05 7.87e+17  -1.0 1.57e+04    -  1.05e-01 9.31e-01w  1
- 159  0.0000000e+00 1.14e+04 1.15e+15  -1.0 6.99e+05    -  1.00e+00 1.96e-03h  8
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 160  0.0000000e+00 1.13e+04 1.16e+15  -1.0 2.36e+04    -  1.00e+00 1.96e-03h  9
- 161  0.0000000e+00 1.13e+04 1.16e+15  -1.0 2.35e+04    -  1.00e+00 1.96e-03h  9
- 162  0.0000000e+00 1.13e+04 1.16e+15  -1.0 2.34e+04    -  1.00e+00 1.96e-03h  9
- 163  0.0000000e+00 1.13e+04 1.16e+15  -1.0 2.33e+04    -  1.00e+00 1.96e-03h  9
- 164  0.0000000e+00 1.12e+04 1.16e+15  -1.0 2.31e+04    -  1.00e+00 1.96e-03h  9
- 165  0.0000000e+00 1.12e+04 1.16e+15  -1.0 2.29e+04    -  1.00e+00 1.96e-03h  9
- 166  0.0000000e+00 1.12e+04 1.16e+15  -1.0 2.28e+04    -  1.00e+00 1.96e-03h  9
- 167  0.0000000e+00 1.12e+04 1.16e+15  -1.0 2.26e+04    -  1.00e+00 1.96e-03h  9
- 168  0.0000000e+00 1.12e+04 1.16e+15  -1.0 2.24e+04    -  1.00e+00 1.96e-03h  9
- 169  0.0000000e+00 2.02e+05 1.34e+15  -1.0 2.21e+04    -  1.00e+00 5.03e-01w  1
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 170  0.0000000e+00 9.58e+04 4.16e+15  -1.0 3.80e+04    -  5.87e-01 5.55e-01w  1
- 171  0.0000000e+00 8.97e+04 2.18e+18  -1.0 4.09e+03    -  1.03e-01 9.81e-01w  1
- 172  0.0000000e+00 1.11e+04 1.16e+15  -1.0 4.36e+06    -  1.00e+00 1.96e-03h  8
- 173  0.0000000e+00 1.11e+04 1.16e+15  -1.0 2.18e+04    -  1.00e+00 1.96e-03h  9
- 174  0.0000000e+00 1.11e+04 1.16e+15  -1.0 2.15e+04    -  1.00e+00 1.96e-03h  9
- 175  0.0000000e+00 1.11e+04 1.17e+15  -1.0 2.11e+04    -  1.00e+00 1.96e-03h  9
- 176  0.0000000e+00 1.10e+04 1.17e+15  -1.0 2.07e+04    -  1.00e+00 1.96e-03h  9
- 177  0.0000000e+00 1.10e+04 1.17e+15  -1.0 2.02e+04    -  1.00e+00 1.96e-03h  9
- 178  0.0000000e+00 1.10e+04 1.17e+15  -1.0 1.96e+04    -  1.00e+00 1.96e-03h  9
- 179  0.0000000e+00 1.10e+04 1.17e+15  -1.0 1.89e+04    -  1.00e+00 1.96e-03h  9
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 180  0.0000000e+00 1.10e+04 1.17e+15  -1.0 1.80e+04    -  1.00e+00 1.96e-03h  9
- 181  0.0000000e+00 1.09e+04 1.17e+15  -1.0 1.72e+04    -  1.00e+00 3.92e-03h  8
- 182  0.0000000e+00 1.59e+05 1.38e+15  -1.0 1.67e+04    -  1.00e+00 5.02e-01w  1
- 183  0.0000000e+00 9.33e+04 4.59e+15  -1.0 4.75e+04    -  5.08e-01 5.55e-01w  1
- 184  0.0000000e+00 9.75e+04 2.25e+18  -1.0 2.67e+03    -  1.02e-01 9.81e-01w  1
- 185  0.0000000e+00 1.09e+04 1.17e+15  -1.0 3.80e+06    -  1.00e+00 3.92e-03h  7
- 186  0.0000000e+00 1.08e+04 1.18e+15  -1.0 1.61e+04    -  1.00e+00 3.92e-03h  8
- 187  0.0000000e+00 1.08e+04 1.18e+15  -1.0 1.54e+04    -  1.00e+00 3.91e-03h  8
- 188  0.0000000e+00 2.03e+04 8.92e+15  -1.0 1.43e+04    -  7.56e-01 7.98e-01H  1
- 189  0.0000000e+00 1.74e+04 6.11e+15  -1.0 1.09e+04    -  9.32e-01 1.24e-01h  3
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 190  0.0000000e+00 2.18e+03 3.24e+15  -1.0 7.69e+03    -  9.67e-01 5.03e-01h  1
- 191  0.0000000e+00 2.18e+03 1.06e+16  -1.0 2.51e+04    -  2.14e-01 9.54e-04h 11
- 192  0.0000000e+00 2.18e+03 1.06e+16  -1.0 2.56e+04    -  2.15e-01 9.54e-04h 11
- 193  0.0000000e+00 2.17e+03 1.06e+16  -1.0 2.56e+04    -  2.16e-01 9.54e-04h 11
- 194  0.0000000e+00 2.17e+03 1.06e+16  -1.0 2.55e+04    -  2.32e-01 9.54e-04h 11
- 195  0.0000000e+00 2.17e+03 1.06e+16  -1.0 2.55e+04    -  1.00e+00 9.54e-04h 11
- 196  0.0000000e+00 2.17e+03 1.06e+16  -1.0 2.53e+04    -  2.93e-01 9.54e-04h 11
- 197  0.0000000e+00 2.16e+03 1.06e+16  -1.0 2.52e+04    -  1.00e+00 9.54e-04h 11
- 198  0.0000000e+00 2.16e+03 1.06e+16  -1.0 2.50e+04    -  2.88e-01 1.91e-03h 10
- 199  0.0000000e+00 2.16e+03 1.06e+16  -1.0 2.49e+04    -  1.00e+00 1.91e-03h 10
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 200  0.0000000e+00 2.15e+03 1.05e+16  -1.0 2.47e+04    -  2.96e-01 1.91e-03h 10
- 201  0.0000000e+00 2.00e+05 2.31e+17  -1.0 2.46e+04    -  1.00e+00 9.77e-01w  1
- 202  0.0000000e+00 1.96e+05 2.28e+17  -1.0 8.75e+04    -  5.63e-02 1.85e-02w  1
- 203  0.0000000e+00 5.12e+05 2.22e+17  -1.0 2.37e+05    -  3.03e-02 1.69e-01w  1
- 204  0.0000000e+00 2.15e+03 1.05e+16  -1.0 2.44e+05    -  1.00e+00 1.91e-03h  9
- 205  0.0000000e+00 2.14e+03 1.05e+16  -1.0 2.44e+04    -  3.04e-01 1.91e-03h 10
- 206  0.0000000e+00 2.14e+03 1.05e+16  -1.0 2.43e+04    -  1.00e+00 1.91e-03h 10
- 207  0.0000000e+00 2.14e+03 1.05e+16  -1.0 2.41e+04    -  3.12e-01 1.91e-03h 10
- 208  0.0000000e+00 2.13e+03 1.04e+16  -1.0 2.40e+04    -  1.00e+00 1.91e-03h 10
- 209  0.0000000e+00 2.13e+03 1.04e+16  -1.0 2.38e+04    -  3.20e-01 1.91e-03h 10
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 210  0.0000000e+00 2.12e+03 1.04e+16  -1.0 2.37e+04    -  1.00e+00 1.91e-03h 10
- 211  0.0000000e+00 2.12e+03 1.04e+16  -1.0 2.35e+04    -  3.28e-01 1.91e-03h 10
- 212  0.0000000e+00 2.12e+03 1.04e+16  -1.0 2.34e+04    -  1.00e+00 1.91e-03h 10
- 213  0.0000000e+00 2.11e+03 1.03e+16  -1.0 2.32e+04    -  3.37e-01 1.91e-03h 10
- 214  0.0000000e+00 1.78e+05 2.36e+17  -1.0 2.31e+04    -  1.00e+00 9.78e-01w  1
- 215  0.0000000e+00 1.76e+05 2.33e+17  -1.0 9.51e+04    -  4.85e-02 1.67e-02w  1
- 216  0.0000000e+00 4.92e+05 2.27e+17  -1.0 2.41e+05    -  2.84e-02 1.65e-01w  1
- 217  0.0000000e+00 2.11e+03 1.03e+16  -1.0 2.49e+05    -  1.00e+00 1.91e-03h  9
- 218  0.0000000e+00 2.10e+03 1.03e+16  -1.0 2.29e+04    -  3.45e-01 1.91e-03h 10
- 219  0.0000000e+00 2.10e+03 1.03e+16  -1.0 2.28e+04    -  1.00e+00 1.91e-03h 10
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 220  0.0000000e+00 2.10e+03 1.03e+16  -1.0 2.26e+04    -  3.54e-01 1.91e-03h 10
- 221  0.0000000e+00 2.09e+03 1.02e+16  -1.0 2.25e+04    -  1.00e+00 1.91e-03h 10
- 222  0.0000000e+00 2.09e+03 1.02e+16  -1.0 2.23e+04    -  3.62e-01 1.91e-03h 10
- 223  0.0000000e+00 2.08e+03 1.02e+16  -1.0 2.22e+04    -  1.00e+00 1.91e-03h 10
- 224  0.0000000e+00 2.08e+03 1.02e+16  -1.0 2.20e+04    -  3.71e-01 1.91e-03h 10
- 225  0.0000000e+00 2.08e+03 1.02e+16  -1.0 2.20e+04    -  1.00e+00 1.91e-03h 10
- 226  0.0000000e+00 2.07e+03 1.01e+16  -1.0 2.18e+04    -  3.81e-01 1.91e-03h 10
- 227  0.0000000e+00 1.59e+05 2.41e+17  -1.0 2.17e+04    -  1.00e+00 9.79e-01w  1
- 228  0.0000000e+00 1.57e+05 2.38e+17  -1.0 1.03e+05    -  4.21e-02 1.50e-02w  1
- 229  0.0000000e+00 4.74e+05 2.33e+17  -1.0 2.45e+05    -  2.68e-02 1.60e-01w  1
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 230  0.0000000e+00 2.07e+03 1.01e+16  -1.0 2.54e+05    -  1.00e+00 1.91e-03h  9
- 231  0.0000000e+00 2.06e+03 1.01e+16  -1.0 2.15e+04    -  3.90e-01 1.91e-03h 10
- 232  0.0000000e+00 2.06e+03 1.01e+16  -1.0 2.14e+04    -  1.00e+00 1.91e-03h 10
- 233  0.0000000e+00 2.06e+03 1.01e+16  -1.0 2.12e+04    -  3.99e-01 1.91e-03h 10
- 234  0.0000000e+00 2.05e+03 1.00e+16  -1.0 2.11e+04    -  1.00e+00 1.91e-03h 10
- 235  0.0000000e+00 2.05e+03 1.00e+16  -1.0 2.09e+04    -  4.09e-01 1.91e-03h 10
- 236  0.0000000e+00 2.04e+03 1.00e+16  -1.0 2.09e+04    -  1.00e+00 1.91e-03h 10
- 237  0.0000000e+00 2.04e+03 9.98e+15  -1.0 2.07e+04    -  4.19e-01 1.91e-03h 10
- 238  0.0000000e+00 2.04e+03 9.96e+15  -1.0 2.06e+04    -  1.00e+00 1.91e-03h 10
- 239  0.0000000e+00 2.03e+03 9.94e+15  -1.0 2.04e+04    -  4.29e-01 1.91e-03h 10
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 240  0.0000000e+00 1.42e+05 2.45e+17  -1.0 2.03e+04    -  1.00e+00 9.79e-01w  1
- 241  0.0000000e+00 1.41e+05 2.43e+17  -1.0 1.13e+05    -  3.67e-02 1.35e-02w  1
- 242  0.0000000e+00 4.57e+05 2.38e+17  -1.0 2.50e+05    -  2.53e-02 1.56e-01w  1
- 243  0.0000000e+00 2.03e+03 9.93e+15  -1.0 2.59e+05    -  1.00e+00 1.91e-03h  9
- 244  0.0000000e+00 2.02e+03 9.91e+15  -1.0 2.02e+04    -  4.39e-01 1.91e-03h 10
- 245  0.0000000e+00 2.02e+03 9.89e+15  -1.0 2.01e+04    -  1.00e+00 1.91e-03h 10
- 246  0.0000000e+00 2.02e+03 9.87e+15  -1.0 1.99e+04    -  4.49e-01 1.91e-03h 10
- 247  0.0000000e+00 2.01e+03 9.85e+15  -1.0 1.98e+04    -  1.00e+00 1.91e-03h 10
- 248  0.0000000e+00 2.01e+03 9.83e+15  -1.0 1.97e+04    -  4.60e-01 1.91e-03h 10
- 249  0.0000000e+00 2.00e+03 9.81e+15  -1.0 1.96e+04    -  1.00e+00 1.91e-03h 10
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 250  0.0000000e+00 2.00e+03 9.79e+15  -1.0 1.94e+04    -  4.70e-01 1.91e-03h 10
- 251  0.0000000e+00 2.00e+03 9.77e+15  -1.0 1.93e+04    -  1.00e+00 1.91e-03h 10
- 252  0.0000000e+00 1.99e+03 9.76e+15  -1.0 1.92e+04    -  4.81e-01 1.91e-03h 10
- 253  0.0000000e+00 1.27e+05 2.50e+17  -1.0 1.91e+04    -  1.00e+00 9.80e-01w  1
- 254  0.0000000e+00 1.26e+05 2.48e+17  -1.0 1.22e+05    -  3.21e-02 1.22e-02w  1
- 255  0.0000000e+00 4.42e+05 2.43e+17  -1.0 2.54e+05    -  2.40e-02 1.52e-01w  1
- 256  0.0000000e+00 1.99e+03 9.74e+15  -1.0 2.64e+05    -  1.00e+00 1.91e-03h  9
- 257  0.0000000e+00 1.99e+03 9.72e+15  -1.0 1.89e+04    -  4.92e-01 1.91e-03h 10
- 258  0.0000000e+00 1.98e+03 9.70e+15  -1.0 1.88e+04    -  1.00e+00 1.91e-03h 10
- 259  0.0000000e+00 1.98e+03 9.68e+15  -1.0 1.87e+04    -  5.04e-01 1.91e-03h 10
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 260  0.0000000e+00 1.97e+03 9.66e+15  -1.0 1.86e+04    -  1.00e+00 1.91e-03h 10
- 261  0.0000000e+00 1.97e+03 9.64e+15  -1.0 1.84e+04    -  5.15e-01 1.91e-03h 10
- 262  0.0000000e+00 1.97e+03 9.63e+15  -1.0 1.84e+04    -  1.00e+00 1.91e-03h 10
- 263  0.0000000e+00 1.96e+03 9.61e+15  -1.0 1.82e+04    -  5.27e-01 1.91e-03h 10
- 264  0.0000000e+00 1.96e+03 9.59e+15  -1.0 1.81e+04    -  1.00e+00 1.92e-03h 10
- 265  0.0000000e+00 3.55e+03 9.39e+15  -1.0 1.80e+04    -  3.06e-01 1.97e-02H  1
- 266  0.0000000e+00 3.31e+03 8.76e+15  -1.0 1.41e+04    -  2.72e-03 6.14e-02f  5
- 267  0.0000000e+00 3.21e+03 8.48e+15  -1.0 1.38e+04    -  1.00e+00 3.07e-02f  6
- 268  0.0000000e+00 3.10e+03 8.21e+15  -1.0 1.37e+04    -  1.25e-01 3.07e-02h  6
- 269  0.0000000e+00 3.05e+03 8.08e+15  -1.0 1.35e+04    -  1.00e+00 1.54e-02h  7
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 270  0.0000000e+00 3.01e+03 7.95e+15  -1.0 1.34e+04    -  1.89e-01 1.54e-02h  7
- 271  0.0000000e+00 3.89e+03 7.87e+15  -1.0 1.34e+04    -  3.43e-01 1.03e-02H  1
- 272  0.0000000e+00 3.63e+03 7.34e+15  -1.0 1.16e+04    -  1.96e-03 6.15e-02f  5
- 273  0.0000000e+00 3.52e+03 7.10e+15  -1.0 1.15e+04    -  1.00e+00 3.08e-02f  6
- 274  0.0000000e+00 3.40e+03 6.88e+15  -1.0 1.14e+04    -  1.14e-01 3.08e-02h  6
- 275  0.0000000e+00 4.12e+03 6.82e+15  -1.0 1.14e+04    -  4.08e-01 8.24e-03H  1
- 276  0.0000000e+00 3.85e+03 6.36e+15  -1.0 1.01e+04    -  1.40e-03 6.16e-02f  5
- 277  0.0000000e+00 4.23e+03 6.33e+15  -1.0 1.01e+04    -  1.00e+00 4.23e-03H  1
- 278  0.0000000e+00 3.94e+03 5.90e+15  -1.0 8.86e+03    -  6.82e-04 6.16e-02f  5
- 279  0.0000000e+00 4.31e+03 5.88e+15  -1.0 8.96e+03    -  4.59e-01 4.14e-03H  1
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 280  0.0000000e+00 4.18e+03 5.69e+15  -1.0 8.21e+03    -  6.73e-04 3.08e-02f  6
- 281  0.0000000e+00 4.04e+03 5.51e+15  -1.0 8.27e+03    -  1.00e+00 3.08e-02f  6
- 282  0.0000000e+00 3.91e+03 5.33e+15  -1.0 8.34e+03    -  7.09e-02 3.08e-02f  6
- 283  0.0000000e+00 3.85e+03 5.24e+15  -1.0 8.39e+03    -  1.00e+00 1.54e-02h  7
- 284  0.0000000e+00 3.79e+03 5.16e+15  -1.0 8.42e+03    -  1.34e-01 1.54e-02h  7
- 285  0.0000000e+00 3.54e+03 4.81e+15  -1.0 8.44e+03    -  1.00e+00 6.16e-02h  5
- 286  0.0000000e+00 4.57e+03 4.75e+15  -1.0 8.51e+03    -  4.16e-01 1.22e-02H  1
- 287  0.0000000e+00 4.58e+03 2.97e+15  -1.0 7.25e+03    -  1.00e+00 1.16e-04H  1
-In iteration 287, 2 Slacks too small, adjusting variable bounds
- 288  0.0000000e+00 4.58e+03 7.72e+20  -1.0 6.48e+03    -  4.95e-01 1.14e-06H  1
- 289  0.0000000e+00 4.58e+03 6.27e+20  -1.0 5.31e+07    -  1.89e-07 9.97e-08f 13
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 290  0.0000000e+00 4.58e+03 4.98e+20  -1.0 4.16e+07    -  2.88e-07 1.27e-07f 13
- 291  0.0000000e+00 4.58e+03 3.99e+20  -1.0 4.18e+07    -  4.14e-07 6.33e-08f 14
- 292  0.0000000e+00 4.58e+03 3.99e+20  -1.0 3.89e+07    -  4.76e-07 6.81e-08f 14
- 293  0.0000000e+00 4.58e+03 3.99e+20  -1.0 3.74e+07    -  5.44e-07 7.07e-08f 14
- 294  0.0000000e+00 8.22e+04 9.13e+21  -1.0 3.68e+07    -  6.19e-07 5.89e-04f  1
- 295r 0.0000000e+00 8.22e+04 1.00e+03   1.3 0.00e+00  -2.0 0.00e+00 3.59e-07R  6
- 296r 0.0000000e+00 2.45e+04 1.10e+03   1.3 2.75e+04    -  4.44e-04 9.93e-04f  1
- 297  0.0000000e+00 7.00e+04 3.83e+03  -1.0 9.26e+03    -  9.90e-01 2.78e-01h  1
- 298  0.0000000e+00 4.58e+04 1.31e+04  -1.0 1.70e+04    -  9.90e-01 3.04e-01h  2
- 299  0.0000000e+00 4.25e+04 4.87e+04  -1.0 1.39e+04    -  9.94e-01 6.95e-02h  4
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 300  0.0000000e+00 4.16e+04 1.02e+05  -1.0 2.69e+04    -  1.00e+00 2.10e-02h  6
- 301  0.0000000e+00 4.11e+04 1.53e+05  -1.0 3.81e+04    -  1.00e+00 1.26e-02h  7
- 302  0.0000000e+00 4.08e+04 1.98e+05  -1.0 4.37e+04    -  1.00e+00 7.00e-03h  8
- 303  0.0000000e+00 5.32e+04 3.29e+05  -1.0 4.67e+04    -  1.00e+00 3.75e-01H  1
- 304  0.0000000e+00 1.62e+04 7.70e+05  -1.0 3.30e+04    -  1.35e-01 6.14e-01H  1
- 305  0.0000000e+00 1.61e+04 6.42e+06  -1.0 3.16e+04    -  1.00e+00 7.89e-03h  7
- 306  0.0000000e+00 1.56e+04 1.02e+07  -1.0 7.07e+04    -  3.44e-01 3.17e-02h  5
- 307  0.0000000e+00 1.51e+04 2.68e+07  -1.0 6.16e+04    -  1.00e+00 3.17e-02h  5
- 308  0.0000000e+00 1.46e+04 4.65e+07  -1.0 4.82e+04    -  6.26e-01 3.17e-02h  5
- 309  0.0000000e+00 1.41e+04 9.88e+07  -1.0 5.21e+04    -  1.00e+00 3.17e-02h  5
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 310  0.0000000e+00 1.36e+04 1.68e+08  -1.0 5.04e+04    -  7.00e-01 3.17e-02h  5
- 311  0.0000000e+00 1.35e+04 3.48e+08  -1.0 5.24e+04    -  1.00e+00 7.93e-03h  7
- 312  0.0000000e+00 1.34e+04 5.97e+08  -1.0 5.39e+04    -  7.20e-01 7.93e-03h  7
- 313  0.0000000e+00 1.33e+04 1.18e+09  -1.0 6.02e+04    -  1.00e+00 7.94e-03h  7
- 314  0.0000000e+00 1.32e+04 1.79e+09  -1.0 6.93e+04    -  5.41e-01 7.95e-03h  7
- 315  0.0000000e+00 7.29e+05 1.86e+09  -1.0 8.38e+04    -  1.00e+00 5.10e-01w  1
- 316  0.0000000e+00 3.49e+05 3.76e+09  -1.0 8.49e+03    -  1.00e+00 5.26e-01w  1
- 317  0.0000000e+00 7.49e+05 4.59e+11  -1.0 5.26e+04    -  8.58e-01 9.93e-01w  1
- 318  0.0000000e+00 1.31e+04 3.52e+09  -1.0 2.36e+04    -  1.00e+00 3.98e-03h  7
- 319  0.0000000e+00 3.27e+05 2.78e+09  -1.0 1.15e+05    -  3.04e-01 2.56e-01h  2
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 320  0.0000000e+00 3.19e+05 4.46e+09  -1.0 1.17e+05    -  4.79e-01 3.40e-02h  4
- 321  0.0000000e+00 3.19e+05 9.97e+09  -1.0 1.38e+05    -  1.00e+00 1.83e-03h  8
- 322  0.0000000e+00 3.19e+05 1.59e+10  -1.0 1.42e+05    -  5.81e-01 4.47e-04h 10
- 323  0.0000000e+00 3.19e+05 3.11e+10  -1.0 1.35e+05    -  1.00e+00 2.33e-04h 11
- 324  0.0000000e+00 3.19e+05 5.12e+10  -1.0 1.16e+05    -  7.00e-01 3.30e-05h 14
- 325  0.0000000e+00 3.15e+05 9.04e+10  -1.0 9.56e+04    -  1.00e+00 7.96e-02h  3
- 326  0.0000000e+00 3.11e+05 1.39e+11  -1.0 5.52e+04    -  1.00e+00 2.38e-01h  2
- 327  0.0000000e+00 2.95e+05 1.73e+11  -1.0 6.03e+04    -  4.21e-01 1.28e-01h  3
- 328  0.0000000e+00 1.43e+05 2.04e+11  -1.0 7.88e+01  -2.5 1.00e+00 5.14e-01h  1
- 329  0.0000000e+00 4.75e+04 4.58e+11  -1.0 3.83e+01  -3.0 1.00e+00 6.68e-01h  1
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 330  0.0000000e+00 3.86e+04 5.36e+13  -1.0 1.27e+01  -3.4 6.67e-02 9.63e-01h  1
- 331  0.0000000e+00 1.80e+04 5.23e+12  -1.0 7.89e+00  -3.9 1.00e+00 1.00e+00h  1
- 332  0.0000000e+00 2.08e+04 9.78e+07  -1.0 1.90e+00  -4.4 1.00e+00 1.00e+00H  1
- 333  0.0000000e+00 3.36e+04 5.43e+05  -1.0 5.38e+00  -4.9 1.00e+00 1.00e+00H  1
- 334  0.0000000e+00 4.64e+04 8.02e+10  -2.5 2.96e+00  -5.3 2.57e-01 1.00e+00H  1
- 335  0.0000000e+00 5.09e+04 7.24e+10  -2.5 2.12e+02  -5.8 9.72e-02 1.00e+00H  1
- 336  0.0000000e+00 4.59e+04 7.09e+10  -2.5 2.40e+04  -5.4 2.56e-02 1.00e+00H  1
- 337  0.0000000e+00 4.59e+04 6.97e+10  -2.5 1.37e+05  -4.1 2.02e-02 3.10e-04h  2
- 338  0.0000000e+00 4.58e+04 6.93e+10  -2.5 4.29e+05  -3.6 7.56e-03 8.98e-05h  2
- 339  0.0000000e+00 4.58e+04 4.33e+10  -2.5 2.16e+04  -3.2 3.84e-01 5.43e-04h  2
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 340  0.0000000e+00 4.55e+04 3.64e+10  -2.5 6.37e+04  -3.7 1.52e-01 5.68e-03h  4
- 341  0.0000000e+00 4.53e+04 2.93e+10  -2.5 6.57e+04  -4.2 1.87e-01 4.82e-03h  4
- 342  0.0000000e+00 4.51e+04 2.14e+10  -2.5 6.57e+04  -4.6 2.59e-01 4.33e-03h  4
- 343  0.0000000e+00 4.48e+04 1.34e+10  -2.5 6.55e+04  -5.1 3.60e-01 6.24e-03h  4
- 344  0.0000000e+00 4.46e+04 9.71e+09  -2.5 6.51e+04  -5.6 2.65e-01 6.10e-03h  7
- 345  0.0000000e+00 4.41e+04 3.89e+09  -2.5 6.47e+04  -6.1 5.84e-01 1.00e-02h  7
- 346  0.0000000e+00 4.28e+04 2.34e+09  -2.5 6.41e+04  -6.5 4.03e-01 2.91e-02h  6
- 347  0.0000000e+00 4.67e+03 8.31e+08  -2.5 6.23e+04  -7.0 6.41e-01 1.00e+00w  1
- 348  0.0000000e+00 3.94e+02 1.22e+08  -2.5 2.12e+03  -7.5 8.24e-01 1.00e+00w  1
- 349  0.0000000e+00 4.04e+03 3.14e+07  -2.5 2.26e+03  -8.0 7.39e-01 8.01e-01w  1
-iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
- 350  0.0000000e+00 4.15e+04 9.19e+08  -2.5 2.84e+03  -8.5 6.41e-01 3.12e-02h  5
- 351  0.0000000e+00 4.14e+04 9.13e+08  -2.5 2.66e+04  -2.6 1.21e-02 9.29e-04h  2
- 352  0.0000000e+00 1.70e+03 4.06e+11  -2.5 1.18e+04  -3.1 6.48e-02 6.27e-03h  1
- 353  0.0000000e+00 1.37e+02 2.17e+10  -2.5 6.97e+01  -3.6 8.87e-01 1.00e+00h  1
- 354  0.0000000e+00 1.07e+00 3.99e+08  -2.5 3.26e+00  -4.0 1.00e+00 1.00e+00h  1
- 355  0.0000000e+00 2.04e-04 4.94e+04  -2.5 7.34e-01  -4.5 1.00e+00 1.00e+00h  1
- 356  0.0000000e+00 1.31e-03 5.18e-01  -2.5 2.17e+00  -5.0 1.00e+00 1.00e+00h  1
- 357  0.0000000e+00 2.24e-08 1.74e+01  -7.0 2.22e-04  -5.5 1.00e+00 1.00e+00h  1
- 358  0.0000000e+00 2.24e-08 6.99e-10  -7.0 6.28e-04  -6.0 1.00e+00 1.00e+00h  1
+  20  3.1278634e+05 1.49e-08 1.21e-03  -3.8 1.71e-01    -  1.00e+00 1.00e+00h  1
+  21  3.1278634e+05 7.45e-09 3.73e+00  -7.0 3.04e-01    -  1.00e+00 1.00e+00f  1
+  22  3.1278634e+05 2.24e-08 2.60e-05  -7.0 3.96e-07    -  1.00e+00 1.00e+00h  1
 
-Number of Iterations....: 358
+Number of Iterations....: 22
 
                                    (scaled)                 (unscaled)
-Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-Dual infeasibility......:   6.9888942673322408e-10    6.9888942673322408e-10
-Constraint violation....:   2.9103830456733704e-11    2.2351741790771484e-08
-Complementarity.........:   9.0909093616086122e-08    9.0909093616086122e-08
-Overall NLP error.......:   6.6368354273499748e-09    9.0909093616086122e-08
+Objective...............:   3.1278633834102680e+05    3.1278633834102680e+05
+Dual infeasibility......:   2.5986889846549508e-05    2.5986889846549508e-05
+Constraint violation....:   2.9103830456733704e-11    2.2351741790771481e-08
+Complementarity.........:   9.0926527280252943e-08    9.0926527280252943e-08
+Overall NLP error.......:   2.0798568670122999e-09    2.5986889846549508e-05
 
 
-Number of objective function evaluations             = 3103
-Number of objective gradient evaluations             = 359
-Number of equality constraint evaluations            = 3103
-Number of inequality constraint evaluations          = 0
-Number of equality constraint Jacobian evaluations   = 360
-Number of inequality constraint Jacobian evaluations = 0
-Number of Lagrangian Hessian evaluations             = 358
-Total CPU secs in IPOPT (w/o function evaluations)   =      0.316
-Total CPU secs in NLP function evaluations           =      0.073
+Number of objective function evaluations             = 26
+Number of objective gradient evaluations             = 23
+Number of equality constraint evaluations            = 26
+Number of inequality constraint evaluations          = 26
+Number of equality constraint Jacobian evaluations   = 23
+Number of inequality constraint Jacobian evaluations = 23
+Number of Lagrangian Hessian evaluations             = 22
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.016
+Total CPU secs in NLP function evaluations           =      0.002
 
 EXIT: Optimal Solution Found.
 </pre>
@@ -14926,12 +14872,12 @@ EXIT: Optimal Solution Found.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[38]:</div>
+<div class="prompt input_prompt">In&nbsp;[51]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># For testing purposes</span>
-<span class="c1"># from pyomo.environ import TerminationCondition</span>
-<span class="c1"># assert results.solver.termination_condition == TerminationCondition.optimal</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="k">import</span> <span class="n">TerminationCondition</span>
+<span class="k">assert</span> <span class="n">results</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span>
 </pre></div>
 
     </div>
@@ -14942,59 +14888,29 @@ EXIT: Optimal Solution Found.
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Analyze-the-results-of-the-square-problem">Analyze the results of the square problem<a class="anchor-link" href="#Analyze-the-results-of-the-square-problem">&#182;</a></h2><p>What is the total operating cost?</p>
+<h2 id="Optimization-Results">Optimization Results<a class="anchor-link" href="#Optimization-Results">&#182;</a></h2><p>Display the results and product specifications</p>
 
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[39]:</div>
+<div class="prompt input_prompt">In&nbsp;[52]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;operating cost = $&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">))</span>
-</pre></div>
 
-    </div>
-</div>
-</div>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Product flow rate and purity in F102&#39;</span><span class="p">)</span>
 
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>operating cost = $ 364461.48384096316
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>For this operating cost, what is the amount of benzene we are able to produce and what purity we are able to achieve?</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[40]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
 
 <span class="nb">print</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;benzene purity = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">purity</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Overhead loss in F101&#39;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
 </pre></div>
 
     </div>
@@ -15011,7 +14927,10 @@ EXIT: Optimal Solution Found.
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>
+<pre>operating cost = $ 312786.3383410268
+
+Product flow rate and purity in F102
+
 ====================================================================================
 Unit : fs.F102                                                             Time: 0.0
 ------------------------------------------------------------------------------------
@@ -15020,25 +14939,53 @@ Unit : fs.F102                                                             Time:
     Variables: 
 
     Key             : Value       : Fixed : Bounds
-          Heat Duty :      2263.9 : False : (None, None)
-    Pressure Change : -2.0000e+05 :  True : (None, None)
+          Heat Duty :      8377.0 : False : (None, None)
+    Pressure Change : -2.4500e+05 : False : (None, None)
 
 ------------------------------------------------------------------------------------
     Stream Table
                                                Inlet    Vapor Outlet  Liquid Outlet
-    flow_mol_phase_comp (&#39;Liq&#39;, &#39;benzene&#39;)     0.10734   1.0000e-08       0.10734  
-    flow_mol_phase_comp (&#39;Liq&#39;, &#39;toluene&#39;)     0.17017   1.0000e-08       0.17017  
-    flow_mol_phase_comp (&#39;Liq&#39;, &#39;hydrogen&#39;) 2.7751e-07   1.0000e-08    2.7751e-07  
-    flow_mol_phase_comp (&#39;Liq&#39;, &#39;methane&#39;)  2.7751e-07   1.0000e-08    2.7751e-07  
-    flow_mol_phase_comp (&#39;Vap&#39;, &#39;benzene&#39;)  1.0000e-08   4.8301e-08    1.0000e-08  
-    flow_mol_phase_comp (&#39;Vap&#39;, &#39;toluene&#39;)  1.0000e-08   3.1686e-08    1.0000e-08  
-    flow_mol_phase_comp (&#39;Vap&#39;, &#39;hydrogen&#39;) 1.0000e-08   1.0000e-08    1.0000e-08  
-    flow_mol_phase_comp (&#39;Vap&#39;, &#39;methane&#39;)  1.0000e-08   1.0000e-08    1.0000e-08  
-    temperature                                 325.00       375.00        375.00  
-    pressure                                3.5000e+05   1.5000e+05    1.5000e+05  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;benzene&#39;)     0.21743   1.0000e-08      0.067425  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;toluene&#39;)    0.070695   1.0000e-08      0.037507  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;hydrogen&#39;) 2.8812e-07   1.0000e-08    1.0493e-07  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;methane&#39;)  2.8812e-07   1.0000e-08    1.0493e-07  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;benzene&#39;)  1.0000e-08      0.15000    1.0000e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;toluene&#39;)  1.0000e-08     0.033189    1.0000e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;hydrogen&#39;) 1.0000e-08   1.9319e-07    1.0000e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;methane&#39;)  1.0000e-08   1.9319e-07    1.0000e-08  
+    temperature                                 301.88       362.93        362.93  
+    pressure                                3.5000e+05   1.0500e+05    1.0500e+05  
 ====================================================================================
 
-benzene purity =  0.6038615270937168
+benzene purity =  0.818827657811226
+
+Overhead loss in F101
+
+====================================================================================
+Unit : fs.F101                                                             Time: 0.0
+------------------------------------------------------------------------------------
+    Unit Performance
+
+    Variables: 
+
+    Key             : Value   : Fixed : Bounds
+          Heat Duty : -56354. : False : (None, None)
+    Pressure Change :  0.0000 :  True : (None, None)
+
+------------------------------------------------------------------------------------
+    Stream Table
+                                               Inlet    Vapor Outlet  Liquid Outlet
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;benzene&#39;)  4.3534e-08   1.0000e-08       0.21743  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;toluene&#39;)  7.5866e-07   1.0000e-08      0.070695  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;hydrogen&#39;) 1.0000e-08   1.0000e-08    2.8812e-07  
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;methane&#39;)  1.0000e-08   1.0000e-08    2.8812e-07  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;benzene&#39;)     0.27178     0.054356    1.0000e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;toluene&#39;)    0.076085    0.0053908    1.0000e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;hydrogen&#39;)    0.35887      0.35887    1.0000e-08  
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;methane&#39;)      1.2414       1.2414    1.0000e-08  
+    temperature                                 696.12       301.88        301.88  
+    pressure                                3.5000e+05   3.5000e+05    3.5000e+05  
+====================================================================================
 </pre>
 </div>
 </div>
@@ -15050,23 +14997,30 @@ benzene purity =  0.6038615270937168
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, let's look at how much benzene we are loosing with the light gases out of F101. IDAES has tools for creating stream tables based on the <code>Arcs</code> and/or <code>Ports</code> in a flowsheet. Let us create and print a simple stream table showing the stream leaving the reactor and the vapor stream from F101.</p>
-<div class="alert alert-block alert-info">
-<b>Inline Exercise:</b>
-How much benzene are we losing in the F101 vapor outlet stream?
-</div>
+<p>Display optimal values for the decision variables</p>
+
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[41]:</div>
+<div class="prompt input_prompt">In&nbsp;[53]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.core.util.tables</span> <span class="k">import</span> <span class="n">create_stream_table_dataframe</span><span class="p">,</span> <span class="n">stream_table_dataframe_to_string</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Optimal Values&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
 
-<span class="n">st</span> <span class="o">=</span> <span class="n">create_stream_table_dataframe</span><span class="p">({</span><span class="s2">&quot;Reactor&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s05</span><span class="p">,</span> <span class="s2">&quot;Light Gases&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s06</span><span class="p">})</span>
-<span class="n">st</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;H101 outlet temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;K&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;R101 outlet temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;K&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;F101 outlet temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;K&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;F102 outlet temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;K&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;F102 outlet pressure = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;Pa&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -15079,106 +15033,53 @@ How much benzene are we losing in the F101 vapor outlet stream?
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[41]:</div>
+    <div class="prompt"></div>
 
 
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Optimal Values
 
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
+H101 outlet temperature =  500.0 K
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
+R101 outlet temperature =  696.1161004638068 K
 
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Reactor</th>
-      <th>Light Gases</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>flow_mol_phase_comp ('Liq', 'benzene')</th>
-      <td>0.019349</td>
-      <td>1.000000e-08</td>
-    </tr>
-    <tr>
-      <th>flow_mol_phase_comp ('Liq', 'toluene')</th>
-      <td>0.126917</td>
-      <td>1.000000e-08</td>
-    </tr>
-    <tr>
-      <th>flow_mol_phase_comp ('Liq', 'hydrogen')</th>
-      <td>0.096911</td>
-      <td>1.000000e-08</td>
-    </tr>
-    <tr>
-      <th>flow_mol_phase_comp ('Liq', 'methane')</th>
-      <td>0.404752</td>
-      <td>1.000000e-08</td>
-    </tr>
-    <tr>
-      <th>flow_mol_phase_comp ('Vap', 'benzene')</th>
-      <td>0.161092</td>
-      <td>7.309994e-02</td>
-    </tr>
-    <tr>
-      <th>flow_mol_phase_comp ('Vap', 'toluene')</th>
-      <td>0.082946</td>
-      <td>3.969182e-02</td>
-    </tr>
-    <tr>
-      <th>flow_mol_phase_comp ('Vap', 'hydrogen')</th>
-      <td>0.793635</td>
-      <td>8.905453e-01</td>
-    </tr>
-    <tr>
-      <th>flow_mol_phase_comp ('Vap', 'methane')</th>
-      <td>0.305000</td>
-      <td>7.097520e-01</td>
-    </tr>
-    <tr>
-      <th>temperature</th>
-      <td>767.666119</td>
-      <td>3.250000e+02</td>
-    </tr>
-    <tr>
-      <th>pressure</th>
-      <td>349999.999191</td>
-      <td>3.500000e+05</td>
-    </tr>
-  </tbody>
-</table>
+F101 outlet temperature =  301.87847605692815 K
+
+F102 outlet temperature =  362.93476830548985 K
+F102 outlet pressure =  105000.0 Pa
+</pre>
 </div>
-</div>
-
 </div>
 
 </div>
 </div>
 
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<div class="alert alert-block alert-info">
-<b>Inline Exercise:</b>
-You can querry additional variables here if you like. 
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
 
-Use Shift+Enter to run the cell once you have typed in your code. 
+    </div>
 </div>
 </div>
+
 </div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
 </div>
     </div>
   </div>
