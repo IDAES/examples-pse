@@ -252,10 +252,7 @@ def main():
     elif args.vb > 0:
         _log.setLevel(logging.INFO)
     if args.kernel is None:
-        kernel = os.environ.get("CONDA_DEFAULT_ENV", None)
-        if kernel is None:
-            _log.error("No -k/--kernel provided and CONDA_DEFAULT_ENV is empty")
-            return 1
+        kernel = os.environ.get("CONDA_DEFAULT_ENV", "python")
     else:
         kernel = args.kernel
 
