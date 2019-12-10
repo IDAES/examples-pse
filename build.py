@@ -173,6 +173,9 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors):
 
 
 def build_notebooks(config, **kwargs):
+    """Build RST and HTML versions of Jupyter Notebooks, after
+    executing them to ensure the output is populated.
+    """
     nb = config["notebook"]
     # pull options out of the config file
     kwargs.update({"continue": nb.get("continue", False)})
@@ -204,6 +207,8 @@ def build_notebooks(config, **kwargs):
 
 
 def build_sphinx(config):
+    """Run 'sphinx-build' command.
+    """
     spx = config["sphinx"]
     args = spx["args"].split()
     errfile = spx.get("error_file", "sphinx-errors.txt")
@@ -219,6 +224,8 @@ def build_sphinx(config):
 
 
 def extract_sphinx_error(errfile: str):
+    """Extract error message from a Sphinx output file.
+    """
     collect_errors, lines = None, []
     with open(errfile) as f:
         for line in f:
