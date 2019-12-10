@@ -1,10 +1,21 @@
 #!/usr/bin/env python
+"""
+Build docs from Python.
+
+This encapsulates generating Sphinx-ready versions of the Jupyter Notebooks and
+calling 'sphinx-build' to build the HTML docs from source. No changes in the
+Sphinx default build procedure should be required, which means this should work
+on Windows, Mac OSX, and Linux equally well.
+"""
 import argparse
 import logging
+import os
 import pathlib
-import re
 import shutil
+import subprocess
+import re
 import sys
+import yaml
 
 #
 import nbformat
@@ -28,6 +39,13 @@ class NotebookExecError(NotebookError):
 
 class NotebookFormatError(NotebookError):
     pass
+
+
+class SphinxError(Exception):
+    def __init__(self, cmdline, errmsg, details):
+        msg = f"Sphinx error while running '{cmdline}': {errmsg}. " \
+              f"Details: {details}"
+        super().__init__(msg)
 
 
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
@@ -154,70 +172,115 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors):
     _log.debug(f"leaving {srcdir}")
 
 
+def build_notebooks(config, **kwargs):
+    """Build RST and HTML versions of Jupyter Notebooks, after
+    executing them to ensure the output is populated.
+    """
+    nb = config["notebook"]
+    # pull options out of the config file
+    kwargs.update({"continue": nb.get("continue", False)})
+    source_base = nb.get("source_base", "src")
+    output_base = nb.get("output_base", "docs")
+    htmldir = pathlib.Path(output_base) / nb.get("html_dir", "build")
+    # build all input/output directory pairs
+    num_dirs = len(nb["directories"])
+    for i, item in enumerate(nb["directories"]):
+        srcdir = pathlib.Path(source_base) / item["source"]
+        _log.debug(f"Converting notebooks in directory '{srcdir}'")
+        outdir = pathlib.Path(output_base) / item["output"]
+        if "match" in item:
+            kwargs["pat"] = re.compile(item["match"])
+        else:
+            kwargs["pat"] = None
+        # build HTML and RST versions of the notebooks
+        for ofmt in "html", "rst":
+            kwargs["format"] = ofmt
+            try:
+                convert(srcdir=srcdir, outdir=outdir, htmldir=htmldir, options=kwargs)
+            except NotebookError as err:
+                _log.error(
+                    f"Failed converting notebooks in directory "
+                    f"{i + 1} out of {num_dirs}. Abort."
+                )
+                raise
+    _log.info(f"Converted {num_dirs} notebook directories")
+
+
+def build_sphinx(config):
+    """Run 'sphinx-build' command.
+    """
+    spx = config["sphinx"]
+    args = spx["args"].split()
+    errfile = spx.get("error_file", "sphinx-errors.txt")
+    cmdargs = ["sphinx-build", "-w", errfile] + args
+    cmdline = " ".join(cmdargs)
+    _log.info(f"Running Sphinx command: {cmdline}")
+    proc = subprocess.Popen(cmdargs, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    proc.wait()
+    status = proc.returncode
+    if status != 0:
+        log_error = extract_sphinx_error(errfile)
+        raise SphinxError(cmdline, f"return code = {status}", log_error)
+
+
+def extract_sphinx_error(errfile: str):
+    """Extract error message from a Sphinx output file.
+    """
+    collect_errors, lines = None, []
+    with open(errfile) as f:
+        for line in f:
+            s = line.strip()
+            if collect_errors:
+                lines.append(s)
+            elif s.startswith("Sphinx error:"):
+                collect_errors = True
+    return "\n".join(lines)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("source_dir")
-    ap.add_argument("output_dir")
-    ap.add_argument("--html-dir")
-    ap.add_argument("--continue", dest="cont", action="store_true", default=False)
-    ap.add_argument("--format", dest="fmt", choices=["html", "rst"], default="html")
-    ap.add_argument("--kernel", dest="kernel", default="")
-    ap.add_argument("--match", dest="match", default=None)
-    ap.add_argument("--test", dest="test", action="store_true", default=False)
+    ap.add_argument("-N", "--no-notebooks", action="store_true")
+    ap.add_argument("-S", "--no-sphinx", action="store_true")
+    ap.add_argument("-c", "--config", default="build.yml")
+    ap.add_argument("-k", "--kernel", default=None, dest="kernel")
     ap.add_argument("-v", "--verbose", action="count", dest="vb", default=0)
     args = ap.parse_args()
 
+    # further arg processing
     if args.vb > 1:
         _log.setLevel(logging.DEBUG)
     elif args.vb > 0:
         _log.setLevel(logging.INFO)
-
-    srcdir = pathlib.Path(args.source_dir)
-    if not srcdir.exists():
-        _log.fatal(f"source directory does not exist: {srcdir}")
-        return -1
-
-    outdir = pathlib.Path(args.output_dir)
-    if not outdir.exists():
-        _log.warning(f"output directory does not exist: {outdir}")
-
-    if args.html_dir is None:
-        htdir = pathlib.Path("build") / outdir
+    if args.kernel is None:
+        kernel = os.environ.get("CONDA_DEFAULT_ENV", "python")
     else:
-        htdir = pathlib.Path(args.html_dir)
-    if not htdir.exists():
-        _log.warning(f"HTML (build) directory does not exist: {htdir}")
+        kernel = args.kernel
 
-    options = {
-        "continue": args.cont,
-        "kernel": args.kernel,
-        "format": args.fmt,
-        "pat": re.compile(args.match) if args.match else None,
-    }
-    test_mode = args.test
-
-    status_code, te = 0, None
     try:
-        te = convert(
-            srcdir=srcdir, outdir=outdir, htmldir=htdir, options=options, test=test_mode
-        )
-    except ValueError as err:
-        _log.fatal(f"error converting notebooks: {err}")
-        status_code = 1
-    except NotebookError as err:
-        _log.fatal(f"error running notebook: {err}")
-        status_code = 2
+        f = open(args.config)
+        config = yaml.load(f, Loader=yaml.SafeLoader)
+    except IOError as err:
+        _log.error(f"Configuration file is required: {err}")
+        return 1
+    except yaml.error.YAMLError as err:
+        _log.error(f"Cannot parse configuration file, expected YAML: {err}")
+        return 1
 
-    if test_mode:
-        if te:
-            errlist = "\n".join([f"[ERROR {i + 1}] {s}" for i, s in enumerate(te)])
-            _log.error(f"{len(te):d} test error(s):\n{errlist}")
-            status_code = len(te)
-        else:
-            _log.info(f"all tests passed")
-            status_code = 0
+    if not args.no_notebooks:
+        try:
+            build_notebooks(config, kernel=kernel)
+        except NotebookError as err:
+            _log.fatal(f"Could not build notebooks: {err}")
+            return -1
 
-    return status_code
+    if not args.no_sphinx:
+        try:
+            build_sphinx(config)
+        except SphinxError as err:
+            _log.fatal(f"Could not build Sphinx docs: {err}")
+            return -1
+
+    return 0
 
 
 if __name__ == "__main__":

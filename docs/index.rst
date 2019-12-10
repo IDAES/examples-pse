@@ -1,51 +1,90 @@
-.. index::
-    pair: idaes;Home
+Example gallery
+===============
 
-Institute for the Design of Advanced Energy Systems (IDAES) Examples
-====================================================================
+.. only:: latex or latexpdf or text
 
-This is the documentation for the *examples*, including workshop tutorials,
-for the IDAES Process Systems Engineering (IDAES-PSE) toolkit.
-This is complentary to the main documentation for the
-`IDAES-PSE project <https://idaes-pse.readthedocs.io/>`_.
+    .. toctree::
+        :maxdepth: 2
 
-Collaborating institutions
---------------------------
-The IDAES team is comprised of collaborators from the following institutions:
+        tutorials/index
+        surrogate/index
+        properties/index
+        license
+        copyright
 
-* National Energy Technology Laboratory (Lead)
-* Sandia National Laboratory
-* Lawrence Berkeley National Laboratory
-* Carnegie-Mellon University (subcontract to LBNL)
-* West Virginia University (subcontract to LBNL)
+.. only:: html
 
-Contact, contributions and more information
--------------------------------------------
-General, background and overview information is available at the `IDAES main
-website <https://www.idaes.org>`_.  Framework development happens at our `GitHub
-repo <https://github.com/IDAES/idaes-pse>`_ where you can `report issues/bugs
-<https://github.com/IDAES/idaes-pse/issues>`_ or `make contributions
-<https://github.com/IDAES/idaes-pse/pulls>`_.  For further enquiries, send an
-email to: <idaes-support@idaes.org>
-
-Contents
---------
-
-.. toctree::
-    :maxdepth: 2
+    Below are thumbnails with links to Jupyter Notebook examples
+    for the IDAES Process Systems Engineering (IDAES-PSE) toolkit.
+    This is complementary to the main documentation for the
+    `IDAES-PSE project <https://idaes-pse.readthedocs.io/>`_.
 
 
-    Tutorials <tutorials/index>
-    Surrogate modeling <surrogate/index>
-    Property packages <properties/index>
-    license
-    copyright
+    Tutorials
+    ---------
 
-Indices and tables
-==================
+    content
+    ^^^^^^^
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    Module 0: Welcome
+    +++++++++++++++++
 
-.. |CO2| replace:: CO\ :sub:`2`
+        .. image:: /_static/thumbs/tut_m0.png
+            :target: tutorials/Module_0_Welcome/index.html
+
+    Tutorial introduction and welcome.
+
+    Module 1: Flash unit
+    ++++++++++++++++++++
+
+        .. image:: /_static/thumbs/tut_m1.png
+            :target: tutorials/Module_1_Flash_Unit/index.html
+
+    A flowsheet with a flash
+    tank that performs separation of Benzene and Toluene.
+
+    Module 2: Hydrodealkylation
+    +++++++++++++++++++++++++++
+
+        .. image:: /_static/thumbs/tut_m2.png
+            :target: tutorials/Module_2_Flowsheet/index.html
+
+    Toluene reacted with Hydrogen gas, based on the 1967 AIChE Student Contest problem.
+
+
+    Module 3: Custom Unit Model
+    +++++++++++++++++++++++++++
+
+        .. image:: /_static/thumbs/tut_m3.png
+            :target: tutorials/Module_3_Custom_Unit_Model/index.html
+
+        Create a custom "unit model" for a heater.
+
+    Surrogate modeling
+    ------------------
+
+    content
+    ^^^^^^^
+
+    ALAMO Six-hump Camel
+    ++++++++++++++++++++
+
+        .. image:: /_static/thumbs/ala_six.png
+            :target: surrogate/alamo_python/index.html
+
+    ALAMO surrogate model of the "six hump camel" function.
+
+    Property packages
+    -----------------
+
+    content
+    ^^^^^^^
+
+    DMF Properties Flowsheet
+    ++++++++++++++++++++++++
+
+        .. image:: /_static/thumbs/prp_m2dmf.png
+            :target: properties/Workshop_DMF/index.html
+
+        Tutorial module 2 (Hydroealkalyation) using the DMF for material properties.
+

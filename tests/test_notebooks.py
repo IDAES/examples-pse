@@ -1,51 +1,29 @@
 """
 Test notebooks
 """
-import pytest
 import os
 from pathlib import Path
-from subprocess import Popen, PIPE
+import subprocess
 
 # assume parent of this test's directory is top
 TOP_DIR = Path(__file__).parent.parent
 
 
-class Runner:
-    def __init__(self, command=None, args=None):
-        self.command = [command] + args
-        self.stderr = None
-
-    def run(self, srcdir, match=None):
-        command = self.command.copy()
-        if match:
-            command.extend(["--match", match])
-        top_dir = TOP_DIR / "src" / Path(srcdir)
-        command.append(top_dir)
-        command.append("/")
-
-        proc = Popen(command)
-        proc.wait()
-        return proc.returncode
+def test_build_notebooks():
+    ensure_build_directory()
+    cmd = str(TOP_DIR / "build.py")
+    cmdargs = [cmd, "--no-sphinx", "--config",
+               str(TOP_DIR / "build.yml"), "-vv"]
+    proc = subprocess.run(cmdargs)
+    assert proc.returncode == 0
 
 
-@pytest.fixture()
-def runner():
-    kernel = os.environ.get("CONDA_DEFAULT_ENV", "python")
-    cmd_path = Path(__file__)
-    rnr = Runner(
-        command=TOP_DIR / "docs" / "build_notebooks.py",
-        args=["--test", "-v", f"--kernel={kernel}"],
-    )
-    return rnr
-
-
-def test_workshops(runner):
-    assert 0 == runner.run("workshops", match="Solution")
-
-
-def test_surrogate(runner):
-    assert 0 == runner.run("surrogate")
-
-
-def test_dmf(runner):
-    assert 0 == runner.run(Path("properties") / "Workshop_Module_2_DMF")
+def ensure_build_directory():
+    """In case docs aren't built, ensure the docs
+    'build' directory exists; this is needed because
+    the notebook creation tries to copy images in there.
+    """
+    build_dir = TOP_DIR / "docs" / "build"
+    if not build_dir.exists():
+        os.mkdir(str(build_dir))
+        print("Created empty docs build dir at: {build_dir}")
