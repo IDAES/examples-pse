@@ -181,7 +181,6 @@ def build_notebooks(config, **kwargs):
     kwargs.update({"continue": nb.get("continue", False)})
     source_base = nb.get("source_base", "src")
     output_base = nb.get("output_base", "docs")
-    htmldir = pathlib.Path(output_base) / nb.get("html_dir", "build")
     # build all input/output directory pairs
     num_dirs = len(nb["directories"])
     for i, item in enumerate(nb["directories"]):
@@ -194,9 +193,10 @@ def build_notebooks(config, **kwargs):
             kwargs["pat"] = None
         # build HTML and RST versions of the notebooks
         for ofmt in "html", "rst":
+            fmtdir = pathlib.Path(output_base) / nb.get(f"{ofmt}_dir", "build")
             kwargs["format"] = ofmt
             try:
-                convert(srcdir=srcdir, outdir=outdir, htmldir=htmldir, options=kwargs)
+                convert(srcdir=srcdir, outdir=outdir, htmldir=fmtdir, options=kwargs)
             except NotebookError as err:
                 _log.error(
                     f"Failed converting notebooks in directory "
@@ -206,11 +206,16 @@ def build_notebooks(config, **kwargs):
     _log.info(f"Converted {num_dirs} notebook directories")
 
 
+
 def build_sphinx(config):
     """Run 'sphinx-build' command.
     """
     spx = config["sphinx"]
     args = spx["args"].split()
+    html_dir = args[-1]
+    if not os.path.exists(html_dir):
+        _log.warning("Target HTML directory {html_dir} does not exist: creating")
+        os.makedirs(html_dir)
     errfile = spx.get("error_file", "sphinx-errors.txt")
     cmdargs = ["sphinx-build", "-w", errfile] + args
     cmdline = " ".join(cmdargs)

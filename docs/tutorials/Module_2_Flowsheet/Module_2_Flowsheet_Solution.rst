@@ -1,4 +1,3 @@
-
 Learning outcomes
 -----------------
 
@@ -832,111 +831,111 @@ can then take over and solve this flowsheet for us.
 
 .. parsed-literal::
 
-    2019-12-10 09:04:34 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 1 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 2 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.F102 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:35 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-    2019-12-10 09:04:36 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-    2019-12-10 09:04:36 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-    2019-12-10 09:04:36 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:36 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:37 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
-    2019-12-10 09:04:38 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+    2019-12-10 13:50:28 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 1 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 2 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.F102 Initialisation Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+    2019-12-10 13:50:28 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+    2019-12-10 13:50:28 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+    2019-12-10 13:50:29 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:30 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+    2019-12-10 13:50:30 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+    2019-12-10 13:50:31 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.H101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.H101 Initialisation Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.R101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.R101 Initialisation Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.F101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.F101 Initialisation Complete.
+    2019-12-10 13:50:31 - INFO - idaes.unit_models.separator - fs.S101 Initialisation Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 1 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.C101 Initialisation Step 2 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.C101 Initialisation Complete.
+    2019-12-10 13:50:31 - INFO - idaes.unit_models.mixer - fs.M101 Initialisation Complete.
     WARNING: Wegstein failed to converge in 5 iterations
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 1 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 2 Complete.
-    2019-12-10 09:04:38 - INFO - idaes.core.unit_model - fs.F102 Initialisation Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 1 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.F102 Initialisation Step 2 Complete.
+    2019-12-10 13:50:31 - INFO - idaes.core.unit_model - fs.F102 Initialisation Complete.
 
 
 .. raw:: html
@@ -1310,8 +1309,8 @@ solve this problem.
     Number of equality constraint Jacobian evaluations   = 23
     Number of inequality constraint Jacobian evaluations = 23
     Number of Lagrangian Hessian evaluations             = 22
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.019
-    Total CPU secs in NLP function evaluations           =      0.003
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.018
+    Total CPU secs in NLP function evaluations           =      0.002
     
     EXIT: Optimal Solution Found.
 
