@@ -155,7 +155,7 @@ Create a Heater
     Number of equality constraint Jacobian evaluations   = 3
     Number of inequality constraint Jacobian evaluations = 0
     Number of Lagrangian Hessian evaluations             = 2
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
     Total CPU secs in NLP function evaluations           =      0.000
     
     EXIT: Optimal Solution Found.

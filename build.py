@@ -43,19 +43,20 @@ class NotebookFormatError(NotebookError):
 
 class SphinxError(Exception):
     def __init__(self, cmdline, errmsg, details):
-        msg = f"Sphinx error while running '{cmdline}': {errmsg}. " \
-              f"Details: {details}"
+        msg = (
+            f"Sphinx error while running '{cmdline}': {errmsg}. " f"Details: {details}"
+        )
         super().__init__(msg)
 
 
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
+NOTEBOOK_SUFFIX = ".ipynb"
 
 
 def convert(
     srcdir: pathlib.Path = None,
     outdir: pathlib.Path = None,
     htmldir: pathlib.Path = None,
-    test: bool = False,
     options: dict = None,
 ):
     """Convert notebooks under `srcdir`, placing output in `outdir`.
@@ -64,7 +65,6 @@ def convert(
         srcdir: Input directory
         outdir: Output directory
         htmldir: Where HTML files will end up (Sphinx build directory)
-        test: Run in 'test' mode
         options: Options controlling the conversion:
             * "continue": if true, continue if there is an error executing the
               notebook; if false, raise NotebookError
@@ -89,20 +89,13 @@ def convert(
         raise ValueError(f"Invalid output format: {options['fmt']}")
     wrt = FilesWriter()
 
-    test_errors = [] if test else None
-    _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors)
-
-    return test_errors
+    _convert(srcdir, outdir, htmldir, wrt, exp, ep, options)
 
 
-def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors):
+def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
     """Recurse through directory, converting notebooks.
     """
     _log.debug(f"looking for notebooks in {srcdir}")
-
-    if test_errors is None:  # conversion mode (not test-only)
-        wrt.build_directory = str(outdir)
-    _log.debug(f"convert: build_directory = '{wrt.build_directory}'")
 
     for entry in srcdir.iterdir():
         filename = entry.parts[-1]
@@ -112,22 +105,10 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors):
         if entry.is_dir():
             new_outdir = outdir / entry.parts[-1]
             new_htmldir = htmldir / entry.parts[-1]
-            _convert(entry, new_outdir, new_htmldir, wrt, exp, ep, options, test_errors)
-        elif entry.suffix == ".ipynb":
+            _convert(entry, new_outdir, new_htmldir, wrt, exp, ep, options)
+        elif entry.suffix == NOTEBOOK_SUFFIX:
             if options["pat"] and not options["pat"].search(filename):
                 _log.debug(f"does not match {options['pat']}, skip {entry}")
-                continue
-
-            if test_errors is not None:  # testing mode
-                _log.info(f"testing '{entry}'")
-                try:
-                    nb = nbformat.read(str(entry), as_version=4)
-                    try:
-                        ep.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
-                    except (CellExecutionError, NameError) as err:
-                        test_errors.append(f"'{entry}' execution error: {err}")
-                except (nbformat.reader.NotJSONError, AttributeError) as err:
-                    test_errors.append(f"'{entry}' parse error: {err}")
                 continue
 
             _log.info(f"converting '{entry}' to {options['format']}")
@@ -171,11 +152,23 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors):
                 if isinstance(exp, RSTExporter):
                     body = replace_image_refs(body)
                 wrt.write(body, resources, notebook_name=entry.stem)
-        elif test_errors is None and entry.suffix in IMAGE_SUFFIXES:
-            _log.debug(f"copying image '{entry}' to html output dir '{htmldir}'")
-            shutil.copy(entry, htmldir)
+                copy_to_html_dir(entry, htmldir)
+        elif entry.suffix in IMAGE_SUFFIXES:
+            copy_to_html_dir(entry, htmldir)
 
     _log.debug(f"leaving {srcdir}")
+
+
+def copy_to_html_dir(entry: str, htmldir: pathlib.Path):
+    """Copy file in 'entry' over to HTML dir.
+
+    Converted notebooks expect their image fles in the same directory as the .html
+    file, but Sphinx will copy them all into some _images/ sub-directory instead.
+    """
+    target_file = htmldir / entry
+    if not target_file.exists():
+        _log.debug(f"copying file '{entry}' to html output dir '{htmldir}'")
+        shutil.copy(entry, htmldir)
 
 
 def replace_image_refs(body):
@@ -194,14 +187,14 @@ def replace_image_refs(body):
             raise ValueError(f"Couldn't find image matching ref at {pos}")
         if imgn > 0:
             # support up to 35 different images
-            c = ' 123456789abcdefghijklmnopqrstuvwxyz'[imgn]
+            c = " 123456789abcdefghijklmnopqrstuvwxyz"[imgn]
             # replace '0' with another thing in ref
             chars[pos + 6] = c
             # replace '0' with same other thing in image
             chars[pos2 + 9] = c
         pos = pos2 + 10
         imgn += 1
-    return ''.join(chars)
+    return "".join(chars)
 
 
 def build_notebooks(config, **kwargs):
@@ -225,10 +218,14 @@ def build_notebooks(config, **kwargs):
             kwargs["pat"] = None
         # build HTML and RST versions of the notebooks
         for ofmt in "html", "rst":
-            builddir = pathlib.Path(output_base) / nb.get("build_dir", "build")
+            htmldir = (
+                pathlib.Path(output_base)
+                / nb.get("html_dir", "build")
+                / item["output"]
+            )
             kwargs["format"] = ofmt
             try:
-                convert(srcdir=srcdir, outdir=outdir, htmldir=builddir, options=kwargs)
+                convert(srcdir=srcdir, outdir=outdir, options=kwargs, htmldir=htmldir)
             except NotebookError as err:
                 _log.error(
                     f"Failed converting notebooks in directory "
@@ -251,7 +248,7 @@ def build_sphinx(config):
     cmdargs = ["sphinx-build", "-w", errfile] + args
     cmdline = " ".join(cmdargs)
     _log.info(f"Running Sphinx command: {cmdline}")
-    proc = subprocess.Popen(cmdargs, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    proc = subprocess.Popen(cmdargs)
     proc.wait()
     status = proc.returncode
     if status != 0:
