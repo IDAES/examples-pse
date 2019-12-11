@@ -225,8 +225,6 @@ def build_notebooks(config, **kwargs):
             kwargs["pat"] = None
         # build HTML and RST versions of the notebooks
         for ofmt in "html", "rst":
-            if ofmt == "html":
-                continue
             builddir = pathlib.Path(output_base) / nb.get("build_dir", "build")
             kwargs["format"] = ofmt
             try:
