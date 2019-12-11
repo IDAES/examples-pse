@@ -2,7 +2,8 @@ notebook:
     continue: true
     source_base: src
     output_base: docs
-    html_dir: build
+    html_dir: _build/html
+    rst_dir: _build/rst
     directories:
         - source: workshops
           output: tutorials
@@ -13,5 +14,5 @@ notebook:
           output: properties/Workshop_DMF
           match: Solution
 sphinx:
-    args: "-b html -T docs docs/build"
+    args: "-b html -T docs docs/_build/html"
     error_file: sphinx-errors.txt
