@@ -102,6 +102,7 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors):
 
     if test_errors is None:  # conversion mode (not test-only)
         wrt.build_directory = str(outdir)
+    _log.debug(f"convert: build_directory = '{wrt.build_directory}'")
 
     for entry in srcdir.iterdir():
         filename = entry.parts[-1]
@@ -164,12 +165,43 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options, test_errors):
                 # export
                 _log.debug(f"exporting '{entry}'")
                 (body, resources) = exp.from_notebook_node(nb)
+                if not os.path.exists(htmldir):
+                    _log.info(f"Creating output directory {htmldir} for notebook")
+                    os.makedirs(htmldir)
+                if isinstance(exp, RSTExporter):
+                    body = replace_image_refs(body)
                 wrt.write(body, resources, notebook_name=entry.stem)
         elif test_errors is None and entry.suffix in IMAGE_SUFFIXES:
             _log.debug(f"copying image '{entry}' to html output dir '{htmldir}'")
             shutil.copy(entry, htmldir)
 
     _log.debug(f"leaving {srcdir}")
+
+
+def replace_image_refs(body):
+    """Replace |image0| references with successive numbers, instead
+        having them all be "image0". The order is "|image0|" then
+        ".. |image0|".
+    """
+    chars = list(body)
+    pos, imgn = 0, 0
+    while True:
+        pos = body.find("|image0|\n", pos)
+        if pos == -1:
+            break
+        pos2 = body.find(".. |image0|", pos + 8)
+        if pos2 == -1:
+            raise ValueError(f"Couldn't find image matching ref at {pos}")
+        if imgn > 0:
+            # support up to 35 different images
+            c = ' 123456789abcdefghijklmnopqrstuvwxyz'[imgn]
+            # replace '0' with another thing in ref
+            chars[pos + 6] = c
+            # replace '0' with same other thing in image
+            chars[pos2 + 9] = c
+        pos = pos2 + 10
+        imgn += 1
+    return ''.join(chars)
 
 
 def build_notebooks(config, **kwargs):
@@ -193,10 +225,12 @@ def build_notebooks(config, **kwargs):
             kwargs["pat"] = None
         # build HTML and RST versions of the notebooks
         for ofmt in "html", "rst":
-            fmtdir = pathlib.Path(output_base) / nb.get(f"{ofmt}_dir", "build")
+            if ofmt == "html":
+                continue
+            builddir = pathlib.Path(output_base) / nb.get("build_dir", "build")
             kwargs["format"] = ofmt
             try:
-                convert(srcdir=srcdir, outdir=outdir, htmldir=fmtdir, options=kwargs)
+                convert(srcdir=srcdir, outdir=outdir, htmldir=builddir, options=kwargs)
             except NotebookError as err:
                 _log.error(
                     f"Failed converting notebooks in directory "
@@ -204,7 +238,6 @@ def build_notebooks(config, **kwargs):
                 )
                 raise
     _log.info(f"Converted {num_dirs} notebook directories")
-
 
 
 def build_sphinx(config):
