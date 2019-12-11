@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'IDAES'
+project = 'IDAES Examples'
 copyright = 'DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020'
 author = 'Dan Gunter'
 
@@ -48,7 +48,7 @@ master_doc = "index"  # default for older versions is "content"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-# html_theme = 'alabaster'
+html_theme = 'alabaster'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
