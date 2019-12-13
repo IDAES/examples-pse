@@ -14,6 +14,7 @@ import pathlib
 import shutil
 import subprocess
 import re
+from string import Template
 import sys
 import yaml
 
@@ -51,6 +52,8 @@ class SphinxError(Exception):
 
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
 NOTEBOOK_SUFFIX = ".ipynb"
+
+g_doc_template = None
 
 
 def convert(
@@ -151,18 +154,40 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
                     os.makedirs(htmldir)
                 if isinstance(exp, RSTExporter):
                     body = replace_image_refs(body)
+                wrt.build_directory = str(outdir)  # write converted NB to output dir
                 wrt.write(body, resources, notebook_name=entry.stem)
                 copy_to_html_dir(entry, htmldir)
+
+                nb_file = os.path.splitext(entry.name)[0]  # name minus extension
+                generate_doc_page(nb_file, outdir)
+
         elif entry.suffix in IMAGE_SUFFIXES:
             copy_to_html_dir(entry, htmldir)
 
     _log.debug(f"leaving {srcdir}")
 
 
+def generate_doc_page(nb_file: str, output_dir: pathlib.Path):
+    """Generate a Sphinx documentation page for the Module.
+    """
+    # interpret some characters in filename differently for title
+    title = nb_file.replace("__", ": ")
+    title = title.replace("_", " ")
+    # replacements in template
+    doc_kw = {"title": title, "notebook_name": nb_file}
+    # fill in the template
+    doc = g_doc_template.substitute(**doc_kw)
+    # write out the new doc
+    doc_rst = output_dir / (nb_file + "_doc.rst")
+    with doc_rst.open("w") as f:
+        _log.debug(f"Writing document to: {doc_rst}")
+        f.write(doc)
+
+
 def copy_to_html_dir(entry: str, htmldir: pathlib.Path):
     """Copy file in 'entry' over to HTML dir.
 
-    Converted notebooks expect their image fles in the same directory as the .html
+    Converted notebooks expect their image files in the same directory as the .html
     file, but Sphinx will copy them all into some _images/ sub-directory instead.
     """
     target_file = htmldir / entry
@@ -201,11 +226,20 @@ def build_notebooks(config, **kwargs):
     """Build RST and HTML versions of Jupyter Notebooks, after
     executing them to ensure the output is populated.
     """
+    global g_doc_template
     nb = config["notebook"]
     # pull options out of the config file
     kwargs.update({"continue": nb.get("continue", False)})
     source_base = nb.get("source_base", "src")
     output_base = nb.get("output_base", "docs")
+    # read sphinx notebook page template into a global var
+    if "template" not in nb:
+        raise NotebookError("In configuration, `notebook.template` is missing")
+    try:
+        f = open(nb["template"], "r")
+    except IOError as err:
+        raise NotebookError(f"Cannot open notebook Sphinx template: {err}")
+    g_doc_template = Template(f.read())
     # build all input/output directory pairs
     num_dirs = len(nb["directories"])
     for i, item in enumerate(nb["directories"]):
@@ -219,9 +253,7 @@ def build_notebooks(config, **kwargs):
         # build HTML and RST versions of the notebooks
         for ofmt in "html", "rst":
             htmldir = (
-                pathlib.Path(output_base)
-                / nb.get("html_dir", "build")
-                / item["output"]
+                pathlib.Path(output_base) / nb.get("html_dir", "build") / item["output"]
             )
             kwargs["format"] = ofmt
             try:
