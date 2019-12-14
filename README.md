@@ -41,12 +41,35 @@ to create a ": " in the title of the page.
 2. Add the notebook's directory to `build.yml`
 
 This configuration tells `build.py` where to find notebooks and
-how to build the Sphinx documentation. For a Jupyter Notebook,
-each notebook needs to be somewhere under one of the directories
-that result from combining the `notebook.source_base` prefix with
-one of the `directories.source` values. Note that the `directories.match`
-value, if present, will restrict notebooks to ones with that string
-included in their filename.
+how to build the Sphinx documentation. The top-level key is `notebooks`,
+under which go general settings, then each directory tree containing
+Jupyter Notebooks has an entry in the list under `notebooks.directories`. 
+The path to the directory tree is constructed by combining the
+ `notebook.source_base` prefix with the `notebook.directories.source` 
+ value. Note that the 
+`notebook.directories.match` value, if present, will restrict notebooks
+to ones with that value included in their filename.
+
+For example:
+
+    # keep going even if some notebooks fail to execute
+    continue: true
+    # base of all notebooks
+    source_base: src
+    # base of all output
+    output_base: docs
+    # base for sphinx generated HTML pages
+    html_dir: _build/html
+    # template for creating Sphinx wrapper pages (see 3)
+    template: docs/jupyter_notebook_sphinx.tpl
+    # sub-directories for notebooks
+    directories:
+          # find notebooks in src/workshops/*
+        - source: workshops
+          # put generated docs in docs/tutorials/*
+          output: tutorials
+          # only process notebooks with "Solution" in filename
+          match: Solution
 
 3. Add the notebook's wrapper to the index page
 
@@ -56,10 +79,12 @@ The rules for making the new filename is very simple: the extension
 `.ipynb` will be replaced by `_doc.rst`. For example, if your notebook was in
 `src/foo/Number_1_Foo_Solution.ipynb` then the output file will be
 `Number_1_Foo_Solution_doc.rst`. The output directory will be the
-`output` directory given in the configuration file (`build.yml`,
-see Step 2 for details).
+`notebok.output_base` directory given in the configuration file (`build.yml`,
+see Step 2 for details). Images and generated HTML will be copied to
+the Sphinx destination HTML directory, given by `notebook.html_dir` . 
+
 
 The index page is usually under
-`(notebook.output_base)/(notebook.directories.<item>.output)/index.rst`
+`<notebook.output_base>/<notebook.directories.*.output>/index.rst`
  . It needs to have an entry in the table of contents that names the 
 generated wrapper file, e.g., "Number_1_Foo_Solution_doc".

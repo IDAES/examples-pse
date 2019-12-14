@@ -15,68 +15,74 @@ Jupyter Notebook Gallery
     Tutorials
     ---------
 
-    content
-    ^^^^^^^
-
-    Module 0: Welcome
-    +++++++++++++++++
+    Module 0: Welcome (Short)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
 
         .. image:: /_static/thumbs/tut_m0.png
-            :target: tutorials/Module_0_Welcome/index.html
+            :target: tutorials/Module_0_Welcome/Module_0_Welcome_Short_Solution_doc.html
+            :width: 300px
 
-    Tutorial introduction and welcome.
+    Tutorial introduction and welcome, short solution version.
+
+    Module 0: Welcome (Full)
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+        .. image:: /_static/thumbs/tut_m0.png
+            :target: tutorials/Module_0_Welcome/Module_0_Welcome_Solution_doc.html
+            :width: 300px
+
+    Tutorial introduction and welcome, full solution version.
 
     Module 1: Flash unit
-    ++++++++++++++++++++
+    ^^^^^^^^^^^^^^^^^^^^
 
         .. image:: /_static/thumbs/tut_m1.png
-            :target: tutorials/Module_1_Flash_Unit/index.html
+            :target: tutorials/Module_1__Flash_Unit/Module_1_Flash_Unit_Solution_doc.html
+            :height: 200px
 
     A flowsheet with a flash
     tank that performs separation of Benzene and Toluene.
 
     Module 2: Hydrodealkylation
-    +++++++++++++++++++++++++++
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         .. image:: /_static/thumbs/tut_m2.png
-            :target: tutorials/Module_2_Flowsheet/index.html
+            :target: tutorials/Module_2_Flowsheet/Module_2_Flowsheet_Solution_doc.html
+            :width: 400px
 
     Toluene reacted with Hydrogen gas, based on the 1967 AIChE Student Contest problem.
 
 
     Module 3: Custom Unit Model
-    +++++++++++++++++++++++++++
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         .. image:: /_static/thumbs/tut_m3.png
-            :target: tutorials/Module_3_Custom_Unit_Model/index.html
+            :target: tutorials/Module_3_Custom_Unit_Model/Module_3_Custom_Unit_Model_doc.html
+            :width: 200px
 
         Create a custom "unit model" for a heater.
 
     Surrogate modeling
     ------------------
 
-    content
-    ^^^^^^^
-
     ALAMO Six-hump Camel
-    ++++++++++++++++++++
+    ^^^^^^^^^^^^^^^^^^^^
 
         .. image:: /_static/thumbs/ala_six.png
             :target: surrogate/alamo_python/index.html
+            :width: 200px
 
     ALAMO surrogate model of the "six hump camel" function.
 
     Property packages
     -----------------
 
-    content
-    ^^^^^^^
-
     DMF Properties Flowsheet
-    ++++++++++++++++++++++++
+    ^^^^^^^^^^^^^^^^^^^^^^^^
 
         .. image:: /_static/thumbs/prp_m2dmf.png
             :target: properties/Workshop_DMF/index.html
+            :width: 400px
 
         Tutorial module 2 (Hydroealkalyation) using the DMF for material properties.
 

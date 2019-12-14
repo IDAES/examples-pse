@@ -1,9 +1,9 @@
 $title
-====
+$title_underline
 
 .. only:: html
 
-    Click here to view or download the `Jupyter Notebook file <{notebook_name}.ipynb>`_.
+    Click here to view or download the `Jupyter Notebook file <$notebook_name.ipynb>`_.
 
 Jupyter Notebook
 ----------------

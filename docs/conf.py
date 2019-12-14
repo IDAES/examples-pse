@@ -22,8 +22,11 @@ copyright = 'DOE Institute for the Design of Advanced Energy Systems (IDAES), 20
 author = 'Dan Gunter'
 
 # The full version, including alpha/beta/rc tags
-release = '1.4.0'
+release = '1.4.2'
 
+
+# For Read the Docs theme
+import sphinx_rtd_theme
 
 # -- General configuration ---------------------------------------------------
 
@@ -31,6 +34,7 @@ release = '1.4.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.mathjax',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -48,10 +52,17 @@ master_doc = "index"  # default for older versions is "content"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+# html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
+
+# The name for this set of Sphinx documents.
+# "<project> v<release> documentation" by default.
+html_title = u'IDAES v{} Examples'.format(release)
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-html_style = 'css/gallery.css'
+html_css_files = ['css/custom.css']
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+

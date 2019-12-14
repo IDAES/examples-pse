@@ -13017,45 +13017,6 @@ ul.typeahead-list  > li > a.pull-right {
 .highlight .vm { color: #19177C } /* Name.Variable.Magic */
 .highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
     </style>
-<style type="text/css">
-    
-/* Temporary definitions which will become obsolete with Notebook release 5.0 */
-.ansi-black-fg { color: #3E424D; }
-.ansi-black-bg { background-color: #3E424D; }
-.ansi-black-intense-fg { color: #282C36; }
-.ansi-black-intense-bg { background-color: #282C36; }
-.ansi-red-fg { color: #E75C58; }
-.ansi-red-bg { background-color: #E75C58; }
-.ansi-red-intense-fg { color: #B22B31; }
-.ansi-red-intense-bg { background-color: #B22B31; }
-.ansi-green-fg { color: #00A250; }
-.ansi-green-bg { background-color: #00A250; }
-.ansi-green-intense-fg { color: #007427; }
-.ansi-green-intense-bg { background-color: #007427; }
-.ansi-yellow-fg { color: #DDB62B; }
-.ansi-yellow-bg { background-color: #DDB62B; }
-.ansi-yellow-intense-fg { color: #B27D12; }
-.ansi-yellow-intense-bg { background-color: #B27D12; }
-.ansi-blue-fg { color: #208FFB; }
-.ansi-blue-bg { background-color: #208FFB; }
-.ansi-blue-intense-fg { color: #0065CA; }
-.ansi-blue-intense-bg { background-color: #0065CA; }
-.ansi-magenta-fg { color: #D160C4; }
-.ansi-magenta-bg { background-color: #D160C4; }
-.ansi-magenta-intense-fg { color: #A03196; }
-.ansi-magenta-intense-bg { background-color: #A03196; }
-.ansi-cyan-fg { color: #60C6C8; }
-.ansi-cyan-bg { background-color: #60C6C8; }
-.ansi-cyan-intense-fg { color: #258F8F; }
-.ansi-cyan-intense-bg { background-color: #258F8F; }
-.ansi-white-fg { color: #C5C1B4; }
-.ansi-white-bg { background-color: #C5C1B4; }
-.ansi-white-intense-fg { color: #A1A6B2; }
-.ansi-white-intense-bg { background-color: #A1A6B2; }
-
-.ansi-bold { font-weight: bold; }
-
-    </style>
 
 
 <style type="text/css">
@@ -13118,7 +13079,10 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.surrogate</span> <span class="kn">import</span> <span class="n">alamopy</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.surrogate</span> <span class="k">import</span> <span class="n">alamopy</span>
+<span class="kn">import</span> <span class="nn">examples</span>
+<span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+<span class="kn">import</span> <span class="nn">camel6</span>
 </pre></div>
 
     </div>
@@ -13131,52 +13095,7 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="nb">execfile</span><span class="p">(</span><span class="s1">&#39;camel6.py&#39;</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_text output_error">
-<pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-green-fg">&lt;ipython-input-2-4f88f14d452a&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
-<span class="ansi-green-fg">----&gt; 1</span><span class="ansi-red-fg"> </span>execfile<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">&#39;camel6.py&#39;</span><span class="ansi-blue-fg">)</span>
-
-<span class="ansi-red-fg">NameError</span>: name &#39;execfile&#39; is not defined</pre>
-</div>
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="kn">as</span> <span class="nn">pyo</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
-<span class="n">opt</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;baron&#39;</span><span class="p">)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">x1</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">()</span>
-<span class="n">model</span><span class="o">.</span><span class="n">x2</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">pyomo_model</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="nn">cam6alm</span>
-    <span class="k">return</span> <span class="n">cam6alm</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x1</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">x2</span><span class="p">)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span><span class="n">rule</span> <span class="o">=</span> <span class="n">pyomo_model</span><span class="p">)</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">alamo_ran</span> <span class="o">=</span> <span class="n">camel6</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
 </pre></div>
 
     </div>
@@ -13186,61 +13105,24 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">solutions</span><span class="o">.</span><span class="n">store_to</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-<span class="k">print</span> <span class="n">results</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">if</span> <span class="n">alamo_ran</span><span class="p">:</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+    <span class="n">opt</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;baron&#39;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">x1</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">()</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">x2</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">pyomo_model</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">cam6alm</span>
+        <span class="k">return</span> <span class="n">cam6alm</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x1</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">x2</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span><span class="n">rule</span> <span class="o">=</span> <span class="n">pyomo_model</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">solutions</span><span class="o">.</span><span class="n">store_to</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 </pre></div>
 
     </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>
-Problem: 
-- Name: problem
-  Lower bound: -1e+51
-  Upper bound: -1.03162845349
-  Number of objectives: 1
-  Number of constraints: 1
-  Number of variables: 3
-  Sense: unknown
-Solver: 
-- Status: ok
-  Termination condition: unknown
-  Error rc: 0
-  Time: 0.753000020981
-Solution: 
-- number of solutions: 1
-  number of solutions displayed: 1
-- Gap: 1e+51
-  Status: feasible
-  Message: None
-  Objective:
-    obj:
-      Value: -1.03162845349
-  Variable:
-    x1:
-      Value: 0.0898426337843
-    x2:
-      Value: -0.712656468875
-  Constraint: No values
-
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
@@ -13250,7 +13132,7 @@ Solution:
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span> 
+<div class=" highlight hl-ipython3"><pre><span></span> 
 </pre></div>
 
     </div>

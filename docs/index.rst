@@ -6,7 +6,7 @@ IDAES Examples
 
     gallery
     tutorials/index
-    surrogate/index
+    surrogate_models/index
     properties/index
     license
     copyright

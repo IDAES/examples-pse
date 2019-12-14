@@ -54,6 +54,7 @@ IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
 NOTEBOOK_SUFFIX = ".ipynb"
 
 g_doc_template = None
+g_force_rebuild = False
 
 
 def convert(
@@ -113,58 +114,83 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
             if options["pat"] and not options["pat"].search(filename):
                 _log.debug(f"does not match {options['pat']}, skip {entry}")
                 continue
-
-            _log.info(f"converting '{entry}' to {options['format']}")
-
-            # parse
-            _log.debug(f"parsing '{entry}'")
-            nb = None
-            try:
-                nb = nbformat.read(str(entry), as_version=4)
-            except nbformat.reader.NotJSONError:
-                if options["continue"]:
-                    _log.error(f"parsing of '{entry}' failed: invalid JSON")
-                else:
-                    raise NotebookFormatError(f"'{entry}' is not JSON")
-            except AttributeError as err:
-                if options["continue"]:
-                    _log.error(f"parsing of '{entry}' failed: format error, {err}")
-                else:
-                    raise NotebookFormatError(f"'{entry}' format error: {err}")
-
-            if nb is None:
-                _log.warning(f"skip conversion of '{entry}'")
+            # always guarantee target HTML directory exists
+            if not os.path.exists(htmldir):
+                _log.info(f"Creating output directory {htmldir} for notebook")
+                os.makedirs(htmldir)
+            # don't rebuild the notebook if a converted
+            # one already exists in `outdir` that is as recent, UNLESS
+            # the "g_force_rebuild" flag is turned on
+            if not g_force_rebuild:
+                if converted_notebook_is_current(entry, outdir):
+                    _log.info(f"Using previously-converted notebook in {outdir}")
+                    nb = True   # change from None so post-processing steps occur
             else:
-                # execute
-                _log.debug(f"executing '{entry}'")
+                _log.info(f"converting '{entry}' to {options['format']}")
+
+                # parse
+                _log.debug(f"parsing '{entry}'")
+                nb = None
                 try:
-                    ep.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
-                except (CellExecutionError, NameError) as err:
+                    nb = nbformat.read(str(entry), as_version=4)
+                except nbformat.reader.NotJSONError:
                     if options["continue"]:
-                        _log.error(f"execution of '{entry}' failed: {err}")
-                        _log.warning(f"generating partial output for '{entry}'")
+                        _log.error(f"parsing of '{entry}' failed: invalid JSON")
                     else:
-                        raise NotebookExecError(f"execution error for '{entry}': {err}")
+                        raise NotebookFormatError(f"'{entry}' is not JSON")
+                except AttributeError as err:
+                    if options["continue"]:
+                        _log.error(f"parsing of '{entry}' failed: format error, {err}")
+                    else:
+                        raise NotebookFormatError(f"'{entry}' format error: {err}")
 
-                # export
-                _log.debug(f"exporting '{entry}'")
-                (body, resources) = exp.from_notebook_node(nb)
-                if not os.path.exists(htmldir):
-                    _log.info(f"Creating output directory {htmldir} for notebook")
-                    os.makedirs(htmldir)
-                if isinstance(exp, RSTExporter):
-                    body = replace_image_refs(body)
-                wrt.build_directory = str(outdir)  # write converted NB to output dir
-                wrt.write(body, resources, notebook_name=entry.stem)
+                if nb is None:
+                    _log.warning(f"skip conversion of '{entry}'")
+                else:
+                    # execute
+                    _log.debug(f"executing '{entry}'")
+                    try:
+                        ep.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
+                    except (CellExecutionError, NameError) as err:
+                        if options["continue"]:
+                            _log.error(f"execution of '{entry}' failed: {err}")
+                            _log.warning(f"generating partial output for '{entry}'")
+                        else:
+                            raise NotebookExecError(
+                                f"execution error for '{entry}': {err}"
+                            )
+
+                    # export
+                    _log.debug(f"exporting '{entry}'")
+                    (body, resources) = exp.from_notebook_node(nb)
+                    if isinstance(exp, RSTExporter):
+                        body = replace_image_refs(body)
+                    wrt.build_directory = str(
+                        outdir
+                    )  # write converted NB to output dir
+                    wrt.write(body, resources, notebook_name=entry.stem)
+            if nb is not None:
+                # Do these regardless of whether we built the notebook or not.
+                # This will restore files in case the HTML build directory was
+                # removed/cleaned.
                 copy_to_html_dir(entry, htmldir)
-
-                nb_file = os.path.splitext(entry.name)[0]  # name minus extension
-                generate_doc_page(nb_file, outdir)
+                # create Sphinx .rst doc page wrapping the notebook
+                generate_doc_page(entry.stem, outdir)
 
         elif entry.suffix in IMAGE_SUFFIXES:
             copy_to_html_dir(entry, htmldir)
 
     _log.debug(f"leaving {srcdir}")
+
+
+def converted_notebook_is_current(nb_file: pathlib.Path, dst_dir: pathlib.Path):
+    output_nb_name = str(nb_file.stem) + ".html"
+    output_file = dst_dir / output_nb_name
+    if not output_file.exists():
+        return False
+    nb_mod_ts = nb_file.stat().st_mtime
+    output_mod_ts = output_file.stat().st_mtime
+    return output_mod_ts >= nb_mod_ts
 
 
 def generate_doc_page(nb_file: str, output_dir: pathlib.Path):
@@ -174,11 +200,16 @@ def generate_doc_page(nb_file: str, output_dir: pathlib.Path):
     title = nb_file.replace("__", ": ")
     title = title.replace("_", " ")
     # replacements in template
-    doc_kw = {"title": title, "notebook_name": nb_file}
-    # fill in the template
+    doc_kw = {
+        "title": title,
+        "notebook_name": nb_file,
+        "title_underline": "=" * len(title),
+    }
+    # fill in the template (use simple "string.substitute")
     doc = g_doc_template.substitute(**doc_kw)
     # write out the new doc
     doc_rst = output_dir / (nb_file + "_doc.rst")
+    _log.debug(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
     with doc_rst.open("w") as f:
         _log.debug(f"Writing document to: {doc_rst}")
         f.write(doc)
@@ -303,11 +334,21 @@ def extract_sphinx_error(errfile: str):
 
 
 def main():
+    global g_force_rebuild
+
     ap = argparse.ArgumentParser()
     ap.add_argument("-N", "--no-notebooks", action="store_true")
     ap.add_argument("-S", "--no-sphinx", action="store_true")
     ap.add_argument("-c", "--config", default="build.yml")
     ap.add_argument("-k", "--kernel", default=None, dest="kernel")
+    ap.add_argument(
+        "-R",
+        "--rebuild-all",
+        default=False,
+        action="store_true",
+        dest="force_rebuild",
+        help="Rebuild all notebooks",
+    )
     ap.add_argument("-v", "--verbose", action="count", dest="vb", default=0)
     args = ap.parse_args()
 
@@ -320,6 +361,8 @@ def main():
         kernel = os.environ.get("CONDA_DEFAULT_ENV", "python")
     else:
         kernel = args.kernel
+
+    g_force_rebuild = args.force_rebuild
 
     try:
         f = open(args.config)
