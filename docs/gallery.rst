@@ -1,6 +1,7 @@
 Jupyter Notebook Gallery
 ========================
 
+
 .. only:: latex or latexpdf or text
 
     The gallery is only available in the HTML version of the documentation.
@@ -11,6 +12,9 @@ Jupyter Notebook Gallery
     for the IDAES Process Systems Engineering (IDAES-PSE) toolkit.
     This is complementary to the main documentation for the
     `IDAES-PSE project <https://idaes-pse.readthedocs.io/>`_.
+
+    .. contents::
+        :local:
 
     Tutorials
     ---------
