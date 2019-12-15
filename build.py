@@ -111,6 +111,7 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
             new_htmldir = htmldir / entry.parts[-1]
             _convert(entry, new_outdir, new_htmldir, wrt, exp, ep, options)
         elif entry.suffix == NOTEBOOK_SUFFIX:
+            nb = None
             if options["pat"] and not options["pat"].search(filename):
                 _log.debug(f"does not match {options['pat']}, skip {entry}")
                 continue
@@ -130,7 +131,6 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
 
                 # parse
                 _log.debug(f"parsing '{entry}'")
-                nb = None
                 try:
                     nb = nbformat.read(str(entry), as_version=4)
                 except nbformat.reader.NotJSONError:
