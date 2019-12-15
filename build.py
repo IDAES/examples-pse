@@ -308,7 +308,7 @@ def build_sphinx(config):
         _log.warning("Target HTML directory {html_dir} does not exist: creating")
         os.makedirs(html_dir)
     errfile = spx.get("error_file", "sphinx-errors.txt")
-    cmdargs = ["sphinx-build", "-w", errfile] + args
+    cmdargs = ["sphinx-build", "-a", "-w", errfile] + args
     cmdline = " ".join(cmdargs)
     _log.info(f"Running Sphinx command: {cmdline}")
     proc = subprocess.Popen(cmdargs)

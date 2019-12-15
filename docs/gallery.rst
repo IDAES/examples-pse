@@ -60,7 +60,7 @@ Jupyter Notebook Gallery
             :target: tutorials/Module_3_Custom_Unit_Model/Module_3_Custom_Unit_Model_doc.html
             :width: 200px
 
-        Create a custom "unit model" for a heater.
+    Create a custom "unit model" for a heater.
 
     Surrogate modeling
     ------------------
@@ -84,5 +84,5 @@ Jupyter Notebook Gallery
             :target: properties/Workshop_DMF/index.html
             :width: 400px
 
-        Tutorial module 2 (Hydroealkalyation) using the DMF for material properties.
+    Tutorial module 2 (Hydroealkalyation) using the DMF for material properties.
 
