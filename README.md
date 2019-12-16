@@ -30,9 +30,9 @@ Full installation instructions are available on the
 [install page](https://idaes-pse.readthedocs.io/en/stable/install/index.html) 
 of the online documentation.
 
-## Running
+### Install the examples
 
-For most people, the easiest way to run these examples is to use the 
+For most people, the easiest way to install these examples is to use the 
 [idaes install-examples](https://idaes-pse.readthedocs.io/en/stable/install-examples.html)
 command that is part of the IDAES-PSE toolkit. This will download 
 and install the examples, and their documentation, in the local system.
@@ -40,8 +40,11 @@ From there, you can browse the directory you chose to install them
 in and run the scripts or Jupyter Notebooks (see next section if you
 need help with this).
 
-Some people may want to work directly with the examples repository
-on Github, which is at [https://github.com/IDAES/examples-pse](https://github.com/IDAES/examples-pse)
+Some people, though, may want to work directly with the examples repository
+on Github, which is at [https://github.com/IDAES/examples-pse](https://github.com/IDAES/examples-pse). 
+This is more DIY, but it will give you more control of what gets installed, and also
+be easier to transition to being a developer (adding your own code). 
+
 
 ## Running the examples
 
