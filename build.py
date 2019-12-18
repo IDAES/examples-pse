@@ -101,6 +101,7 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
     """
     _log.debug(f"looking for notebooks in {srcdir}")
 
+    output_type = options["format"]  # rst or html
     for entry in srcdir.iterdir():
         filename = entry.parts[-1]
         if filename.startswith("."):
@@ -111,6 +112,7 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
             new_htmldir = htmldir / entry.parts[-1]
             _convert(entry, new_outdir, new_htmldir, wrt, exp, ep, options)
         elif entry.suffix == NOTEBOOK_SUFFIX:
+            _log.debug(f"found notebook at: {entry}")
             nb = None
             if options["pat"] and not options["pat"].search(filename):
                 _log.debug(f"does not match {options['pat']}, skip {entry}")
@@ -122,10 +124,11 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
             # don't rebuild the notebook if a converted
             # one already exists in `outdir` that is as recent, UNLESS
             # the "g_force_rebuild" flag is turned on
-            if not g_force_rebuild:
-                if converted_notebook_is_current(entry, outdir):
-                    _log.info(f"Using previously-converted notebook in {outdir}")
-                    nb = True   # change from None so post-processing steps occur
+            if not g_force_rebuild and converted_notebook_is_current(
+                entry, outdir, output_type
+            ):
+                _log.info(f"Using previously-converted notebook in {outdir}")
+                nb = True  # change from None so post-processing steps occur
             else:
                 _log.info(f"converting '{entry}' to {options['format']}")
 
@@ -163,7 +166,7 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
                     # export
                     _log.debug(f"exporting '{entry}'")
                     (body, resources) = exp.from_notebook_node(nb)
-                    if isinstance(exp, RSTExporter):
+                    if output_type == "rst":
                         body = replace_image_refs(body)
                     wrt.build_directory = str(
                         outdir
@@ -183,8 +186,10 @@ def _convert(srcdir, outdir, htmldir, wrt, exp, ep, options):
     _log.debug(f"leaving {srcdir}")
 
 
-def converted_notebook_is_current(nb_file: pathlib.Path, dst_dir: pathlib.Path):
-    output_nb_name = str(nb_file.stem) + ".html"
+def converted_notebook_is_current(
+    nb_file: pathlib.Path, dst_dir: pathlib.Path, otype: str
+):
+    output_nb_name = str(nb_file.stem) + "." + otype
     output_file = dst_dir / output_nb_name
     if not output_file.exists():
         return False
