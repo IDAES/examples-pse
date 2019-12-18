@@ -10,8 +10,7 @@ from the prior one, so it is recommended that the new user view them in order.
 
 
 .. toctree::
-    :maxdepth: 2
-
+    :maxdepth: 1
 
     Welcome tutorial (short) <Module_0_Welcome/Module_0_Welcome_Short_Solution_doc>
     Welcome tutorial (full) <Module_0_Welcome/Module_0_Welcome_Solution_doc>
