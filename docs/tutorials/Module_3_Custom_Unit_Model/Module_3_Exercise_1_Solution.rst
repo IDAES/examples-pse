@@ -14,7 +14,7 @@ Create a Heater
                             useDefault,
                             FlowsheetBlock)
     from idaes.core.util.config import is_physical_parameter_block
-    from methanol_param_VLE import PhysicalParameterBlock
+    from idaes.examples.workshops.Module_3_Custom_Unit_Model.methanol_param_VLE import PhysicalParameterBlock
     from idaes.core.util.misc import add_object_reference
 
 .. code:: ipython3

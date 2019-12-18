@@ -8,5 +8,6 @@ IDAES Examples
     tutorials/index
     surrogate_models/index
     properties/index
+    matopt/index
     license
     copyright
