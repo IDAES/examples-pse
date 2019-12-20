@@ -1,6 +1,6 @@
 # IDAES Examples
 
-This repository contains the example notebooks and scripts for
+This Git repository contains the example notebooks and scripts for
 the IDAES-PSE code. Some examples are Jupyter Notebooks, and
 some are Python scripts.
 
