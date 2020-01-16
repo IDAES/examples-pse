@@ -8,9 +8,7 @@ pipeline {
     stage('root-setup') {
       steps {
         slackSend (message: "Build Started - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
-        sh 'yum update -y'
-        sh 'yum install -y epel-release'
-        sh 'yum install -y gcc gcc-c++ git gcc-gfortran libboost-dev make wget boost boost-thread boost-devel'
+        sh 'yum install -y gcc g++ git gcc-gfortran libboost-dev make'
         dir('idaes-dev') {
           git url: 'https://github.com/makaylas/idaes-dev.git',
           credentialsId: '6ca01274-150a-4dd4-96ec-f0d117b0ea95'
