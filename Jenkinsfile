@@ -37,7 +37,7 @@ pipeline {
       steps {
         sh '''
          source activate idaes
-         pytest -c pytest.ini 
+         pytest
          conda deactivate
          '''
       }   
