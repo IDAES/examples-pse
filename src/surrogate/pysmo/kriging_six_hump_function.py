@@ -31,7 +31,7 @@ def main():
     data_scaled = np.concatenate((data_scaled_x, y_r.reshape(y_r.shape[0], 1)), axis=1)
 
     # Select 100 samples for Kriging training
-    no_training_samples = 100
+    no_training_samples = 50
     b = sp.HammersleySampling(data_scaled, no_training_samples, 'selection')
     training_data = b.sample_points()
 
@@ -50,6 +50,7 @@ def main():
     x_pred = data_scaled[:, :-1]
     y_pred = aa.kriging_predict_output(ab, x_pred)
     r2 = aa.r2_calculation(data_scaled[:, -1], y_pred)
+    print('The R^2 value is: ', r2)
 
     # 3D error (deviation) plot
     difference_vector = data_scaled[:, 2] - y_pred[:, 0]

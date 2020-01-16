@@ -45,7 +45,7 @@ def main():
     # Evaluate model performance as R2
     y_predict = train_obj.poly_predict_output(train_results, xval)
     r2 = kriging.KrigingModel.r2_calculation(yval, y_predict)
-    print(r2)
+    print('\nThe R^2 value for the polynomial over the 100 off-design points is', r2)
 
     # Print Pyomo expression
     m = pyo.ConcreteModel()

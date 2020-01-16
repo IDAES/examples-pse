@@ -55,7 +55,7 @@ def main():
         list_vars.append(p[i])
     print('\nThe RBF expression is: \n', results_pyomo.rbf_generate_expression(list_vars))
 
-    # Plots
+    # 3-D plot of errors between prediction and actual values over 10,200 points
     yy = sp.FeatureScaling.data_unscaling_minmax(y_predicted_pyomo, data_min[0, 2], data_max[0, 2])
     x1 = np.linspace(-20, 20, 101)
     x2 = np.linspace(-20, 20, 101)

@@ -22,12 +22,12 @@ from mpl_toolkits import mplot3d
 def main():
     # Load the necessary data
     current_path = os.path.dirname(os.path.realpath(__file__))
-    data = pd.read_csv(os.path.join(current_path, 'data_files', 'six_hump_function_data.tab'), header=0, index_col=0)
+    data = pd.read_csv(os.path.join(current_path, 'data_files', 'six_hump_function_data.tab'), sep='\t', header=0, index_col=0)
 
     # Scale the data and select 200 sampling points via Hammersley sampling
     sd = sp.FeatureScaling()
     data_scaled, data_min, data_max = sd.data_scaling_minmax(data)
-    no_training_samples = 200
+    no_training_samples = 150
     b = sp.HammersleySampling(data_scaled, no_training_samples, 'selection')
     training_data = b.sample_points()
 
@@ -39,9 +39,9 @@ def main():
     # Predict values for other points in loaded data not used in training, evaluate R^2
     y_predicted_pyomo = f1.rbf_predict_output(results_pyomo, data_scaled[:, :-1])
     r2_pyomo = f1.r2_calculation(data_scaled[:, -1], y_predicted_pyomo)
-    print(r2_pyomo)
+    print('R2 over 10201 off-design points:', r2_pyomo)
 
-    # Prinr RBF expression based on headers of input data
+    # Print RBF expression based on headers of input data
     list_vars = []
     for i in p.keys():
         list_vars.append(p[i])

@@ -27,7 +27,7 @@ def main():
     # Scale the data and select 200 sampling points via Hammersley sampling
     sd = sp.FeatureScaling()
     data_scaled, data_min, data_max = sd.data_scaling_minmax(data)
-    no_training_samples = 200
+    no_training_samples = 100
     b = sp.HammersleySampling(data_scaled, no_training_samples, 'selection')
     training_data = b.sample_points()
 
@@ -39,7 +39,7 @@ def main():
     # Predict values for other points in loaded data not used in training, evaluate R^2
     y_predicted_pyomo = f1.rbf_predict_output(results_pyomo, data_scaled[:, :-1])
     r2_pyomo = f1.r2_calculation(data_scaled[:, -1], y_predicted_pyomo)
-    print(r2_pyomo)
+    print('The R2 value over 10201 off-design points is:', r2_pyomo)
 
     # Prinr RBF expression based on headers of input data
     list_vars = []
