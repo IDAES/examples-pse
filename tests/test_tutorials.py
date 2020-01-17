@@ -44,6 +44,7 @@ else:
     solver = True
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(solver is None, reason="Solver not available")
 def test_tutorial_1():
     m, results = Tutorial_1_Basic_Flowsheets.main()
@@ -74,6 +75,7 @@ def test_tutorial_1():
     assert m.fs.Tank2.outlet.temperature[0].value == pytest.approx(304.20, abs=1e-1)
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(solver is None, reason="Solver not available")
 def test_tutorial_2():
     m, results = Tutorial_2_Basic_Flowsheet_Optimization.main()
@@ -107,6 +109,7 @@ def test_tutorial_2():
     assert m.fs.Tank2.volume[0].value == pytest.approx(1.785, abs=1e-2)
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(solver is None, reason="Solver not available")
 def test_tutorial_3():
     m, results = Tutorial_3_Dynamic_Flowsheets.main()

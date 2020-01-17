@@ -4,6 +4,8 @@ Test notebooks
 import os
 from pathlib import Path
 import subprocess
+#
+import pytest
 
 # assume parent of this test's directory is top
 TOP_DIR = Path(__file__).parent.parent
@@ -16,6 +18,7 @@ else:
     g_kernel = None
 
 
+@pytest.mark.integration
 def test_build_notebooks():
     ensure_build_directory()
     cmd = str(TOP_DIR / "build.py")
