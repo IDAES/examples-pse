@@ -26,7 +26,7 @@ pipeline {
          export TEMP_LANG=$LANG
          export LC_ALL=en_US.utf-8
          export LANG=en_US.utf-8
-         python setup.py develop
+         python setup.py install
          export LC_ALL=$TEMP_LC_ALL
          export LANG=$TEMP_LANG
          conda deactivate
