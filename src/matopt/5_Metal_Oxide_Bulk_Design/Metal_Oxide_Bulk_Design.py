@@ -1,4 +1,3 @@
-
 from matopt import *
 
 A = 4.0
