@@ -14,7 +14,7 @@ import pyomo.environ as pyo
 from idaes.surrogate import ripe
 import numpy as np
 import random
-from . import isotsim
+import isotsim
 
 np.random.seed(20)
 
@@ -39,13 +39,13 @@ def main():
     stoich = [[-1,-1,1,0,0] ,[0,-1,-1,1,0],[-1,0,0,-1,1],[-1,-2,0,1,0] ,[-2,-2,0,0,1],[-1,-1,-1,0,1],[-2,-1,1,-1,1]]
 
     # IRIPE internal mass action kinetics are specified
-    mechs = [['all','massact']]
+    rxn_mechs = [['all','massact']]
 
     # Use expected variance - estimated from data if not provided
     sigma = np.multiply(noise**2,np.array(cdata))
 
     # Call to RIPE
-    results = ripe.ripemodel(cdata,stoich = stoich,mechanisms=mechs,x0=cdata0,hide_output=False,sigma=sigma,deltaterm=0,expand_output=True)
+    results = ripe.ripemodel(cdata,stoich = stoich,mechanisms=rxn_mechs,x0=cdata0,hide_output=False,sigma=sigma,deltaterm=0,expand_output=True)
 
     # Adaptive experimental design using error maximization sampling
     [new_points, err] = ripe.ems(results,isotsim.sim,lb_conc,ub_conc,5,x=cdata,x0=cdata0)
@@ -72,7 +72,7 @@ def main():
         sigma =  np.multiply(noise**2,np.array(new_cdata))
 
         # Build updated RIPE model
-        results = ripe.ripemodel(new_cdata,stoich = stoich,mechanisms=mechs,x0=new_cdata0,sigma=sigma,expand_output=True)
+        results = ripe.ripemodel(new_cdata,stoich = stoich,mechanisms=rxn_mechs,x0=new_cdata0,sigma=sigma,expand_output=True)
 
         # Another call to EMS
         [new_points, err] = ripe.ems(results,isotsim.sim,lb_conc,ub_conc,5,x=cdata,x0=cdata0)
@@ -83,7 +83,7 @@ def main():
         cdata = new_cdata
 
     # Final call to RIPE to get concise output
-    results = ripe.ripemodel(cdata,stoich = stoich,mechanisms=mechs,x0=cdata0,sigma=sigma,expand_output=False)
+    results = ripe.ripemodel(cdata,stoich = stoich,mechanisms=rxn_mechs,x0=cdata0,sigma=sigma,expand_output=False)
     #print results
 
 
