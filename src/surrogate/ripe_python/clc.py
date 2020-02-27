@@ -12,7 +12,7 @@
 ##############################################################################
 from idaes.surrogate import ripe
 import numpy as np
-
+from idaes.surrogate.ripe import mechs as mechs
 
 def main():
     spec = ['X']
@@ -23,10 +23,11 @@ def main():
     stoich = [1]
 
     # User pre-defined clc rate forms found in RIPE
-    mechs = ripe.clcforms
+    # mechs = ripe.clcforms
+    clc_mechs = [mechs.powerlawp5, mechs.powerlaw2, mechs.powerlaw3, mechs.powerlaw4, mechs.avrami2, mechs.avrami3, mechs.avrami4, mechs.avrami5, mechs.randomnuc, mechs.ptompkins, mechs.jander, mechs.antijander, mechs.valensi, mechs.parabolic, mechs.gb3d, mechs.zlt, mechs.grain]
 
     # Identify optimal kinetic mechanism
-    results = ripe.ripemodel(xdata,stoichiometry=stoich,mechanisms=mechs,time=t)
+    results = ripe.ripemodel(xdata,stoichiometry=stoich,mechanisms=clc_mechs,time=t)
 
 
 if __name__ == "__main__":
