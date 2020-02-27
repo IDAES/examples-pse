@@ -22,10 +22,13 @@ import pyomo.environ as pyo
 from idaes.surrogate import ripe
 import numpy as np
 import random
-from . import cracsim
+import cracsim
 
 np.random.seed(100)
 
+# Define kinetic mechanisms, adsorption parameters must be known a-priori
+kco = 35
+kst = 1.5
 
 def main():
     Tr = 750.0
@@ -87,14 +90,17 @@ def keq(*x):
 def cat_st_prod_t1(*x):
     a,b,c,d,f,g,h,i,j,Temp = x
     return (a - (b * h) / keq(*x)) * (1/((1+kst*b)*(1+kco*i)))
+
 def cat_ben_prod_t2(*x):
     # Mechanism for EB > B + C2H4
     a,b,c,d,f,g,h,i,j,Temp = x
     return a / (1+kco*i)
+
 def meth_prod_t3(*x):
     # Mechanism for C2H4+4H2O > 2CO2+6H
     a,b,c,d,f,g,h,i,j,Temp = x
     return d * h
+
 def ch4_to_co_t4(*x):
      a,b,c,d,f,g,h,i,j,Temp = x
     #mechanism for CH4+2H2O > CO2+4H2
@@ -104,12 +110,15 @@ def ch4_to_co_t4(*x):
 def eb_dep(*x):
     a,b,c,d,f,g,h,i,j,Temp = x
     return a
+
 def t_st_prod(*x):
     a,b,c,d,f,g,h,i,j,Temp = x
     return (a - (b * h) / keq(*x))
+
 def ma_h(*x):
     a,b,c,d,f,g,h,i,j,Temp = x
     return h
+
 def ma_g(*x):
     a,b,c,d,f,g,h,i,j,Temp = x
     return g
