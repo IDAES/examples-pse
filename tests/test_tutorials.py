@@ -13,6 +13,8 @@
 """
 Tests that tutorials run.
 
+*** NOTE: These tutorials have been deprecated. The tests are not run.
+
 Author: Andrew Lee
 Modified by: Dan Gunter (to run in `examples` context)
 """
