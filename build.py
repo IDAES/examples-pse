@@ -363,7 +363,7 @@ def main():
     elif args.vb > 0:
         _log.setLevel(logging.INFO)
     if args.kernel is None:
-        kernel = os.environ.get("CONDA_DEFAULT_ENV", "python")
+        kernel = None
     else:
         kernel = args.kernel
 
