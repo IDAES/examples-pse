@@ -363,8 +363,10 @@ def main():
     elif args.vb > 0:
         _log.setLevel(logging.INFO)
     if args.kernel is None:
+        _log.warning("using default kernel for notebook execution")
         kernel = None
     else:
+        _log.info(f"using kernel {args.kernel} for notebook execution")
         kernel = args.kernel
 
     g_force_rebuild = args.force_rebuild
