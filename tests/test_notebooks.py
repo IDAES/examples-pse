@@ -22,7 +22,7 @@ else:
 def test_build_notebooks():
     ensure_build_directory()
     cmd = str(TOP_DIR / "build.py")
-    cmdargs = [cmd, "--no-sphinx", "--config",
+    cmdargs = [cmd, "--no-sphinx", "--rebuild-all", "--config",
                str(TOP_DIR / "build.yml"), "-vv"]
     if g_kernel:
         cmdargs.append(f"--kernel={g_kernel}")
