@@ -24,11 +24,11 @@ from idaes.core import FlowsheetBlock
 from idaes.core.util.model_statistics import report_statistics
 
 # Import Unit Model Modules
-import idaes.core_lib.properties.examples.saponification_thermo as thermo_props
-import idaes.core_lib.properties.examples.saponification_reactions as reaction_props
+import idaes.generic_models.properties.examples.saponification_thermo as thermo_props
+import idaes.generic_models.properties.examples.saponification_reactions as reaction_props
 
 # Import Unit Model Modules
-from idaes.core_lib.unit_models import CSTR
+from idaes.generic_models.unit_models import CSTR
 
 
 def main():
