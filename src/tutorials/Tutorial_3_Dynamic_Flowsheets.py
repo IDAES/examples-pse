@@ -26,12 +26,12 @@ from pyomo.network import Arc
 from idaes.core import FlowsheetBlock
 
 # Import Unit Model Modules
-import idaes.property_models.examples.saponification_thermo as thermo_props
-import idaes.property_models.examples.saponification_reactions as \
+import idaes.core_lib.properties.examples.saponification_thermo as thermo_props
+import idaes.core_lib.properties.examples.saponification_reactions as \
     reaction_props
 
 # Import Unit Model Modules
-from idaes.unit_models import CSTR, Mixer
+from idaes.core_lib.unit_models import CSTR, Mixer
 
 
 def main():
