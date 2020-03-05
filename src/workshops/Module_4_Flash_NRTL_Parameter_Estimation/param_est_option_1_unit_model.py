@@ -2,7 +2,7 @@ from pyomo.environ import ConcreteModel, SolverFactory, Constraint, value, \
     Expression, Objective, minimize
 from idaes.core import FlowsheetBlock
 import idaes.logger as idaeslog
-from idaes.property_models.activity_coeff_models.BTX_activity_coeff_VLE \
+from idaes.generic_models.properties.activity_coeff_models.BTX_activity_coeff_VLE \
     import BTXParameterBlock
 
 
@@ -16,7 +16,7 @@ m.fs.properties = BTXParameterBlock(default={"valid_phase":
                                              "activity_coeff_model":
                                              'NRTL'})
 
-from idaes.unit_models import Flash
+from idaes.generic_models.unit_models import Flash
 
 
 m.fs.flash = Flash(default={"property_package": m.fs.properties})
@@ -40,14 +40,10 @@ m.fs.flash.deltaP.fix(0)
 
 # Fix NRTL specific
 # alpha values (set at 0.3)
-m.fs.flash.control_volume.properties_in[0].\
-    alpha["benzene", "benzene"].fix(0)
-m.fs.flash.control_volume.properties_in[0].\
-    alpha["benzene", "toluene"].fix(0.3)
-m.fs.flash.control_volume.properties_in[0].\
-    alpha["toluene", "toluene"].fix(0)
-m.fs.flash.control_volume.properties_in[0].\
-    alpha["toluene", "benzene"].fix(0.3)
+m.fs.flash.control_volume.properties_in[0].alpha["benzene", "benzene"].fix(0)
+m.fs.flash.control_volume.properties_in[0].alpha["benzene", "toluene"].fix(0.3)
+m.fs.flash.control_volume.properties_in[0].alpha["toluene", "toluene"].fix(0)
+m.fs.flash.control_volume.properties_in[0].alpha["toluene", "benzene"].fix(0.3)
 
 m.fs.flash.control_volume.properties_out[0].\
     alpha["benzene", "benzene"].fix(0)
@@ -62,20 +58,20 @@ m.fs.flash.control_volume.properties_out[0].\
 m.fs.flash.control_volume.properties_in[0].\
     tau["benzene", "benzene"].fix(0)
 m.fs.flash.control_volume.properties_in[0].\
-    tau["benzene", "toluene"].fix(0.1690)
+    tau["benzene", "toluene"].fix(0.3)
 m.fs.flash.control_volume.properties_in[0].\
     tau["toluene", "toluene"].fix(0)
 m.fs.flash.control_volume.properties_in[0].\
-    tau["toluene", "benzene"].fix(-0.1559)
+    tau["toluene", "benzene"].fix(-0.1)
 
 m.fs.flash.control_volume.properties_out[0].\
     tau["benzene", "benzene"].fix(0)
 m.fs.flash.control_volume.properties_out[0].\
-    tau["benzene", "toluene"].fix(0.1690)
+    tau["benzene", "toluene"].fix(0.2)
 m.fs.flash.control_volume.properties_out[0].\
     tau["toluene", "toluene"].fix(0)
 m.fs.flash.control_volume.properties_out[0].\
-    tau["toluene", "benzene"].fix(-0.1559)
+    tau["toluene", "benzene"].fix(-0.1)
 
 # Todo: print the degrees of freedom for your model
 print("Degrees of Freedom =", degrees_of_freedom(m))
@@ -92,8 +88,8 @@ status = solver.solve(m, tee=True)
 m.fs.flash.report()
 m.fs.flash.control_volume.properties_out[0].temperature_bubble.display()
 
-# Parameter Estimation
-VLE_data = {"vap_benzene": 0.63269, "liq_benzene": 0.41050}
+# Parameter Estimation problem setup
+VLE_data = {"vap_benzene": 0.631425, "liq_benzene": 0.40906}
 m.fs.sse = Expression(expr=(VLE_data["vap_benzene"] -
                             m.fs.flash.vap_outlet.
                             mole_frac_comp[0, "benzene"])**2 +
@@ -123,12 +119,12 @@ m.fs.c2 = Constraint(expr=m.fs.flash.control_volume.
 m.fs.flash.control_volume.properties_in[0].\
     tau["benzene", "toluene"].setlb(0)
 m.fs.flash.control_volume.properties_in[0].\
-    tau["benzene", "toluene"].setub(0.5)
+    tau["benzene", "toluene"].setub(1)
 
 m.fs.flash.control_volume.properties_in[0].\
-    tau["toluene", "benzene"].setlb(-0.5)
+    tau["toluene", "benzene"].setlb(-1)
 m.fs.flash.control_volume.properties_in[0].\
-    tau["toluene", "benzene"].setub(0.5)
+    tau["toluene", "benzene"].setub(1)
 
 
 print(degrees_of_freedom(m))
