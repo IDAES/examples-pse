@@ -88,9 +88,8 @@ def SSE(m, data):
     expr = ((float(data["vap_benzene"]) -
              m.fs.flash.vap_outlet.mole_frac_comp[0, "benzene"])**2 +
             (float(data["liq_benzene"]) -
-             m.fs.flash.liq_outlet.
-             mole_frac_comp[0, "benzene"])**2)
-    return expr
+             m.fs.flash.liq_outlet.mole_frac_comp[0, "benzene"])**2)
+    return expr*1E4
 
 pest = parmest.Estimator(NRTL_model, data, variable_name, SSE, tee=True)
 
@@ -99,10 +98,10 @@ print(SSE)
 print(parameters)
 
 
-# bootstrap_theta = pest.theta_est_bootstrap(10)
-# print(bootstrap_theta.head())
-#
-# parmest.pairwise_plot(bootstrap_theta)
-# parmest.pairwise_plot(bootstrap_theta, variable_name, 0.8,
-#                       ['tau["benzene", "toluene"]',
-#                        'tau["toluene", "benzene"]'])
+bootstrap_theta = pest.theta_est_bootstrap(10)
+print(bootstrap_theta.head())
+
+parmest.pairwise_plot(bootstrap_theta)
+parmest.pairwise_plot(bootstrap_theta, variable_name, 0.8,
+                      ['tau["benzene", "toluene"]',
+                       'tau["toluene", "benzene"]'])
