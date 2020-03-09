@@ -32,23 +32,23 @@ def NRTL_model(data):
 
     # Fix NRTL specific variables
     # alpha values (set at 0.3)
-    m.fs.state_block.\
+    m.fs.properties.\
         alpha["benzene", "benzene"].fix(0)
-    m.fs.state_block.\
+    m.fs.properties.\
         alpha["benzene", "toluene"].fix(0.3)
-    m.fs.state_block.\
+    m.fs.properties.\
         alpha["toluene", "toluene"].fix(0)
-    m.fs.state_block.\
+    m.fs.properties.\
         alpha["toluene", "benzene"].fix(0.3)
 
     # initial tau values
-    m.fs.state_block.\
+    m.fs.properties.\
         tau["benzene", "benzene"].fix(0)
-    m.fs.state_block.\
+    m.fs.properties.\
         tau["benzene", "toluene"].fix(0.1690)
-    m.fs.state_block.\
+    m.fs.properties.\
         tau["toluene", "toluene"].fix(0)
-    m.fs.state_block.\
+    m.fs.properties.\
         tau["toluene", "benzene"].fix(-0.1559)
 
     # Initialize the flash unit
@@ -58,14 +58,14 @@ def NRTL_model(data):
     m.fs.state_block.temperature.fix(float(data["temperature"]))
 
     # Set bounds on variables to be estimated
-    m.fs.state_block.\
+    m.fs.properties.\
         tau["benzene", "toluene"].setlb(-5)
-    m.fs.state_block.\
+    m.fs.properties.\
         tau["benzene", "toluene"].setub(5)
 
-    m.fs.state_block.\
+    m.fs.properties.\
         tau["toluene", "benzene"].setlb(-5)
-    m.fs.state_block.\
+    m.fs.properties.\
         tau["toluene", "benzene"].setub(5)
 
     # Return initialized flash model
@@ -74,8 +74,8 @@ def NRTL_model(data):
 # Parameter Estimation using parmest
 
 # Vars to estimate
-variable_name = ["fs.state_block.tau['benzene', 'toluene']",
-                 "fs.state_block.tau['toluene', 'benzene']"]
+variable_name = ["fs.properties.tau['benzene', 'toluene']",
+                 "fs.properties.tau['toluene', 'benzene']"]
 
 # List of dictionaries
 data = [{"temperature": 367, "vap_benzene": 0.662038, "liq_benzene": 0.441008},
@@ -97,3 +97,10 @@ pest = parmest.Estimator(NRTL_model, data, variable_name, SSE, tee=True)
 SSE, parameters = pest.theta_est()
 print(SSE)
 print(parameters)
+
+
+bootstrap_theta = pest.theta_est_bootstrap(8)
+print(bootstrap_theta.head())
+
+parmest.pairwise_plot(bootstrap_theta)
+parmest.pairwise_plot(bootstrap_theta, variable_name, 0.8, ['MVN', 'KDE', 'Rect'])
