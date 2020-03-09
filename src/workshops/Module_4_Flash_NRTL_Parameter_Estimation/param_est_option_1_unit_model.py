@@ -38,40 +38,19 @@ m.fs.flash.inlet.mole_frac_comp[0, "toluene"].fix(0.5)
 m.fs.flash.heat_duty.fix(0)
 m.fs.flash.deltaP.fix(0)
 
-# Fix NRTL specific
+# Fix NRTL specific variables
 # alpha values (set at 0.3)
-m.fs.flash.control_volume.properties_in[0].alpha["benzene", "benzene"].fix(0)
-m.fs.flash.control_volume.properties_in[0].alpha["benzene", "toluene"].fix(0.3)
-m.fs.flash.control_volume.properties_in[0].alpha["toluene", "toluene"].fix(0)
-m.fs.flash.control_volume.properties_in[0].alpha["toluene", "benzene"].fix(0.3)
+m.fs.properties.alpha["benzene", "benzene"].fix(0)
+m.fs.properties.alpha["benzene", "toluene"].fix(0.3)
+m.fs.properties.alpha["toluene", "toluene"].fix(0)
+m.fs.properties.alpha["toluene", "benzene"].fix(0.3)
 
-m.fs.flash.control_volume.properties_out[0].\
-    alpha["benzene", "benzene"].fix(0)
-m.fs.flash.control_volume.properties_out[0].\
-    alpha["benzene", "toluene"].fix(0.3)
-m.fs.flash.control_volume.properties_out[0].\
-    alpha["toluene", "toluene"].fix(0)
-m.fs.flash.control_volume.properties_out[0].\
-    alpha["toluene", "benzene"].fix(0.3)
 
 # tau values
-m.fs.flash.control_volume.properties_in[0].\
-    tau["benzene", "benzene"].fix(0)
-m.fs.flash.control_volume.properties_in[0].\
-    tau["benzene", "toluene"].fix(0.3)
-m.fs.flash.control_volume.properties_in[0].\
-    tau["toluene", "toluene"].fix(0)
-m.fs.flash.control_volume.properties_in[0].\
-    tau["toluene", "benzene"].fix(-0.1)
-
-m.fs.flash.control_volume.properties_out[0].\
-    tau["benzene", "benzene"].fix(0)
-m.fs.flash.control_volume.properties_out[0].\
-    tau["benzene", "toluene"].fix(0.2)
-m.fs.flash.control_volume.properties_out[0].\
-    tau["toluene", "toluene"].fix(0)
-m.fs.flash.control_volume.properties_out[0].\
-    tau["toluene", "benzene"].fix(-0.1)
+m.fs.properties.tau["benzene", "benzene"].fix(0)
+m.fs.properties.tau["benzene", "toluene"].fix(0.1690)
+m.fs.properties.tau["toluene", "toluene"].fix(0)
+m.fs.properties.tau["toluene", "benzene"].fix(-0.1559)
 
 # Todo: print the degrees of freedom for your model
 print("Degrees of Freedom =", degrees_of_freedom(m))
@@ -86,7 +65,6 @@ solver = SolverFactory('ipopt')
 status = solver.solve(m, tee=True)
 
 m.fs.flash.report()
-m.fs.flash.control_volume.properties_out[0].temperature_bubble.display()
 
 # Parameter Estimation problem setup
 VLE_data = {"vap_benzene": 0.631425, "liq_benzene": 0.40906}
@@ -99,32 +77,14 @@ m.fs.sse = Expression(expr=(VLE_data["vap_benzene"] -
 
 m.fs.param_obj = Objective(expr=m.fs.sse, sense=minimize)
 
-m.fs.flash.control_volume.properties_in[0].tau["benzene", "toluene"].unfix()
-m.fs.flash.control_volume.properties_in[0].tau["toluene", "benzene"].unfix()
+m.fs.properties.tau["benzene", "toluene"].unfix()
+m.fs.properties.tau["toluene", "benzene"].unfix()
 
-m.fs.flash.control_volume.properties_out[0].tau["benzene", "toluene"].unfix()
-m.fs.flash.control_volume.properties_out[0].tau["toluene", "benzene"].unfix()
+m.fs.properties.tau["benzene", "toluene"].setlb(-5)
+m.fs.properties.tau["benzene", "toluene"].setub(5)
 
-# Add constraints equating tau from properties_in and from properties_out
-m.fs.c1 = Constraint(expr=m.fs.flash.control_volume.
-                     properties_in[0].tau["benzene", "toluene"] ==
-                     m.fs.flash.control_volume.
-                     properties_out[0].tau["benzene", "toluene"])
-
-m.fs.c2 = Constraint(expr=m.fs.flash.control_volume.
-                     properties_in[0].tau["toluene", "benzene"] ==
-                     m.fs.flash.control_volume.
-                     properties_out[0].tau["toluene", "benzene"])
-
-m.fs.flash.control_volume.properties_in[0].\
-    tau["benzene", "toluene"].setlb(0)
-m.fs.flash.control_volume.properties_in[0].\
-    tau["benzene", "toluene"].setub(1)
-
-m.fs.flash.control_volume.properties_in[0].\
-    tau["toluene", "benzene"].setlb(-1)
-m.fs.flash.control_volume.properties_in[0].\
-    tau["toluene", "benzene"].setub(1)
+m.fs.properties.tau["toluene", "benzene"].setlb(-5)
+m.fs.properties.tau["toluene", "benzene"].setub(5)
 
 
 print(degrees_of_freedom(m))
@@ -132,4 +92,4 @@ print(degrees_of_freedom(m))
 status = solver.solve(m, tee=True)
 
 m.fs.flash.report()
-m.fs.flash.control_volume.properties_in[0].tau.display()
+m.fs.properties.tau.display()

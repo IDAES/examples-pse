@@ -6,7 +6,7 @@ from idaes.generic_models.properties.activity_coeff_models.\
     BTX_activity_coeff_VLE import BTXParameterBlock
 
 import pyomo.contrib.parmest.parmest as parmest
-
+import pandas as pd
 # Set tag level to see output logs; here we want to see log messages
 # down to the properties level
 idaeslog.add_log_tag("properties")
@@ -77,12 +77,8 @@ def NRTL_model(data):
 variable_name = ["fs.properties.tau['benzene', 'toluene']",
                  "fs.properties.tau['toluene', 'benzene']"]
 
-# List of dictionaries
-data = [{"temperature": 367, "vap_benzene": 0.662038, "liq_benzene": 0.441008},
-        {"temperature": 368, "vap_benzene": 0.631425, "liq_benzene": 0.409061},
-        {"temperature": 369, "vap_benzene": 0.599865, "liq_benzene": 0.378040},
-        {"temperature": 370, "vap_benzene": 0.567323, "liq_benzene": 0.347899},
-        {"temperature": 371, "vap_benzene": 0.533776, "liq_benzene": 0.318596}]
+# Using excel
+data = pd.read_excel('BT_NRTL_dataset.xlsx')
 
 # Create expression to compute the sum of squared error
 def SSE(m, data):
@@ -99,8 +95,10 @@ print(SSE)
 print(parameters)
 
 
-bootstrap_theta = pest.theta_est_bootstrap(8)
+bootstrap_theta = pest.theta_est_bootstrap(25)
 print(bootstrap_theta.head())
 
 parmest.pairwise_plot(bootstrap_theta)
-parmest.pairwise_plot(bootstrap_theta, variable_name, 0.8, ['MVN', 'KDE', 'Rect'])
+parmest.pairwise_plot(bootstrap_theta, variable_name, 0.8,
+                      ['tau["benzene", "toluene"]',
+                       'tau["toluene", "benzene"]'])
