@@ -98,6 +98,4 @@ bootstrap_theta = pest.theta_est_bootstrap(10)
 print(bootstrap_theta.head())
 
 parmest.pairwise_plot(bootstrap_theta)
-parmest.pairwise_plot(bootstrap_theta, variable_name, 0.8,
-                      ['tau["benzene", "toluene"]',
-                       'tau["toluene", "benzene"]'])
+parmest.pairwise_plot(bootstrap_theta, parameters, 0.8, ['Rect', 'MVN'])
