@@ -76,8 +76,8 @@ def NRTL_model(data):
 variable_name = ["fs.properties.tau['benzene', 'toluene']",
                  "fs.properties.tau['toluene', 'benzene']"]
 
-# Using excel
-data = pd.read_excel('BT_NRTL_dataset.xlsx')
+# Load data
+data = pd.read_csv('BT_NRTL_dataset.csv')
 
 # Create expression to compute the sum of squared error
 def SSE(m, data):
@@ -87,15 +87,30 @@ def SSE(m, data):
              m.fs.state_block.mole_frac_phase_comp["Liq", "benzene"])**2)
     return expr*1E4
 
+# Initialize a parameter estimation object
 pest = parmest.Estimator(NRTL_model, data, variable_name, SSE, tee=True)
 
-SSE, parameters = pest.theta_est()
-print(SSE)
+# Run parameter estimation using all data
+obj_value, parameters = pest.theta_est()
+print(obj_value)
 print(parameters)
 
+# Run parameter estimation using bootstrap resample of the data (8 samples), 
+# plot results along with confidence regions
+bootstrap_theta = pest.theta_est_bootstrap(8)
+print(bootstrap_theta)
+parmest.pairwise_plot(bootstrap_theta, alpha=0.75, distributions=['Rect', 'MVN'])
 
-bootstrap_theta = pest.theta_est_bootstrap(10)
-print(bootstrap_theta.head())
+# Run parameter estimation using leave-N-out samples (leave 2 out, 8 samples), 
+# plot results along with confidence regions
+lNo_theta = pest.theta_est_leaveNout(2, 8)
+print(lNo_theta)
+parmest.pairwise_plot(lNo_theta, alpha=0.75, distributions=['Rect', 'MVN'])
 
-parmest.pairwise_plot(bootstrap_theta)
-parmest.pairwise_plot(bootstrap_theta, parameters, 0.8, ['Rect', 'MVN'])
+# Run a confidence region test and plot data points that 
+# fall within an alpha confidence region
+test_results = pest.confidence_region_test(bootstrap_theta, distribution='MVN', 
+                                           alphas=[0.75, 0.9])
+print(test_results)
+parmest.pairwise_plot(test_results, alpha=0.75)
+
