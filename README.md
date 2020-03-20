@@ -9,7 +9,7 @@ The examples can be viewed online at
 
 ## Install
 
-First, you need to downlooad and install the examples locally, on your own computer.
+First, you need to download and install the examples locally, on your own computer.
 Instructions for doing this are in the
 [install instructions](https://idaes-pse.readthedocs.io/en/stable/install/index.html)
 in the main IDAES-PSE toolkit documentation -- under the "Generic install"
