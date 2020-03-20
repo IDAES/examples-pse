@@ -6,6 +6,9 @@ This encapsulates generating Sphinx-ready versions of the Jupyter Notebooks and
 calling 'sphinx-build' to build the HTML docs from source. No changes in the
 Sphinx default build procedure should be required, which means this should work
 on Windows, Mac OSX, and Linux equally well.
+
+This program uses a configuration file, by default "build.yml" in the same
+directory, to set some options and tell it which directories to process.
 """
 import argparse
 import logging
