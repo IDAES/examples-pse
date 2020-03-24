@@ -6,6 +6,9 @@ This encapsulates generating Sphinx-ready versions of the Jupyter Notebooks and
 calling 'sphinx-build' to build the HTML docs from source. No changes in the
 Sphinx default build procedure should be required, which means this should work
 on Windows, Mac OSX, and Linux equally well.
+
+This program uses a configuration file, by default "build.yml" in the same
+directory, to set some options and tell it which directories to process.
 """
 import argparse
 import logging
@@ -280,7 +283,7 @@ def build_notebooks(config, **kwargs):
     num_dirs = len(nb["directories"])
     for i, item in enumerate(nb["directories"]):
         srcdir = pathlib.Path(source_base) / item["source"]
-        _log.debug(f"Converting notebooks in directory '{srcdir}'")
+        notify(f"Converting notebooks in '{srcdir}'", level=1)
         outdir = pathlib.Path(output_base) / item["output"]
         if "match" in item:
             kwargs["pat"] = re.compile(item["match"])
@@ -338,6 +341,18 @@ def extract_sphinx_error(errfile: str):
     return "\n".join(lines)
 
 
+TERM_WIDTH = 60  # TODO: figure this out
+
+
+def notify(message, level=0):
+    if level == 0:
+        print("*" * TERM_WIDTH)
+        print(f"* {message}")
+        print("*" * TERM_WIDTH)
+    else:
+        print(f"===> {message}")
+
+
 def main():
     global g_force_rebuild
 
@@ -383,6 +398,7 @@ def main():
 
     if not args.no_notebooks:
         try:
+            notify("Convert Jupyter notebooks")
             build_notebooks(config, kernel=kernel)
         except NotebookError as err:
             _log.fatal(f"Could not build notebooks: {err}")
@@ -390,6 +406,7 @@ def main():
 
     if not args.no_sphinx:
         try:
+            notify("Sphinx documentation")
             build_sphinx(config)
         except SphinxError as err:
             _log.fatal(f"Could not build Sphinx docs: {err}")
