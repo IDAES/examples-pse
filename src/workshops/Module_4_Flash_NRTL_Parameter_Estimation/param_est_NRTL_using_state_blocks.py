@@ -51,7 +51,7 @@ def NRTL_model(data):
         tau["toluene", "benzene"].fix(-0.1559)
 
     # Initialize the flash unit
-    m.fs.state_block.initialize(outlvl=idaeslog.INFO)
+    m.fs.state_block.initialize(outlvl=idaeslog.INFO_LOW)
 
     # Fix at actual temperature
     m.fs.state_block.temperature.fix(float(data["temperature"]))
@@ -94,8 +94,8 @@ print(SSE)
 print(parameters)
 
 
-bootstrap_theta = pest.theta_est_bootstrap(10)
-print(bootstrap_theta.head())
+bootstrap_theta = pest.theta_est_bootstrap(20)
+print(bootstrap_theta)
 
 parmest.pairwise_plot(bootstrap_theta)
-parmest.pairwise_plot(bootstrap_theta, parameters, 0.8, ['Rect', 'MVN'])
+parmest.pairwise_plot(bootstrap_theta, parameters, 0.8, ['Rect', 'MVN']) # three different options
