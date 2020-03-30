@@ -51,7 +51,7 @@ def NRTL_model(data):
         tau["toluene", "benzene"].fix(-0.1559)
 
     # Initialize the flash unit
-    m.fs.state_block.initialize(outlvl=idaeslog.INFO)
+    m.fs.state_block.initialize(outlvl=idaeslog.INFO_LOW)
 
     # Fix at actual temperature
     m.fs.state_block.temperature.fix(float(data["temperature"]))
