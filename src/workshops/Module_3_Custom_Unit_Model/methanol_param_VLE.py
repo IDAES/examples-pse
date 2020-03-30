@@ -26,7 +26,7 @@ from pyomo.common.config import ConfigValue, In
 # Import IDAES cores
 from idaes.core import declare_process_block_class, PhysicalParameterBlock
 
-from .methanol_state_block_VLE import IdealStateBlock
+from methanol_state_block_VLE import IdealStateBlock
 
 # Some more inforation about this module
 __author__ = "Jaffer Ghouse"
