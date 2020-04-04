@@ -30,13 +30,13 @@ except:
 
 try:
     from idaes.core import *
-    from idaes.unit_models import (PressureChanger,
+    from idaes.generic_models.unit_models import (PressureChanger,
                                CSTR,
                                Flash,
                                Heater,
                                Mixer,
                                Separator)
-    from idaes.unit_models.pressure_changer import ThermodynamicAssumption
+    from idaes.generic_models.unit_models.pressure_changer import ThermodynamicAssumption
 
     from idaes.core.util.model_statistics import degrees_of_freedom
 
