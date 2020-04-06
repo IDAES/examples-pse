@@ -20,7 +20,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            pytest -m unit tests
+            pytest -m "not integration" tests
       - store_artifacts:
           path: test-reports
           destination: test-reports

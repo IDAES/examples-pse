@@ -67,27 +67,7 @@ dumping errors to, by default, "sphinx-errors.txt" as well as logging them.
 It doesn't do any other accommodations, as all the work of dealing what Sphinx wants
 to do by default is handled in the NotebookBuilder.
 
-Some example command-lines::
-
-    # build the docs, only re-running notebooks whose converted output is "stale",
-    # i.e. the notebook changed more recently
-    ./build.py
-
-    # just re-run the Sphinx documentation generator
-    ./build.py -N
-
-    # rebuild the notebooks, though this will also convert them to HTML
-    # output. Do not run Sphinx. Rebuild *all* the notebooks, whether they
-    # are "stale" or not.
-    ./build.py -SR
-
-    # run with a custom configuration file
-    ./build.py -c my-config.yaml
-
-    # don't really do anything except read/parse configuration file; so this
-    # can serve as a test of that file's syntax
-    ./build.py -c my-config.yaml -NS
-
+For example command lines see the README.md in this directory.
 """
 from abc import ABC, abstractmethod
 import argparse
@@ -100,15 +80,18 @@ import subprocess
 import re
 from string import Template
 import sys
+import tempfile
 import time
 from typing import TextIO, List
 import yaml
 
 #
-import nbformat
-from nbconvert.exporters import HTMLExporter, RSTExporter
+import nbconvert
+from nbconvert.exporters import HTMLExporter, RSTExporter, NotebookExporter
 from nbconvert.writers import FilesWriter
 from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
+import nbformat
+from traitlets.config import Config
 
 _log = logging.getLogger("build_notebook_html")
 _hnd = logging.StreamHandler()
@@ -153,12 +136,13 @@ class Settings:
             "error_file": "sphinx-errors.txt",
         },
         "notebook": {
-            "error-file": "notebook-errors.txt",
-            "continue": True,
+            "error_file": "notebook-errors.txt",
+            "continue_on_error": True,
             "template": "{output}/jupyter_notebook_sphinx.tpl",
             "directories": [],
             "kernel": None,
             "test_mode": False,
+            "clean": False,
         },
     }
 
@@ -190,8 +174,8 @@ class Settings:
                  otherwise use current default section (otherwise ValueError)
             default: Default value. A little different than dict.get(), since
                  providing no value will cause a missing key to raise an error,
-                 you have to explicitly pass default=None (or a value of your
-                 choosing) to get the default value to be used.
+                 you have to explicitly pass default=<value> to get the default
+                 value to be used.
 
         Raises:
             ValueError: if the key is malformed
@@ -205,7 +189,7 @@ class Settings:
         values = self.d.get(section, self.DEFAULTS[section])
         if val not in values:
             if default is self._NULL:
-                raise KeyError(f"unknown value '{val}' in section '{section}'")
+                raise KeyError(f"get() failed for value '{val}' in section '{section}'")
             return self._subst_paths(default)
         return self._subst_paths(values[val])
 
@@ -223,7 +207,8 @@ class Settings:
             section, val = parts
         if section not in self.DEFAULTS:
             raise KeyError(
-                f"unknown section '{section}' not in: " f"{', '.join(self.DEFAULTS)}"
+                f"get() failed for section '{section}',"
+                f" not in: {', '.join(self.DEFAULTS)}"
             )
         return section, val
 
@@ -237,6 +222,8 @@ class Builder(ABC):
     """Abstract base class for notebook and sphinx builders.
     """
 
+    _rpath = None
+
     def __init__(self, settings):
         self.s = settings
 
@@ -248,6 +235,12 @@ class Builder(ABC):
         for key, value in options.items():
             self.s.set(key, value)
 
+    @classmethod
+    def root_path(cls):
+        if cls._rpath is None:
+            cls._rpath = Path(__file__).parent.absolute()
+        return cls._rpath
+
 
 class NotebookBuilder(Builder):
     """Run Jupyter notebooks and render them for viewing.
@@ -255,17 +248,25 @@ class NotebookBuilder(Builder):
 
     # Map format to file extension
     FORMATS = {"html": ".html", "rst": ".rst"}
+
     HTML_IMAGE_DIR = "_images"
+    TEST_SUFFIX = "_test"  # for notebooks *with* tests
+    CLEAN_SUFFIX = "_clean"  # for notebooks without tests
+    REMOVE_CELL_TAG = "remove_cell"
+
+    JUPYTER_NB_VERSION = 4  # for parsing
 
     @dataclass
     class Results:
         """Stores results from build().
         """
+
         _t = None
         failed: List[str]
         dirs_processed: List[str]
-        total: int = 0
         duration: float = -1.0
+        n_fail: int = 0
+        n_success: int = 0
 
         def start(self):
             self._t = time.time()
@@ -282,6 +283,7 @@ class NotebookBuilder(Builder):
         self._imgdir = None  # cached location of images in HTML tree
         self._nb_error_file = None  # error file, for notebook execution failures
         self._results = None  # record results here
+        self._nb_remove_config = None  # traitlets.Config for removing test cells
 
     def build(self, options):
         self.s.set_default_section("notebook")
@@ -289,13 +291,23 @@ class NotebookBuilder(Builder):
         self._open_error_file()
         self._ep = self._create_preprocessor()
         self._imgdir = (
-            Path(self.s.get("paths.output"))
+            self.root_path()
+            / self.s.get("paths.output")
             / self.s.get("paths.html")
             / self.HTML_IMAGE_DIR
         )
         if _log.isEnabledFor(logging.DEBUG):
-            _log.debug("settings for build: {self.s}")
+            _log.debug(f"settings for build: {self.s}")
         self._read_template()
+        # Set up configuration for removing specially tagged cells
+        c = Config()
+        # Configure tag removal
+        c.TagRemovePreprocessor.remove_cell_tags = (self.REMOVE_CELL_TAG,)
+        # Configure for exporters
+        c.NotebookExporter.preprocessors = [
+            "nbconvert.preprocessors.TagRemovePreprocessor"
+        ]  # for some reason, this only works with the full module path
+        self._nb_remove_config = c
         nb_dirs = self.s.get("directories")
         self._results = self.Results(failed=[], dirs_processed=[])
         self._results.start()
@@ -308,15 +320,15 @@ class NotebookBuilder(Builder):
         """Print some messages to the user.
         """
         r = self._results  # alias
-
+        total = r.n_fail + r.n_success
         notify(
-            f"{r.total} notebooks in {len(r.dirs_processed)} "
+            f"Built {r.n_success}/{total} notebooks in {len(r.dirs_processed)} "
             f"directories in {r.duration:.3f} seconds"
         )
         notify("Notebook build summary", level=1)
-        if r.total == 0 and len(r.failed) == 0:
+        if total == 0:
             notify(f"No notebooks converted", level=2)
-        elif len(r.failed) == 0:
+        elif r.n_fail == 0:
             notify(f"All {r.total} notebooks executed successfully", level=2)
         else:
             notify(
@@ -354,7 +366,7 @@ class NotebookBuilder(Builder):
         return ExecutePreprocessor(timeout=600, **kwargs)
 
     def _read_template(self):
-        nb_template_path = Path(self.s.get("template"))
+        nb_template_path = self.root_path() / self.s.get("template")
         try:
             with nb_template_path.open("r") as f:
                 nb_template = Template(f.read())
@@ -364,7 +376,6 @@ class NotebookBuilder(Builder):
 
     def _build_tree(self, info: dict):
         """"""
-        ex_msg = "" if self.s.get("execute", True) else " (without executing)"
         try:
             source, output = info["source"], info["output"]
             match = info.get("match", None)
@@ -374,23 +385,22 @@ class NotebookBuilder(Builder):
                 f"'output', but got: {info}"
             )
         sroot, oroot = (
-            Path(self.s.get("paths.source")),
-            Path(self.s.get("paths.output")),
+            self.root_path() / self.s.get("paths.source"),
+            self.root_path() / self.s.get("paths.output"),
         )
         srcdir, outdir = sroot / source, oroot / output
-        notify(f"Converting notebooks{ex_msg} in '{srcdir}'", level=1)
+        notify(f"Converting notebooks in '{srcdir}'", level=1)
         self._match_expr = re.compile(match) if match else None
         # build, starting at this directory
-        n = self._build_subtree(srcdir, outdir, depth=1)
-        self._results.total += n
+        self._build_subtree(srcdir, outdir, depth=1)
         self._results.dirs_processed.append(srcdir)
 
-    def _build_subtree(self, srcdir: Path, outdir: Path, depth: int) -> int:
+    def _build_subtree(self, srcdir: Path, outdir: Path, depth: int):
         """Build all notebooks in a given directory, exporting into the given output
         format.
         """
         _log.debug(f"build.begin subtree={srcdir}")
-        total = 0
+        success, failed = 0, 0
         for entry in srcdir.iterdir():
             filename = entry.parts[-1]
             if filename.startswith(".") or filename.startswith("__"):
@@ -398,7 +408,7 @@ class NotebookBuilder(Builder):
                 continue  # e.g. .ipynb_checkpoints
             if entry.is_dir():
                 # build sub-directory (filename is really directory name)
-                total += self._build_subtree(entry, outdir / filename, depth + 1)
+                self._build_subtree(entry, outdir / filename, depth + 1)
             elif entry.suffix in IMAGE_SUFFIXES:
                 shutil.copy(str(entry), str(self._imgdir))
                 _log.debug(f"copied image {entry} to {self._imgdir}/")
@@ -413,24 +423,27 @@ class NotebookBuilder(Builder):
                 if not self.s.get("rebuild") and self._is_cached(entry, outdir):
                     _log.info(f"skip converting notebook '{entry}': not changed")
                 else:
-                    _log.info(f"converting notebook '{entry}'")
-                    continue_on_err = self.s.get("continue", None)
+                    notify(f"{entry}", level=2)
+                    continue_on_err = self.s.get("continue_on_error", None)
                     try:
                         self._convert(entry, outdir, depth)
-                        total += 1
+                        success += 1
                     except NotebookExecError as err:
+                        failed += 1
                         self._notebook_error(entry, err)
                         if continue_on_err:
                             _log.warning(f"generating partial output for '{entry}'")
                             continue
                         raise
                     except NotebookError as err:
+                        failed += 1
                         if continue_on_err:
                             _log.warning(f"failed to convert {entry}: {err}")
                             continue
                         raise  # abort all processing
-        _log.debug(f"build.end subtree={srcdir} n={total}")
-        return total
+        _log.debug(f"build.end subtree={srcdir} {success}/{success + failed}")
+        self._results.n_fail += failed
+        self._results.n_success += success
 
     def _notebook_error(self, entry, error):
         filename = str(entry)
@@ -442,42 +455,115 @@ class NotebookBuilder(Builder):
     def _convert(self, entry: Path, outdir: Path, depth: int):
         """Convert a notebook.
 
-        Parameters
-        ----------
-        entry: notebook to convert
-        outdir: output directory for .html and .rst files
-        depth: depth below root, for fixing image paths
+        Args:
+            entry: notebook to convert
+            outdir: output directory for .html and .rst files
+            depth: depth below root, for fixing image paths
         """
+        if self.s.get("test_mode"):
+            self._parse_and_execute(entry)
+            return  # skip export
+        if self._has_tagged_cells(entry):
+            _log.debug(f"notebook '{entry}' has test cell(s)")
+            entries, tmpdir = self._strip_tagged_cells(entry)
+        else:
+            entries, tmpdir = [entry], None
+        # main loop
+        try:
+            for e in entries:  # one or two notebooks to export
+                _log.debug(f"exporting '{e}' to directory {outdir}")
+                nb = self._parse_and_execute(e)
+                wrt = FilesWriter()
+                # export each notebook into multiple target formats
+                for (exp, postprocess_func, pp_args) in (
+                    (RSTExporter(), self._postprocess_rst, ()),
+                    (HTMLExporter(), self._postprocess_html, (depth,)),
+                ):
+                    _log.debug(f"export '{e}' with {exp}")
+                    (body, resources) = exp.from_notebook_node(nb)
+                    body = postprocess_func(body, *pp_args)
+                    wrt.build_directory = str(outdir)
+                    wrt.write(body, resources, notebook_name=e.stem)
+            # create a 'wrapper' page for the main (first) entry
+            self._create_notebook_wrapper_page(entries[0].stem, outdir)
+        finally:
+            # clean up any temporary directories
+            if tmpdir is not None:
+                _log.debug(f"remove temporary directory at '{tmpdir.name}'")
+                shutil.rmtree(str(tmpdir))
+
+    def _has_tagged_cells(self, entry: Path) -> bool:
+        """Quickly check whether this notebook has any cells with the "special" tag.
+
+        Returns:
+            True = yes, it does; False = no specially tagged cells
+        Raises:
+            NotebookFormatError, if notebook at 'entry' is not parseable
+        """
+        # parse the notebook (assuming this is fast; otherwise should cache it)
+        try:
+            nb = nbformat.read(str(entry), as_version=self.JUPYTER_NB_VERSION)
+        except nbformat.reader.NotJSONError:
+            raise NotebookFormatError(f"'{entry}' is not JSON")
+        # look for tagged cells; return immediately if one is found
+        for i, c in enumerate(nb.cells):
+            if "tags" in c.metadata and self.REMOVE_CELL_TAG in c.metadata.tags:
+                _log.debug(f"Found {self.REMOVE_CELL_TAG} tag in cell {i}")
+                return True  # can stop now, one is enough
+        # no tagged cells
+        return False
+
+    def _strip_tagged_cells(self, entry):
+        """Split a notebook into one with and without the specially tagged cells.
+        """
+        if self.s.get("clean"):
+            # generate a "clean" notebook in place of original
+            # copy 'raw' original to <name>_test.ipynb
+            entry_copy = Path(entry.parent) / f"{entry.stem}{self.TEST_SUFFIX}.ipynb"
+            _log.debug(f"copy raw notebook '{entry}' -> '{entry_copy}'")
+            shutil.copy(entry, entry_copy)
+            # replace 'raw' notebook with stripped one
+            (body, resources) = NotebookExporter(
+                config=self._nb_remove_config  # config removes cells with special tags
+            ).from_filename(str(entry))
+            wrt = nbconvert.writers.FilesWriter()
+            wrt.build_directory = str(entry.parent)
+            wrt.write(body, resources, notebook_name=entry.stem)
+            _log.debug(f"stripped tags from '{entry}'")
+            return [entry, entry_copy], None
+        else:
+            # copy notebook to a temporary location, and generate a stripped
+            # version there. No files are modified in the original directory.
+            tmpdir = Path(tempfile.mkdtemp())  # already checked this
+            _log.debug(f"run notebook in temporary directory: {tmpdir}")
+            raw_entry = tmpdir / entry.name
+            shutil.copy(entry, raw_entry)  # copy into temp dir
+            (body, resources) = NotebookExporter(
+                config=self._nb_remove_config  # config removes cells with special tags
+            ).from_filename(str(raw_entry))
+            wrt = nbconvert.writers.FilesWriter()
+            wrt.build_directory = str(tmpdir)
+            cleaned_entry = tmpdir / f"{entry.stem}{self.CLEAN_SUFFIX}.ipynb"
+            wrt.write(body, resources, notebook_name=cleaned_entry.stem)
+            _log.debug(f"stripped tags from '{raw_entry}' -> '{cleaned_entry}'")
+            return [raw_entry, cleaned_entry], tmpdir
+
+    def _parse_and_execute(self, entry):
         # parse
         _log.debug(f"parsing '{entry}'")
         try:
-            nb = nbformat.read(str(entry), as_version=4)
+            nb = nbformat.read(str(entry), as_version=self.JUPYTER_NB_VERSION)
         except nbformat.reader.NotJSONError:
             raise NotebookFormatError(f"'{entry}' is not JSON")
         except AttributeError:
             raise NotebookFormatError(f"'{entry}' has invalid format")
         # execute
-        if self.s.get("execute"):
-            _log.debug(f"executing '{entry}'")
-            try:
-                self._ep.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
-            except (CellExecutionError, NameError) as err:
-                raise NotebookExecError(f"execution error for '{entry}': {err}")
-        # export
-        if self.s.get("test_mode"):
-            return  # skip export
-        _log.debug(f"exporting '{entry}'")
-        wrt = FilesWriter()
-        for (exp, postprocess_func, pp_args) in (
-            (RSTExporter(), self._postprocess_rst, ()),
-            (HTMLExporter(), self._postprocess_html, (depth,)),
-        ):
-            (body, resources) = exp.from_notebook_node(nb)
-            body = postprocess_func(body, *pp_args)
-            wrt.build_directory = str(outdir)  # write converted NB to output dir
-            wrt.write(body, resources, notebook_name=entry.stem)
-        # create a 'wrapper' page
-        self._create_notebook_wrapper_page(entry.stem, outdir)
+        _log.debug(f"executing '{entry}'")
+        try:
+            self._ep.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
+        except (CellExecutionError, NameError) as err:
+            raise NotebookExecError(f"execution error for '{entry}': {err}")
+        return nb
 
     def _create_notebook_wrapper_page(self, nb_file: str, output_dir: Path):
         """Generate a Sphinx documentation page for the Module.
@@ -573,15 +659,22 @@ class SphinxBuilder(Builder):
     def build(self, options):
         self.s.set_default_section("sphinx")
         self._merge_options(options)
-        args = self.s.get("args").split()
-        html_dir = Path(self.s.get("paths.output")) / self.s.get("paths.html")
+        raw_args = self.s.get("args")
+        _log.debug(f"Sphinx args from settings: {raw_args}")
+        args = raw_args.split()
+        # prepend root path to last source and output directories
+        args[-2] = str(self.root_path() / args[-2])
+        args[-1] = str(self.root_path() / args[-1])
+        html_dir = (
+            self.root_path() / self.s.get("paths.output") / self.s.get("paths.html")
+        )
         if not os.path.exists(html_dir):
             _log.warning("Target HTML directory {html_dir} does not exist: creating")
             html_dir.mkdir(parents=True)
         errfile = self.s.get("error_file")
         cmdargs = ["sphinx-build", "-a", "-w", errfile] + args
         cmdline = " ".join(cmdargs)
-        _log.info(f"Running Sphinx command: {cmdline}")
+        notify(f"Running Sphinx command: {cmdline}", level=1)
         proc = subprocess.Popen(cmdargs)
         proc.wait()
         status = proc.returncode
@@ -615,22 +708,82 @@ def notify(message, level=0):
         print(f".... {message}")
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-N", "--no-notebooks", action="store_true")
-    ap.add_argument("-E", "--no-exec", action="store_true")
-    ap.add_argument("-S", "--no-sphinx", action="store_true")
-    ap.add_argument("-c", "--config", default="build.yml")
-    ap.add_argument("-k", "--kernel", default=None, dest="kernel")
-    ap.add_argument(
-        "-R",
-        "--rebuild-all",
-        default=False,
-        action="store_true",
-        help="Rebuild all notebooks",
+def get_git_branch():
+    _log.debug("Run command: git branch --list")
+    proc = subprocess.run(
+        ["git", "branch", "--list"], encoding="utf-8", capture_output=True
     )
-    ap.add_argument("-v", "--verbose", action="count", dest="vb", default=0)
+    if proc.returncode != 0:
+        raise RuntimeError(proc.stderr)
+    branch = None
+    for line in proc.stdout.split("\n"):
+        if len(line) > 1 and line[0] == "*":  # current branch
+            branch = line[1:].strip()
+    if branch is None:
+        raise RuntimeError("cannot find current branch in output")
+    return branch
+
+
+# Run modes
+MODE_DEV, MODE_REL, MODE_TEST = "dev", "release", "test"
+
+
+def main():
+    ap = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Build documentation and Jupyter notebooks",
+        epilog=f"Modes of operation\n"
+        f"------------------\n"
+        f"* {MODE_DEV:7s}  Build docs for local development\n"
+        f"* {MODE_TEST:7s}  Run all notebooks for local testing. "
+        f"* {MODE_REL:7s}  Build notebooks and docs for release\n"
+        f"Implies '--no-docs' option.\n",
+    )
+    ap.add_argument(
+        "mode",
+        help="Mode of operation (see below)",
+        choices=[MODE_DEV, MODE_REL, MODE_TEST],
+    )
+    ap.add_argument(
+        "-c",
+        "--config",
+        default="build.yml",
+        help="Location of configuration file (default=./build.yml)",
+    )
+    ap.add_argument(
+        "--no-notebooks", action="store_true", help="Do not run any Jupyter notebooks"
+    )
+    ap.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        dest="vb",
+        help="Increase verbosity",
+        default=0,
+    )
     args = ap.parse_args()
+
+    # Need temporary directories in "dev" mode
+    if args.mode == MODE_DEV and tempfile.gettempdir() == os.getcwd():
+        ap.error(
+            "ABORT: temporary directory is going to be in "
+            "the current directory. Please set one of the "
+            "following environment variables to a suitable "
+            "directory: TMPDIR, TEMP, or TMP"
+        )
+
+    # Cannot be in master branch for "release" mode
+    if args.mode == MODE_REL:
+        branch = None
+        try:
+            branch = get_git_branch()
+        except RuntimeError as err:
+            ap.error(f"Cannot run 'git' to get branch: {err}")
+        if not branch.lower().startswith("release"):
+            ap.error(
+                f"Current git branch is '{branch}', but in '{MODE_REL}' mode,\n"
+                f"the branch name must start with 'release' (case-insensitive)"
+            )
 
     # Set verbosity
     if args.vb > 1:
@@ -651,15 +804,30 @@ def main():
         return 1
 
     # Process Jupyter Notebooks
-    if not args.no_notebooks:
+    if (args.mode == MODE_REL) or (not args.no_notebooks):
+        if args.mode == MODE_REL and args.no_notebooks:
+            notify(
+                "Warning: 'release' mode does not honor the --no-notebooks flag. "
+                "Building notebooks anyways, sorry.",
+                1,
+            )
         try:
             notify("Convert Jupyter notebooks")
             nbb = NotebookBuilder(settings)
+            # set options based on mode
+            clean, rebuild, test_mode, cont = None, None, None, None
+            if args.mode == MODE_REL:
+                clean, rebuild, test_mode, cont = True, True, False, False
+            elif args.mode == MODE_DEV:
+                clean, rebuild, test_mode, cont = False, False, False, True
+            elif args.mode == MODE_TEST:
+                clean, rebuild, test_mode, cont = False, True, True, True
             nbb.build(
                 dict(
-                    kernel=args.kernel,
-                    execute=not args.no_exec,
-                    rebuild=args.rebuild_all,
+                    rebuild=rebuild,
+                    test_mode=test_mode,
+                    clean=clean,
+                    continue_on_error=cont,
                 )
             )
         except NotebookError as err:
@@ -668,9 +836,9 @@ def main():
         nbb.report()
 
     # Build Sphinx documentation
-    if not args.no_sphinx:
+    if args.mode != MODE_TEST:
         try:
-            notify("Sphinx documentation")
+            notify("Build documentation with Sphinx")
             spb = SphinxBuilder(settings)
             spb.build({})
         except SphinxError as err:
