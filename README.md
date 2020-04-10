@@ -26,7 +26,7 @@ can run.
 
 To run the Python scripts, navigate to the directory in which they
 are held and either use a command or graphical Python interface (see this 
-[page on how to run Python on Windows](https://docs.python.org/3/faq/windows.html)).
+[README-developer](README-developer.md)).
 
 ### Running Jupyter Notebooks
 
