@@ -22,7 +22,7 @@ copyright = 'DOE Institute for the Design of Advanced Energy Systems (IDAES), 20
 author = 'Dan Gunter'
 
 # The full version, including alpha/beta/rc tags
-release = '1.5.0rc2'
+release = '1.5.0'
 
 
 # For Read the Docs theme
