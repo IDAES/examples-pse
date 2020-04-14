@@ -410,6 +410,7 @@ class NotebookBuilder(Builder):
                 # build sub-directory (filename is really directory name)
                 self._build_subtree(entry, outdir / filename, depth + 1)
             elif entry.suffix in IMAGE_SUFFIXES:
+                os.makedirs(self._imgdir, exist_ok=True)
                 shutil.copy(str(entry), str(self._imgdir))
                 _log.debug(f"copied image {entry} to {self._imgdir}/")
             elif entry.suffix == NOTEBOOK_SUFFIX:
@@ -725,7 +726,7 @@ def get_git_branch():
 
 
 # Run modes
-MODE_DEV, MODE_REL, MODE_TEST = "dev", "release", "test"
+MODE_DEV, MODE_REL, MODE_TEST = "dev", "rel", "test"
 
 
 def main():
@@ -735,7 +736,7 @@ def main():
         epilog=f"Modes of operation\n"
         f"------------------\n"
         f"* {MODE_DEV:7s}  Build docs for local development\n"
-        f"* {MODE_TEST:7s}  Run all notebooks for local testing. "
+        f"* {MODE_TEST:7s}  Run all notebooks for local testing\n"
         f"* {MODE_REL:7s}  Build notebooks and docs for release\n"
         f"Implies '--no-docs' option.\n",
     )
@@ -772,17 +773,17 @@ def main():
             "directory: TMPDIR, TEMP, or TMP"
         )
 
-    # Cannot be in master branch for "release" mode
+    # Cannot be in master branch for "rel" mode
     if args.mode == MODE_REL:
         branch = None
         try:
             branch = get_git_branch()
         except RuntimeError as err:
             ap.error(f"Cannot run 'git' to get branch: {err}")
-        if not branch.lower().startswith("release"):
+        if not branch.endswith("_rel"):
             ap.error(
                 f"Current git branch is '{branch}', but in '{MODE_REL}' mode,\n"
-                f"the branch name must start with 'release' (case-insensitive)"
+                f"the branch name must end with '_rel'"
             )
 
     # Set verbosity
