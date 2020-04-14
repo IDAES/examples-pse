@@ -1,9 +1,28 @@
+#
+# Configuration file for build.py,
+# a notebook and documentation builder
+#
+
+# Paths used for all sections
+paths:
+  # where the Jupyter notebook source files are
+  source: src
+  # where the documentation (generated, hand-written) lives
+  output: docs
+  # the HTML output directory
+  html: _build/html
+# Settings for running and converting Jupyter Notebooks
 notebook:
-    continue: true
-    source_base: src
-    output_base: docs
-    html_dir: _build/html
+    # continue on errors (otherwise stop)
+    continue_on_error: true
+    # where to put error files. special values: '__stdout__',  '__stderr__'
+    error_file: notebook-errors.txt
+    # template file for the "_doc" wrapper RST file
     template: docs/jupyter_notebook_sphinx.tpl
+    # List of directories to process. For each, source directory relative to
+    # paths.source and output directory relative to paths.output. The "match"
+    # string is a regular expression that acts as a filter: only files that
+    # have that expression (here a simple string) in them will be processed.
     directories:
         - source: workshops
           output: tutorials
@@ -15,6 +34,9 @@ notebook:
           match: Solution
         - source: matopt
           output: matopt
+# Settings for running Sphinx build
 sphinx:
+    # Arguments that are given to 'sphinx-build' after arguments fixed in the code
     args: "-b html -T docs docs/_build/html"
+    # Error file for the sphinx errors (no special values)
     error_file: sphinx-errors.txt
