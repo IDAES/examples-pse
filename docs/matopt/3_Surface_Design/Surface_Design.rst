@@ -12,8 +12,6 @@ We start by importing several standard Python modules for convienience.
 
 .. code:: ipython3
 
-    import os 
-    from math import sqrt
     import numpy as np
     from copy import deepcopy
 
@@ -21,22 +19,7 @@ Next, we import MatOpt.
 
 .. code:: ipython3
 
-    from matopt import *
-
-
-::
-
-
-    ---------------------------------------------------------------------------
-
-    ModuleNotFoundError                       Traceback (most recent call last)
-
-    <ipython-input-2-be5adc2fb850> in <module>
-    ----> 1 from matopt import *
-    
-
-    ModuleNotFoundError: No module named 'matopt'
-
+    from apps.matopt import *
 
 Representing Materials
 ----------------------
@@ -140,7 +123,7 @@ lowest surface energy design.
     maxSurfE = 999
     CatWeight = 1.0
 
-To begin, we start by creating a **MatOptModel** object to hold
+To begin, we start by creating a ***MatOptModel*** object to hold
 information about the model.
 
 .. code:: ipython3
@@ -148,8 +131,8 @@ information about the model.
     m = MatOptModel(Canv,Atoms)
 
 By default, several basic variables are pre-defined. See the first
-example, **Monometallic_Nanocluster_Design.ipynb** for a description of
-basic variables, expressions, and constraint rules.
+example, ***Monometallic\_Nanocluster\_Design.ipynb*** for a description
+of basic variables, expressions, and constraint rules.
 
 First, we introduce two rules to fix special sites in the design. We fix
 the bottom two layers of atoms to exist, creating underlying bulk layers
@@ -238,110 +221,58 @@ maximize method to optimize the balance of activity and stability
 
 .. code:: ipython3
 
-    D = m.maximize(m.ActAndStab,tilim=360)
+    D = None
+    try:
+        D = m.maximize(m.ActAndStab,tilim=360)
+    except:
+        print('MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)')
 
 
 .. parsed-literal::
 
     
-    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer 12.6.1.0
+    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
       with Simplex, Mixed Integer & Barrier Optimizers
     5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-    Copyright IBM Corp. 1988, 2014.  All Rights Reserved.
+    Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
     
     Type 'help' for a list of available commands.
     Type 'help' followed by a command name for more
     information on commands.
     
     CPLEX> Logfile 'cplex.log' closed.
-    Logfile '/tmp/tmppgmxz9vy.cplex.log' open.
+    Logfile '/tmp/tmpttwbxhv_.cplex.log' open.
     CPLEX> New value for absolute mixed integer optimality gap tolerance: 0
     CPLEX> New value for mixed integer optimality gap tolerance: 0
     CPLEX> New value for time limit in seconds: 360
-    CPLEX> Problem '/tmp/tmpmqh62f6a.pyomo.lp' read.
-    Read time = 0.01 sec. (0.32 ticks)
-    CPLEX> Problem name         : /tmp/tmpmqh62f6a.pyomo.lp
+    CPLEX> Problem '/tmp/tmpx0l04jq4.pyomo.lp' read.
+    Read time = 0.05 sec. (0.34 ticks)
+    CPLEX> Problem name         : /tmp/tmpx0l04jq4.pyomo.lp
     Objective sense      : Maximize
-    Variables            :    1428  [Nneg: 321,  Box: 65,  Free: 66,  Binary: 895,
+    Variables            :    1620  [Nneg: 1,  Box: 65,  Free: 322,  Binary: 1151,
                                      General Integer: 80,  Other: 1]
     Objective nonzeros   :       1
-    Linear constraints   :    3573  [Less: 3232,  Equal: 341]
-      Nonzeros           :    8656
+    Linear constraints   :    4085  [Less: 3680,  Greater: 64,  Equal: 341]
+      Nonzeros           :    9808
       RHS nonzeros       :    1029
-    SOS                  :      64  [SOS2: 64, 320 members, all continuous]
     
     Variables            : Min LB: 0.000000         Max UB: 999.0000       
     Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
     Linear constraints   :
-      Nonzeros           : Min   : 0.01438000       Max   : 12.00000       
+      Nonzeros           : Min   : 0.03741000       Max   : 12.00000       
       RHS nonzeros       : Min   : 0.1012080        Max   : 12.00000       
-    CPLEX> MIP Presolve eliminated 1 redundant SOS constraints.
-    Tried aggregator 2 times.
-    MIP Presolve eliminated 2237 rows and 539 columns.
-    MIP Presolve modified 488 coefficients.
-    Aggregator did 256 substitutions.
-    Reduced MIP has 1080 rows, 633 columns, and 4051 nonzeros.
-    Reduced MIP has 301 binaries, 66 generals, 63 SOSs, and 0 indicators.
-    Presolve time = 0.01 sec. (10.00 ticks)
-    Probing fixed 0 vars, tightened 70 bounds.
-    Probing time = 0.03 sec. (30.84 ticks)
-    Tried aggregator 1 time.
-    Reduced MIP has 1080 rows, 633 columns, and 4051 nonzeros.
-    Reduced MIP has 301 binaries, 66 generals, 63 SOSs, and 0 indicators.
-    Presolve time = 0.00 sec. (2.83 ticks)
-    Probing fixed 0 vars, tightened 6 bounds.
-    Probing time = 0.02 sec. (23.29 ticks)
-    Clique table members: 2849.
-    MIP emphasis: balance optimality and feasibility.
-    MIP search method: dynamic search.
-    Parallel mode: deterministic, using up to 8 threads.
-    Root relaxation solution time = 0.01 sec. (13.74 ticks)
+    CPLEX> CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
     
-            Nodes                                         Cuts/
-       Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+    Error termination, CPLEX Error  1016.
+    Solution time =    0.00 sec.
+    Deterministic time = 0.00 ticks  (0.00 ticks/sec)
     
-          0     0        1.0000   182                      1.0000      196         
-    *     0+    0                            0.0000        1.0000              --- 
-          0     0        1.0000   148        0.0000      Cuts: 13      249     --- 
-          0     0        1.0000   269        0.0000     Cuts: 167      427     --- 
-    *     0+    0                            0.0625        1.0000              --- 
-          0     0        1.0000   187        0.0625      Cuts: 15      460     --- 
-          0     0        1.0000   310        0.0625      Cuts: 96      620     --- 
-          0     2        1.0000   274        0.0625        1.0000      620     --- 
-    Elapsed time = 0.47 sec. (420.18 ticks, tree = 0.00 MB, solutions = 2)
-    *   281+  116                            0.1875        1.0000           433.33%
-        296    60        0.8914   209        0.1875        1.0000    10764  433.33%
-    *   478+  123                            0.2500        1.0000           300.00%
-        770   161        0.8694   239        0.2500        1.0000    30637  300.00%
-       1219   303        0.9495   289        0.2500        1.0000    57291  300.00%
-    *  1580   432      integral     0        0.3750        0.9460    73750  152.27%
-       1833   217        0.4420   128        0.3750        0.8149    88172  117.32%
-    
-    Clique cuts applied:  6
-    Cover cuts applied:  17
-    Implied bound cuts applied:  249
-    Mixed integer rounding cuts applied:  1
-    Zero-half cuts applied:  3
-    
-    Root node processing (before b&c):
-      Real time             =    0.47 sec. (419.13 ticks)
-    Parallel b&c, 8 threads:
-      Real time             =    1.16 sec. (1061.27 ticks)
-      Sync time (average)   =    0.27 sec.
-      Wait time (average)   =    0.28 sec.
-                              ------------
-    Total (root+branch&cut) =    1.63 sec. (1480.40 ticks)
-    
-    Solution pool: 6 solutions saved.
-    
-    MIP - Integer optimal solution:  Objective =  3.7500000000e-01
-    Solution time =    1.63 sec.  Iterations = 98707  Nodes = 2303
-    Deterministic time = 1480.40 ticks  (908.51 ticks/sec)
-    
-    CPLEX> Incumbent solution written to file '/tmp/tmpqdq58zzx.cplex.sol'.
-    CPLEX> The solver exited normally.
-    A feasible and provably optimal solution is available.
-    The Design has objective: 0.375
+    CPLEX> CPLEX Error  1217: No solution exists.
+    No file written.
+    CPLEX> ERROR: evaluating object as numeric value: obj
+            (object: <class 'pyomo.core.base.objective.SimpleObjective'>)
+        No value for uninitialized NumericValue object obj
+    MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
 
 
 Processing Solutions

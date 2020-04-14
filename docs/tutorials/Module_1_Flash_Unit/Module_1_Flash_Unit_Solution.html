@@ -13077,17 +13077,42 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Surface-Design">Surface Design<a class="anchor-link" href="#Surface-Design">&#182;</a></h1><p>This notebook serves as an example application of the MatOpt framework.
-We consider an example optimization problem of designing a monometallic nanostructured catalyst surface.</p>
-
+<h1 id="Module-1:-Flash-Unit">Module 1: Flash Unit<a class="anchor-link" href="#Module-1:-Flash-Unit">&#182;</a></h1><p>In this module, we will familiarize ourselves with the IDAES framework by creating and working with a flowsheet that contains a single flash tank. The flash tank will be used to perform separation of Benzene and Toluene. The inlet specifications for this flash tank are:</p>
+<p>Inlet Specifications:</p>
+<ul>
+<li>Mole fraction (Benzene) = 0.5</li>
+<li>Mole fraction (Toluene) = 0.5</li>
+<li>Pressure = 101325 Pa</li>
+<li>Temperature = 368 K</li>
+</ul>
+<p>We will complete the following tasks:</p>
+<ul>
+<li>Create the model and the IDAES Flowsheet object</li>
+<li>Import the appropriate property packages</li>
+<li>Create the flash unit and set the operating conditions</li>
+<li>Initialize the model and simulate the system</li>
+<li>Demonstrate analyses on this model through some examples and exercises</li>
+</ul>
+<h2 id="Key-links-to-documentation">Key links to documentation<a class="anchor-link" href="#Key-links-to-documentation">&#182;</a></h2><ul>
+<li>Main IDAES online documentation page: <a href="https://idaes-pse.readthedocs.io/en/latest/index.html">https://idaes-pse.readthedocs.io/en/latest/index.html</a></li>
+<li>Core IDAES Library: <a href="https://idaes-pse.readthedocs.io/en/latest/core/index.html">https://idaes-pse.readthedocs.io/en/latest/core/index.html</a><ul>
+<li>Flowsheet: <a href="https://idaes-pse.readthedocs.io/en/latest/core/flowsheet_model.html">https://idaes-pse.readthedocs.io/en/latest/core/flowsheet_model.html</a></li>
+<li>Property Packages: <a href="https://idaes-pse.readthedocs.io/en/latest/core/properties.html">https://idaes-pse.readthedocs.io/en/latest/core/properties.html</a></li>
+<li>Unit Model: <a href="https://idaes-pse.readthedocs.io/en/latest/core/unit_model.html">https://idaes-pse.readthedocs.io/en/latest/core/unit_model.html</a></li>
+</ul>
+</li>
+<li>Modeling Standards: <a href="https://idaes-pse.readthedocs.io/en/latest/standards.html">https://idaes-pse.readthedocs.io/en/latest/standards.html</a><ul>
+<li>Naming Conventions: <a href="https://idaes-pse.readthedocs.io/en/latest/standards.html#standard-naming-format">https://idaes-pse.readthedocs.io/en/latest/standards.html#standard-naming-format</a></li>
+</ul>
+</li>
+<li>IDAES Unit Model Library: <a href="https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/unit_models/index.html">https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/unit_models/index.html</a></li>
+</ul>
+<h2 id="Create-the-Model-and-the-IDAES-Flowsheet">Create the Model and the IDAES Flowsheet<a class="anchor-link" href="#Create-the-Model-and-the-IDAES-Flowsheet">&#182;</a></h2><p>In the next cell, we will perform the necessary imports to get us started. From <code>pyomo.environ</code> (a standard import for the Pyomo package), we are importing <code>ConcreteModel</code> (to create the Pyomo model that will contain the IDAES flowsheet) and <code>SolverFactory</code> (to create the object we will use to solve the equations). We will also import <code>Constraint</code> as we will be adding a constraint to the model later in the module. Lastly, we also import <code>value</code> from Pyomo. This is a function that can be used to return the current numerical value for variables and parameters in the model. These are all part of Pyomo.</p>
+<p>We will also import the main <code>FlowsheetBlock</code> from IDAES. The flowsheet block will contain our unit model.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the cell below to perform the imports. Let a workshop organizer know if you see any errors.
 </div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Importing-Packages">Importing Packages<a class="anchor-link" href="#Importing-Packages">&#182;</a></h2><p>We start by importing several standard Python modules for convienience.</p>
-
 </div>
 </div>
 </div>
@@ -13096,8 +13121,11 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">SolverFactory</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">,</span> <span class="n">value</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+
+<span class="c1"># Import idaes logger to set output levels</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
 </pre></div>
 
     </div>
@@ -13108,8 +13136,11 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we import MatOpt.</p>
-
+<p>In the next cell, we will create the <code>ConcreteModel</code> and the <code>FlowsheetBlock</code>, and attach the flowsheet block to the Pyomo model.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the cell below to create the objects
+</div>
 </div>
 </div>
 </div>
@@ -13118,7 +13149,8 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">apps.matopt</span> <span class="kn">import</span> <span class="o">*</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
 </pre></div>
 
     </div>
@@ -13129,8 +13161,11 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Representing-Materials">Representing Materials<a class="anchor-link" href="#Representing-Materials">&#182;</a></h2><p>To begin, we define a <strong>Lattice</strong> object. In this example, <strong>FCCLattice</strong> is the appropriate a child class of Lattice. This object will serve to define neighbor connections and helps us generically create other objects. We construct our lattice from a class method constructor for FCC lattices aligned with the {111} plane.</p>
-
+<p>At this point, we have a single Pyomo model that contains an (almost) empty flowsheet block.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Use the pprint method on the model, i.e. m.pprint(), to see what is currently contained in the model.
+</div>
 </div>
 </div>
 </div>
@@ -13139,11 +13174,37 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">IAD</span> <span class="o">=</span> <span class="mf">2.828427</span> <span class="c1"># Angstrom</span>
-<span class="n">Lat</span> <span class="o">=</span> <span class="n">FCCLattice</span><span class="o">.</span><span class="n">alignedWith111</span><span class="p">(</span><span class="n">IAD</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Todo: call pprint on the model</span>
+<span class="n">m</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
 </pre></div>
 
     </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>1 Block Declarations
+    fs : Size=1, Index=None, Active=True
+        1 Set Declarations
+            time : Dim=0, Dimen=1, Size=1, Domain=None, Ordered=Insertion, Bounds=(0.0, 0.0)
+                [0.0]
+
+        1 Declarations: time
+
+1 Declarations: fs
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -13151,9 +13212,13 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we define a <strong>Shape</strong> object that we will use to specify a design space. Additionally, in this example our design space is periodic, so we will define a <strong>Tiling</strong> object to hold information about the periodicity. In this example, <strong>Parallelepiped</strong> and <strong>PlanarTiling</strong> are the appropriate child classes for these objects, respectively.</p>
-<p>Note that we shift the shape of our design space slightly, in order to avoid confusion about which lattice sites that lie perfectly on the shape facet should be included.</p>
-
+<h2 id="Define-Properties">Define Properties<a class="anchor-link" href="#Define-Properties">&#182;</a></h2><p>We need to define the property package for our flowsheet. In this example, we will be using the ideal property package that is available as part of the IDAES framework. This property package supports ideal gas - ideal liquid, ideal gas - NRTL, and ideal gas - Wilson models for VLE. More details on this property package can be found at: <a href="https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/property_models/activity_coefficient.html">https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/property_models/activity_coefficient.html</a></p>
+<p>IDAES also supports creation of your own property packages that allow for specification of the fluid using any set of valid state variables (e.g., component molar flows vs overall flow and mole fractions). This flexibility is designed to support advanced modeling needs that may rely on specific formulations. To learn about creating your own property package, please consult the online documentation at: <a href="https://idaes-pse.readthedocs.io/en/latest/core/properties.html">https://idaes-pse.readthedocs.io/en/latest/core/properties.html</a> and look at examples within IDAES</p>
+<p>For this workshop, we will import the BTX_activity_coeff_VLE property parameter block to be used in the flowsheet. This properties block will be passed to our unit model to define the appropriate state variables and equations for performing thermodynamic calculations.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the following two cells to import and create the properties block.
+</div>
 </div>
 </div>
 </div>
@@ -13162,38 +13227,23 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nUnitCellsOnEdge</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">nLayers</span> <span class="o">=</span> <span class="mi">6</span>
-<span class="n">a</span> <span class="o">=</span> <span class="n">nUnitCellsOnEdge</span><span class="o">*</span><span class="n">IAD</span>
-<span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
-<span class="n">c</span> <span class="o">=</span> <span class="n">nLayers</span><span class="o">*</span><span class="n">Lat</span><span class="o">.</span><span class="n">FCC111LayerSpacing</span>
-<span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span>
-<span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span>
-<span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>
-<span class="n">S</span> <span class="o">=</span> <span class="n">Parallelepiped</span><span class="o">.</span><span class="n">fromEdgesAndAngles</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">,</span><span class="n">gamma</span><span class="p">)</span>
-<span class="n">S</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">a</span><span class="p">,</span><span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">b</span><span class="p">,</span><span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">c</span><span class="p">]))</span>
-<span class="n">T</span> <span class="o">=</span> <span class="n">PlanarTiling</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.generic_models.properties.activity_coeff_models.BTX_activity_coeff_VLE</span> \
+    <span class="kn">import</span> <span class="nn">BTXParameterBlock</span>
 </pre></div>
 
     </div>
 </div>
 </div>
 
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Given the parameters for a design space, we can construct a <strong>Canvas</strong> object to hold information about points and nearest neighbors. In this example, the object is efficiently constructed from a scan over lattice sites. In general, the Canvas can be constructed and manipulated via user-defined algorithms.</p>
-
-</div>
-</div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Canv</span> <span class="o">=</span> <span class="n">Canvas</span><span class="o">.</span><span class="n">fromLatticeAndTilingScan</span><span class="p">(</span><span class="n">Lat</span><span class="p">,</span><span class="n">T</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">BTXParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;valid_phase&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;Vap&#39;</span><span class="p">),</span>
+                                            <span class="s2">&quot;activity_coeff_model&quot;</span><span class="p">:</span> <span class="s2">&quot;Ideal&quot;</span><span class="p">,</span>
+                                            <span class="s2">&quot;state_vars&quot;</span><span class="p">:</span> <span class="s2">&quot;FTPz&quot;</span><span class="p">})</span>
 </pre></div>
 
     </div>
@@ -13204,10 +13254,24 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The Canvas object hold information about the design space and the lattice sites, but it does not specify any material building block information. To represent material configurations, use a <strong>Design</strong> object.</p>
-<p>Initially, the Design is empty. There are several ways to place <strong>Atom</strong> (i.e., building block) objects in a Design. In this example, we are considering a Pt surface for the oxygen reduction reaction. We can initialize a design representing the FCC {111} surface by using a standard constructor for the Design object.</p>
-<p>To debug our work so far, we can create material structure files to load and plot with standard visualization tools such as AtomEye. Here, we create PDB (protein data bank format, www.rcsb.org) and CFG (AtomEye configuration, li.mit.edu/A/Graphics/A/) files for the design. These files can be plotted with visualization packages such as AtomEye or OVITO.</p>
-
+<h2 id="Adding-Flash-Unit">Adding Flash Unit<a class="anchor-link" href="#Adding-Flash-Unit">&#182;</a></h2><p>Now that we have the flowsheet and the properties defined, we can create the flash unit and add it to the flowsheet.</p>
+<p><strong>The Unit Model Library within IDAES includes a large set of common unit operations (see the online documentation for details: <a href="https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/unit_models/index.html">https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/unit_models/index.html</a></strong></p>
+<p>IDAES also fully supports the development of customized unit models (which we will see in a later module).</p>
+<p>Some of the IDAES pre-written unit models:</p>
+<ul>
+<li>Mixer / Splitter</li>
+<li>Heater / Cooler</li>
+<li>Heat Exchangers (simple and 1D discretized)</li>
+<li>Flash</li>
+<li>Reactors (kinetic, equilibrium, gibbs, stoichiometric conversion)</li>
+<li>Pressure changing equipment (compressors, expanders, pumps)</li>
+<li>Feed and Product (source / sink) components</li>
+</ul>
+<p>In this module, we will import the <code>Flash</code> unit model from <code>idaes.generic_models.unit_models</code> and create an instance of the flash unit, attaching it to the flowsheet. Each IDAES unit model has several configurable options to customize the model behavior, but also includes defaults for these options. In this example, we will specify that the property package to be used with the Flash is the one we created earlier.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the following two cells to import the Flash and create an instance of the unit model, attaching it to the flowsheet object.
+</div>
 </div>
 </div>
 </div>
@@ -13216,38 +13280,20 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Pt&#39;</span><span class="p">))</span>
-<span class="n">D</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;undefected.pdb&#39;</span><span class="p">)</span>
-<span class="n">D</span><span class="o">.</span><span class="n">toCFG</span><span class="p">(</span><span class="s1">&#39;undefected.cfg&#39;</span><span class="p">,</span><span class="n">GS</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span><span class="n">BBox</span><span class="o">=</span><span class="n">S</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.generic_models.unit_models</span> <span class="kn">import</span> <span class="n">Flash</span>
 </pre></div>
 
     </div>
 </div>
 </div>
 
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Building-a-Model">Building a Model<a class="anchor-link" href="#Building-a-Model">&#182;</a></h2><p>In this example, we will build a model that maximizes the number of sites that are reactive for the oxygen reduction reaction (ORR). More generally, our model will indicate sites that are within a certain tolerance of a target generalized coordination number (GCN). These target sites can also be constrained to lie within minimum and maximum coordination number to be considered surface sites.</p>
-<p>Additionally, we model the surface energy of nanostructured designs. This surface energy can be constrained to be below a threshold and can be included in the objective function. We can parametrically optimize the multi-objective optimization problem by defining a weighting, <em>CatWeight</em>, that controls how much weight is given to the catalytic activity term in the objective function. A weighting of 1 corresponds to the optimally active material and a weighting of 0 corresponds to the lowest surface energy design.</p>
-
-</div>
-</div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Pt&#39;</span><span class="p">)]</span>
-<span class="n">TargetGCN</span> <span class="o">=</span> <span class="mf">8.0</span>
-<span class="n">CNsurfMin</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="n">CNsurfMax</span> <span class="o">=</span> <span class="mi">9</span>
-<span class="n">TileSizeSquared</span> <span class="o">=</span> <span class="n">nUnitCellsOnEdge</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">UndefectedSurfE</span> <span class="o">=</span> <span class="mf">0.129758</span>
-<span class="n">maxSurfE</span> <span class="o">=</span> <span class="mi">999</span>
-<span class="n">CatWeight</span> <span class="o">=</span> <span class="mf">1.0</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span> <span class="o">=</span> <span class="n">Flash</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">})</span>
 </pre></div>
 
     </div>
@@ -13258,8 +13304,20 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>To begin, we start by creating a <strong><em>MatOptModel</em></strong> object to hold information about the model.</p>
+<p>At this point, we have created a flowsheet and a properties block. We have also created a flash unit and added it to the flowsheet. Under the hood, IDAES has created the required state variables and model equations. Everything is open. You can see these variables and equations by calling the Pyomo method <code>pprint</code> on the model, flowsheet, or flash tank objects. Note that this output is very exhaustive, and is not intended to provide any summary information about the model, but rather a complete picture of all of the variables and equations in the model.</p>
 
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Set-Operating-Conditions">Set Operating Conditions<a class="anchor-link" href="#Set-Operating-Conditions">&#182;</a></h2><p>Now that we have created our unit model, we can specify the necessary operating conditions. It is often very useful to determine the degrees of freedom before we specify any conditions.</p>
+<p>The <code>idaes.core.util.model_statistics</code> package has a function <code>degrees_of_freedom</code>. To see how to use this function, we can make use of the Python function <code>help(func)</code>. This function prints the appropriate documentation string for the function.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Import the degrees_of_freedom function and print the help for the function by calling the Python help function.
+</div>
 </div>
 </div>
 </div>
@@ -13268,29 +13326,53 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">MatOptModel</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atoms</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Todo: import the degrees_of_freedom function from the idaes.core.util.model_statistics package</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+
+<span class="c1"># Todo: Call the python help on the degrees_of_freedom function</span>
+<span class="n">help</span><span class="p">(</span><span class="n">degrees_of_freedom</span><span class="p">)</span>
 </pre></div>
 
     </div>
 </div>
 </div>
 
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Help on function degrees_of_freedom in module idaes.core.util.model_statistics:
+
+degrees_of_freedom(block)
+    Method to return the degrees of freedom of a model.
+    
+    Args:
+        block : model to be studied
+    
+    Returns:
+        Number of degrees of freedom in block.
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>By default, several basic variables are pre-defined. See the first example, <strong><em>Monometallic_Nanocluster_Design.ipynb</em></strong> for a description of basic variables, expressions, and constraint rules.</p>
-
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Now print the degrees of freedom for your model. The result should be 7.
 </div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>First, we introduce two rules to fix special sites in the design. 
-We fix the bottom two layers of atoms to exist, creating underlying bulk layers above which we will introduce nanostruced defets.
-We also fix an arbitrary atom in the top layer, breaking symetry of the design space and resulting in easier to solve opitmization problems without actually restricting the designs that can be possibly represented.</p>
-
 </div>
 </div>
 </div>
@@ -13299,17 +13381,29 @@ We also fix an arbitrary atom in the top layer, breaking symetry of the design s
 <div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">CanvTwoBotLayers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))</span> 
-                    <span class="k">if</span> <span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1.5</span><span class="o">*</span><span class="n">Lat</span><span class="o">.</span><span class="n">FCC111LayerSpacing</span><span class="p">]</span>
-<span class="n">CanvMinusTwoBotLayers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))</span> 
-                         <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CanvTwoBotLayers</span><span class="p">]</span>
-<span class="n">OneSiteInTopLayer</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))</span> 
-                          <span class="k">if</span> <span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">nLayers</span><span class="o">-</span><span class="mf">1.5</span><span class="p">)</span><span class="o">*</span><span class="n">Lat</span><span class="o">.</span><span class="n">FCC111LayerSpacing</span><span class="p">])]</span>
-<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FixedTo</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">sites</span><span class="o">=</span><span class="n">OneSiteInTopLayer</span><span class="p">))</span>
-<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FixedTo</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">sites</span><span class="o">=</span><span class="n">CanvTwoBotLayers</span><span class="p">))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Todo: print the degrees of freedom for your model</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Degrees of Freedom =&quot;</span><span class="p">,</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
 </pre></div>
 
     </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Degrees of Freedom = 7
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -13317,8 +13411,35 @@ We also fix an arbitrary atom in the top layer, breaking symetry of the design s
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we introduce constraints thtat require atoms to be placed on top of each other, avoiding hollow pockets below the surface.</p>
-
+<p>To satisfy our degrees of freedom, we will first specify the inlet conditions. We can specify these values through the <code>inlet</code> port of the flash unit.</p>
+<p><strong>To see the list of naming conventions for variables within the IDAES framework, consult the online documentation at: <a href="https://idaes-pse.readthedocs.io/en/latest/standards.html#standard-naming-format">https://idaes-pse.readthedocs.io/en/latest/standards.html#standard-naming-format</a></strong></p>
+<p>As an  example, to fix the molar flow of the inlet to be 1.0, you can use the following notation:</p>
+<div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+<p>To specify variables that are indexed by components, you can use the following notation:</p>
+<div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+<div class="alert alert-block alert-warning">
+<b>Note:</b>
+The "0" in the indexing of the component mole fraction is present because IDAES models support both dynamic and steady state simulation, and the "0" refers to a timestep. Dynamic modeling is beyond the scope of this workshop. Since we are performing steady state modeling, there is only a single timestep in the model.
+</div><p>In the next cell, we will specify the inlet conditions. To satisfy the remaining degrees of freedom, we will make two additional specifications on the flash tank itself. The names of the key variables within the Flash unit model can also be found in the online documentation: <a href="https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/unit_models/flash.html#variables">https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/unit_models/flash.html#variables</a>.</p>
+<p>To specify the value of a variable on the unit itself, use the following notation.</p>
+<div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+<p>For this module, we will use the following specifications:</p>
+<ul>
+<li>inlet overall molar flow = 1.0 (<code>flow_mol</code>)</li>
+<li>inlet temperature = 368 K (<code>temperature</code>)</li>
+<li>inlet pressure = 101325 Pa (<code>pressure</code>)</li>
+<li>inlet mole fraction (benzene) = 0.5 (<code>mole_frac_comp[0, "benzene"]</code>)</li>
+<li>inlet mole fraction (toluene) = 0.5 (<code>mole_frac_comp[0, "toluene"]</code>)</li>
+<li>The heat duty on the flash set to 0 (<code>heat_duty</code>)</li>
+<li>The pressure drop across the flash tank set to 0 (<code>deltaP</code>)</li>
+</ul>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Write the code below to specify the inlet conditions and unit specifications described above
+</div>
 </div>
 </div>
 </div>
@@ -13327,13 +13448,16 @@ We also fix an arbitrary atom in the top layer, breaking symetry of the design s
 <div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">NeighborsBelow</span> <span class="o">=</span> <span class="p">[[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">Canv</span><span class="o">.</span><span class="n">NeighborhoodIndexes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> 
-                   <span class="k">if</span><span class="p">(</span><span class="n">j</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
-                      <span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">&lt;</span><span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">DBL_TOL</span><span class="p">)]</span> 
-                  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))]</span>
-<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ImpliesNeighbors</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="p">,</span><span class="n">GreaterThan</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
-                                   <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">,</span>
-                                   <span class="n">neighborhoods</span><span class="o">=</span><span class="n">NeighborsBelow</span><span class="p">))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Inlet specifications given above</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">368</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Todo: add code for the 2 flash unit specifications given above</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13344,11 +13468,10 @@ We also fix an arbitrary atom in the top layer, breaking symetry of the design s
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we introduce several rules for the geometric and reactive descriptors of sites in the design. 
-We define the generalized coordination number according to a linear equality constraint. 
-Then, we define ideal sites as having a conjunction of requirements on the generalized coordination number, and regular coordination number. 
-Finally, we define activity as the count of sites with target coordination number.</p>
-
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Check the degrees of freedom again to ensure that the system is now square. You should see that the degrees of freedom is now 0.
+</div>
 </div>
 </div>
 </div>
@@ -13357,20 +13480,29 @@ Finally, we define activity as the count of sites with target coordination numbe
 <div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;GCNi&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">12</span><span class="p">),</span><span class="n">integer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                     <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumNeighborSites</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span>
-                                                    <span class="n">coefs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">12</span><span class="p">)),</span>
-                     <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">)</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;IdealSitei&#39;</span><span class="p">,</span><span class="n">binary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                     <span class="n">rules</span><span class="o">=</span><span class="p">[</span><span class="n">Implies</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span><span class="n">GreaterThan</span><span class="p">(</span><span class="mi">3</span><span class="p">))),</span>
-                            <span class="n">Implies</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span><span class="n">LessThan</span><span class="p">(</span><span class="mi">9</span><span class="p">))),</span>
-                            <span class="n">Implies</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">GCNi</span><span class="p">,</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">TargetGCN</span><span class="p">)))],</span>
-                     <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">)</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Activity&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span>
-                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">IdealSitei</span><span class="p">,</span><span class="n">coefs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">TileSizeSquared</span><span class="p">)))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Todo: print the degrees of freedom for your model</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Degrees of Freedom =&quot;</span><span class="p">,</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
 </pre></div>
 
     </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Degrees of Freedom = 0
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -13378,8 +13510,11 @@ Finally, we define activity as the count of sites with target coordination numbe
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we define a simple model for the surface energy of nanostructured slabs as a piecwise linear function of coordination number.</p>
-
+<h2 id="Initializing-the-Model">Initializing the Model<a class="anchor-link" href="#Initializing-the-Model">&#182;</a></h2><p>IDAES includes pre-written initialization routines for all unit models. You can call this initialize method on the units. In the next module, we will demonstrate the use of a sequential modular solve cycle to initialize flowsheets.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Call the initialize method on the flash unit to initialize the model.
+</div>
 </div>
 </div>
 </div>
@@ -13388,19 +13523,41 @@ Finally, we define activity as the count of sites with target coordination numbe
 <div class="prompt input_prompt">In&nbsp;[12]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">EiVals</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.04293</span><span class="o">*</span><span class="mi">3</span><span class="o">+</span><span class="mf">0.41492</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.04293</span><span class="o">*</span><span class="mi">10</span><span class="o">+</span><span class="mf">0.41492</span><span class="p">,</span> <span class="mf">0.05179</span><span class="o">*</span><span class="mi">11</span><span class="o">-</span><span class="mf">0.62148</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-<span class="n">EiBPs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;Ei&#39;</span><span class="p">,</span><span class="n">rules</span><span class="o">=</span><span class="n">PiecewiseLinear</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">EiVals</span><span class="p">,</span>
-                                                <span class="n">breakpoints</span><span class="o">=</span><span class="n">EiBPs</span><span class="p">,</span>
-                                                <span class="n">input_desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">),</span>
-                     <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">)</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Esurf&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="n">maxSurfE</span><span class="p">),</span>
-                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ei</span><span class="p">,</span><span class="n">coefs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">TileSizeSquared</span><span class="p">,</span><span class="n">offset</span><span class="o">=</span><span class="mf">0.101208</span><span class="p">)))</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Stability&#39;</span><span class="p">,</span>
-                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">LinearExpr</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Esurf</span><span class="p">,</span><span class="mi">1</span><span class="o">/</span><span class="n">UndefectedSurfE</span><span class="p">)))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Todo: initialize the flash unit</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 </pre></div>
 
     </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
+2020-04-14 00:01:34 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
+2020-04-14 00:01:35 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -13408,8 +13565,11 @@ Finally, we define activity as the count of sites with target coordination numbe
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Finally,  we introduce a descriptor for the weighted combination of activity and stability.</p>
-
+<p>Now that the model has been defined and intialized, we can solve the model.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Using the notation described in the previous model, create an instance of the "ipopt" solver and use it to solve the model. Set the tee option to True to see the log output.
+</div>
 </div>
 </div>
 </div>
@@ -13418,9 +13578,103 @@ Finally, we define activity as the count of sites with target coordination numbe
 <div class="prompt input_prompt">In&nbsp;[13]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;ActAndStab&#39;</span><span class="p">,</span>
-                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">LinearExpr</span><span class="p">(</span><span class="n">descs</span><span class="o">=</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">Stability</span><span class="p">,</span><span class="n">m</span><span class="o">.</span><span class="n">Activity</span><span class="p">],</span>
-                                                      <span class="n">coefs</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">CatWeight</span><span class="p">),</span><span class="n">CatWeight</span><span class="p">])))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Todo: create the ipopt solver</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+
+<span class="c1"># Todo: solve the model</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Ipopt 3.13.2: 
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit http://projects.coin-or.org/Ipopt
+
+This version of Ipopt was compiled from source code available at
+    https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See http://www.hsl.rl.ac.uk.
+******************************************************************************
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      135
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       55
+
+Total number of variables............................:       41
+                     variables with only lower bounds:        3
+                variables with lower and upper bounds:       10
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       41
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 2.91e-11 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   9.7603753480903075e-13    2.9103830456733704e-11
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   9.7603753480903075e-13    2.9103830456733704e-11
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 1
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 1
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># For testing purposes</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">TerminationCondition</span>
+<span class="k">assert</span> <span class="n">status</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span>
 </pre></div>
 
     </div>
@@ -13431,22 +13685,89 @@ Finally, we define activity as the count of sites with target coordination numbe
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Solving-the-Model">Solving the Model<a class="anchor-link" href="#Solving-the-Model">&#182;</a></h2><p>Given a fully formed Pyomo model, we have several capabilities to optimize and visualize the solution. 
-In this example, we simply call the maximize method to optimize the balance of activity and stability</p>
-
+<h2 id="Viewing-the-Results">Viewing the Results<a class="anchor-link" href="#Viewing-the-Results">&#182;</a></h2><p>Once a model is solved, the values returned by the solver are loaded into the model object itself. We can access the value of any variable in the model with the <code>value</code> function. For example:</p>
+<div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Vap. Outlet Temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</pre></div>
+<p>You can also find more information about a variable or an entire port using the <code>display</code> method from Pyomo:</p>
+<div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the cells below to show the current value of the flash vapor outlet pressure. This cell also shows use of the display function to see the values of the variables in the vap_outlet and the liq_outlet.
+</div>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">D</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">maximize</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">ActAndStab</span><span class="p">,</span><span class="n">tilim</span><span class="o">=</span><span class="mi">360</span><span class="p">)</span>
-<span class="k">except</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)&#39;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Print the pressure of the flash vapor outlet</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Pressure =&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Output from display:&#39;</span><span class="p">)</span>
+<span class="c1"># Call display on vap_outlet and liq_outlet of the flash</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Pressure = 101325.0
+
+Output from display:
+vap_outlet : Size=1
+    Key  : Name           : Value
+    None :       flow_mol : {0.0: 0.39611817487742085}
+         : mole_frac_comp : {(0.0, &#39;benzene&#39;): 0.6339766485081284, (0.0, &#39;toluene&#39;): 0.3660233514918713}
+         :       pressure : {0.0: 101325.0}
+         :    temperature : {0.0: 368.0}
+liq_outlet : Size=1
+    Key  : Name           : Value
+    None :       flow_mol : {0.0: 0.6038818251225793}
+         : mole_frac_comp : {(0.0, &#39;benzene&#39;): 0.41211759772293016, (0.0, &#39;toluene&#39;): 0.5878824022770697}
+         :       pressure : {0.0: 101325.0}
+         :    temperature : {0.0: 368.0}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The output from <code>display</code> is quite exhaustive and not really intended to provide quick summary information. Because Pyomo is built on Python, there are opportunities to format the output any way we like. Most IDAES models have a <code>report</code> method which provides a summary of the results for the model.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the cell below which uses the function above to print a summary of the key variables in the flash model, including the inlet, the vapor, and the liquid ports.  
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
 </pre></div>
 
     </div>
@@ -13464,48 +13785,26 @@ In this example, we simply call the maximize method to optimize the balance of a
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
-Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-  with Simplex, Mixed Integer &amp; Barrier Optimizers
-5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+====================================================================================
+Unit : fs.flash                                                            Time: 0.0
+------------------------------------------------------------------------------------
+    Unit Performance
 
-Type &#39;help&#39; for a list of available commands.
-Type &#39;help&#39; followed by a command name for more
-information on commands.
+    Variables: 
 
-CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
-Logfile &#39;/tmp/tmpttwbxhv_.cplex.log&#39; open.
-CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
-CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
-CPLEX&gt; New value for time limit in seconds: 360
-CPLEX&gt; Problem &#39;/tmp/tmpx0l04jq4.pyomo.lp&#39; read.
-Read time = 0.05 sec. (0.34 ticks)
-CPLEX&gt; Problem name         : /tmp/tmpx0l04jq4.pyomo.lp
-Objective sense      : Maximize
-Variables            :    1620  [Nneg: 1,  Box: 65,  Free: 322,  Binary: 1151,
-                                 General Integer: 80,  Other: 1]
-Objective nonzeros   :       1
-Linear constraints   :    4085  [Less: 3680,  Greater: 64,  Equal: 341]
-  Nonzeros           :    9808
-  RHS nonzeros       :    1029
+    Key             : Value  : Fixed : Bounds
+          Heat Duty : 0.0000 :  True : (None, None)
+    Pressure Change : 0.0000 :  True : (None, None)
 
-Variables            : Min LB: 0.000000         Max UB: 999.0000       
-Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
-Linear constraints   :
-  Nonzeros           : Min   : 0.03741000       Max   : 12.00000       
-  RHS nonzeros       : Min   : 0.1012080        Max   : 12.00000       
-CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
-
-Error termination, CPLEX Error  1016.
-Solution time =    0.00 sec.
-Deterministic time = 0.00 ticks  (0.00 ticks/sec)
-
-CPLEX&gt; CPLEX Error  1217: No solution exists.
-No file written.
-CPLEX&gt; ERROR: evaluating object as numeric value: obj
-        (object: &lt;class &#39;pyomo.core.base.objective.SimpleObjective&#39;&gt;)
-    No value for uninitialized NumericValue object obj
-MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+------------------------------------------------------------------------------------
+    Stream Table
+                              Inlet    Vapor Outlet  Liquid Outlet
+    flow_mol                   1.0000      0.39612       0.60388  
+    mole_frac_comp benzene    0.50000      0.63398       0.41212  
+    mole_frac_comp toluene    0.50000      0.36602       0.58788  
+    temperature                368.00       368.00        368.00  
+    pressure               1.0132e+05   1.0132e+05    1.0132e+05  
+====================================================================================
 </pre>
 </div>
 </div>
@@ -13517,26 +13816,504 @@ MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Processing-Solutions">Processing Solutions<a class="anchor-link" href="#Processing-Solutions">&#182;</a></h2><p>Once the model is solved, we can plot the resulting design. However, it is often useful to label atoms according to some auxilliary information. In this case, we would like to label atoms that consitute ideal reactive sites. We loop over the sites and set the atom to S to highlight the sites that are reactive. Then, we can write the Design object to PDB or CFG files for plotting.</p>
-<p>Additionally, we can manipulate the resulting design to better see the periodic pattern. Here, we replicate the design four times to see the periodic pattern.</p>
-
+<h2 id="Studying-Purity-as-a-Function-of-Heat-Duty">Studying Purity as a Function of Heat Duty<a class="anchor-link" href="#Studying-Purity-as-a-Function-of-Heat-Duty">&#182;</a></h2><p>Since the entire modeling framework is built upon Python, it includes a complete programming environment for whatever analysis we may want to perform. In this next exercise, we will make use of what we learned in this and the previous module to generate a figure showing some output variables as a function of the heat duty in the flash tank.</p>
+<p>First, let's import the matplotlib package for plotting as we did in the previous module.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the cell below to import matplotlib appropriately.
+</div>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">if</span><span class="p">(</span><span class="n">D</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">IdealSitei</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">IdealSitei</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
-            <span class="n">D</span><span class="o">.</span><span class="n">setContent</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">))</span>
-    <span class="n">D</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;result.pdb&#39;</span><span class="p">)</span>
-    <span class="n">PeriodicD</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">replicateDesign</span><span class="p">(</span><span class="n">D</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
-    <span class="n">PeriodicS</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
-    <span class="n">PeriodicS</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">]))</span>
-    <span class="n">PeriodicD</span><span class="o">.</span><span class="n">toCFG</span><span class="p">(</span><span class="s1">&#39;periodic_result.cfg&#39;</span><span class="p">,</span><span class="n">BBox</span><span class="o">=</span><span class="n">PeriodicS</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Exercise specifications:</p>
+<ul>
+<li>Generate a figure showing the flash tank heat duty (<code>m.fs.flash.heat_duty[0]</code>) vs. the vapor flowrate (<code>m.fs.flash.vap_outlet.flow_mol[0]</code>)</li>
+<li>Specify the heat duty from -17000 to 25000 over 50 steps</li>
+</ul>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Using what you have learned so far, fill in the missing code below to generate the figure specified above. (Hint: import numpy and use the linspace function from the previous module)
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># import the solve_successful checking function from workshop tools</span>
+<span class="kn">from</span> <span class="nn">workshoptools</span> <span class="kn">import</span> <span class="n">solve_successful</span>
+
+<span class="c1"># Todo: import numpy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># create the empty lists to store the results that will be plotted</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">V</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># create the solver</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+
+<span class="c1"># Todo: Write the for loop specification using numpy&#39;s linspace</span>
+<span class="k">for</span> <span class="n">duty</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">17000</span><span class="p">,</span> <span class="mi">25000</span><span class="p">,</span> <span class="mi">50</span><span class="p">):</span>
+    <span class="c1"># fix the heat duty</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">duty</span><span class="p">)</span>
+    
+    <span class="c1"># append the value of the duty to the Q list</span>
+    <span class="n">Q</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">duty</span><span class="p">)</span>
+    
+    <span class="c1"># print the current simulation</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simulating with Q = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+    <span class="c1"># Solve the model</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    
+    <span class="c1"># append the value for vapor fraction if the solve was successful</span>
+    <span class="k">if</span> <span class="n">solve_successful</span><span class="p">(</span><span class="n">status</span><span class="p">):</span>
+        <span class="n">V</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;... solve successful.&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">V</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;... solve failed.&#39;</span><span class="p">)</span>
+    
+<span class="c1"># Create and show the figure</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="s2">&quot;Vapor Fraction&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Heat Duty [J]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Vapor Fraction [-]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Simulating with Q =  -17000.0
+... solve successful.
+Simulating with Q =  -16142.857142857143
+... solve successful.
+Simulating with Q =  -15285.714285714286
+... solve successful.
+Simulating with Q =  -14428.571428571428
+... solve successful.
+Simulating with Q =  -13571.428571428572
+... solve successful.
+Simulating with Q =  -12714.285714285714
+... solve successful.
+Simulating with Q =  -11857.142857142857
+... solve successful.
+Simulating with Q =  -11000.0
+... solve successful.
+Simulating with Q =  -10142.857142857143
+... solve successful.
+Simulating with Q =  -9285.714285714286
+... solve successful.
+Simulating with Q =  -8428.57142857143
+... solve successful.
+Simulating with Q =  -7571.4285714285725
+... solve successful.
+Simulating with Q =  -6714.285714285714
+... solve successful.
+Simulating with Q =  -5857.142857142857
+... solve successful.
+Simulating with Q =  -5000.0
+... solve successful.
+Simulating with Q =  -4142.857142857143
+... solve successful.
+Simulating with Q =  -3285.7142857142862
+... solve successful.
+Simulating with Q =  -2428.5714285714294
+... solve successful.
+Simulating with Q =  -1571.4285714285725
+... solve successful.
+Simulating with Q =  -714.2857142857156
+... solve successful.
+Simulating with Q =  142.8571428571413
+... solve successful.
+Simulating with Q =  1000.0
+... solve successful.
+Simulating with Q =  1857.142857142855
+... solve successful.
+Simulating with Q =  2714.2857142857138
+... solve successful.
+Simulating with Q =  3571.4285714285725
+... solve successful.
+Simulating with Q =  4428.5714285714275
+... solve successful.
+Simulating with Q =  5285.714285714286
+... solve successful.
+Simulating with Q =  6142.857142857141
+... solve successful.
+Simulating with Q =  7000.0
+... solve successful.
+Simulating with Q =  7857.142857142855
+... solve successful.
+Simulating with Q =  8714.285714285714
+... solve successful.
+Simulating with Q =  9571.428571428569
+... solve successful.
+Simulating with Q =  10428.571428571428
+... solve successful.
+Simulating with Q =  11285.714285714286
+... solve successful.
+Simulating with Q =  12142.857142857141
+... solve successful.
+Simulating with Q =  13000.0
+... solve successful.
+Simulating with Q =  13857.142857142855
+... solve successful.
+Simulating with Q =  14714.285714285714
+... solve successful.
+Simulating with Q =  15571.428571428569
+... solve successful.
+Simulating with Q =  16428.571428571428
+... solve successful.
+Simulating with Q =  17285.714285714283
+... solve successful.
+Simulating with Q =  18142.857142857145
+... solve successful.
+Simulating with Q =  19000.0
+... solve successful.
+Simulating with Q =  19857.142857142855
+... solve successful.
+Simulating with Q =  20714.28571428571
+... solve successful.
+Simulating with Q =  21571.428571428572
+... solve successful.
+Simulating with Q =  22428.571428571428
+... solve successful.
+Simulating with Q =  23285.714285714283
+... solve successful.
+Simulating with Q =  24142.857142857145
+... solve successful.
+Simulating with Q =  25000.0
+... solve successful.
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+"
+>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Repeate the exercise above, but create a figure showing the heat duty vs. the mole fraction of Benzene in the vapor outlet. Remove any unnecessary printing to create cleaner results.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Todo: generate a figure of heat duty vs. mole fraction of Benzene in the vapor</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">V</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">duty</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">17000</span><span class="p">,</span> <span class="mi">25000</span><span class="p">,</span> <span class="mi">50</span><span class="p">):</span>
+    <span class="c1"># fix the heat duty</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">duty</span><span class="p">)</span>
+    
+    <span class="c1"># append the value of the duty to the Q list</span>
+    <span class="n">Q</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">duty</span><span class="p">)</span>
+    
+    <span class="c1"># solve the model</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    
+    <span class="c1"># append the value for vapor fraction if the solve was successful</span>
+    <span class="k">if</span> <span class="n">solve_successful</span><span class="p">(</span><span class="n">status</span><span class="p">):</span>
+        <span class="n">V</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">V</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;... solve failed.&#39;</span><span class="p">)</span>
+    
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="s2">&quot;Purity&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Heat Duty [J]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Vapor Benzene Mole Fraction [-]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>2020-04-14 00:01:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
+2020-04-14 00:01:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+2020-04-14 00:01:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash.control_volume.properties_in: State Released.
+2020-04-14 00:01:41 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYgAAAEGCAYAAAB/+QKOAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAADh0RVh0U29mdHdhcmUAbWF0cGxvdGxpYiB2ZXJzaW9uMy4yLjEsIGh0dHA6Ly9tYXRwbG90bGliLm9yZy+j8jraAAAgAElEQVR4nO3dd5hV1dn38e89FRh6r1IUUUABGeqoAY2oUcEuFhAbKiAaE30siebB5I0xmlho0mxRBBUBFUWMjEoRRUGU6gAqYKGK0qTd7x9nY47zDDMbMmfOzDm/z3Xta/Zeu5x7FsPcs/daey1zd0RERPJLiXcAIiJSOilBiIhIgZQgRESkQEoQIiJSICUIEREpUFq8AyguNWvW9CZNmsQ7jLjbvn07WVlZ8Q6jVFMdFU71U7REqqOPPvpoo7vXKmhfwiSIJk2aMH/+/HiHEXe5ubl069Yt3mGUaqqjwql+ipZIdWRmXx5snx4xiYhIgZQgRESkQEoQIiJSICUIEREpkBKEiIgUSAlCREQKpAQhIiIFSpj3IA7Xjt17GZm7Muafk5aaQnaTanRoUp30VOVlESn9kj5B7Ny9j8dm5sX8cw5Mu1EpM42Tj65F92Nq061FLWpWzIz5Z4uIHI6kTxA1Kmay+q9nxfxztv+0l1l5G3l76XpmLl/Pa59+gxkc37Aqg7ofxWkt68Q8BhGRQ5H0CaKkZGWmcXqrupzeqi7uzuKvf+DtZeuZ+snXXPf0fC7rdAR/OOtYKmTon0RESgf9NooDM6N1gyq0blCFG351JA/NWM6od1fx/spNPNK7Hcc1rBLvEEVE1Isp3jLSUrjzzGN59tpO7Ni9j/OGz2Z4bh779muucBGJLyWIUqLrkTV545aT6NGqDg+8sZzLRr/Puu93xjssEUliShClSNUKGQy77AT+fuHxfLZuK2c+/C7TPv0m3mGJSJJSgihlzIyLshvx2uCTaFoziwHPfswdLy1ix+698Q5NRJKMEkQp1aRmFi/c0JUbux3JhPlrOPuxWXy2bmu8wxKRJKIEUYplpKXwP2ccw7+u6cS2XXs5f/gcxry3iv1qwBaREhDTBGFmZ5jZcjPLM7M7Ctj/TzNbGCwrzOz7qH1XmtnnwXJlLOMs7XKOqskbt5zMyUfX4s+vLeWqJz9k47af4h2WiCS4mCUIM0sFhgFnAi2BS82sZfQx7v5bd2/r7m2Bx4BJwbnVgXuBTkBH4F4zqxarWMuC6lkZjO7bnvt6tWLuqk2c+ch7zM7bGO+wRCSBxfIOoiOQ5+6r3H038DzQq5DjLwXGB+unAzPcfbO7bwFmAGfEMNYywczo06UJUwbmUKV8OleMncffpy9jz7798Q5NRBJQLN+kbgCsidpeS+SO4P8ws8ZAU+DtQs5tUMB5/YH+AHXq1CE3N/e/DrqsuO1459llaQybuZLpC1ZzQ5tMapZPYdu2bUlVD4dDdVQ41U/RkqWOSstQG72BF91936Gc5O6jgFEA2dnZ3q1btxiEVnqd/muY+snX3DXpU4bM28PfLjieiiwn2erhUOXm5qqOCqH6KVqy1FEsHzGtAxpFbTcMygrSm/88XjrUc5Nazzb1mRa8M3Hjsx/z9JKf2LXnkPKsiEiBYpkgPgSam1lTM8sgkgSm5j/IzI4BqgFzo4qnAz3MrFrQON0jKJMCHFGjAi/c0JXrTmrK219FusOu3rg93mGJSBkXswTh7nuBQUR+sS8FJrr7YjMbYmY9ow7tDTzv7h517mbgPiJJ5kNgSFAmB5GRlsLdZ7XklhMy+XrrTs5+9D2mLNRNl4gcvpi2Qbj7NGBavrJ78m3/6SDnjgPGxSy4BNW2dhrTenRi8PgF3Pz8Quau3MS957SifEZqvEMTkTJGb1InoPpVyzO+f2cGdDuS5z9cw7nDZpO3flu8wxKRMkYJIkGlp6Zw+xnH8NTVHdm47Sd6Dp3F5AV65CQi4SlBJLhfHV2L1wafROv6VbhlwkLunLRIvZxEJJSDtkGY2a0hzt/u7o8XYzwSA3WrlOO56zrx0IwVjMhdycI1Wxl2WTua1aoY79BEpBQr7A7iNqAiUKmQ5XexDlCKR1pqZGTYJ/p14JutO+k5dDavLvo63mGJSClWWC+mZ9x9SGEnm1lWMccjMdb9mNq8NvgkbnruYwY9t4APVm/m7rOOJTNNvZxE5JcOegfh7rcXdXKYY6T0aVC1PBOu78K1Jzbl6blfcvHIuazdsiPeYYlIKXNIjdRm9mqsApGSlZ6awh/ObsnIK05g1YbtnPXoLGYuWx/vsESkFDnUXkz/Z0RVKdvOaF2PqTedSL0q5bjqyQ95cPpy9mnGOhHh0BPEgphEIXHVtGYWkwfmcHF2Q4bOzKPP2Hls+FEz1okku0NKEO5+dawCkfgql57KAxe24YELjuejL7dw1qPvMf8LDX8lkswOmiDMbFRRJ4c5RsqWizs04uUBOZTPSKX3qPcZN2s1UeMoikgSKayb67lmtquQ/QZ0L+Z4pBRoWb8yUwedyO8mLmTIq0v4+Kst/O2C48nKLC3zS4lISSjsf/xtIc5/r7gCkdKlSvl0RvXJZsQ7K3nozeUs//ZHRlzRnqNq6+1rkWRx0ATh7k+VZCBS+qSkGAO7H0XbRlUZPH4BvYbO4u8XteE3x9WLd2giUgI0WJ8UKeeomrw6+ESOrluJAc9+zP+btpS9+/bHOywRiTElCAmlXpXyTOjfhT6dGzPq3VX0GfsBG7epK6xIIlOCkNAy0lK479zWPHRRGz7+agvnPDaLBV9tiXdYIhIjRSYIMzvazEab2Ztm9vaBpSSCk9LpgvYNeenGrqSmGJc8/j7PzftKXWFFElCYfosvACOB0YBmmhEAWjeowqs3ncjNzy/krpc/ZeGaLQzp1Zpy6RoVViRRhEkQe919RMwjkTKnaoUMxvXrwCNvreDRt/NY9u2PjLyiPfWrlo93aCJSDMK0QbxiZgPMrJ6ZVT+wxDwyKRNSU4xbe7RgVJ/2rNqwnXMem8XclZviHZaIFIMwCeJKIi/NzQE+Cpb5sQxKyp4ereoyeWAOVSukc8XYeYzVEB0iZV6RCcLdmxawNCuJ4KRsOap2RSYPzOHUY2pz36tLuGXCQnbuVrOVSFkVphdTupkNNrMXg2WQmaWXRHBS9lQql87IK9rz+x5HM/WTr7lgxBzWbNZsdSJlUZhHTCOA9sDwYGkflIkUKCXFGHRKc8b168DaLTs4Z+gsZudtjHdYInKIwiSIDu5+pbu/HSxXAR1iHZiUfd1b1GbqoBOpXSmTPmPnMea9VWqXEClDwiSIfWZ25IENM2uG3oeQkJrUzGLSgBxOa1mHP7+2lFsnfsKuPfrxESkLwrwHcRsw08xWEZkDojFwVUyjkoRSMTONEZe3Z9jMPP7x1go+X/8jj/fJpoHelxAp1cL0Yvo30BwYDNwEtHD3mbEOTBJLSopx06nNGdM3my837qDnY7N4f5XelxApzQqbcvSU4Ov5wFnAUcFyVlAmcshOPbYOkwcF70uMmccz73+pdgmRUqqwR0y/At4GzilgnwOTYhKRJLwja1Xk5YE53PL8Qv44+TOWfP0D/9uzFRlpGlxYpDQpbEa5e4PVIe6+OnqfmTWNaVSS8CqXS2d032z+MWM5w2au5PPvIlOa1qqUGe/QRCQQ5k+2lwooe7G4A5Hkk5pi3Hb6MTx2aTs++3orPYfOYtHa7+MdlogECmuDOMbMLgCqmNn5UUs/oFyJRSgJ75w29Xnpxq6kmHHRyLlMXrAu3iGJCIXfQbQAzgaqEmmHOLCcAFwX+9AkmbSqX4Wpg3Jo06gqt0xYyP2vL2PffjVei8RTYW0QU4ApZtbF3eeWYEySpGpUzOTZazvxp6mLGfnOSlZ89yMP925L5XIa+kskHsK0QdxgZlUPbJhZNTMbF+biZnaGmS03szwzu+Mgx1xsZkvMbLGZPRdVvs/MFgbL1DCfJ2VfemoKfznvOO47tzXvrtjAecNms3rj9niHJZKUwiSI493955ZDd98CtCvqJDNLBYYBZwItgUvNrGW+Y5oDdwI57t4KuCVq9053bxssPUPEKQmkT+fGPHNNJzZv302vobN47/MN8Q5JJOmESRApZlbtwEYwm1yYITo6AnnuvsrddwPPA73yHXMdMCxIOrj7+nBhSzLocmQNpg46kXpVynPluA8Yp0mIREpUmF/0DwFzzewFImMxXQj8JcR5DYA1UdtrgU75jjkawMxmA6nAn9z9jWBfOTObD+wF7nf3yfk/wMz6A/0B6tSpQ25uboiwEtu2bdsSrh5uOc4ZvSiVIa8uIXfhCvq2zCAtxQ77eolYR8VJ9VO0ZKmjIhOEuz9tZh8B3YOi8919STF+fnOgG9AQeNfMjgseaTV293XB6LFvm9mn7r4yX2yjgFEA2dnZ3q1bt2IKq+zKzc0lEevh9FOcf761gsfezmNXWmVGXHECNSoe3kt1iVpHxUX1U7RkqaNQYxu4+2JgIjAV2GZmR4Q4bR3QKGq7YVAWbS0w1d33BG9rryCSMHD3dcHXVUAuIdo9JHGlpBi/69GCR3q35ZO139Nz6GyWfftDvMMSSWhhphztaWafA6uBd4AvgNdDXPtDoLmZNTWzDKA3kQQTbTKRuwfMrCaRR06rgp5SmVHlOUBx3bVIGdarbQMmXt+FPfv2c8HwOcxY8l28QxJJWGHuIO4DOgMr3L0pcCrwflEnufteYBAwHVgKTHT3xWY2xMwO9EqaDmwysyXATOA2d98EHAvMN7NPgvL7i/GxlpRxbRpV5ZWbTuSo2hXp/8x8hs3MU+O1SAyEaaTe4+6bzCzFzFLcfaaZPRzm4u4+DZiWr+yeqHUHbg2W6GPmAMeF+QxJTnUql2PC9V24/cVF/H36cvLWb+Ov5x9HufTUeIcmkjDCJIjvzawi8C7wrJmtB/TmksRdufRUHundlhZ1K/H36cv5YtN2Hu/TntqVNFSYSHEI84ipF7AD+C3wBrCSgueIEClxZsbA7kcx8ooTWPbNj5w7dDaLv94a77BEEkKhCSJ4G/pVd9/v7nvd/Sl3fzRoJxApNc5oXY8XbuiCAxeOmMsbn30b75BEyrxCE4S77wP2m1mVEopH5LC1blCFKQNzaFG3Ejf86yM1Xov8l8K0QWwDPjWzGUS1Pbj74JhFJXKYalcux/P9O/M/L6nxWuS/FSZBTELzT0sZUi49lYcvaUvz2hV58M0VfLV5B4/3aU/Nw3zzWiRZFTaj3JsA7v4UUD9of/h5KbEIRQ6DmTHolOYMv/wEFn+9lV5681rkkBXWBlErav2iWAciEgu/Oa4eE6/vwt79kTev316mN69FwiosQah1TxLC8Q2rMmXgiTStlcW1T81n+hd71HgtEkJhCaKZmU01s1ei1n9eSipAkeJQt0o5Jl7fhR4t6zJ+2W7uevlT9uzbH++wREq1whqpoyf3eTDWgYjEWoWMNIZffgKDx8xg/Adr+HLTDkZc3p4qFTTntUhBDpog3P2dkgxEpCSkpBgXHp1B9/YtuWPSIs4bPpux/TrQtGZWvEMTKXVCzQchkmguaN+QZ6/tzJYduzlv+GzeX6XBAUTyU4KQpNWxaXUmD8yhRlYGfcbOY+L8NUWfJJJEQicIM6sQy0BE4qFxjSwmDcihc7Ma3P7iIv76+lL271cPJxEIN6Nc12BCn2XBdhszGx7zyERKSJXy6Yzr14HLOx3B4++s4sZnP2LH7r3xDksk7sLcQfwTOB3YBODunwAnxzIokZKWnprCn89tzT1nt+TNJd9xyePv890Pu+IdlkhchXrE5O75H87ui0EsInFlZlx9YlPG9M1m5YZtnDtMc0tIcguTINaYWVfAzSzdzH5PZI5pkYR06rF1ePGGrgBcNHIuby3R8BySnMIkiBuAgUADYB3QNtgWSVgt61dmysAcjqpdkeuemc+Y91ZpeA5JOkUmCHff6O6Xu3sdd6/t7ldoRjlJBrUrl2NC/y6c3rIuf35tKX+c8hl7NTyHJJGDvkltZo9RyIB9mjBIkkH5jFSGX34CD0xfzsh3VvLV5p0MvawdlctpeA5JfIWNxTS/xKIQKcVSUow7zjyGJjUq8IfJn3HhiDmMvbIDjarr1SBJbIWNxfSLSYHMrGJQvi3WQYmURr07HkGj6hW44V8fcd7w2Yzum027I6rFOyyRmAnzolxrM1sALAaWmNlHZtYq9qGJlD45R9Xk5QE5VMhIo/eo95n26TfxDkkkZsL0YhoF3Orujd39COB3wOjYhiVSeh1VuyIvD+hK6wZVGPDsxwzPzVMPJ0lIYRJElrvPPLDh7rmAxkaWpFajYibPXtuJnm3q88Aby7njJU1AJImnsEbqA1aZ2R+BZ4LtK4BVsQtJpGwol57KI73b0qRGBR59O481W3Yw4or2VCmvHk6SGMLcQVwN1AImBUutoEwk6ZkZt/ZowUMXteHDLzZzwYg5rNm8I95hiRSLMC/KbXH3we5+QrDc7O5bSiI4kbLigvYNeeaaTmz48SfOHTabj77UfxEp+wp7UW5qYSe6e8/iD0ek7OrcrAYvD+jK1U9+yKWj3+cfF7fh7OPrxzsskcNWWBtEF2ANMB6YB1iJRCRShjWrVZFJA3K4/pn5DHpuAV9u2sGAbkdipv8+UvYU9oipLnAX0Bp4BDgN2Oju77j7OyURnEhZVD0rg39d24lebevz9+nL+Z+XFqmHk5RJB00Q7r7P3d9w9yuBzkAekGtmg0osOpEyKjMtlYcvacvgU5szcf5a+j3xAVt37ol3WCKHpNBGajPLNLPzgX8RGeL7UeDlkghMpKwzM2497WgeuqgNH6xWDycpew6aIMzsaWAucALwv+7ewd3vc/d1JRadSAK4oH1Dnr66E+t/2MW5w2bz8Vfq4SRlQ2F3EFcAzYGbgTlm9kOw/GhmP5RMeCKJocuRNZg0IIeszDQu1RhOUkYU1gaR4u6VgqVy1FLJ3SuHubiZnWFmy80sz8zuOMgxF5vZEjNbbGbPRZVfaWafB8uVh/6tiZQuB8ZwalW/MgOe/ZjH31mpMZykVAvzJvVhMbNUYBhwJtASuNTMWuY7pjlwJ5Dj7q2AW4Ly6sC9QCegI3CvmWlcZSnzalTM5LnrOnP28fX46+vLuOvlz9TDSUqtmCUIIr/Y89x9lbvvBp4HeuU75jpg2IE3s919fVB+OjDD3TcH+2YAZ8QwVpESUy49lUd7t2Ng9yMZ/8FXXP3kh/ywSz2cpPQJM1jf4WpA5EW7A9YSuSOIdjSAmc0GUoE/ufsbBzm3Qf4PMLP+QH+AOnXqkJubW1yxl1nbtm1TPRShtNRRh0y4unUGTy3eyG8enMFv25ejRvlY/s0WTmmpn9IsWeooVIIws8ZAc3d/y8zKA2nu/mMxfX5zoBvQEHjXzI4Le7K7jyIyXwXZ2dnerVu3YgipbMvNzUX1ULjSVEfdgFPzNnLDvz7i/o/3M/bKEzi+YdW4xlSa6qe0SpY6CjOj3HXAi8DjQVFDYHKIa68DGkVtNwzKoq0Fprr7HndfDawgkjDCnCuSEHKOqsmkG7uSkZrCJY+/z5uLv413SCJAuDaIgUAO8AOAu38O1A5x3odAczNramYZQG8g/wCAk4n8EYWZ1STyyGkVMB3oYWbVgsbpHkGZSEJqXqcSkwfmcHSdilz/r48YN2t1vEMSCZUgfgoamQEwszSgyL557r4XGETkF/tSYKK7LzazIWZ2YCTY6cAmM1sCzARuc/dN7r4ZuI9IkvkQGBKUiSSsWpUyeb5/F3q0rMOQV5fwp6mL2bdf3WAlfsK0QbxjZncB5c3sNGAA8EqYi7v7NGBavrJ7otYduDVY8p87DhgX5nNEEkX5jFSGX96e+19fyuj3VrNm8w4evbQdWZmx7E8iUrAwdxB3ABuAT4HrifzC/0MsgxJJZqkpxt1nteS+c1szc/l6Ln58Lt/9sCveYUkSCjOj3H53H+3uF7n7hcG67ntFYqxP58aM7deBLzZu59xhs1n6jUa4kZIVphdTjpnNMLMVZrbKzFab2aqSCE4k2XVvUZsXbuiKO1w0ci65y9cXfZJIMQnziGks8A/gRKADkB18FZES0LJ+ZSYPzOGI6hW45qn5PDvvy3iHJEkiTILY6u6vu/v6oIfRJnffFPPIRORndauUY+INXTi5eU3ufvkz/t+0pexXDyeJsTAJYqaZ/d3MupjZCQeWmEcmIr9QMTON0X2z6dulMaPeXcXA5z5m5+598Q5LEliYvnMHxk/Kjipz4JTiD0dECpOWmsL/9mxF4xpZ/Pm1JXwz+n1G982mVqXMeIcmCajIBOHu3UsiEBEJx8y45sSmNKxWnpufX8B5w2fzRL8ONK9TKd6hSYIJ04upjpmNNbPXg+2WZnZN7EMTkcKc3qouE/p3Ydee/Zw/Yg5z8jbGOyRJMGHaIJ4kMiRG/WB7BcHEPiISX20aVWXywK7Uq1KOvuM+4IX5a4o+SSSkMAmiprtPBPbDz2MsqWVMpJRoWK0CL97Ylc7NanDbi4t46M3lmspUikWYBLHdzGoQDNBnZp2BrTGNSkQOSeVy6TxxVQcuyW7EY2/ncfPzC9m1R3/HyX8nTC+m3xEZpvvIYOa3WsBFMY1KRA5ZemoK919wHEfUqMDfpy/nm607ebxPNtWzMuIdmpRRYcZi+gj4FdCVyGB9rdz9k1gHJiKHzswY2P0oHru0HZ+s3cr5w2ezeuP2eIclZVSYXkwrgWvdfbG7f+bue8zs1RKITUQO0zlt6jP+uk78sGsv5w2fzQerNZ2KHLowbRB7gO5m9kQwMxxAgxjGJCLFoH3j6rw8oCvVszK4Ysw8Ji/QrL1yaMIkiB3ufgmRWeHeM7MjCDGjnIjEX+MaWUy6sSvtjqjKLRMW8ui/P1cPJwktTIIwAHd/ALgbeBNoGMugRKT4VK2QwdPXdOT8dg34x4wV/O6FT9i9d3+8w5IyIEwvpugpQt8ysx5Av5hFJCLFLjMtlYcubkPjGln8860VfP39TkZe0Z6qFdTDSQ4uTC+mV8ysgZl1NbOTgSZAbqwDE5HiZWbc/OvmPHxJWz7+8nvOHz6HLzeph5McXJF3EGZ2P9AbWMJ/3qB24N0YxiUiMXJuuwbUr1qe/s/M57zhcxjVpz3ZTarHOywphcK0QZwHtHD337j7OcHSM9aBiUjsdGxanZcH5FClfDqXjZnH1E++jndIUgqFSRCrgPRYByIiJatpzUgPp7YNqzJ4/AKGvq0eTvJLYRqpdwALzezfwE8HCt19cMyiEpESUS0rg2eu7cgdL33Kg2+uYPXGHZxZU0lCIsIkiKnBIiIJKDMtlX9c3IbGNSrw8Fufs7h6Ctmdd6uHk4SaUe4pMysPHOHuy0sgJhEpYWbGLb8+miY1svj9xIWcP3wOT1zVgcY1suIdmsRRmLGYzgEWAm8E223NTHcUIgno3HYNuK1DObbs2M15w+cw/wuN4ZTMwjRS/wnoCHwP4O4LgWYxjElE4qhF9VQmRfVwmrJQYzglq1CD9bl7/gmC9J6+SAL7uYdTo6rc/LzGcEpWYRLEYjO7DEg1s+Zm9hgwJ8ZxiUicVcvK4JlrOnL+CcEYThM/4ae9mqUumYRJEDcBrYh0cR0P/ADcEsugRKR0yExL5aGL2vD7HkczacE6+oz5gC3bd8c7LCkhYcZi2uHud7t7B3fPDtZ3lURwIhJ/ZsagU5rz6KXtWLj2e84bPptVG7bFOywpAQdNEGZW08zuNbPBZlbRzEaY2WdmNsXMjirJIEUk/nq2qc/46zrz4669nDd8DnNXbop3SBJjhd1BPAdkAs2BD4DVwIXAq8CY2IcmIqVN+8bVeHlADrUqZdJ33Dwmzl8T75AkhgpLEHXc/S5gMFDR3R9w92XuPhqoWjLhiUhpc0SNCrx0Y1c6Na3B7S8u4oE3lrF/v3o4JaLCEsQ+AI/0bduYb5+6uYoksSrl03niqg5c1ukIhueuZND4j9m5Wz2cEk1hQ200C96Ytqh1gu2mMY9MREq19NQU/nJua5rVzOIv05aybstcRvfNpnblcvEOTYpJYQmiV9T6g/n25d8WkSRkZlx7UjMa18hi8PgFnDtsNmP7deDYepXjHZoUg4M+YnL3dwpbwlzczM4ws+VmlmdmdxSwv5+ZbTCzhcFybdS+fVHlGvtJpBQ7rWUdXrihC/sdLhwxh7eXfRfvkKQYhHlR7rCYWSowDDgTaAlcamYtCzh0gru3DZbo3lE7o8o1g51IKde6QRUmD8yhaa0srn1qPuNmrdbwHGVczBIEkQH+8tx9lbvvBp7nl4+tRCTB1K1SjonXd+G0lnUY8uoS/jD5M/bsU5+WsqrQ+SCCu4C/ufvvD+PaDYDoTtJrgU4FHHeBmZ0MrAB+6+4HzilnZvOBvcD97j65gPj6A/0B6tSpQ25u7mGEmVi2bdumeiiC6qhwxVE/lzR0Unek8+y8r1iYt5YBbcuRlW7FE2ApkCw/Q4UmCHffZ2YnxvDzXwHGu/tPZnY98BRwSrCvsbuvM7NmwNtm9qm7r8wX3yhgFEB2drZ369YthqGWDbm5uageCqc6Klxx1c8p3WHi/DXcNelT/rHIGNcvcSYgSpafoTCPmBaY2VQz62Nm5x9YQpy3DmgUtd0wKPuZu29y9wPzXI8B2kftWxd8XQXkAu1CfKaIlCIXZzfimWs6sWn7bs4dNpsPVmsCorIkTIIoB2wi8pf9OcFydojzPgSam1lTM8sAepNvbmszqxe12RNYGpRXM7PMYL0mkAMsCfGZIlLKdDmyBi8PyKFahQwuH/M+L2h4jjIjzJzUVx3Ohd19r5kNAqYDqcA4d19sZkOA+e4+FRhsZj2JtDNsBvoFpx8LPG5m+4kksfvdXQlCpIxqWjOLlwfkMOC5j7jtxUWs3LCd209vQUpK4rRLJKIiE4SZNQQeI/JXPMB7wM3uvraoc919GjAtX9k9Uet3AncWcN4c4Liiri8iZUeVCuk8eVVH7p26mJHvrGTVhm083LstFTKK/DUkcRLmEdMTRB4N1Q+WV4IyEZFDcmB4jnvObslbS7/jopFz+WbrzniHJQcRJkHUcvcn3H1vsDwJ1IpxXCKSoMyMq09sytgrO/Dlph30GjqbTw8vhQIAAA3iSURBVNZ8H++wpABhEsQmM7vCzFKD5QoijdYiIoet+zG1eenGrmSkpXDx43N5ddHX8Q5J8gmTIK4GLga+DZYLgcNquBYRidaibiUmD8zhuAZVGPTcAh5+a4WG5yhFwvRi+pJIF1QRkWJXs2Imz17XibsmfcbDb31O3vptPHhRG8qlp8Y7tKRX5B2EmTUzs1eCUVfXB3NSNyuJ4EQkOWSmpfLgRcdz55nH8Nqn33DJ43P57odd8Q4r6YV5xPQcMBGoR6QX0wvA+FgGJSLJx8y4/ldHMqpPNp+v30avobP5dO3WeIeV1MIkiAru/kxUL6Z/EXm7WkSk2J3Wsg4v3diV1BTjosfn8Nqib+IdUtIKkyBeN7M7zKyJmTU2s9uBaWZW3cyqxzpAEUk+x9arzJRBObSuX4WBz32sxus4CfMK48XB1+vzlfcGHFB7hIgUu/yN15+v38aDF7ahfIYar0tKmF5MTUsiEBGR/A40XreoW5G/vr6MLzdtZ3TfbOpVKR/v0JJCqBnlzKy1mV1sZn0PLLEOTEQEIo3X/U8+kjF9s1m9YTu9hs5mod68LhFhurneS2SwvseA7sAD6L0IESlhpx5bh0kDcshMj7x5PXnBuqJPkv9KmDuIC4FTgW+Dob/bAFViGpWISAFa1K3ElIEn0q5RVW6ZsJD7X1/Gvv1qvI6VMAlip7vvB/aaWWVgPb+cKU5EpMRUz8rgmWs6cVmnIxj5zkr6Pz2fH3ftiXdYCSlMgphvZlWB0cBHwMfA3JhGJSJSiIy0yLDhQ3q1InfFBs4fPoevNu2Id1gJ56AJwsyGmVmOuw9w9+/dfSRwGnDl4c4yJyJSXMyMvl2a8PTVHVn/40/0HDaLOSs3xjushFLYHcQK4EEz+8LMHjCzdu7+hbsvKqngRESKknNUTaYOyqFmxUz6jP2Ap+d+oZfqislBE4S7P+LuXYBfEZn/YZyZLTOze83s6BKLUESkCI1rZPHygK50O7oW90xZzF0vf8ruvfvjHVaZV2QbhLt/6e5/c/d2wKXAucDSmEcmInIIKpVLZ1TfbAZ0O5LxH6zh8jHvs3HbT/EOq0wL8x5EmpmdY2bPAq8Dy4HzYx6ZiMghSk0xbj/jGB7p3ZZFa7fSa+hsFn+tEWEPV2GN1KeZ2ThgLXAd8BpwpLv3dvcpJRWgiMih6tW2AS/e0JX97lw4Yq5GhD1Mhd1B3AnMAY51957u/py7by+huERE/ivHNazClEE5tKxfmYHPfcyD05ezXy/VHZLCGqlPcfcx7r6lJAMSESkutSuV47nrOnFJdiOGzszjuqfn84Neqgst1GB9IiJlVWZaKvdfcBxDerXinRUbOG/YbFZt2BbvsMoEJQgRSXgHXqp75ppObNmxh17DZpO7fH28wyr1lCBEJGl0ObIGUwfl0LBaBa568kNGvrNSL9UVQglCRJJKw2oVeOnGLvzmuHrc//oyBj+/kB2798Y7rFJJCUJEkk6FjDSGXtqO/znjGF5d9DUXjJjLms0a7C8/JQgRSUpmxo3djuSJfh1Yt2UH5wydxew8DfYXTQlCRJJatxa1mTroRGpXyqTP2HmMeW+V2iUCShAikvSa1Mxi0oAcTmtZhz+/tpTfTljIrj374h1W3ClBiIgAFTPTGHF5e3532tFM+eRrLhgxh7VbkrtdQglCRCSQkmLcdGpzxvTN5qtNOzjnsVnMSeJ2CSUIEZF8Tj22DlOCSYiuGDuP0e8mZ7uEEoSISAGa1arIywNzOL1VXf4ybWlSvi+hBCEichAVM9MYfvkJ3H5GC15d9DXnD5/Dp2uTZ36JmCYIMzvDzJabWZ6Z3VHA/n5mtsHMFgbLtVH7rjSzz4PlyljGKSJyMGbGgG5H8eRVHfn2h12cM3QWf35/J5MXrOOnvYnd0ylmCcLMUoFhwJlAS+BSM2tZwKET3L1tsIwJzq0O3At0AjoC95pZtVjFKiJSlF8dXYt3b+/Ovee0ZNtu55YJC8m5/20enL6cr7/fGe/wYiIthtfuCOS5+yoAM3se6AUsCXHu6cAMd98cnDsDOAMYH6NYRUSKVLlcOlflNKXx7i9Ib9iap+Z8ybDcPEa8s5KmNbOwOMV1TL3KPHZpu2K/biwTRANgTdT2WiJ3BPldYGYnAyuA37r7moOc2yD/iWbWH+gPUKdOHXJzc4sn8jJs27ZtqociqI4Kp/op2o7t26m4bjFXNIbTa5XnnbV7+XZ7/O4i/MefYvJvFssEEcYrwHh3/8nMrgeeAk4Je7K7jwJGAWRnZ3u3bt1iEmRZkpubi+qhcKqjwql+ipa/ji6KXygxFctG6nVAo6jthkHZz9x9k7v/FGyOAdqHPVdERGIrlgniQ6C5mTU1swygNzA1+gAzqxe12RNYGqxPB3qYWbWgcbpHUCYiIiUkZo+Y3H2vmQ0i8os9FRjn7ovNbAgw392nAoPNrCewF9gM9AvO3Wxm9xFJMgBDDjRYi4hIyYhpG4S7TwOm5Su7J2r9TuDOg5w7DhgXy/hEROTg9Ca1iIgUSAlCREQKpAQhIiIFUoIQEZECWaKMcW5mG4Av4x1HKVATSN4ZTsJRHRVO9VO0RKqjxu5eq6AdCZMgJMLM5rt7drzjKM1UR4VT/RQtWepIj5hERKRAShAiIlIgJYjEMyreAZQBqqPCqX6KlhR1pDYIEREpkO4gRESkQEoQIiJSICWIMsDMLjKzxWa238yy8+2708zyzGy5mZ0eVX5GUJZnZndElTc1s3lB+YRgKHbMLDPYzgv2Nymp76+kHKxOEpWZjTOz9Wb2WVRZdTObYWafB1+rBeVmZo8GdbPIzE6IOufK4PjPzezKqPL2ZvZpcM6jZhavGTcPi5k1MrOZZrYk+P91c1CuOjrA3bWU8gU4FmgB5ALZUeUtgU+ATKApsJLI0OqpwXozICM4pmVwzkSgd7A+ErgxWB8AjAzWewMT4v19F3MdHrROEnUBTgZOAD6LKnsAuCNYvwP4W7D+G+B1wIDOwLygvDqwKvhaLVivFuz7IDjWgnPPjPf3fIj1Uw84IVivRGTa45aqo/8suoMoA9x9qbsvL2BXL+B5d//J3VcDeUDHYMlz91Xuvht4HugV/PVyCvBicP5TwLlR13oqWH8ROLXM/bVTuALrJM4xxZS7v0tknpVo0f/O+f/9n/aI94GqwYRepwMz3H2zu28BZgBnBPsqu/v7HvlN+HTUtcoEd//G3T8O1n8kMmFZA1RHP1OCKNsaAGuittcGZQcrrwF87+5785X/4lrB/q3B8YniYHWSbOq4+zfB+rdAnWD9UH+WGgTr+cvLpOCRajtgHqqjn8V0wiAJz8zeAuoWsOtud59S0vFI4nN3N7Ok7+duZhWBl4Bb3P2H6BvnZK8jJYhSwt1/fRinrQMaRW03DMo4SPkmIrfFacFdQvTxB6611szSgCrB8YmisLpKJt+ZWT13/yZ4BLI+KD9Y/awDuuUrzw3KGxZwfJliZulEksOz7j4pKFYdBfSIqWybCvQOeiA1BZoTaRT7EGge9FjKINLoPDV4DjoTuDA4/0pgStS1DvS+uBB4Ozg+URRYJ3GOKR6i/53z//v3DXrqdAa2Bo9ZpgM9zKxa0JunBzA92PeDmXUO2qr6Rl2rTAjiHgssdfd/RO1SHR0Q71ZyLUUvwHlEnl/+BHxH5IfvwL67ifTOWU5UDwkiPS5WBPvujipvRiSJ5AEvAJlBeblgOy/Y3yze33cM6rHAOknUBRgPfAPsCX5+riHSrvRv4HPgLaB6cKwBw4K6+ZRf9pa7Ovi5yAOuiirPBj4LzhlKMDJDWVmAEwEHFgELg+U3qqP/LBpqQ0RECqRHTCIiUiAlCBERKZAShIiIFEgJQkRECqQEISIiBVKCkKRhZtvybfczs6GHea22Zvabg+zrZmZbzWxBMHrsu2Z2dohrNjGzyw4xjn5mtsHMxkR99qvB+iXBKKKvHso1RQ5QghA5PG2J9Jk/mPfcvZ27twAGA0PN7NQirtkEOKQEEZjg7tfmL3T3CcD/KRcJSwlCBDCzWmb2kpl9GCw5QXlHM5sb3A3MMbMWwZvYQ4BLzGyhmV1S2LXdfWFw/KDgmk+a2YG32aPvbO4HTgqu+dvgzqNt1HGzzKxN8X7nIgensZgkmZQ3s4VR29X5z3AbjwD/dPdZZnYEkeETjgWWASe5+14z+zXw/9z9AjO7h8ibtINCfvbHwG1FHHMH8Ht3PxvAzDYD/YBbzOxooJy7fxLy80T+a0oQkkx2unv0X+T9iAyFAPBroGXUSJ6Vg1E+qwBPmVlzIsMypB/mZx/O3BovAH80s9uIDOXw5GF+tshhUYIQiUgBOrv7rujCoBF7prufF8wZkHuY129HZEIagL3B52FmKURmuPs/3H2Hmc0gMlHNxUD7w/xskcOiNgiRiDeBmw5sRD37r8J/hmjuF3X8j0SmqSySmR0P/JHIQG8AX/CfX/Y9+c9dSUHXHAM8CnzokdnKREqMEoRIxGAgO5iMfglwQ1D+APBXM1vAL++4ZxJ5JHWwRuqTDnRzJZIYBrv7v4N9o4FfmdknQBdge1C+CNhnZp+Y2W8B3P0j4AfgiZDfRxqRUX9F/msazVWkFDOz+kQeax3j7vsL2N+PqMZyM7sZaODutwfb3Yhq+BY5FGqDECmlzKwv8Bfg1oKSQ2AncGbwopwBrYm0VxDc2dwLfFQC4UoC0h2EiIgUSG0QIiJSICUIEREpkBKEiIgUSAlCREQKpAQhIiIF+v9urWsHHSwuxwAAAABJRU5ErkJggg==
+"
+>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Recall that the IDAES framework is an equation-oriented modeling environment. This means that we can specify "design" problems natively. That is, there is no need to have our specifications on the inlet alone. We can put specifications on the outlet as long as we retain a well-posed, square system of equations.</p>
+<p>For example, we can remove the specification on heat duty and instead specify that we want the mole fraction of Benzene in the vapor outlet to be equal to 0.6. The mole fraction is not a native variable in the property block, so we cannot use "fix". We can, however, add a constraint to the model.</p>
+<p>Note that we have been executing a number of solves on the problem, and may not be sure of the current state. To help convergence, therefore, we will first call initialize, then add the new constraint and solve the problem. Note that the reference for the mole fraction of Benzene in the vapor outlet is <code>m.fs.flash.vap_outlet.mole_frac_comp[0, "benzene"]</code>.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Fill in the missing code below and add a constraint on the mole fraction of Benzene (to a value of 0.6) to find the required heat duty.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># re-initialize the model - this may or may not be required depending on current state but safe to initialize</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+<span class="c1"># Unfix the heat_duty variable</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+
+<span class="c1"># Todo: Add a new constraint (benzene mole fraction to 0.6)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">benz_purity_con</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.6</span><span class="p">)</span>
+
+<span class="c1"># solve the problem</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Check stream condition</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>2020-04-14 00:01:45 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash.control_volume.properties_in: State Released.
+2020-04-14 00:01:46 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
+Ipopt 3.13.2: 
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit http://projects.coin-or.org/Ipopt
+
+This version of Ipopt was compiled from source code available at
+    https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See http://www.hsl.rl.ac.uk.
+******************************************************************************
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      137
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       55
+
+Total number of variables............................:       42
+                     variables with only lower bounds:        3
+                variables with lower and upper bounds:       10
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       42
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.40e-02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 2.12e+02 7.01e-02  -1.0 5.15e+03    -  9.87e-01 1.00e+00h  1
+   2  0.0000000e+00 5.65e-02 2.03e-03  -1.0 7.07e+01    -  9.90e-01 1.00e+00h  1
+   3  0.0000000e+00 9.53e-10 2.50e-06  -1.0 4.13e-01    -  9.98e-01 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.4104644499482428e-11    9.5315044745802879e-10
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.4104644499482428e-11    9.5315044745802879e-10
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+
+====================================================================================
+Unit : fs.flash                                                            Time: 0.0
+------------------------------------------------------------------------------------
+    Unit Performance
+
+    Variables: 
+
+    Key             : Value  : Fixed : Bounds
+          Heat Duty : 5083.6 : False : (None, None)
+    Pressure Change : 0.0000 :  True : (None, None)
+
+------------------------------------------------------------------------------------
+    Stream Table
+                              Inlet    Vapor Outlet  Liquid Outlet
+    flow_mol                   1.0000      0.54833       0.45167  
+    mole_frac_comp benzene    0.50000      0.60000       0.37860  
+    mole_frac_comp toluene    0.50000      0.40000       0.62140  
+    temperature                368.00       369.07        369.07  
+    pressure               1.0132e+05   1.0132e+05    1.0132e+05  
+====================================================================================
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># For testing purposes</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">TerminationCondition</span>
+<span class="k">assert</span> <span class="n">status</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
 </pre></div>
 
     </div>

@@ -13097,7 +13097,7 @@ $$\hat{E}^{\text{surf}} = \frac{1}{N \sqrt{12}} \displaystyle \sum_i \sqrt{CN_i}
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Importing-Packages">Importing Packages<a class="anchor-link" href="#Importing-Packages">&#182;</a></h2><p>We start by importing several standard Python modules for convienience.</p>
+<h2 id="Importing-Packages">Importing Packages<a class="anchor-link" href="#Importing-Packages">&#182;</a></h2><p>We start by importing several standard Python modules for convenience.</p>
 
 </div>
 </div>
@@ -13107,8 +13107,8 @@ $$\hat{E}^{\text{surf}} = \frac{1}{N \sqrt{12}} \displaystyle \sum_i \sqrt{CN_i}
 <div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">sqrt</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sqrt</span>
 </pre></div>
 
     </div>
@@ -13129,33 +13129,10 @@ $$\hat{E}^{\text{surf}} = \frac{1}{N \sqrt{12}} \displaystyle \sum_i \sqrt{CN_i}
 <div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">matopt</span> <span class="k">import</span> <span class="o">*</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">apps.matopt</span> <span class="kn">import</span> <span class="o">*</span>
 </pre></div>
 
     </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_text output_error">
-<pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">ModuleNotFoundError</span>                       Traceback (most recent call last)
-<span class="ansi-green-fg">&lt;ipython-input-2-be5adc2fb850&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
-<span class="ansi-green-fg">----&gt; 1</span><span class="ansi-red-fg"> </span><span class="ansi-green-fg">from</span> matopt <span class="ansi-green-fg">import</span> <span class="ansi-blue-fg">*</span>
-
-<span class="ansi-red-fg">ModuleNotFoundError</span>: No module named &#39;matopt&#39;</pre>
-</div>
-</div>
-
 </div>
 </div>
 
@@ -13525,17 +13502,20 @@ maximize(self, func, **kwargs)
     Method to maximize a target functionality of the material model.
     
     Args:
-    func (MaterialDescriptor/Expr): Material functionality to optimize.
-    **kwargs: Arguments to MatOptModel.optimize
+        func (``MaterialDescriptor``/``Expr``): Material functionality to optimize.
+        **kwargs: Arguments to ``MatOptModel.optimize``
     
     Returns:
-    (Design/list&lt;Design&gt;) Optimal designs.
+        (``Design``/list&lt;``Design``&gt;) Optimal designs.
     
-    See MatOptModel.optimize method for details.
+    Raises:
+        ``pyutilib.ApplicationError`` if MatOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+    
+    See ``MatOptModel.optimize`` method for details.
 
 Help on function optimize in module matopt.opt.mat_modeling:
 
-optimize(self, func, sense, nSolns=1, tee=True, disp=1, keepfiles=False, tilim=3600, trelim=None)
+optimize(self, func, sense, nSolns=1, tee=True, disp=1, keepfiles=False, tilim=3600, trelim=None, solver=&#39;cplex&#39;)
     Method to create and optimize the materials design problem.
     
     This method automatically creates a new optimization model every 
@@ -13547,29 +13527,30 @@ optimize(self, func, sense, nSolns=1, tee=True, disp=1, keepfiles=False, tilim=3
     be called instead. 
     
     Args:
-    func (MaterialDescriptor/Expr): Material functionality to optimize.
-    sense (int): flag to indicate the choice to minimize or maximize the
-        functionality of interest. 
-        Choices: minimize/maximize (Pyomo constants 1,-1 respectively)
-    nSolns (int): Optional, number of Design objects to return.
-        Default: 1 (See MatOptModel.populate for more information)
-    tee (bool): Optional, flag to turn on solver output. 
-        Default: True
-    disp (int): Optional, flag to control level of MatOpt output.
-        Choices: 0: No MatOpt output (other than solver tee)
-                 1: MatOpt output for outer level method
-                 2: MatOpt output for solution pool &amp; individual solns.
-        Default: 1
-    keepfiles (bool): Optional, flag to save temporary pyomo files. 
-        Default: True
-    tilim (float): Optional, solver time limit (in seconds). 
-        Default: 3600
-    trelim (float): Optional, solver tree memeory limit (in MB).
-        Default: None (i.e., Pyomo/CPLEX default)
+        func (``MaterialDescriptor``/``Expr``): Material functionality to optimize.
+        sense (int): flag to indicate the choice to minimize or maximize the functionality of interest.
+            Choices: minimize/maximize (Pyomo constants 1,-1 respectively)
+        nSolns (int): Optional, number of Design objects to return.
+            Default: 1 (See ``MatOptModel.populate`` for more information)
+        tee (bool): Optional, flag to turn on solver output.
+            Default: True
+        disp (int): Optional, flag to control level of MatOpt output.
+            Choices: 0: No MatOpt output (other than solver tee) 1: MatOpt output for outer level method 2: MatOpt output for solution pool &amp; individual solns.
+            Default: 1
+        keepfiles (bool): Optional, flag to save temporary pyomo files.
+            Default: True
+        tilim (float): Optional, solver time limit (in seconds).
+            Default: 3600
+        trelim (float): Optional, solver tree memeory limit (in MB).
+            Default: None (i.e., Pyomo/CPLEX default)
+        solver (str): Solver choice. Currently only cplex or neos-cplex are supported
+            Default: cplex
     
     Returns:
-    (Design/list&lt;Design&gt;) Optimal design or designs, depending on the 
-        number of solutions requested by argument nSolns.
+        (``Design``/list&lt;``Design``&gt;) Optimal design or designs, depending on the number of solutions requested by argument ``nSolns``.
+    
+    Raises:
+        ``pyutilib.ApplicationError`` if MatOpt can not find usable solver (CPLEX or NEOS-CPLEX)
 
 </pre>
 </div>
@@ -13584,7 +13565,11 @@ optimize(self, func, sense, nSolns=1, tee=True, disp=1, keepfiles=False, tilim=3
 <div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">maximize</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ecoh</span><span class="p">,</span><span class="n">tilim</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">maximize</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ecoh</span><span class="p">,</span><span class="n">tilim</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13602,115 +13587,48 @@ optimize(self, func, sense, nSolns=1, tee=True, disp=1, keepfiles=False, tilim=3
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
-Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer 12.6.1.0
+Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
   with Simplex, Mixed Integer &amp; Barrier Optimizers
 5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-Copyright IBM Corp. 1988, 2014.  All Rights Reserved.
+Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
 
 Type &#39;help&#39; for a list of available commands.
 Type &#39;help&#39; followed by a command name for more
 information on commands.
 
 CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
-Logfile &#39;/tmp/tmpyyvw8afg.cplex.log&#39; open.
+Logfile &#39;/tmp/tmpwf39p94i.cplex.log&#39; open.
 CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
 CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
 CPLEX&gt; New value for time limit in seconds: 100
-CPLEX&gt; Problem &#39;/tmp/tmppdm7y76o.pyomo.lp&#39; read.
-Read time = 0.02 sec. (0.18 ticks)
-CPLEX&gt; Problem name         : /tmp/tmppdm7y76o.pyomo.lp
+CPLEX&gt; Problem &#39;/tmp/tmpn0jk7bdk.pyomo.lp&#39; read.
+Read time = 0.05 sec. (0.28 ticks)
+CPLEX&gt; Problem name         : /tmp/tmpn0jk7bdk.pyomo.lp
 Objective sense      : Maximize
-Variables            :    1315  [Nneg: 716,  Fix: 1,  Box: 55,  Free: 1,
-                                 Binary: 487,  General Integer: 55]
+Variables            :    1920  [Nneg: 1,  Fix: 1,  Box: 55,  Free: 661,
+                                 Binary: 1147,  General Integer: 55]
 Objective nonzeros   :       1
-Linear constraints   :    1519  [Less: 1296,  Equal: 223]
-  Nonzeros           :    5769
+Linear constraints   :    2839  [Less: 2561,  Greater: 55,  Equal: 223]
+  Nonzeros           :    8904
   RHS nonzeros       :     488
-SOS                  :      55  [SOS2: 55, 715 members, all continuous]
 
 Variables            : Min LB: 0.000000         Max UB: 22.00000       
 Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
 Linear constraints   :
   Nonzeros           : Min   : 0.01312160       Max   : 12.00000       
   RHS nonzeros       : Min   : 1.000000         Max   : 1.000000       
-CPLEX&gt; Tried aggregator 2 times.
-MIP Presolve eliminated 2 rows and 189 columns.
-Aggregator did 55 substitutions.
-Reduced MIP has 1462 rows, 1071 columns, and 5043 nonzeros.
-Reduced MIP has 487 binaries, 0 generals, 55 SOSs, and 0 indicators.
-Presolve time = 0.03 sec. (5.87 ticks)
-Probing time = 0.01 sec. (5.75 ticks)
-Tried aggregator 1 time.
-MIP Presolve eliminated 648 rows and 216 columns.
-Reduced MIP has 814 rows, 855 columns, and 3531 nonzeros.
-Reduced MIP has 271 binaries, 0 generals, 55 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (4.18 ticks)
-Probing time = 0.00 sec. (1.86 ticks)
-Tried aggregator 1 time.
-Reduced MIP has 814 rows, 855 columns, and 3531 nonzeros.
-Reduced MIP has 271 binaries, 0 generals, 55 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (2.36 ticks)
-Probing time = 0.00 sec. (1.87 ticks)
-Clique table members: 432.
-MIP emphasis: balance optimality and feasibility.
-MIP search method: dynamic search.
-Parallel mode: deterministic, using up to 8 threads.
-Root relaxation solution time = 0.03 sec. (40.90 ticks)
+CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
 
-        Nodes                                         Cuts/
-   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+Error termination, CPLEX Error  1016.
+Solution time =    0.00 sec.
+Deterministic time = 0.00 ticks  (0.00 ticks/sec)
 
-      0     0        1.2621   271                      1.2621     1179         
-*     0+    0                            0.5285        1.2621           138.81%
-*     0+    0                            0.6055        1.2621           108.42%
-      0     0        0.7995   326        0.6055     Cuts: 303     1764   32.04%
-*     0+    0                            0.6310        0.7995            26.71%
-      0     0        0.7936   324        0.6310       Cuts: 6     1836   25.77%
-      0     0        0.7926   325        0.6310   ZeroHalf: 7     1862   25.61%
-      0     0        0.7921   326        0.6310   ZeroHalf: 8     1892   25.53%
-      0     0        0.7918   326        0.6310   ZeroHalf: 6     1916   25.49%
-*     0+    0                            0.6639        0.7918            19.26%
-      0     0        0.7916   326        0.6639   ZeroHalf: 6     1941   18.90%
-      0     0        0.7882   325        0.6639       Cuts: 8     2008   18.71%
-      0     0        0.7867   325        0.6639      Cuts: 10     2088   18.49%
-*     0+    0                            0.6790        0.7867            15.87%
-*     0+    0                            0.7087        0.7867            11.01%
-      0     0        0.7864   326        0.7087   ZeroHalf: 5     2118   10.97%
-      0     0        0.7864   326        0.7087   ZeroHalf: 2     2129   10.96%
-      0     0        0.7863   326        0.7087   ZeroHalf: 3     2144   10.95%
-*     0+    0                            0.7251        0.7863             8.44%
-      0     2        0.7863   326        0.7251        0.7863     2144    8.44%
-Elapsed time = 0.71 sec. (542.46 ticks, tree = 0.00 MB, solutions = 7)
-*    44+   30                            0.7254        0.7796             7.47%
-*    51    34      integral     0        0.7309        0.7736     6230    5.84%
-    165    41        0.7403   174        0.7309        0.7670    13066    4.94%
-    781   190        cutoff              0.7309        0.7402    34131    1.27%
-
-Implied bound cuts applied:  55
-Mixed integer rounding cuts applied:  11
-Zero-half cuts applied:  9
-Lift and project cuts applied:  1
-Gomory fractional cuts applied:  7
-
-Root node processing (before b&amp;c):
-  Real time             =    0.70 sec. (541.04 ticks)
-Parallel b&amp;c, 8 threads:
-  Real time             =    0.61 sec. (639.31 ticks)
-  Sync time (average)   =    0.15 sec.
-  Wait time (average)   =    0.16 sec.
-                          ------------
-Total (root+branch&amp;cut) =    1.32 sec. (1180.35 ticks)
-
-Solution pool: 9 solutions saved.
-
-MIP - Integer optimal solution:  Objective =  7.3092764017e-01
-Solution time =    1.32 sec.  Iterations = 45901  Nodes = 1439
-Deterministic time = 1180.36 ticks  (893.28 ticks/sec)
-
-CPLEX&gt; Incumbent solution written to file &#39;/tmp/tmp480cjg47.cplex.sol&#39;.
-CPLEX&gt; The solver exited normally.
-A feasible and provably optimal solution is available.
-The Design has objective: 0.730927640166201
+CPLEX&gt; CPLEX Error  1217: No solution exists.
+No file written.
+CPLEX&gt; ERROR: evaluating object as numeric value: obj
+        (object: &lt;class &#39;pyomo.core.base.objective.SimpleObjective&#39;&gt;)
+    No value for uninitialized NumericValue object obj
+MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
 </pre>
 </div>
 </div>

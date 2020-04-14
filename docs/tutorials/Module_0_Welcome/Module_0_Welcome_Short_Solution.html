@@ -13077,16 +13077,18 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Surface-Design">Surface Design<a class="anchor-link" href="#Surface-Design">&#182;</a></h1><p>This notebook serves as an example application of the MatOpt framework.
-We consider an example optimization problem of designing a monometallic nanostructured catalyst surface.</p>
-
+<p><img src="../../_images/idaes_icon.png" width="100"></p>
+<h1><center>Welcome to the IDAES Stakeholder Workshop</center></h1>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Importing-Packages">Importing Packages<a class="anchor-link" href="#Importing-Packages">&#182;</a></h2><p>We start by importing several standard Python modules for convienience.</p>
+<p>Welcome and thank you for taking the time to attend today's workshop. Today we will introduce you to the fundamentals of working with the IDAES process modeling toolset, and we will demonstrate how these tools can be applied for optimization applications.</p>
+<p>Today's workshop will be conducted using Jupyter Notebooks which provide an online, interactive Python environment for you to use (without the need for installing anything).</p>
+<p>Before we get started on some actual examples, let's make sure that everything is working correctly. The cell below contains a command to run a simple test script that will test that everything we will need for today is working properly.</p>
+<p>You can execute a cell by pressing <code>Shift+Enter</code>.</p>
 
 </div>
 </div>
@@ -13096,357 +13098,7 @@ We consider an example optimization problem of designing a monometallic nanostru
 <div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we import MatOpt.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">apps.matopt</span> <span class="kn">import</span> <span class="o">*</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Representing-Materials">Representing Materials<a class="anchor-link" href="#Representing-Materials">&#182;</a></h2><p>To begin, we define a <strong>Lattice</strong> object. In this example, <strong>FCCLattice</strong> is the appropriate a child class of Lattice. This object will serve to define neighbor connections and helps us generically create other objects. We construct our lattice from a class method constructor for FCC lattices aligned with the {111} plane.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">IAD</span> <span class="o">=</span> <span class="mf">2.828427</span> <span class="c1"># Angstrom</span>
-<span class="n">Lat</span> <span class="o">=</span> <span class="n">FCCLattice</span><span class="o">.</span><span class="n">alignedWith111</span><span class="p">(</span><span class="n">IAD</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we define a <strong>Shape</strong> object that we will use to specify a design space. Additionally, in this example our design space is periodic, so we will define a <strong>Tiling</strong> object to hold information about the periodicity. In this example, <strong>Parallelepiped</strong> and <strong>PlanarTiling</strong> are the appropriate child classes for these objects, respectively.</p>
-<p>Note that we shift the shape of our design space slightly, in order to avoid confusion about which lattice sites that lie perfectly on the shape facet should be included.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nUnitCellsOnEdge</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">nLayers</span> <span class="o">=</span> <span class="mi">6</span>
-<span class="n">a</span> <span class="o">=</span> <span class="n">nUnitCellsOnEdge</span><span class="o">*</span><span class="n">IAD</span>
-<span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
-<span class="n">c</span> <span class="o">=</span> <span class="n">nLayers</span><span class="o">*</span><span class="n">Lat</span><span class="o">.</span><span class="n">FCC111LayerSpacing</span>
-<span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span>
-<span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span>
-<span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>
-<span class="n">S</span> <span class="o">=</span> <span class="n">Parallelepiped</span><span class="o">.</span><span class="n">fromEdgesAndAngles</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">,</span><span class="n">gamma</span><span class="p">)</span>
-<span class="n">S</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">a</span><span class="p">,</span><span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">b</span><span class="p">,</span><span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">c</span><span class="p">]))</span>
-<span class="n">T</span> <span class="o">=</span> <span class="n">PlanarTiling</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Given the parameters for a design space, we can construct a <strong>Canvas</strong> object to hold information about points and nearest neighbors. In this example, the object is efficiently constructed from a scan over lattice sites. In general, the Canvas can be constructed and manipulated via user-defined algorithms.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Canv</span> <span class="o">=</span> <span class="n">Canvas</span><span class="o">.</span><span class="n">fromLatticeAndTilingScan</span><span class="p">(</span><span class="n">Lat</span><span class="p">,</span><span class="n">T</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>The Canvas object hold information about the design space and the lattice sites, but it does not specify any material building block information. To represent material configurations, use a <strong>Design</strong> object.</p>
-<p>Initially, the Design is empty. There are several ways to place <strong>Atom</strong> (i.e., building block) objects in a Design. In this example, we are considering a Pt surface for the oxygen reduction reaction. We can initialize a design representing the FCC {111} surface by using a standard constructor for the Design object.</p>
-<p>To debug our work so far, we can create material structure files to load and plot with standard visualization tools such as AtomEye. Here, we create PDB (protein data bank format, www.rcsb.org) and CFG (AtomEye configuration, li.mit.edu/A/Graphics/A/) files for the design. These files can be plotted with visualization packages such as AtomEye or OVITO.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Pt&#39;</span><span class="p">))</span>
-<span class="n">D</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;undefected.pdb&#39;</span><span class="p">)</span>
-<span class="n">D</span><span class="o">.</span><span class="n">toCFG</span><span class="p">(</span><span class="s1">&#39;undefected.cfg&#39;</span><span class="p">,</span><span class="n">GS</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span><span class="n">BBox</span><span class="o">=</span><span class="n">S</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Building-a-Model">Building a Model<a class="anchor-link" href="#Building-a-Model">&#182;</a></h2><p>In this example, we will build a model that maximizes the number of sites that are reactive for the oxygen reduction reaction (ORR). More generally, our model will indicate sites that are within a certain tolerance of a target generalized coordination number (GCN). These target sites can also be constrained to lie within minimum and maximum coordination number to be considered surface sites.</p>
-<p>Additionally, we model the surface energy of nanostructured designs. This surface energy can be constrained to be below a threshold and can be included in the objective function. We can parametrically optimize the multi-objective optimization problem by defining a weighting, <em>CatWeight</em>, that controls how much weight is given to the catalytic activity term in the objective function. A weighting of 1 corresponds to the optimally active material and a weighting of 0 corresponds to the lowest surface energy design.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Pt&#39;</span><span class="p">)]</span>
-<span class="n">TargetGCN</span> <span class="o">=</span> <span class="mf">8.0</span>
-<span class="n">CNsurfMin</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="n">CNsurfMax</span> <span class="o">=</span> <span class="mi">9</span>
-<span class="n">TileSizeSquared</span> <span class="o">=</span> <span class="n">nUnitCellsOnEdge</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">UndefectedSurfE</span> <span class="o">=</span> <span class="mf">0.129758</span>
-<span class="n">maxSurfE</span> <span class="o">=</span> <span class="mi">999</span>
-<span class="n">CatWeight</span> <span class="o">=</span> <span class="mf">1.0</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>To begin, we start by creating a <strong><em>MatOptModel</em></strong> object to hold information about the model.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">MatOptModel</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atoms</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>By default, several basic variables are pre-defined. See the first example, <strong><em>Monometallic_Nanocluster_Design.ipynb</em></strong> for a description of basic variables, expressions, and constraint rules.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>First, we introduce two rules to fix special sites in the design. 
-We fix the bottom two layers of atoms to exist, creating underlying bulk layers above which we will introduce nanostruced defets.
-We also fix an arbitrary atom in the top layer, breaking symetry of the design space and resulting in easier to solve opitmization problems without actually restricting the designs that can be possibly represented.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">CanvTwoBotLayers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))</span> 
-                    <span class="k">if</span> <span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1.5</span><span class="o">*</span><span class="n">Lat</span><span class="o">.</span><span class="n">FCC111LayerSpacing</span><span class="p">]</span>
-<span class="n">CanvMinusTwoBotLayers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))</span> 
-                         <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CanvTwoBotLayers</span><span class="p">]</span>
-<span class="n">OneSiteInTopLayer</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))</span> 
-                          <span class="k">if</span> <span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">nLayers</span><span class="o">-</span><span class="mf">1.5</span><span class="p">)</span><span class="o">*</span><span class="n">Lat</span><span class="o">.</span><span class="n">FCC111LayerSpacing</span><span class="p">])]</span>
-<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FixedTo</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">sites</span><span class="o">=</span><span class="n">OneSiteInTopLayer</span><span class="p">))</span>
-<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FixedTo</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">sites</span><span class="o">=</span><span class="n">CanvTwoBotLayers</span><span class="p">))</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we introduce constraints thtat require atoms to be placed on top of each other, avoiding hollow pockets below the surface.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">NeighborsBelow</span> <span class="o">=</span> <span class="p">[[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">Canv</span><span class="o">.</span><span class="n">NeighborhoodIndexes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> 
-                   <span class="k">if</span><span class="p">(</span><span class="n">j</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
-                      <span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">&lt;</span><span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">DBL_TOL</span><span class="p">)]</span> 
-                  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))]</span>
-<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ImpliesNeighbors</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="p">,</span><span class="n">GreaterThan</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
-                                   <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">,</span>
-                                   <span class="n">neighborhoods</span><span class="o">=</span><span class="n">NeighborsBelow</span><span class="p">))</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we introduce several rules for the geometric and reactive descriptors of sites in the design. 
-We define the generalized coordination number according to a linear equality constraint. 
-Then, we define ideal sites as having a conjunction of requirements on the generalized coordination number, and regular coordination number. 
-Finally, we define activity as the count of sites with target coordination number.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;GCNi&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">12</span><span class="p">),</span><span class="n">integer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                     <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumNeighborSites</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span>
-                                                    <span class="n">coefs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">12</span><span class="p">)),</span>
-                     <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">)</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;IdealSitei&#39;</span><span class="p">,</span><span class="n">binary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                     <span class="n">rules</span><span class="o">=</span><span class="p">[</span><span class="n">Implies</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span><span class="n">GreaterThan</span><span class="p">(</span><span class="mi">3</span><span class="p">))),</span>
-                            <span class="n">Implies</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span><span class="n">LessThan</span><span class="p">(</span><span class="mi">9</span><span class="p">))),</span>
-                            <span class="n">Implies</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">GCNi</span><span class="p">,</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">TargetGCN</span><span class="p">)))],</span>
-                     <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">)</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Activity&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span>
-                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">IdealSitei</span><span class="p">,</span><span class="n">coefs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">TileSizeSquared</span><span class="p">)))</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Next, we define a simple model for the surface energy of nanostructured slabs as a piecwise linear function of coordination number.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">EiVals</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.04293</span><span class="o">*</span><span class="mi">3</span><span class="o">+</span><span class="mf">0.41492</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.04293</span><span class="o">*</span><span class="mi">10</span><span class="o">+</span><span class="mf">0.41492</span><span class="p">,</span> <span class="mf">0.05179</span><span class="o">*</span><span class="mi">11</span><span class="o">-</span><span class="mf">0.62148</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-<span class="n">EiBPs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;Ei&#39;</span><span class="p">,</span><span class="n">rules</span><span class="o">=</span><span class="n">PiecewiseLinear</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">EiVals</span><span class="p">,</span>
-                                                <span class="n">breakpoints</span><span class="o">=</span><span class="n">EiBPs</span><span class="p">,</span>
-                                                <span class="n">input_desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">),</span>
-                     <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">)</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Esurf&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="n">maxSurfE</span><span class="p">),</span>
-                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ei</span><span class="p">,</span><span class="n">coefs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">TileSizeSquared</span><span class="p">,</span><span class="n">offset</span><span class="o">=</span><span class="mf">0.101208</span><span class="p">)))</span>
-<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Stability&#39;</span><span class="p">,</span>
-                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">LinearExpr</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Esurf</span><span class="p">,</span><span class="mi">1</span><span class="o">/</span><span class="n">UndefectedSurfE</span><span class="p">)))</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Finally,  we introduce a descriptor for the weighted combination of activity and stability.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[13]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;ActAndStab&#39;</span><span class="p">,</span>
-                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">LinearExpr</span><span class="p">(</span><span class="n">descs</span><span class="o">=</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">Stability</span><span class="p">,</span><span class="n">m</span><span class="o">.</span><span class="n">Activity</span><span class="p">],</span>
-                                                      <span class="n">coefs</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">CatWeight</span><span class="p">),</span><span class="n">CatWeight</span><span class="p">])))</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Solving-the-Model">Solving the Model<a class="anchor-link" href="#Solving-the-Model">&#182;</a></h2><p>Given a fully formed Pyomo model, we have several capabilities to optimize and visualize the solution. 
-In this example, we simply call the maximize method to optimize the balance of activity and stability</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[14]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">D</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">maximize</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">ActAndStab</span><span class="p">,</span><span class="n">tilim</span><span class="o">=</span><span class="mi">360</span><span class="p">)</span>
-<span class="k">except</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)&#39;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">run</span> <span class="s2">&quot;notebook_test_script.py&quot;</span>
 </pre></div>
 
     </div>
@@ -13463,49 +13115,12 @@ In this example, we simply call the maximize method to optimize the balance of a
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>
-Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-  with Simplex, Mixed Integer &amp; Barrier Optimizers
-5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+<pre>Pyomo Import Checks:        Passed
+IDAES Import Checks:        Passed
+Solver Availability Check:  Passed
+Simple Model Check:         Passed
 
-Type &#39;help&#39; for a list of available commands.
-Type &#39;help&#39; followed by a command name for more
-information on commands.
-
-CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
-Logfile &#39;/tmp/tmpttwbxhv_.cplex.log&#39; open.
-CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
-CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
-CPLEX&gt; New value for time limit in seconds: 360
-CPLEX&gt; Problem &#39;/tmp/tmpx0l04jq4.pyomo.lp&#39; read.
-Read time = 0.05 sec. (0.34 ticks)
-CPLEX&gt; Problem name         : /tmp/tmpx0l04jq4.pyomo.lp
-Objective sense      : Maximize
-Variables            :    1620  [Nneg: 1,  Box: 65,  Free: 322,  Binary: 1151,
-                                 General Integer: 80,  Other: 1]
-Objective nonzeros   :       1
-Linear constraints   :    4085  [Less: 3680,  Greater: 64,  Equal: 341]
-  Nonzeros           :    9808
-  RHS nonzeros       :    1029
-
-Variables            : Min LB: 0.000000         Max UB: 999.0000       
-Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
-Linear constraints   :
-  Nonzeros           : Min   : 0.03741000       Max   : 12.00000       
-  RHS nonzeros       : Min   : 0.1012080        Max   : 12.00000       
-CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
-
-Error termination, CPLEX Error  1016.
-Solution time =    0.00 sec.
-Deterministic time = 0.00 ticks  (0.00 ticks/sec)
-
-CPLEX&gt; CPLEX Error  1217: No solution exists.
-No file written.
-CPLEX&gt; ERROR: evaluating object as numeric value: obj
-        (object: &lt;class &#39;pyomo.core.base.objective.SimpleObjective&#39;&gt;)
-    No value for uninitialized NumericValue object obj
-MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+All Good!
 </pre>
 </div>
 </div>
@@ -13517,26 +13132,984 @@ MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Processing-Solutions">Processing Solutions<a class="anchor-link" href="#Processing-Solutions">&#182;</a></h2><p>Once the model is solved, we can plot the resulting design. However, it is often useful to label atoms according to some auxilliary information. In this case, we would like to label atoms that consitute ideal reactive sites. We loop over the sites and set the atom to S to highlight the sites that are reactive. Then, we can write the Design object to PDB or CFG files for plotting.</p>
-<p>Additionally, we can manipulate the resulting design to better see the periodic pattern. Here, we replicate the design four times to see the periodic pattern.</p>
+<p>If everything worked properly, you should see a message saying <code>All good!</code> and a summary of all the checks that were run. If you don't see this, please contact someone for assistance.</p>
 
 </div>
 </div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Outline-of-Workshop">Outline of Workshop<a class="anchor-link" href="#Outline-of-Workshop">&#182;</a></h2><p>Today's workshop is divided into four modules which will take you through the steps of setting up a flowsheet within the IDAES framework.</p>
+<p>Welcome Module (this one):</p>
+<ul>
+<li>Introduction to Jupyter notebooks and Python</li>
+<li>Introduction to Pyomo</li>
+</ul>
+<p>Module 1 will cover:</p>
+<ul>
+<li>how to import models from the core IDAES model library,</li>
+<li>how to create a model for a single unit operation,</li>
+<li>how to define feed and operating conditions,</li>
+<li>how to initialize and solve a single unit model,</li>
+<li>some ways we can manipulate the model and examine the results.</li>
+</ul>
+<p>Module 2 will demonstrate:</p>
+<ul>
+<li>how to combine unit models together to form flowsheets,</li>
+<li>tools to initialize and solve flowsheets with recycle loops,</li>
+<li>how to optimize process operating conditions to meet product specifications.</li>
+</ul>
+<p>Module 3 will demonstrate:</p>
+<ul>
+<li>how to build new unit models using the IDAES tools,</li>
+<li>how to include new unit models into flowsheets.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction-to-Jupyter-Notebooks-and-Python">Introduction to Jupyter Notebooks and Python<a class="anchor-link" href="#Introduction-to-Jupyter-Notebooks-and-Python">&#182;</a></h2><p>In this short notebook, we will briefly describe the uses of Jupyter notebooks like this one, and provide you with the necessary background in Python for this workshop. We will cover <code>if</code> statements, looping, array-like containers called lists and dictionaries, as well as the use of some external packages for working with data.</p>
+<p>There are many additional tutorials online to learn more about the Python syntax. One recommended by the IDAES team is <a href="https://www.coursera.org/learn/python">https://www.coursera.org/learn/python</a>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In Python, variables do not need to be declared before they are used. You can simply define a new variable using <code>x = 5</code>.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+In the cell below, assign a value of 5 to the variable x. Don't forget to type Shift+Enter to execute the line.</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="mi">5</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>You can easily see the value of a variable using the built-in <code>print</code> function. For example, to print the value of <code>x</code> use <code>print(x)</code>.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Write the code to print the value of x. Don't forget to hit Shift+Enter to execute the cell.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>5
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Now change the value of the x variable to 8 and execute the cell.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="mi">8</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Jupyter-notebooks-and-execution-order">Jupyter notebooks and execution order<a class="anchor-link" href="#Jupyter-notebooks-and-execution-order">&#182;</a></h3><div class="alert alert-block alert-warning">
+<b>Note:</b>
+When using Jupyter notebooks, it is very important to know that the cells can be executed out of order (intentionally or not). The state of the environment (e.g., values of variables, imports, etc.) is defined by the execution order.
+</div><div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+To see this concept, select the cell above that contained the print statement and execute the cell again using Shift+Enter.
+</div><p>You should see that the value <code>8</code> is now printed. This may seem problematic if you are used to programming in environments where the state is linked to the order of the commands as <em>written</em>, not as <em>executed</em>.</p>
+<p><strong>Again, notice that the state of the environment is determined by the execution order.</strong></p>
+<p>Note also that the square brackets to the left of the cell show the order that cells were executed. If you scroll to the top, you should see that the code cells show an execution order of <code>[1]</code>, <code>[2]</code>, <code>[5]</code>, and <code>[4]</code>, indicating the actual execution order.</p>
+<p>There are some useful menu commands at the top of the Jupyter notebook to help with these problems and make sure you retain the execution order as expected.</p>
+<p>Some important commands to remember:</p>
+<ul>
+<li>You can clear the current state with the menu item <code>Kernel | Restart &amp; Clear Output</code></li>
+<li>It is often useful to clear the state using the menu command just described, and then execute all the lines <strong>above the currently selected cell</strong> using <code>Cell | Run All Above</code>.</li>
+<li>You can clear all the state and re-run the entire notebook using <code>Kernel | Restart &amp; Run All</code>.</li>
+</ul>
+<p>To show the use of these commands, complete the following.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+<ul>
+<li>Clear the current state (using Kernel | Restart & Clear Output). You should notice that the square brackets that listed the execution order are all now empty.</li>
+<li>Select the cell immediately below this text
+<li>Re-run all the code up to this point (Cell | Run All Above). You should now see that the square brackets indicate the expected execution order.</li>
+<li>Print the value of x again using the print function. You should see the value 8 printed, while the earlier cell printing x shows the value of 5 as expected.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>8
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Python-if-statements">Python <code>if</code> statements<a class="anchor-link" href="#Python-if-statements">&#182;</a></h3><p>In the code below, we show an example of an <code>if</code> statement in Python.</p>
+<div class="highlight"><pre><span></span><span class="n">temp</span> <span class="o">=</span> <span class="mi">325</span>
+<span class="c1"># some other code</span>
+<span class="k">if</span> <span class="n">temp</span> <span class="o">&gt;</span> <span class="mi">320</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;temperature is too high&#39;</span><span class="p">)</span>
+<span class="k">elif</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">290</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;temperature is too low&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;temperature is just right&#39;</span><span class="p">)</span>
+</pre></div>
+<div class="alert alert-block alert-warning">
+<b>Note:</b>
+You will notice that there are no braces to separate blocks in the if-else tree. In Python, indentation is used to delineate blocks of code throughout Python (e.g., if statements, for loops, functions, etc.). The indentation in the above example is not only to improve legibility of the code. It is necessary for the code to run correctly. As well, the number of spaces required to define the indentation is arbitrary, but it must be consistent throughout the code. For example, we could use 3 spaces (instead of the 4 used in the example above, but we could not use 3 for one of the blocks and 4 for another).
+</div><p>Using the syntax above for the <code>if</code> statement, write the following code.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+<ul>
+    <li>set the value of the variable T_degC to 20</li>
+    <li>convert this from degrees Celsius to degrees Fahrenheit (use variable name T_degF)</li>
+    <li>write an `if` statement that prints a  message if the degrees Fahrenheit are below 70</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">T_degC</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="c1"># some other code</span>
+<span class="n">T_degF</span> <span class="o">=</span> <span class="p">(</span><span class="n">T_degC</span> <span class="o">*</span> <span class="mf">9.0</span><span class="o">/</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">32.0</span>
+
+<span class="c1"># Todo: put the if statement here</span>
+<span class="k">if</span> <span class="n">T_degF</span> <span class="o">&lt;</span> <span class="mi">70</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The room is too cold.&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>The room is too cold.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Python-list-containers">Python list containers<a class="anchor-link" href="#Python-list-containers">&#182;</a></h3><p>Now we will illustrate the use of lists in Python. Lists are similar to vectors or arrays in other languages. A list in Python is indexed by integers from 0 up to the length of the array minus 1. The list can contain standard types (int, float, string), or other objects.</p>
+<p>In the next inline exercise, we will create a list that contains the values from 0 to 50 by steps of 5 using a for loop. Note that the python function <code>range(n)</code> can be used to iterate from 0 to (n-1) in a for loop. Also note that lists have an <code>append</code> method which adds an entry to the end of the list (e.g., if the list <code>l</code> currently has 5 elements, then <code>l.append('temp')</code> will add the string "temp" as the sixth element). Print the new list after the for loop. If this is done correctly, you should see:
+<code>[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]</code> printed after the cell.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Complete the code block below to create the desired list and print the result.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Create a list with the values 0 to 50 with steps of 5.</span>
+<span class="n">xlist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">11</span><span class="p">):</span>
+    <span class="c1"># Todo: use the append method of list to append the correct value</span>
+    <span class="n">xlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">xlist</span><span class="p">)</span> <span class="c1"># Todo: print the value of xlist to verify the results</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>You can easily check the length of a list using the python <code>len(l)</code> function.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Print the length of `xlist`. It should be 11.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xlist</span><span class="p">))</span> <span class="c1"># Todo: print the len of the list</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>11
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If you have a list of values or objects, it is easy to iterate through that list in a for loop. In the next inline exercise, we will create another list, <code>ylist</code> where each of the values is equal to the corresponding value in <code>xlist</code> squared. That is, $y_i = x_i^2$.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Modify the code below to create ylist as described above. Print the values in ylist to check the result.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ylist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+<span class="c1"># Todo: define the for loop to add elements to ylist using the values in xlist</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">:</span>
+    <span class="n">ylist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">ylist</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[0, 25, 100, 225, 400, 625, 900, 1225, 1600, 2025, 2500]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Python-dictionary-containers">Python dictionary containers<a class="anchor-link" href="#Python-dictionary-containers">&#182;</a></h3><p>Another valuable data structure in Python are <em>dictionaries</em>. Dictionaries are an associative array; that is, a map from keys to values or objects. The keys can be <em>almost</em> anything, including floats, integers, and strings. The code below shows an example of creating a dictionary (here, to store the areas of some of the states).</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the lines below to see the areas dictionary.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">areas</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="n">areas</span><span class="p">[</span><span class="s1">&#39;South Dakota&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">199742</span>               
+<span class="n">areas</span><span class="p">[</span><span class="s1">&#39;Oklahoma&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">181035</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">areas</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{&#39;South Dakota&#39;: 199742, &#39;Oklahoma&#39;: 181035}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Dictionaries can contain mixed types (i.e., it is valid to add <code>areas['Texas'] = 'Really big!'</code>) but this may lead to unpredictable behavior if the different types are unexpected in other parts of the code.</p>
+<p>You can loop through dictionaries in different ways. For example,</p>
+<div class="highlight"><pre><span></span><span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">}</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="c1"># loop through the keys in the dictionary</span>
+    <span class="c1"># access the value with d[k]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;key=&#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="s1">&#39;value=&#39;</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+<span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+    <span class="c1"># loop through the values in the dictionary, ignoring the keys</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;value=&#39;</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="c1"># loop through the entries in the dictionary, retrieving both</span>
+    <span class="c1"># the key and the value</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;key=&#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="s1">&#39;value=&#39;</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+</pre></div>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+The areas listed above for the two states are in square kilometers. Modify the loop below to create a new dictionary that contains the areas in square miles. Print the new dictionary to verify the correct behavior. Note that 1 kilometer is equal to 0.62137 miles.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">areas_mi</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">state_name</span><span class="p">,</span> <span class="n">area</span> <span class="ow">in</span> <span class="n">areas</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="c1"># Todo: convert the area to sq. mi and assign to the areas_mi dict.</span>
+    <span class="n">areas_mi</span><span class="p">[</span><span class="n">state_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">area</span><span class="o">*</span><span class="p">(</span><span class="mf">0.62137</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">areas_mi</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{&#39;South Dakota&#39;: 77120.5214053598, &#39;Oklahoma&#39;: 69897.7360425915}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Matplotlib-for-generating-figures">Matplotlib for generating figures<a class="anchor-link" href="#Matplotlib-for-generating-figures">&#182;</a></h3><p>We will now briefly explore the use of the <code>matplotlib</code> package to generate figures. Before we do this, we will introduce some other helpful tools.</p>
+<p>Another effective way to create a list of evenly spaced numbers (e.g., for plotting or other computation) is to use the <code>linspace</code> function from the <code>numpy</code> package (more information <a href="https://www.numpy.org/devdocs/">here</a>). Let's import the <code>numpy</code> package and use linspace function to create a list of 15 evenly spaced intervals (that is, 16 points) from 0 to 50 and store this in <code>xlist</code>. We will also create the <code>ylist</code> that corresponds to the square of the values in <code>xlist</code>. Note, we must first import the <code>numpy</code> package.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the next two cells to see the output.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">xlist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">50</span><span class="p">,</span><span class="mi">16</span><span class="p">))</span>
+<span class="n">ylist</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">xlist</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ylist</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[0.0, 3.3333333333333335, 6.666666666666667, 10.0, 13.333333333333334, 16.666666666666668, 20.0, 23.333333333333336, 26.666666666666668, 30.0, 33.333333333333336, 36.66666666666667, 40.0, 43.333333333333336, 46.66666666666667, 50.0]
+[0.0, 11.111111111111112, 44.44444444444445, 100.0, 177.7777777777778, 277.7777777777778, 400.0, 544.4444444444446, 711.1111111111112, 900.0, 1111.1111111111113, 1344.4444444444448, 1600.0, 1877.777777777778, 2177.7777777777783, 2500.0]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This printed output is not a very effective way to communicate these results. Let's use matplotlib to create a figure of x versus y. A full treatment of the <code>matplotlib</code> package is beyond the scope of this tutorial, and further documentation can be found <a href="https://matplotlib.org/">here</a>. For now, we will import the plotting capability and show how to generate a straightforward figure. You can consult the documentation for matplotlib for further details.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the next two cells to see the output.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[15]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">if</span><span class="p">(</span><span class="n">D</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">IdealSitei</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">IdealSitei</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
-            <span class="n">D</span><span class="o">.</span><span class="n">setContent</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">))</span>
-    <span class="n">D</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;result.pdb&#39;</span><span class="p">)</span>
-    <span class="n">PeriodicD</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">replicateDesign</span><span class="p">(</span><span class="n">D</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
-    <span class="n">PeriodicS</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
-    <span class="n">PeriodicS</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">]))</span>
-    <span class="n">PeriodicD</span><span class="o">.</span><span class="n">toCFG</span><span class="p">(</span><span class="s1">&#39;periodic_result.cfg&#39;</span><span class="p">,</span><span class="n">BBox</span><span class="o">=</span><span class="n">PeriodicS</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xlist</span><span class="p">,</span> <span class="n">ylist</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Embedded x vs y figure&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;data&#39;</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+"
+>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Next, we will use what you have learned so far to create a plot of <code>sin(x)</code> for <code>x</code> from 0 to $2 \pi$ with 100 points. Note, you can get the <code>sin</code> function and the value for $\pi$ from the <code>math</code> package.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the import statement in the next cell, and then complete the missing code in the following cell to create the figure discussed above.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+
+<span class="c1"># Todo: create the list for y</span>
+<span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">xv</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+    <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">xv</span><span class="p">))</span>
+
+<span class="c1"># Todo: Generate the figure</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Trig: sin function&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x in radians&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;sin(x)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+"
+>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Further-Information">Further Information<a class="anchor-link" href="#Further-Information">&#182;</a></h3><p>Further information of the packages mentioned above can be found using the following links:</p>
+<ul>
+<li><a href="https://www.numpy.org/devdocs/">numpy</a></li>
+<li><a href="https://matplotlib.org/">matplotlib</a></li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction-to-Pyomo">Introduction to Pyomo<a class="anchor-link" href="#Introduction-to-Pyomo">&#182;</a></h2><p><a href="www.pyomo.org">Pyomo</a> is an object-oriented, python-based package for equation-oriented (or <em>algebraic</em>) modeling and optimization, and the IDAES framework is built upon the Pyomo package. IDAES extends the Pyomo package and defines a class heirarchy for flowsheet based modeling, including definition of property packages, unit models, and flowsheets.</p>
+<p>The use of IDAES does not require extensive knowledge about Pyomo, however, it can be beneficial to have some familiarity with the Pyomo package for certain tasks:</p>
+<ul>
+<li>IDAES models are open, and you can interrogating the underlying Pyomo model to view the variables, constraints, and objective functions defined in the model.</li>
+<li>You can use Pyomo components to define your objective function or to create additional constraints.</li>
+<li>Since IDAES models <strong>are</strong> Pyomo models, any advanced meta-algorithms or analysis tools that can be developed and/or used on a Pyomo model can also be used on an IDAES model.</li>
+</ul>
+<p>A full tutorial on Pyomo is beyond the scope of this workshop, however in this section we will briefly cover the commands required to specify an objective function or add a constraint to an existing model.</p>
+<p>In the next cell, we will create a Pyomo model, and add a couple of variables to that model. When using IDAES, you will define a flowsheet and the addition of variables and model equations will be handled by the IDAES framework.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the following cell to create a Pyomo model with some variables that will be used later.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">Var</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">Var</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">Var</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The Pyomo syntax to define a scalar objective function is shown below. This defines the objective function as $x^2$. By default Pyomo models (and IDAES models) seek to <em>minimize</em> the objective function.</p>
+<div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+<p>To maximize a quantity, include the keyword argument <code>sense=maximize</code> as in the following:</p>
+<div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">maximize</span><span class="p">)</span>
+</pre></div>
+<p>Note that <code>Objective</code> and <code>maximize</code> would need to be imported from <code>pyomo.environ</code>.</p>
+<p>The Pyomo syntax to define a scalar constraint is shown below. This code defines the equality constraint $x^2 + y^2 = 1$.</p>
+<div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">on_unit_circle_con</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+<p>Pyomo also supports inequalities. For example, the code for the inequality constraint $x^2 + y^2 \le 1$ is given as the following.</p>
+<div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">inside_unit_circle_con</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+<p>Note that, as before, we would need to include the appropriate imports. In this case <code>Constraint</code> would need to be imported from <code>pyomo.environ</code>.</p>
+<p>Using the syntax shown above, we will now add the objective function: $\min x^2 + y^2$ and the constraint $x + y = 1$.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Complete the missing code in the cell below. If this is done correctly, after executing the cell, you should see the log output from the solver and the printed solution should show that x, y, and the objective value are all equal to 0.5.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">SolverFactory</span>
+
+<span class="c1"># Todo: add the objective function here</span>
+<span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Todo: add the constraint here</span>
+<span class="n">model</span><span class="o">.</span><span class="n">con</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">y</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># now solve the problem</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># tee=True shows the solver log</span>
+
+<span class="c1"># print the values of x, y, and the objective function at the solution</span>
+<span class="c1"># Note that the results are automatically stored in the model variables</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;x =&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;y =&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;obj =&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Ipopt 3.13.2: 
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit http://projects.coin-or.org/Ipopt
+
+This version of Ipopt was compiled from source code available at
+    https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See http://www.hsl.rl.ac.uk.
+******************************************************************************
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:        2
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:        2
+
+Total number of variables............................:        2
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        0
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        1
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 1.00e+00 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  5.0000000e-01 0.00e+00 0.00e+00  -1.7 5.00e-01    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 1
+
+                                   (scaled)                 (unscaled)
+Objective...............:   5.0000000000000000e-01    5.0000000000000000e-01
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   0.0000000000000000e+00    0.0000000000000000e+00
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   0.0000000000000000e+00    0.0000000000000000e+00
+
+
+Number of objective function evaluations             = 2
+Number of objective gradient evaluations             = 2
+Number of equality constraint evaluations            = 2
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 2
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 1
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+x = 0.5
+y = 0.5
+obj = 0.5
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Notice that the code above also imported the <code>value</code> function. This is a Pyomo function that should be used to retrieve the value of variables in Pyomo (or IDAES) models. Note that you can display the complete list of all variables, objectives, and constraints (with their expressions) using <code>model.pprint()</code>. The <code>display</code> method is similar to the <code>pprint</code> method except that is shows the <em>values</em> of the constraints and objectives instead of the underlying expressions. The <code>pprint</code> and <code>display</code> methods can also be used on individual components.</p>
+<div class="alert alert-block alert-info">
+<b>Inline Exercise:</b>
+Execute the lines of code below to see the output from pprint and display for a Pyomo model.
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;*** Output from model.pprint():&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;*** Output from model.display():&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>*** Output from model.pprint():
+2 Var Declarations
+    x : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :   0.5 :  None : False : False :  Reals
+    y : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :   0.5 :  None : False : False :  Reals
+
+1 Objective Declarations
+    obj : Size=1, Index=None, Active=True
+        Key  : Active : Sense    : Expression
+        None :   True : minimize : x**2 + y**2
+
+1 Constraint Declarations
+    con : Size=1, Index=None, Active=True
+        Key  : Lower : Body  : Upper : Active
+        None :   1.0 : x + y :   1.0 :   True
+
+4 Declarations: x y obj con
+
+*** Output from model.display():
+Model unknown
+
+  Variables:
+    x : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :   0.5 :  None : False : False :  Reals
+    y : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :   0.5 :  None : False : False :  Reals
+
+  Objectives:
+    obj : Size=1, Index=None, Active=True
+        Key  : Active : Value
+        None :   True :   0.5
+
+  Constraints:
+    con : Size=1
+        Key  : Lower : Body : Upper
+        None :   1.0 :  1.0 :   1.0
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
 </pre></div>
 
     </div>
