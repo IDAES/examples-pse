@@ -31,18 +31,19 @@ from pyomo.network import Arc, SequentialDecomposition
 from idaes.core import FlowsheetBlock
 
 # Import Unit Model Modules
-from . import hda_ideal_VLE as thermo_props
-from . import hda_reaction as reaction_props
+import hda_ideal_VLE as thermo_props
+import hda_reaction as reaction_props
 
 # Import Unit Model Modules
-from idaes.unit_models import (PressureChanger,
-                               StoichiometricReactor,
-                               Flash,
-                               Heater,
-                               Mixer,
-                               Separator as Splitter)
+from idaes.generic_models.unit_models import (PressureChanger,
+                                              StoichiometricReactor,
+                                              Flash,
+                                              Heater,
+                                              Mixer,
+                                              Separator as Splitter)
 
-from idaes.unit_models.pressure_changer import ThermodynamicAssumption
+from idaes.generic_models.unit_models.pressure_changer import \
+    ThermodynamicAssumption
 
 from idaes.core.util.model_statistics import degrees_of_freedom
 
