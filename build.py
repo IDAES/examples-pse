@@ -257,6 +257,24 @@ class NotebookBuilder(Builder):
 
     JUPYTER_NB_VERSION = 4  # for parsing
 
+    #: CSS stylesheet for notebooks
+    STYLESHEET = """
+    #notebook-container {
+      box-shadow: none;  /* get rid of cheesy shadow */
+      -webkit-box-shadow: none;
+      padding 5px;
+      width: auto !important; /* expand to container */
+      min-width: 400px !important;
+    }
+    .wy-nav-content {
+      max-width: 90%; /* top container for notebook */
+    }
+    .run_this_cell {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+    """
+
     @dataclass
     class Results:
         """Stores results from build().
@@ -672,7 +690,27 @@ class NotebookBuilder(Builder):
         for i in range(1, len(splits), 2):
             splits[i] = f'<img src="{prefix}/{splits[i]}>'
         # rejoin splits, to make the modified body text
-        return "".join(splits)
+        body = "".join(splits)
+        # hack in some CSS, replacing useless link
+        custom = re.search(r'<\s*link.*href="custom.css"\s*>', body)
+        if custom:
+            p1, p2 = custom.span()
+            body = "".join(
+                (
+                    body[:p1],
+                    '<style type="text/css">',
+                    self.STYLESHEET,
+                    "</style>",
+                    body[p2:],
+                )
+            )
+        else:
+            _log.warning("Could not insert stylesheet in HTML")
+        # done
+        return body
+
+
+#
 
 
 class SphinxBuilder(Builder):
@@ -697,7 +735,8 @@ class SphinxBuilder(Builder):
             html_dir.mkdir(parents=True)
         # copy images
         notify(
-            f"Copying image files from '{self.s.get('paths.source')}' -> " f"'{doc_dir}'",
+            f"Copying image files from '{self.s.get('paths.source')}' -> "
+            f"'{doc_dir}'",
             1,
         )
         self._copy_aux(doc_dir, ["png", "jpg", "jpeg", "pdf"])
@@ -712,7 +751,9 @@ class SphinxBuilder(Builder):
             log_error = self._extract_sphinx_error(errfile)
             raise SphinxError(cmdline, f"return code = {status}", log_error)
         # copy notebooks
-        notify(f"Copying notebooks from '{self.s.get('paths.source')}' -> '{html_dir}'", 1)
+        notify(
+            f"Copying notebooks from '{self.s.get('paths.source')}' -> '{html_dir}'", 1
+        )
         self._copy_aux(html_dir, ["ipynb"])
 
     def _copy_aux(self, dest, ext_list):
