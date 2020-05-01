@@ -14,17 +14,7 @@ their constructor and actually do something when you call "build()". The
 default values for settings are defined in the class.
 
 Most of the code is devoted to running and exporting the Jupyter notebooks,
-in the NotebookBuilder class. This can operate in two basic modes, controlled
-by the "notebook.test_mode" setting:
-
-    * Documentation mode (the default), will create ReStructuredText and HTML
-      versions of the notebooks, after executing them. Execution of the notebooks
-      is optional, but needed for full results. By default, the timestamps of the
-      generated files and notebook source are compared, and execution is skipped if
-      the generated files are newer.
-
-    * Test mode will run the notebooks, but not try and generate any documentation.
-      This is useful, obviously, from within Python tests.
+in the NotebookBuilder class.
 
 There are some quirks to the NotebookBuilder that require further explanation.
 First, you will notice some postprocess functions for both the RST and HTML output
@@ -71,7 +61,6 @@ For example command lines see the README.md in this directory.
 """
 from abc import ABC, abstractmethod
 import argparse
-from dataclasses import dataclass
 import logging
 import os
 from pathlib import Path
@@ -257,18 +246,15 @@ class NotebookBuilder(Builder):
 
     JUPYTER_NB_VERSION = 4  # for parsing
 
-    @dataclass
     class Results:
         """Stores results from build().
         """
-
-        _t = None
-        failed: List[str]
-        cached: List[str]
-        dirs_processed: List[str]
-        duration: float = -1.0
-        n_fail: int = 0
-        n_success: int = 0
+        def __init__(self):
+            self.failed, self.cached = [], []
+            self.dirs_processed = []
+            self.duration = -1.0
+            self.n_fail, self.n_success = 0, 0
+            self._t = None
 
         def start(self):
             self._t = time.time()
@@ -312,7 +298,7 @@ class NotebookBuilder(Builder):
         ]  # for some reason, this only works with the full module path
         self._nb_remove_config = c
         nb_dirs = self.s.get("directories")
-        self._results = self.Results(failed=[], dirs_processed=[], cached=[])
+        self._results = self.Results()
         self._results.start()
         for item in nb_dirs:
             self._build_tree(item)
