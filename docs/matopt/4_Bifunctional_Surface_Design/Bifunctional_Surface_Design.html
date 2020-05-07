@@ -13493,8 +13493,48 @@ In this example, we simply call the maximize method to optimize the balance of a
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>WARNING: Could not locate the &#39;cplex&#39; executable, which is required for solver
-    cplex
+<pre>
+Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
+  with Simplex, Mixed Integer &amp; Barrier Optimizers
+5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
+Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+
+Type &#39;help&#39; for a list of available commands.
+Type &#39;help&#39; followed by a command name for more
+information on commands.
+
+CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
+Logfile &#39;/tmp/tmpt_ifpfbg.cplex.log&#39; open.
+CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
+CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
+CPLEX&gt; New value for time limit in seconds: 360
+CPLEX&gt; Problem &#39;/tmp/tmph6pv4c9k.pyomo.lp&#39; read.
+Read time = 0.07 sec. (3.48 ticks)
+CPLEX&gt; Problem name         : /tmp/tmph6pv4c9k.pyomo.lp
+Objective sense      : Maximize
+Variables            :    8194  [Nneg: 1,  Free: 644,  Binary: 7165,
+                                 General Integer: 384]
+Objective nonzeros   :       1
+Linear constraints   :   36613  [Less: 35200,  Greater: 128,  Equal: 1285]
+  Nonzeros           :   92491
+  RHS nonzeros       :   12680
+
+Variables            : Min LB: 0.000000         Max UB: 12.00000       
+Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
+Linear constraints   :
+  Nonzeros           : Min   : 0.002604167      Max   : 12.00000       
+  RHS nonzeros       : Min   : 0.1012080        Max   : 9.000000       
+CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
+
+Error termination, CPLEX Error  1016.
+Solution time =    0.00 sec.
+Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+
+CPLEX&gt; CPLEX Error  1217: No solution exists.
+No file written.
+CPLEX&gt; ERROR: evaluating object as numeric value: obj
+        (object: &lt;class &#39;pyomo.core.base.objective.SimpleObjective&#39;&gt;)
+    No value for uninitialized NumericValue object obj
 MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
 </pre>
 </div>

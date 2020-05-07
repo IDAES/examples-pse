@@ -656,2619 +656,2619 @@ can then take over and solve this flowsheet for us.
 
 .. parsed-literal::
 
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 1.44e+05 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 8.53e+04 1.03e+01  -1.0 3.65e+04    -  1.44e-01 5.96e-01h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 5.59e+04 4.56e+02  -1.0 1.46e+04    -  9.90e-01 3.84e-01h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.46e+04 2.28e+04  -1.0 9.01e+03    -  9.64e-01 2.49e-02h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 5.45e+04 8.50e+07  -1.0 8.79e+03    -  9.91e-01 2.77e-04h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 5r 0.0000000e+00 5.45e+04 1.00e+03   0.7 0.00e+00    -  0.00e+00 3.46e-07R  4
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 6r 0.0000000e+00 4.36e+04 3.24e+03   0.7 2.01e+04    -  9.16e-02 2.64e-03f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 7r 0.0000000e+00 3.79e+04 5.91e+03   0.7 2.19e+04    -  4.65e-02 8.63e-02f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 8r 0.0000000e+00 3.17e+04 5.52e+03   0.7 2.00e+04    -  1.58e-01 1.21e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 9r 0.0000000e+00 2.24e+04 4.07e+03   0.7 1.69e+04    -  2.62e-01 2.16e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 10r 0.0000000e+00 2.81e+03 6.09e+03   0.7 1.32e+04    -  1.00e+00 7.31e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 11r 0.0000000e+00 1.14e+03 5.67e+02   0.7 1.61e+03    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 12r 0.0000000e+00 1.94e+02 4.92e+02  -0.0 7.79e+02    -  1.00e+00 9.01e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 13r 0.0000000e+00 2.70e+01 8.63e+03  -0.0 4.68e+02    -  8.57e-01 3.24e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 14r 0.0000000e+00 2.21e+01 2.68e+04  -0.0 1.19e+03    -  1.00e+00 4.58e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 15r 0.0000000e+00 1.50e+01 2.79e+02  -0.0 2.96e+02    -  1.00e+00 1.00e+00f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 16r 0.0000000e+00 9.88e+00 1.66e+01  -0.0 1.08e+02    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 17r 0.0000000e+00 3.29e+00 1.77e+02  -1.4 5.95e+01    -  7.72e-01 9.68e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 18r 0.0000000e+00 5.49e+02 4.70e+03  -1.4 8.66e+03    -  7.57e-01 3.13e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 19r 0.0000000e+00 3.25e+03 1.47e+04  -1.4 2.57e+03    -  1.00e+00 9.97e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 20r 0.0000000e+00 7.66e+01 9.65e+02  -1.4 1.06e+03    -  4.61e-01 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 21r 0.0000000e+00 2.47e+00 2.28e+01  -1.4 5.47e+01    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 22r 0.0000000e+00 8.50e-02 3.54e-02  -1.4 1.24e+00    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 23r 0.0000000e+00 4.43e-01 6.74e+01  -4.7 1.56e+03    -  8.51e-01 8.92e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 24r 0.0000000e+00 1.18e+01 6.96e+03  -4.7 1.12e+02  -4.0 7.45e-01 8.89e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 25r 0.0000000e+00 2.53e+03 6.99e+03  -4.7 9.70e+05    -  1.34e-02 5.52e-03f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 26r 0.0000000e+00 2.53e+03 1.30e+04  -4.7 2.82e+05    -  1.56e-01 1.94e-05f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 27r 0.0000000e+00 2.53e+03 1.41e+04  -4.7 3.91e+05    -  2.35e-01 5.39e-02f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 28r 0.0000000e+00 2.48e+03 9.30e+04  -4.7 3.89e+05    -  9.70e-01 1.83e-02f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 29r 0.0000000e+00 2.48e+03 9.80e+04  -4.7 1.06e+05    -  1.00e+00 3.51e-03f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 30r 0.0000000e+00 6.31e+02 1.61e+05  -4.7 4.03e+03    -  1.00e+00 7.63e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 31r 0.0000000e+00 6.03e+02 8.31e+05  -4.7 9.55e+02    -  1.00e+00 8.77e-02f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 32r 0.0000000e+00 1.66e+02 7.40e+05  -4.7 8.71e+02    -  1.00e+00 7.25e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 33r 0.0000000e+00 1.13e+02 8.82e+05  -4.7 2.39e+02    -  1.00e+00 3.18e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 34r 0.0000000e+00 1.13e+01 7.38e+07  -4.7 1.63e+02    -  1.00e+00 9.70e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 35r 0.0000000e+00 9.91e+00 6.88e+07  -4.7 1.16e+00  -1.8 9.77e-01 6.84e-01h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 36r 0.0000000e+00 9.90e+00 3.24e+08  -4.7 2.52e+02    -  1.00e+00 5.62e-04h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 37r 0.0000000e+00 8.52e+00 2.84e+08  -4.7 4.92e+00    -  1.17e-01 1.39e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 38r 0.0000000e+00 1.25e+00 2.52e+08  -4.7 4.24e+00    -  2.12e-01 1.00e+00f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 39r 0.0000000e+00 8.16e-02 2.46e+07  -4.7 7.06e-01    -  9.33e-01 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 40r 0.0000000e+00 3.37e-01 2.12e+06  -4.7 8.24e+00    -  9.11e-01 5.50e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 41r 0.0000000e+00 3.16e-01 1.68e+07  -4.7 1.05e+02    -  8.97e-01 1.40e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 42r 0.0000000e+00 1.59e-01 4.30e+06  -4.7 4.26e+01    -  1.00e+00 5.00e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 43r 0.0000000e+00 1.31e-01 1.03e+08  -4.7 3.05e+00    -  1.00e+00 2.23e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 44r 0.0000000e+00 7.23e-02 7.07e+08  -4.7 9.03e-01    -  9.95e-02 4.32e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 45r 0.0000000e+00 2.99e-02 3.02e+08  -4.7 7.49e-02    -  1.00e+00 5.76e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 46r 0.0000000e+00 3.96e-03 7.36e+05  -4.7 4.38e-02    -  1.00e+00 1.00e+00f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 47r 0.0000000e+00 3.96e-03 1.08e+04  -4.7 3.69e-02    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 48r 0.0000000e+00 3.96e-03 1.35e-01  -4.7 1.37e-04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 49r 0.0000000e+00 3.96e-03 7.39e+05  -7.0 8.44e-01    -  1.00e+00 9.45e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: 50r 0.0000000e+00 3.44e-05 9.17e+05  -7.0 6.03e+04    -  1.00e+00 6.57e-02f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 50
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.7355712726718819e-09    3.4409734794849101e-05
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.7355712726718819e-09    3.4409734794849101e-05
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 55
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 7
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 55
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 52
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 50
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.016
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.001
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.38e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 2.99e+06 2.44e+02  -1.0 1.10e+05    -  7.92e-02 2.48e-01f  3
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 2.00e+06 9.88e+04  -1.0 9.86e+04    -  6.04e-01 9.90e-01H  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.15e+04 1.42e+05  -1.0 2.84e+03    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 5.77e+04 4.90e+04  -1.0 5.46e+04    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 7.12e-04 1.85e-01  -1.0 5.77e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 2.24e-08 2.37e-09  -7.0 5.26e-07    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 6
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   3.4711595092880110e-11    2.2351741790771484e-08
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   3.4711595092880110e-11    2.2351741790771484e-08
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 11
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 7
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 14
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 7
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 6
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 1.17e+05 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 1.28e+05 8.02e+01  -1.0 8.03e+04    -  1.39e-02 1.19e-01f  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 1.16e+05 2.15e+02  -1.0 2.81e+04    -  3.47e-03 1.32e-01f  2
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.07e+05 1.99e+02  -1.0 4.03e+04    -  9.89e-01 7.41e-02h  4
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.06e+05 1.98e+02  -1.0 3.57e+04    -  5.06e-01 5.95e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 1.06e+05 1.96e+02  -1.0 3.54e+04    -  9.90e-01 6.03e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 6  0.0000000e+00 1.05e+05 1.94e+02  -1.0 3.51e+04    -  5.89e-01 6.11e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 7  0.0000000e+00 1.04e+05 1.93e+02  -1.0 3.48e+04    -  1.00e+00 6.18e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 8  0.0000000e+00 1.04e+05 1.92e+02  -1.7 3.45e+04    -  4.11e-01 6.26e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 9  0.0000000e+00 1.03e+05 1.92e+02  -1.7 3.42e+04    -  1.00e+00 6.34e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 10  0.0000000e+00 1.02e+05 1.91e+02  -1.7 3.40e+04    -  6.84e-01 6.41e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 11  0.0000000e+00 1.02e+05 1.90e+02  -1.7 3.37e+04    -  1.00e+00 6.49e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 12  0.0000000e+00 1.01e+05 1.89e+02  -1.7 3.34e+04    -  6.89e-01 6.56e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 13  0.0000000e+00 1.00e+05 1.88e+02  -1.7 3.31e+04    -  1.00e+00 6.63e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 14  0.0000000e+00 9.96e+04 1.87e+02  -1.7 3.29e+04    -  7.27e-01 6.70e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 15  0.0000000e+00 9.89e+04 1.86e+02  -1.7 3.26e+04    -  1.00e+00 6.77e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 16  0.0000000e+00 9.82e+04 1.84e+02  -1.7 3.23e+04    -  7.65e-01 6.84e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 17  0.0000000e+00 9.75e+04 1.83e+02  -1.7 3.21e+04    -  1.00e+00 6.91e-03h  8
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 18  0.0000000e+00 1.20e+04 2.74e+02  -1.7 3.18e+04    -  8.05e-01 8.94e-01w  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 19  0.0000000e+00 4.15e+03 1.32e+03  -1.7 2.18e+03    -  6.55e-02 8.35e-01w  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 20  0.0000000e+00 1.84e+02 5.93e+01  -1.7 4.30e+02    -  8.96e-01 9.70e-01h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 21  0.0000000e+00 1.24e-01 1.12e+01  -1.7 1.39e+01    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: 22  0.0000000e+00 5.63e-08 6.77e-03  -3.8 1.52e-03    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 22
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   2.0565647774824511e-11    5.6330463849008083e-08
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   2.0565647774824511e-11    5.6330463849008083e-08
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 157
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 23
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 157
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 23
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 22
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.008
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.001
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 3.00e-01 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 3.00e-03 2.20e-06  -1.0 3.00e-01    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 2.99e-05 2.00e-02  -1.0 3.00e-03    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 2.40e-07 2.01e+02  -1.0 2.99e-05    -  9.94e-01 9.92e-01h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: 4  0.0000000e+00 4.14e-25 1.05e-10  -1.7 2.40e-07    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 4
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   4.1359030627651384e-25    4.1359030627651384e-25
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   4.1359030627651384e-25    4.1359030627651384e-25
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 5
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 5
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 5
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 5
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 4
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:09 [DEBUG] idaes.solve.fs.S101: 
-    2020-05-07 00:22:09 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.F102: Initialization Step 1 Complete.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: contain the following acknowledgement:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Total number of variables............................:       41
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: variables with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: variables with lower and upper bounds:        9
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: variables with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Total number of equality constraints.................:       41
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: 0  0.0000000e+00 6.83e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: 1  0.0000000e+00 2.82e+04 5.69e+00  -1.0 2.00e+05    -  1.98e-01 8.56e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: 2  0.0000000e+00 8.44e+03 1.15e+02  -1.0 2.88e+04    -  8.76e-01 9.57e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: 3  0.0000000e+00 1.46e+03 8.84e+04  -1.0 1.98e+03    -  4.14e-01 9.65e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: 4  0.0000000e+00 1.42e+03 1.94e+06  -1.0 9.55e+02    -  9.91e-01 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: 5  0.0000000e+00 9.65e-01 8.14e+04  -1.0 1.42e+01    -  9.91e-01 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: 6  0.0000000e+00 2.25e-04 9.29e+01  -1.0 3.62e-01    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: 7  0.0000000e+00 1.46e-11 1.72e-04  -2.5 8.18e-06    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of Iterations....: 7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: (scaled)                 (unscaled)
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Constraint violation....:   2.2737367544323206e-13    1.4551915228366852e-11
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Overall NLP error.......:   2.2737367544323206e-13    1.4551915228366852e-11
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of objective function evaluations             = 8
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of objective gradient evaluations             = 8
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of equality constraint evaluations            = 8
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of equality constraint Jacobian evaluations   = 8
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Number of Lagrangian Hessian evaluations             = 7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F102: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.F102: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 9.18e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.31e+01 1.60e-03  -1.0 2.28e+01    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 1.32e-01 9.90e+00  -1.0 2.25e+01    -  1.00e+00 9.90e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: 3  0.0000000e+00 2.35e-07 2.83e-11  -1.0 2.26e-01    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 3
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   1.7853365888371418e-10    2.3471693566534668e-07
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   1.7853365888371418e-10    2.3471693566534668e-07
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 3.50e+05 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.81e+03 2.79e+00  -1.0 3.50e+05    -  9.85e-01 9.92e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 3.49e+00 1.01e+01  -1.0 2.81e+03    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 5.90e-05 2.93e+01  -1.0 3.24e-02    -  9.93e-01 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 4  0.0000000e+00 7.45e-09 7.21e-13  -1.0 5.90e-05    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 5
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 5
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 1.05e+05 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 5.93e+04 1.13e+01  -1.0 2.36e+04    -  9.10e-02 5.64e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 2.98e+04 4.03e+00  -1.0 1.03e+04    -  9.90e-01 5.47e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 1.41e+04 1.06e+04  -1.0 4.72e+03    -  9.90e-01 5.55e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.46e+03 1.62e+08  -1.0 2.11e+03    -  9.94e-01 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 3.85e+02 7.63e+06  -1.0 2.44e+01    -  1.00e+00 5.12e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 1.80e+02 3.34e+06  -1.0 1.19e+01    -  1.00e+00 4.96e-01h  2
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 1.30e+02 1.36e+10  -1.0 6.01e+00    -  1.00e+00 9.92e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 1.01e+02 5.67e+09  -1.0 4.72e-02    -  1.00e+00 6.99e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 2.57e+01 1.29e+11  -1.0 1.42e-02    -  1.00e+00 5.00e-01f  2
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 2.48e+01 2.15e+11  -1.0 7.10e-03    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 2.00e-03 1.38e+07  -1.0 2.77e-06    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: 12  0.0000000e+00 1.46e-11 4.94e+02  -1.7 1.35e-07    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 12
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   7.1054273576010019e-14    1.4551915228366852e-11
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   7.1054273576010019e-14    1.4551915228366852e-11
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 19
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 13
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 19
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 13
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 12
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.34e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 5.16e+05 3.30e+01  -1.0 9.28e+04    -  1.51e-01 1.24e-01h  4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 5.14e+05 3.93e+01  -1.0 8.65e+04    -  5.58e-01 1.55e-02h  7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 5.12e+05 4.27e+01  -1.0 8.58e+04    -  3.40e-01 1.55e-02h  7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 5.10e+05 4.92e+01  -1.0 8.50e+04    -  6.07e-01 1.55e-02h  7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 5.08e+05 5.29e+01  -1.0 8.42e+04    -  3.85e-01 1.55e-02h  7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 5.05e+05 6.40e+01  -1.0 8.34e+04    -  9.90e-01 1.55e-02h  7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 5.03e+05 6.72e+01  -1.0 8.26e+04    -  3.52e-01 1.55e-02h  7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 5.00e+05 7.84e+01  -1.0 8.18e+04    -  9.91e-01 1.55e-02h  7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 4.98e+05 8.20e+01  -1.0 8.10e+04    -  3.96e-01 1.55e-02h  7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 4.95e+05 9.34e+01  -1.0 8.03e+04    -  1.00e+00 1.55e-02h  7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 2.18e+07 1.75e+04  -1.0 7.95e+04    -  4.38e-01 9.90e-01w  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 2.41e+05 5.85e+03  -1.0 1.79e+04    -  9.35e-01 9.90e-01w  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 5.29e+04 2.08e+04  -1.0 4.07e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 2.48e-04 2.22e-02  -1.0 5.29e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: 15  0.0000000e+00 5.22e-08 9.54e-10  -7.0 1.76e-07    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 15
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   2.0826957055728064e-11    5.2154064178466797e-08
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   2.0826957055728064e-11    5.2154064178466797e-08
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 103
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 16
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 113
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 16
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 15
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 8.74e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 7.30e+04 3.10e+01  -1.0 1.09e+04    -  4.52e-02 3.85e-01f  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 3.99e+04 3.26e+01  -1.0 7.60e+03    -  2.91e-01 4.83e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 6.21e+02 1.64e+01  -1.0 3.50e+03    -  9.90e-01 1.00e+00H  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 9.72e-01 8.42e+00  -1.0 1.57e+01    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 6.12e-06 6.99e+02  -1.0 3.15e-02    -  9.96e-01 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   2.4734746446097313e-09    6.1192513385321945e-06
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   2.4734746446097313e-09    6.1192513385321945e-06
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 7
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.S101: 
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 3.63e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.41e-01 1.60e-03  -1.0 3.56e+00    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 1.03e-03 9.84e+00  -1.0 3.52e+00    -  1.00e+00 9.90e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: 3  0.0000000e+00 3.51e-08 8.70e-13  -1.0 3.50e-02    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 3
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   4.8173230335450958e-11    3.5146513255313039e-08
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   4.8173230335450958e-11    3.5146513255313039e-08
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 2.24e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.98e+02 5.73e-01  -1.0 2.35e+02    -  9.88e-01 9.92e-01h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 9.91e-01 9.97e+00  -1.0 1.69e+01    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 1.79e-07 2.66e+01  -1.0 1.15e-02    -  9.93e-01 1.00e+00h  1
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.0915153662155086e-10    1.7881393432617188e-07
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.0915153662155086e-10    1.7881393432617188e-07
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:10 [DEBUG] idaes.solve.fs.M101: 
-    2020-05-07 00:22:10 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.41e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.71e+04 1.18e+01  -1.0 1.40e+04    -  6.37e-02 5.29e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.27e+04 5.28e+00  -1.0 8.31e+03    -  9.90e-01 5.21e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.86e+03 9.25e+03  -1.0 4.22e+03    -  9.90e-01 5.33e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.95e+03 4.39e+08  -1.0 2.04e+03    -  9.94e-01 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.46e+01 3.12e+06  -1.0 1.93e+01    -  1.00e+00 5.00e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.02e+01 4.75e+06  -1.0 9.65e+00    -  1.00e+00 4.96e-01h  2
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 2.11e+01 3.98e+10  -1.0 4.86e+00    -  1.00e+00 9.94e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.93e+00 3.45e+09  -1.0 2.80e-02    -  1.00e+00 5.00e-01h  2
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.59e+00 2.70e+10  -1.0 1.40e-02    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 1.11e-04 3.02e+05  -1.0 4.56e-07    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 1.09e-11 2.18e+01  -3.8 3.46e-08    -  1.00e+00 1.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 11
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.2737367544323206e-13    1.0913936421275139e-11
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.2737367544323206e-13    1.0913936421275139e-11
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 17
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 12
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 17
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 12
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 11
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.003
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.25e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.24e+04 5.27e+00  -1.0 5.45e+04    -  4.79e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.24e+04 1.18e+01  -1.0 5.45e+04    -  6.18e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.24e+04 1.87e+01  -1.0 5.45e+04    -  6.78e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.24e+04 2.86e+01  -1.0 5.45e+04    -  9.90e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.24e+04 3.48e+01  -1.0 5.45e+04    -  6.15e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.24e+04 4.47e+01  -1.0 5.45e+04    -  9.92e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.24e+04 5.01e+01  -1.0 5.45e+04    -  5.38e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.24e+04 6.01e+01  -1.0 5.45e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.24e+04 6.55e+01  -1.0 5.45e+04    -  5.37e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.24e+04 7.55e+01  -1.0 5.45e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.24e+07 8.23e+01  -1.0 5.45e+04    -  5.37e-01 9.90e-01w  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.71e+05 9.11e+01  -1.0 7.89e+03    -  1.00e+00 9.90e-01w  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.02e+04 1.64e+00  -1.0 2.26e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.56e-05 5.20e-02  -3.8 4.02e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2334621097335475e-08    3.5621225833892822e-05
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2334621097335475e-08    3.5621225833892822e-05
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 5.18e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.81e+04 6.10e+00  -1.0 1.67e+04    -  1.31e-01 6.60e-01f  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.85e+03 2.82e+01  -1.0 5.27e+03    -  8.83e-01 6.24e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.72e+02 1.97e+01  -1.0 2.29e+03    -  8.30e-01 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.41e+00 2.45e+00  -1.0 1.54e+01    -  9.90e-01 9.92e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 2.66e-06 6.13e+02  -1.0 1.28e-01    -  9.92e-01 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   3.3424899880925952e-11    2.6555062504485250e-06
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   3.3424899880925952e-11    2.6555062504485250e-06
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.S101: 
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.35e+00 3.39e+00  -1.0 5.83e+02    -  7.69e-01 9.92e-01H  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.43e-01 9.99e+00  -1.0 7.44e+00    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.30e-03    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.M101: 
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.31e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.73e+04 1.13e+01  -1.0 9.78e+03    -  9.31e-02 5.26e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.30e+04 5.37e+00  -1.0 4.93e+03    -  9.90e-01 5.20e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 6.03e+03 9.17e+03  -1.0 2.43e+03    -  9.90e-01 5.32e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.71e+03 4.38e+08  -1.0 1.15e+03    -  9.94e-01 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.61e+01 3.17e+06  -1.0 1.78e+01    -  1.00e+00 5.00e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.12e+01 4.80e+06  -1.0 8.89e+00    -  1.00e+00 4.96e-01h  2
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 1.89e+01 3.99e+10  -1.0 4.48e+00    -  1.00e+00 9.94e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.23e+00 3.45e+09  -1.0 2.60e-02    -  1.00e+00 5.00e-01h  2
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.19e+00 2.86e+10  -1.0 1.30e-02    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 9.04e-05 2.85e+05  -1.0 4.05e-07    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 10
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   1.7768289534621779e-08    9.0412653662497178e-05
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   1.7768289534621779e-08    9.0412653662497178e-05
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 16
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 11
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 16
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 11
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 10
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.26e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.26e+04 4.69e+00  -1.0 5.64e+04    -  4.27e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.26e+04 1.11e+01  -1.0 5.64e+04    -  6.10e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.26e+04 1.74e+01  -1.0 5.64e+04    -  6.16e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.26e+04 2.74e+01  -1.0 5.64e+04    -  9.90e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.26e+04 3.18e+01  -1.0 5.64e+04    -  4.40e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.26e+04 4.17e+01  -1.0 5.64e+04    -  9.91e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.26e+04 4.61e+01  -1.0 5.64e+04    -  4.42e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.26e+04 5.61e+01  -1.0 5.64e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.26e+04 6.05e+01  -1.0 5.64e+04    -  4.40e-01 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.26e+04 7.05e+01  -1.0 5.64e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.34e+07 1.55e+02  -1.0 5.64e+04    -  4.40e-01 9.90e-01w  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.85e+05 1.65e+02  -1.0 8.57e+03    -  1.00e+00 9.90e-01w  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.16e+04 6.67e+00  -1.0 2.28e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.73e-05 5.65e-02  -2.5 4.16e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2935751389848925e-08    3.7349760532379150e-05
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2935751389848925e-08    3.7349760532379150e-05
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.007
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 4.96e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.54e+04 5.11e+00  -1.0 3.23e+03    -  1.46e-01 6.92e-01f  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.50e+03 2.82e+01  -1.0 2.15e+03    -  8.67e-01 6.00e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.87e+02 2.35e+01  -1.0 7.00e+02    -  7.91e-01 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.47e+00 2.76e+00  -1.0 1.47e+01    -  9.90e-01 9.92e-01h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 4.89e-07 7.23e+02  -1.0 1.16e-01    -  9.92e-01 1.00e+00h  1
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   2.0246222515506914e-11    4.8884612624533474e-07
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   2.0246222515506914e-11    4.8884612624533474e-07
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:11 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:11 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.04e+00 3.36e+00  -1.0 5.77e+02    -  7.71e-01 9.92e-01H  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.39e-01 9.99e+00  -1.0 7.37e+00    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.26e-03    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.39e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.72e+04 1.17e+01  -1.0 9.60e+03    -  6.94e-02 5.28e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.28e+04 5.29e+00  -1.0 4.88e+03    -  9.90e-01 5.21e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.91e+03 9.23e+03  -1.0 2.41e+03    -  9.90e-01 5.33e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.90e+03 4.37e+08  -1.0 1.14e+03    -  9.94e-01 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.52e+01 3.15e+06  -1.0 1.90e+01    -  1.00e+00 5.00e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.06e+01 4.77e+06  -1.0 9.46e+00    -  1.00e+00 4.96e-01h  2
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 2.08e+01 3.98e+10  -1.0 4.77e+00    -  1.00e+00 9.94e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.81e+00 3.45e+09  -1.0 2.75e-02    -  1.00e+00 5.00e-01h  2
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.56e+00 2.76e+10  -1.0 1.38e-02    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 1.09e-04 3.05e+05  -1.0 4.50e-07    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 2.18e-11 4.40e+01  -3.8 3.66e-08    -  1.00e+00 1.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 11
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.2737367544323206e-13    2.1827872842550274e-11
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.2737367544323206e-13    2.1827872842550274e-11
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 17
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 12
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 17
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 12
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 11
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.004
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.25e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.25e+04 5.13e+00  -1.0 5.50e+04    -  4.66e-01 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.25e+04 1.16e+01  -1.0 5.50e+04    -  6.16e-01 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.25e+04 1.85e+01  -1.0 5.50e+04    -  6.71e-01 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.25e+04 2.84e+01  -1.0 5.50e+04    -  9.90e-01 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.25e+04 3.40e+01  -1.0 5.50e+04    -  5.58e-01 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.25e+04 4.39e+01  -1.0 5.50e+04    -  9.91e-01 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.25e+04 4.91e+01  -1.0 5.50e+04    -  5.13e-01 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.25e+04 5.91e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.25e+04 6.42e+01  -1.0 5.49e+04    -  5.12e-01 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.25e+04 7.42e+01  -1.0 5.49e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.27e+07 9.78e+01  -1.0 5.49e+04    -  5.12e-01 9.90e-01w  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.74e+05 1.07e+02  -1.0 8.06e+03    -  1.00e+00 9.90e-01w  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.06e+04 2.63e+00  -1.0 2.26e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.61e-05 5.36e-02  -3.8 4.06e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2500647559077285e-08    3.6127865314483643e-05
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2500647559077285e-08    3.6127865314483643e-05
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.008
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 5.12e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.74e+04 5.83e+00  -1.0 3.26e+03    -  1.35e-01 6.68e-01f  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.79e+03 2.83e+01  -1.0 2.31e+03    -  8.78e-01 6.18e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.77e+02 2.07e+01  -1.0 7.29e+02    -  8.20e-01 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.44e+00 2.51e+00  -1.0 1.53e+01    -  9.90e-01 9.92e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 2.07e-06 6.41e+02  -1.0 1.26e-01    -  9.92e-01 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   4.2890462401563167e-11    2.0655534171964973e-06
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   4.2890462401563167e-11    2.0655534171964973e-06
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.S101: 
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.20e+00 3.38e+00  -1.0 5.80e+02    -  7.70e-01 9.92e-01H  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.41e-01 9.99e+00  -1.0 7.41e+00    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.28e-03    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:12 [DEBUG] idaes.solve.fs.M101: 
-    2020-05-07 00:22:12 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.39e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.72e+04 1.17e+01  -1.0 9.61e+03    -  6.95e-02 5.28e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.28e+04 5.29e+00  -1.0 4.88e+03    -  9.90e-01 5.21e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.91e+03 9.23e+03  -1.0 2.41e+03    -  9.90e-01 5.33e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.90e+03 4.37e+08  -1.0 1.14e+03    -  9.94e-01 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.53e+01 3.15e+06  -1.0 1.90e+01    -  1.00e+00 5.00e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.06e+01 4.77e+06  -1.0 9.46e+00    -  1.00e+00 4.96e-01h  2
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 2.08e+01 3.97e+10  -1.0 4.76e+00    -  1.00e+00 9.94e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.82e+00 3.45e+09  -1.0 2.75e-02    -  1.00e+00 5.00e-01h  2
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.58e+00 2.76e+10  -1.0 1.38e-02    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 1.09e-04 3.07e+05  -1.0 4.51e-07    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 7.28e-12 4.32e+01  -3.8 2.89e-08    -  1.00e+00 1.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 11
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.2737367544323206e-13    7.2759576141834259e-12
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.2737367544323206e-13    7.2759576141834259e-12
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 17
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 12
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 17
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 12
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 11
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.003
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.25e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.25e+04 5.13e+00  -1.0 5.50e+04    -  4.66e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.25e+04 1.16e+01  -1.0 5.50e+04    -  6.16e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.25e+04 1.85e+01  -1.0 5.50e+04    -  6.70e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.25e+04 2.84e+01  -1.0 5.50e+04    -  9.90e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.25e+04 3.40e+01  -1.0 5.50e+04    -  5.57e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.25e+04 4.39e+01  -1.0 5.50e+04    -  9.91e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.25e+04 4.90e+01  -1.0 5.50e+04    -  5.12e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.25e+04 5.90e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.25e+04 6.41e+01  -1.0 5.50e+04    -  5.11e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.25e+04 7.41e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.27e+07 9.86e+01  -1.0 5.50e+04    -  5.11e-01 9.90e-01w  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.75e+05 1.08e+02  -1.0 8.07e+03    -  1.00e+00 9.90e-01w  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.06e+04 2.68e+00  -1.0 2.26e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.61e-05 5.37e-02  -3.8 4.06e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2517822710291955e-08    3.6142766475677490e-05
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2517822710291955e-08    3.6142766475677490e-05
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 5.12e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.74e+04 5.83e+00  -1.0 3.26e+03    -  1.35e-01 6.68e-01f  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.80e+03 2.83e+01  -1.0 2.31e+03    -  8.78e-01 6.17e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.77e+02 2.07e+01  -1.0 7.30e+02    -  8.20e-01 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.44e+00 2.51e+00  -1.0 1.53e+01    -  9.90e-01 9.92e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 2.07e-06 6.41e+02  -1.0 1.26e-01    -  9.92e-01 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   4.2902110935282590e-11    2.0713669073302299e-06
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   4.2902110935282590e-11    2.0713669073302299e-06
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.S101: 
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.17e+00 3.38e+00  -1.0 5.79e+02    -  7.70e-01 9.92e-01H  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.41e-01 9.99e+00  -1.0 7.40e+00    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.28e-03    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.M101: 
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.40e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.72e+04 1.17e+01  -1.0 9.62e+03    -  6.95e-02 5.28e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.28e+04 5.29e+00  -1.0 4.89e+03    -  9.90e-01 5.21e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.92e+03 9.23e+03  -1.0 2.42e+03    -  9.90e-01 5.33e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.90e+03 4.37e+08  -1.0 1.14e+03    -  9.94e-01 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.55e+01 3.16e+06  -1.0 1.90e+01    -  1.00e+00 5.00e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.07e+01 4.77e+06  -1.0 9.46e+00    -  1.00e+00 4.96e-01h  2
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 2.09e+01 3.97e+10  -1.0 4.76e+00    -  1.00e+00 9.94e-01h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.84e+00 3.45e+09  -1.0 2.76e-02    -  1.00e+00 5.00e-01h  2
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.60e+00 2.77e+10  -1.0 1.38e-02    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 1.10e-04 3.09e+05  -1.0 4.54e-07    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 7.28e-12 6.04e+01  -3.8 4.05e-08    -  1.00e+00 1.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 11
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.2737367544323206e-13    7.2759576141834259e-12
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.2737367544323206e-13    7.2759576141834259e-12
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 17
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 12
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 17
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 12
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 11
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.003
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.25e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.25e+04 5.12e+00  -1.0 5.50e+04    -  4.66e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.25e+04 1.16e+01  -1.0 5.50e+04    -  6.15e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.25e+04 1.84e+01  -1.0 5.50e+04    -  6.70e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.25e+04 2.84e+01  -1.0 5.50e+04    -  9.90e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.25e+04 3.40e+01  -1.0 5.50e+04    -  5.56e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.25e+04 4.39e+01  -1.0 5.50e+04    -  9.91e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.25e+04 4.90e+01  -1.0 5.50e+04    -  5.12e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.25e+04 5.90e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.25e+04 6.41e+01  -1.0 5.50e+04    -  5.10e-01 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.25e+04 7.41e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.27e+07 9.94e+01  -1.0 5.50e+04    -  5.10e-01 9.90e-01w  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.75e+05 1.08e+02  -1.0 8.09e+03    -  1.00e+00 9.90e-01w  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.06e+04 2.73e+00  -1.0 2.26e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.63e-05 5.38e-02  -3.8 4.06e+04    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2552173012721294e-08    3.6276876926422119e-05
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2552173012721294e-08    3.6276876926422119e-05
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.006
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
-    2020-05-07 00:22:13 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-05-07 00:22:13 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 5.13e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.75e+04 5.85e+00  -1.0 3.26e+03    -  1.34e-01 6.67e-01f  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.81e+03 2.83e+01  -1.0 2.31e+03    -  8.78e-01 6.17e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.77e+02 2.07e+01  -1.0 7.31e+02    -  8.20e-01 1.00e+00h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.44e+00 2.51e+00  -1.0 1.54e+01    -  9.90e-01 9.92e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 2.11e-06 6.40e+02  -1.0 1.27e-01    -  9.92e-01 1.00e+00h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   4.2680665616048879e-11    2.1109808585606515e-06
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   4.2680665616048879e-11    2.1109808585606515e-06
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.S101: 
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.12e+00 3.37e+00  -1.0 5.78e+02    -  7.71e-01 9.92e-01H  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.40e-01 9.99e+00  -1.0 7.39e+00    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.27e-03    -  9.90e-01 1.00e+00h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.M101: 
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 1.44e+05 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 8.53e+04 1.03e+01  -1.0 3.65e+04    -  1.44e-01 5.96e-01h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 5.59e+04 4.56e+02  -1.0 1.46e+04    -  9.90e-01 3.84e-01h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.46e+04 2.28e+04  -1.0 9.01e+03    -  9.64e-01 2.49e-02h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 5.45e+04 8.50e+07  -1.0 8.79e+03    -  9.91e-01 2.77e-04h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 5r 0.0000000e+00 5.45e+04 1.00e+03   0.7 0.00e+00    -  0.00e+00 3.46e-07R  4
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 6r 0.0000000e+00 4.36e+04 3.24e+03   0.7 2.01e+04    -  9.16e-02 2.64e-03f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 7r 0.0000000e+00 3.79e+04 5.91e+03   0.7 2.19e+04    -  4.65e-02 8.63e-02f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 8r 0.0000000e+00 3.17e+04 5.52e+03   0.7 2.00e+04    -  1.58e-01 1.21e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 9r 0.0000000e+00 2.24e+04 4.07e+03   0.7 1.69e+04    -  2.62e-01 2.16e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 10r 0.0000000e+00 2.81e+03 6.09e+03   0.7 1.32e+04    -  1.00e+00 7.31e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 11r 0.0000000e+00 1.14e+03 5.67e+02   0.7 1.61e+03    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 12r 0.0000000e+00 1.94e+02 4.92e+02  -0.0 7.79e+02    -  1.00e+00 9.01e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 13r 0.0000000e+00 2.70e+01 8.63e+03  -0.0 4.68e+02    -  8.57e-01 3.24e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 14r 0.0000000e+00 2.21e+01 2.68e+04  -0.0 1.19e+03    -  1.00e+00 4.58e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 15r 0.0000000e+00 1.50e+01 2.79e+02  -0.0 2.96e+02    -  1.00e+00 1.00e+00f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 16r 0.0000000e+00 9.88e+00 1.66e+01  -0.0 1.08e+02    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 17r 0.0000000e+00 3.29e+00 1.77e+02  -1.4 5.95e+01    -  7.72e-01 9.68e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 18r 0.0000000e+00 5.49e+02 4.70e+03  -1.4 8.66e+03    -  7.57e-01 3.13e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 19r 0.0000000e+00 3.25e+03 1.47e+04  -1.4 2.57e+03    -  1.00e+00 9.97e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 20r 0.0000000e+00 7.66e+01 9.65e+02  -1.4 1.06e+03    -  4.61e-01 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 21r 0.0000000e+00 2.47e+00 2.28e+01  -1.4 5.47e+01    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 22r 0.0000000e+00 8.50e-02 3.54e-02  -1.4 1.24e+00    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 23r 0.0000000e+00 4.43e-01 6.74e+01  -4.7 1.56e+03    -  8.51e-01 8.92e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 24r 0.0000000e+00 1.18e+01 6.96e+03  -4.7 1.12e+02  -4.0 7.45e-01 8.89e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 25r 0.0000000e+00 2.53e+03 6.99e+03  -4.7 9.70e+05    -  1.34e-02 5.52e-03f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 26r 0.0000000e+00 2.53e+03 1.30e+04  -4.7 2.82e+05    -  1.56e-01 1.94e-05f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 27r 0.0000000e+00 2.53e+03 1.41e+04  -4.7 3.91e+05    -  2.35e-01 5.39e-02f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 28r 0.0000000e+00 2.48e+03 9.30e+04  -4.7 3.89e+05    -  9.70e-01 1.83e-02f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 29r 0.0000000e+00 2.48e+03 9.80e+04  -4.7 1.06e+05    -  1.00e+00 3.51e-03f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 30r 0.0000000e+00 6.31e+02 1.61e+05  -4.7 4.03e+03    -  1.00e+00 7.63e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 31r 0.0000000e+00 6.03e+02 8.31e+05  -4.7 9.55e+02    -  1.00e+00 8.77e-02f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 32r 0.0000000e+00 1.66e+02 7.40e+05  -4.7 8.71e+02    -  1.00e+00 7.25e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 33r 0.0000000e+00 1.13e+02 8.82e+05  -4.7 2.39e+02    -  1.00e+00 3.18e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 34r 0.0000000e+00 1.13e+01 7.38e+07  -4.7 1.63e+02    -  1.00e+00 9.70e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 35r 0.0000000e+00 9.91e+00 6.88e+07  -4.7 1.16e+00  -1.8 9.77e-01 6.84e-01h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 36r 0.0000000e+00 9.90e+00 3.24e+08  -4.7 2.52e+02    -  1.00e+00 5.62e-04h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 37r 0.0000000e+00 8.52e+00 2.84e+08  -4.7 4.92e+00    -  1.17e-01 1.39e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 38r 0.0000000e+00 1.25e+00 2.52e+08  -4.7 4.24e+00    -  2.12e-01 1.00e+00f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 39r 0.0000000e+00 8.16e-02 2.46e+07  -4.7 7.06e-01    -  9.33e-01 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 40r 0.0000000e+00 3.37e-01 2.12e+06  -4.7 8.24e+00    -  9.11e-01 5.50e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 41r 0.0000000e+00 3.16e-01 1.68e+07  -4.7 1.05e+02    -  8.97e-01 1.40e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 42r 0.0000000e+00 1.59e-01 4.30e+06  -4.7 4.26e+01    -  1.00e+00 5.00e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 43r 0.0000000e+00 1.31e-01 1.03e+08  -4.7 3.05e+00    -  1.00e+00 2.23e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 44r 0.0000000e+00 7.23e-02 7.07e+08  -4.7 9.03e-01    -  9.95e-02 4.32e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 45r 0.0000000e+00 2.99e-02 3.02e+08  -4.7 7.49e-02    -  1.00e+00 5.76e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 46r 0.0000000e+00 3.96e-03 7.36e+05  -4.7 4.38e-02    -  1.00e+00 1.00e+00f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 47r 0.0000000e+00 3.96e-03 1.08e+04  -4.7 3.69e-02    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 48r 0.0000000e+00 3.96e-03 1.35e-01  -4.7 1.37e-04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 49r 0.0000000e+00 3.96e-03 7.39e+05  -7.0 8.44e-01    -  1.00e+00 9.45e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: 50r 0.0000000e+00 3.44e-05 9.17e+05  -7.0 6.03e+04    -  1.00e+00 6.57e-02f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 50
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.7355712726718819e-09    3.4409734794849101e-05
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.7355712726718819e-09    3.4409734794849101e-05
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 55
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 7
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 55
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 52
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 50
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.014
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.001
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.38e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 2.99e+06 2.44e+02  -1.0 1.10e+05    -  7.92e-02 2.48e-01f  3
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 2.00e+06 9.88e+04  -1.0 9.86e+04    -  6.04e-01 9.90e-01H  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.15e+04 1.42e+05  -1.0 2.84e+03    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 5.77e+04 4.90e+04  -1.0 5.46e+04    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 7.12e-04 1.85e-01  -1.0 5.77e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 2.24e-08 2.37e-09  -7.0 5.26e-07    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 6
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   3.4711595092880110e-11    2.2351741790771484e-08
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   3.4711595092880110e-11    2.2351741790771484e-08
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 11
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 7
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 14
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 7
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 6
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 1.17e+05 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 1.28e+05 8.02e+01  -1.0 8.03e+04    -  1.39e-02 1.19e-01f  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 1.16e+05 2.15e+02  -1.0 2.81e+04    -  3.47e-03 1.32e-01f  2
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.07e+05 1.99e+02  -1.0 4.03e+04    -  9.89e-01 7.41e-02h  4
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.06e+05 1.98e+02  -1.0 3.57e+04    -  5.06e-01 5.95e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 1.06e+05 1.96e+02  -1.0 3.54e+04    -  9.90e-01 6.03e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 6  0.0000000e+00 1.05e+05 1.94e+02  -1.0 3.51e+04    -  5.89e-01 6.11e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 7  0.0000000e+00 1.04e+05 1.93e+02  -1.0 3.48e+04    -  1.00e+00 6.18e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 8  0.0000000e+00 1.04e+05 1.92e+02  -1.7 3.45e+04    -  4.11e-01 6.26e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 9  0.0000000e+00 1.03e+05 1.92e+02  -1.7 3.42e+04    -  1.00e+00 6.34e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 10  0.0000000e+00 1.02e+05 1.91e+02  -1.7 3.40e+04    -  6.84e-01 6.41e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 11  0.0000000e+00 1.02e+05 1.90e+02  -1.7 3.37e+04    -  1.00e+00 6.49e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 12  0.0000000e+00 1.01e+05 1.89e+02  -1.7 3.34e+04    -  6.89e-01 6.56e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 13  0.0000000e+00 1.00e+05 1.88e+02  -1.7 3.31e+04    -  1.00e+00 6.63e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 14  0.0000000e+00 9.96e+04 1.87e+02  -1.7 3.29e+04    -  7.27e-01 6.70e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 15  0.0000000e+00 9.89e+04 1.86e+02  -1.7 3.26e+04    -  1.00e+00 6.77e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 16  0.0000000e+00 9.82e+04 1.84e+02  -1.7 3.23e+04    -  7.65e-01 6.84e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 17  0.0000000e+00 9.75e+04 1.83e+02  -1.7 3.21e+04    -  1.00e+00 6.91e-03h  8
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 18  0.0000000e+00 1.20e+04 2.74e+02  -1.7 3.18e+04    -  8.05e-01 8.94e-01w  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 19  0.0000000e+00 4.15e+03 1.32e+03  -1.7 2.18e+03    -  6.55e-02 8.35e-01w  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 20  0.0000000e+00 1.84e+02 5.93e+01  -1.7 4.30e+02    -  8.96e-01 9.70e-01h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 21  0.0000000e+00 1.24e-01 1.12e+01  -1.7 1.39e+01    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: 22  0.0000000e+00 5.63e-08 6.77e-03  -3.8 1.52e-03    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 22
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   2.0565647774824511e-11    5.6330463849008083e-08
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   2.0565647774824511e-11    5.6330463849008083e-08
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 157
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 23
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 157
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 23
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 22
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.003
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 3.00e-01 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 3.00e-03 2.20e-06  -1.0 3.00e-01    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 2.99e-05 2.00e-02  -1.0 3.00e-03    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 2.40e-07 2.01e+02  -1.0 2.99e-05    -  9.94e-01 9.92e-01h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: 4  0.0000000e+00 4.14e-25 1.05e-10  -1.7 2.40e-07    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 4
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   4.1359030627651384e-25    4.1359030627651384e-25
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   4.1359030627651384e-25    4.1359030627651384e-25
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 5
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 5
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 5
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 5
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 4
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:20 [DEBUG] idaes.solve.fs.S101: 
+    2020-05-07 21:27:20 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.F102: Initialization Step 1 Complete.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Total number of variables............................:       41
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: variables with lower and upper bounds:        9
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Total number of equality constraints.................:       41
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: 0  0.0000000e+00 6.83e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: 1  0.0000000e+00 2.82e+04 5.69e+00  -1.0 2.00e+05    -  1.98e-01 8.56e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: 2  0.0000000e+00 8.44e+03 1.15e+02  -1.0 2.88e+04    -  8.76e-01 9.57e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: 3  0.0000000e+00 1.46e+03 8.84e+04  -1.0 1.98e+03    -  4.14e-01 9.65e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: 4  0.0000000e+00 1.42e+03 1.94e+06  -1.0 9.55e+02    -  9.91e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: 5  0.0000000e+00 9.65e-01 8.14e+04  -1.0 1.42e+01    -  9.91e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: 6  0.0000000e+00 2.25e-04 9.29e+01  -1.0 3.62e-01    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: 7  0.0000000e+00 1.46e-11 1.72e-04  -2.5 8.18e-06    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of Iterations....: 7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Constraint violation....:   2.2737367544323206e-13    1.4551915228366852e-11
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Overall NLP error.......:   2.2737367544323206e-13    1.4551915228366852e-11
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of objective function evaluations             = 8
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of objective gradient evaluations             = 8
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of equality constraint evaluations            = 8
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of equality constraint Jacobian evaluations   = 8
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Number of Lagrangian Hessian evaluations             = 7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F102: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.F102: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 9.18e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.31e+01 1.60e-03  -1.0 2.28e+01    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 1.32e-01 9.90e+00  -1.0 2.25e+01    -  1.00e+00 9.90e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: 3  0.0000000e+00 2.35e-07 2.83e-11  -1.0 2.26e-01    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 3
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   1.7853365888371418e-10    2.3471693566534668e-07
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   1.7853365888371418e-10    2.3471693566534668e-07
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 3.50e+05 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.81e+03 2.79e+00  -1.0 3.50e+05    -  9.85e-01 9.92e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 3.49e+00 1.01e+01  -1.0 2.81e+03    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 5.90e-05 2.93e+01  -1.0 3.24e-02    -  9.93e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 4  0.0000000e+00 7.45e-09 7.21e-13  -1.0 5.90e-05    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 5
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 5
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 1.05e+05 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 5.93e+04 1.13e+01  -1.0 2.36e+04    -  9.10e-02 5.64e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 2.98e+04 4.03e+00  -1.0 1.03e+04    -  9.90e-01 5.47e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 1.41e+04 1.06e+04  -1.0 4.72e+03    -  9.90e-01 5.55e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.46e+03 1.62e+08  -1.0 2.11e+03    -  9.94e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 3.85e+02 7.63e+06  -1.0 2.44e+01    -  1.00e+00 5.12e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 1.80e+02 3.34e+06  -1.0 1.19e+01    -  1.00e+00 4.96e-01h  2
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 1.30e+02 1.36e+10  -1.0 6.01e+00    -  1.00e+00 9.92e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 1.01e+02 5.67e+09  -1.0 4.72e-02    -  1.00e+00 6.99e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 2.57e+01 1.29e+11  -1.0 1.42e-02    -  1.00e+00 5.00e-01f  2
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 2.48e+01 2.15e+11  -1.0 7.10e-03    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 2.00e-03 1.38e+07  -1.0 2.77e-06    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 12  0.0000000e+00 1.46e-11 4.94e+02  -1.7 1.35e-07    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 12
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   7.1054273576010019e-14    1.4551915228366852e-11
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   7.1054273576010019e-14    1.4551915228366852e-11
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 19
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 13
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 19
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 13
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 12
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.34e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 5.16e+05 3.30e+01  -1.0 9.28e+04    -  1.51e-01 1.24e-01h  4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 5.14e+05 3.93e+01  -1.0 8.65e+04    -  5.58e-01 1.55e-02h  7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 5.12e+05 4.27e+01  -1.0 8.58e+04    -  3.40e-01 1.55e-02h  7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 5.10e+05 4.92e+01  -1.0 8.50e+04    -  6.07e-01 1.55e-02h  7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 5.08e+05 5.29e+01  -1.0 8.42e+04    -  3.85e-01 1.55e-02h  7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 5.05e+05 6.40e+01  -1.0 8.34e+04    -  9.90e-01 1.55e-02h  7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 5.03e+05 6.72e+01  -1.0 8.26e+04    -  3.52e-01 1.55e-02h  7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 5.00e+05 7.84e+01  -1.0 8.18e+04    -  9.91e-01 1.55e-02h  7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 4.98e+05 8.20e+01  -1.0 8.10e+04    -  3.96e-01 1.55e-02h  7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 4.95e+05 9.34e+01  -1.0 8.03e+04    -  1.00e+00 1.55e-02h  7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 2.18e+07 1.75e+04  -1.0 7.95e+04    -  4.38e-01 9.90e-01w  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 2.41e+05 5.85e+03  -1.0 1.79e+04    -  9.35e-01 9.90e-01w  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 5.29e+04 2.08e+04  -1.0 4.07e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 2.48e-04 2.22e-02  -1.0 5.29e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 15  0.0000000e+00 5.22e-08 9.54e-10  -7.0 1.76e-07    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   2.0826957055728064e-11    5.2154064178466797e-08
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   2.0826957055728064e-11    5.2154064178466797e-08
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 103
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 16
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 113
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 16
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 8.74e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 7.30e+04 3.10e+01  -1.0 1.09e+04    -  4.52e-02 3.85e-01f  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 3.99e+04 3.26e+01  -1.0 7.60e+03    -  2.91e-01 4.83e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 6.21e+02 1.64e+01  -1.0 3.50e+03    -  9.90e-01 1.00e+00H  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 9.72e-01 8.42e+00  -1.0 1.57e+01    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 6.12e-06 6.99e+02  -1.0 3.15e-02    -  9.96e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   2.4734746446097313e-09    6.1192513385321945e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   2.4734746446097313e-09    6.1192513385321945e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 7
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.S101: 
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 3.63e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.41e-01 1.60e-03  -1.0 3.56e+00    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 1.03e-03 9.84e+00  -1.0 3.52e+00    -  1.00e+00 9.90e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: 3  0.0000000e+00 3.51e-08 8.70e-13  -1.0 3.50e-02    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 3
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   4.8173230335450958e-11    3.5146513255313039e-08
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   4.8173230335450958e-11    3.5146513255313039e-08
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 2.24e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.98e+02 5.73e-01  -1.0 2.35e+02    -  9.88e-01 9.92e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 9.91e-01 9.97e+00  -1.0 1.69e+01    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 1.79e-07 2.66e+01  -1.0 1.15e-02    -  9.93e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.0915153662155086e-10    1.7881393432617188e-07
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.0915153662155086e-10    1.7881393432617188e-07
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.M101: 
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.41e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.71e+04 1.18e+01  -1.0 1.40e+04    -  6.37e-02 5.29e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.27e+04 5.28e+00  -1.0 8.31e+03    -  9.90e-01 5.21e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.86e+03 9.25e+03  -1.0 4.22e+03    -  9.90e-01 5.33e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.95e+03 4.39e+08  -1.0 2.04e+03    -  9.94e-01 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.46e+01 3.12e+06  -1.0 1.93e+01    -  1.00e+00 5.00e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.02e+01 4.75e+06  -1.0 9.65e+00    -  1.00e+00 4.96e-01h  2
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 2.11e+01 3.98e+10  -1.0 4.86e+00    -  1.00e+00 9.94e-01h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.93e+00 3.45e+09  -1.0 2.80e-02    -  1.00e+00 5.00e-01h  2
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.59e+00 2.70e+10  -1.0 1.40e-02    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 1.11e-04 3.02e+05  -1.0 4.56e-07    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 1.09e-11 2.18e+01  -3.8 3.46e-08    -  1.00e+00 1.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 11
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.2737367544323206e-13    1.0913936421275139e-11
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.2737367544323206e-13    1.0913936421275139e-11
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 17
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 12
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 17
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 12
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 11
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.003
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.25e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.24e+04 5.27e+00  -1.0 5.45e+04    -  4.79e-01 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.24e+04 1.18e+01  -1.0 5.45e+04    -  6.18e-01 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.24e+04 1.87e+01  -1.0 5.45e+04    -  6.78e-01 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.24e+04 2.86e+01  -1.0 5.45e+04    -  9.90e-01 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.24e+04 3.48e+01  -1.0 5.45e+04    -  6.15e-01 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.24e+04 4.47e+01  -1.0 5.45e+04    -  9.92e-01 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.24e+04 5.01e+01  -1.0 5.45e+04    -  5.38e-01 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.24e+04 6.01e+01  -1.0 5.45e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.24e+04 6.55e+01  -1.0 5.45e+04    -  5.37e-01 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.24e+04 7.55e+01  -1.0 5.45e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.24e+07 8.23e+01  -1.0 5.45e+04    -  5.37e-01 9.90e-01w  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.71e+05 9.11e+01  -1.0 7.89e+03    -  1.00e+00 9.90e-01w  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.02e+04 1.64e+00  -1.0 2.26e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.56e-05 5.20e-02  -3.8 4.02e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2334621097335475e-08    3.5621225833892822e-05
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2334621097335475e-08    3.5621225833892822e-05
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.004
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
+    2020-05-07 21:27:21 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:21 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 5.18e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.81e+04 6.10e+00  -1.0 1.67e+04    -  1.31e-01 6.60e-01f  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.85e+03 2.82e+01  -1.0 5.27e+03    -  8.83e-01 6.24e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.72e+02 1.97e+01  -1.0 2.29e+03    -  8.30e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.41e+00 2.45e+00  -1.0 1.54e+01    -  9.90e-01 9.92e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 2.66e-06 6.13e+02  -1.0 1.28e-01    -  9.92e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   3.3424899880925952e-11    2.6555062504485250e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   3.3424899880925952e-11    2.6555062504485250e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.35e+00 3.39e+00  -1.0 5.83e+02    -  7.69e-01 9.92e-01H  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.43e-01 9.99e+00  -1.0 7.44e+00    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.30e-03    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.31e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.73e+04 1.13e+01  -1.0 9.78e+03    -  9.31e-02 5.26e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.30e+04 5.37e+00  -1.0 4.93e+03    -  9.90e-01 5.20e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 6.03e+03 9.17e+03  -1.0 2.43e+03    -  9.90e-01 5.32e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.71e+03 4.38e+08  -1.0 1.15e+03    -  9.94e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.61e+01 3.17e+06  -1.0 1.78e+01    -  1.00e+00 5.00e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.12e+01 4.80e+06  -1.0 8.89e+00    -  1.00e+00 4.96e-01h  2
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 1.89e+01 3.99e+10  -1.0 4.48e+00    -  1.00e+00 9.94e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.23e+00 3.45e+09  -1.0 2.60e-02    -  1.00e+00 5.00e-01h  2
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.19e+00 2.86e+10  -1.0 1.30e-02    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 9.04e-05 2.85e+05  -1.0 4.05e-07    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 10
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   1.7768289534621779e-08    9.0412653662497178e-05
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   1.7768289534621779e-08    9.0412653662497178e-05
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 16
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 11
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 16
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 11
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 10
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.26e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.26e+04 4.69e+00  -1.0 5.64e+04    -  4.27e-01 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.26e+04 1.11e+01  -1.0 5.64e+04    -  6.10e-01 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.26e+04 1.74e+01  -1.0 5.64e+04    -  6.16e-01 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.26e+04 2.74e+01  -1.0 5.64e+04    -  9.90e-01 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.26e+04 3.18e+01  -1.0 5.64e+04    -  4.40e-01 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.26e+04 4.17e+01  -1.0 5.64e+04    -  9.91e-01 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.26e+04 4.61e+01  -1.0 5.64e+04    -  4.42e-01 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.26e+04 5.61e+01  -1.0 5.64e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.26e+04 6.05e+01  -1.0 5.64e+04    -  4.40e-01 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.26e+04 7.05e+01  -1.0 5.64e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.34e+07 1.55e+02  -1.0 5.64e+04    -  4.40e-01 9.90e-01w  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.85e+05 1.65e+02  -1.0 8.57e+03    -  1.00e+00 9.90e-01w  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.16e+04 6.67e+00  -1.0 2.28e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.73e-05 5.65e-02  -2.5 4.16e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2935751389848925e-08    3.7349760532379150e-05
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2935751389848925e-08    3.7349760532379150e-05
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 4.96e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.54e+04 5.11e+00  -1.0 3.23e+03    -  1.46e-01 6.92e-01f  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.50e+03 2.82e+01  -1.0 2.15e+03    -  8.67e-01 6.00e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.87e+02 2.35e+01  -1.0 7.00e+02    -  7.91e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.47e+00 2.76e+00  -1.0 1.47e+01    -  9.90e-01 9.92e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 4.89e-07 7.23e+02  -1.0 1.16e-01    -  9.92e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   2.0246222515506914e-11    4.8884612624533474e-07
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   2.0246222515506914e-11    4.8884612624533474e-07
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.S101: 
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.04e+00 3.36e+00  -1.0 5.77e+02    -  7.71e-01 9.92e-01H  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.39e-01 9.99e+00  -1.0 7.37e+00    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.26e-03    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.M101: 
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.39e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.72e+04 1.17e+01  -1.0 9.60e+03    -  6.94e-02 5.28e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.28e+04 5.29e+00  -1.0 4.88e+03    -  9.90e-01 5.21e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.91e+03 9.23e+03  -1.0 2.41e+03    -  9.90e-01 5.33e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.90e+03 4.37e+08  -1.0 1.14e+03    -  9.94e-01 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.52e+01 3.15e+06  -1.0 1.90e+01    -  1.00e+00 5.00e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.06e+01 4.77e+06  -1.0 9.46e+00    -  1.00e+00 4.96e-01h  2
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 2.08e+01 3.98e+10  -1.0 4.77e+00    -  1.00e+00 9.94e-01h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.81e+00 3.45e+09  -1.0 2.75e-02    -  1.00e+00 5.00e-01h  2
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.56e+00 2.76e+10  -1.0 1.38e-02    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 1.09e-04 3.05e+05  -1.0 4.50e-07    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 2.18e-11 4.40e+01  -3.8 3.66e-08    -  1.00e+00 1.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 11
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.2737367544323206e-13    2.1827872842550274e-11
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.2737367544323206e-13    2.1827872842550274e-11
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 17
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 12
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 17
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 12
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 11
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-05-07 21:27:22 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.25e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.25e+04 5.13e+00  -1.0 5.50e+04    -  4.66e-01 6.04e-05h 15
+    2020-05-07 21:27:22 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.25e+04 1.16e+01  -1.0 5.50e+04    -  6.16e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.25e+04 1.85e+01  -1.0 5.50e+04    -  6.71e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.25e+04 2.84e+01  -1.0 5.50e+04    -  9.90e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.25e+04 3.40e+01  -1.0 5.50e+04    -  5.58e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.25e+04 4.39e+01  -1.0 5.50e+04    -  9.91e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.25e+04 4.91e+01  -1.0 5.50e+04    -  5.13e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.25e+04 5.91e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.25e+04 6.42e+01  -1.0 5.49e+04    -  5.12e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.25e+04 7.42e+01  -1.0 5.49e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.27e+07 9.78e+01  -1.0 5.49e+04    -  5.12e-01 9.90e-01w  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.74e+05 1.07e+02  -1.0 8.06e+03    -  1.00e+00 9.90e-01w  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.06e+04 2.63e+00  -1.0 2.26e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.61e-05 5.36e-02  -3.8 4.06e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2500647559077285e-08    3.6127865314483643e-05
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2500647559077285e-08    3.6127865314483643e-05
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.004
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 5.12e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.74e+04 5.83e+00  -1.0 3.26e+03    -  1.35e-01 6.68e-01f  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.79e+03 2.83e+01  -1.0 2.31e+03    -  8.78e-01 6.18e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.77e+02 2.07e+01  -1.0 7.29e+02    -  8.20e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.44e+00 2.51e+00  -1.0 1.53e+01    -  9.90e-01 9.92e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 2.07e-06 6.41e+02  -1.0 1.26e-01    -  9.92e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   4.2890462401563167e-11    2.0655534171964973e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   4.2890462401563167e-11    2.0655534171964973e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.20e+00 3.38e+00  -1.0 5.80e+02    -  7.70e-01 9.92e-01H  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.41e-01 9.99e+00  -1.0 7.41e+00    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.28e-03    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.39e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.72e+04 1.17e+01  -1.0 9.61e+03    -  6.95e-02 5.28e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.28e+04 5.29e+00  -1.0 4.88e+03    -  9.90e-01 5.21e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.91e+03 9.23e+03  -1.0 2.41e+03    -  9.90e-01 5.33e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.90e+03 4.37e+08  -1.0 1.14e+03    -  9.94e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.53e+01 3.15e+06  -1.0 1.90e+01    -  1.00e+00 5.00e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.06e+01 4.77e+06  -1.0 9.46e+00    -  1.00e+00 4.96e-01h  2
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 2.08e+01 3.97e+10  -1.0 4.76e+00    -  1.00e+00 9.94e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.82e+00 3.45e+09  -1.0 2.75e-02    -  1.00e+00 5.00e-01h  2
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.58e+00 2.76e+10  -1.0 1.38e-02    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 1.09e-04 3.07e+05  -1.0 4.51e-07    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 7.28e-12 4.32e+01  -3.8 2.89e-08    -  1.00e+00 1.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 11
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.2737367544323206e-13    7.2759576141834259e-12
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.2737367544323206e-13    7.2759576141834259e-12
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 17
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 12
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 17
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 12
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 11
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.25e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.25e+04 5.13e+00  -1.0 5.50e+04    -  4.66e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.25e+04 1.16e+01  -1.0 5.50e+04    -  6.16e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.25e+04 1.85e+01  -1.0 5.50e+04    -  6.70e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.25e+04 2.84e+01  -1.0 5.50e+04    -  9.90e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.25e+04 3.40e+01  -1.0 5.50e+04    -  5.57e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.25e+04 4.39e+01  -1.0 5.50e+04    -  9.91e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.25e+04 4.90e+01  -1.0 5.50e+04    -  5.12e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.25e+04 5.90e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.25e+04 6.41e+01  -1.0 5.50e+04    -  5.11e-01 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.25e+04 7.41e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.27e+07 9.86e+01  -1.0 5.50e+04    -  5.11e-01 9.90e-01w  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.75e+05 1.08e+02  -1.0 8.07e+03    -  1.00e+00 9.90e-01w  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.06e+04 2.68e+00  -1.0 2.26e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.61e-05 5.37e-02  -3.8 4.06e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2517822710291955e-08    3.6142766475677490e-05
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2517822710291955e-08    3.6142766475677490e-05
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 5.12e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.74e+04 5.83e+00  -1.0 3.26e+03    -  1.35e-01 6.68e-01f  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.80e+03 2.83e+01  -1.0 2.31e+03    -  8.78e-01 6.17e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.77e+02 2.07e+01  -1.0 7.30e+02    -  8.20e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.44e+00 2.51e+00  -1.0 1.53e+01    -  9.90e-01 9.92e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 2.07e-06 6.41e+02  -1.0 1.26e-01    -  9.92e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   4.2902110935282590e-11    2.0713669073302299e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   4.2902110935282590e-11    2.0713669073302299e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.S101: 
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.17e+00 3.38e+00  -1.0 5.79e+02    -  7.70e-01 9.92e-01H  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.41e-01 9.99e+00  -1.0 7.40e+00    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.28e-03    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.M101: 
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.H101: Initialization Step 1 Complete.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: contain the following acknowledgement:
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: ******************************************************************************
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total number of variables............................:       41
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: variables with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: variables with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 0  0.0000000e+00 5.40e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 1  0.0000000e+00 2.72e+04 1.17e+01  -1.0 9.62e+03    -  6.95e-02 5.28e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 2  0.0000000e+00 1.28e+04 5.29e+00  -1.0 4.89e+03    -  9.90e-01 5.21e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 3  0.0000000e+00 5.92e+03 9.23e+03  -1.0 2.42e+03    -  9.90e-01 5.33e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 4  0.0000000e+00 1.90e+03 4.37e+08  -1.0 1.14e+03    -  9.94e-01 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 5  0.0000000e+00 6.55e+01 3.16e+06  -1.0 1.90e+01    -  1.00e+00 5.00e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 6  0.0000000e+00 3.07e+01 4.77e+06  -1.0 9.46e+00    -  1.00e+00 4.96e-01h  2
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 7  0.0000000e+00 2.09e+01 3.97e+10  -1.0 4.76e+00    -  1.00e+00 9.94e-01h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 8  0.0000000e+00 5.84e+00 3.45e+09  -1.0 2.76e-02    -  1.00e+00 5.00e-01h  2
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 9  0.0000000e+00 4.60e+00 2.77e+10  -1.0 1.38e-02    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 10  0.0000000e+00 1.10e-04 3.09e+05  -1.0 4.54e-07    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: 11  0.0000000e+00 7.28e-12 6.04e+01  -3.8 4.05e-08    -  1.00e+00 1.00e+00   0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of Iterations....: 11
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: (scaled)                 (unscaled)
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Constraint violation....:   2.2737367544323206e-13    7.2759576141834259e-12
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Overall NLP error.......:   2.2737367544323206e-13    7.2759576141834259e-12
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of objective function evaluations             = 17
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of objective gradient evaluations             = 12
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of equality constraint evaluations            = 17
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of equality constraint Jacobian evaluations   = 12
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Number of Lagrangian Hessian evaluations             = 11
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.003
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:23 [DEBUG] idaes.solve.fs.H101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.H101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-05-07 21:27:23 [INFO] idaes.init.fs.R101: Initialization Step 1 Complete.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: contain the following acknowledgement:
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in equality constraint Jacobian...:       93
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Total number of variables............................:       39
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: variables with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: variables with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Total number of equality constraints.................:       39
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 0  0.0000000e+00 3.25e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 1  0.0000000e+00 3.25e+04 5.12e+00  -1.0 5.50e+04    -  4.66e-01 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 2  0.0000000e+00 3.25e+04 1.16e+01  -1.0 5.50e+04    -  6.15e-01 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 3  0.0000000e+00 3.25e+04 1.84e+01  -1.0 5.50e+04    -  6.70e-01 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 4  0.0000000e+00 3.25e+04 2.84e+01  -1.0 5.50e+04    -  9.90e-01 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 5  0.0000000e+00 3.25e+04 3.40e+01  -1.0 5.50e+04    -  5.56e-01 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 6  0.0000000e+00 3.25e+04 4.39e+01  -1.0 5.50e+04    -  9.91e-01 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 7  0.0000000e+00 3.25e+04 4.90e+01  -1.0 5.50e+04    -  5.12e-01 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 8  0.0000000e+00 3.25e+04 5.90e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 9  0.0000000e+00 3.25e+04 6.41e+01  -1.0 5.50e+04    -  5.10e-01 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 10  0.0000000e+00 3.25e+04 7.41e+01  -1.0 5.50e+04    -  1.00e+00 6.04e-05h 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 11  0.0000000e+00 1.27e+07 9.94e+01  -1.0 5.50e+04    -  5.10e-01 9.90e-01w  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 12  0.0000000e+00 1.75e+05 1.08e+02  -1.0 8.09e+03    -  1.00e+00 9.90e-01w  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 13  0.0000000e+00 4.06e+04 2.73e+00  -1.0 2.26e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: 14  0.0000000e+00 3.63e-05 5.38e-02  -3.8 4.06e+04    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of Iterations....: 14
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: (scaled)                 (unscaled)
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Constraint violation....:   1.2552173012721294e-08    3.6276876926422119e-05
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Overall NLP error.......:   1.2552173012721294e-08    3.6276876926422119e-05
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of objective function evaluations             = 185
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of objective gradient evaluations             = 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of equality constraint evaluations            = 195
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of equality constraint Jacobian evaluations   = 15
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Number of Lagrangian Hessian evaluations             = 14
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.004
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: Total CPU secs in NLP function evaluations           =      0.001
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.R101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.R101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.F101: Initialization Step 1 Complete.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: contain the following acknowledgement:
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Total number of variables............................:       41
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: variables with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: variables with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Total number of equality constraints.................:       41
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: 0  0.0000000e+00 5.13e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: 1  0.0000000e+00 3.75e+04 5.85e+00  -1.0 3.26e+03    -  1.34e-01 6.67e-01f  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: 2  0.0000000e+00 9.81e+03 2.83e+01  -1.0 2.31e+03    -  8.78e-01 6.17e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: 3  0.0000000e+00 1.77e+02 2.07e+01  -1.0 7.31e+02    -  8.20e-01 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: 4  0.0000000e+00 1.44e+00 2.51e+00  -1.0 1.54e+01    -  9.90e-01 9.92e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: 5  0.0000000e+00 2.11e-06 6.40e+02  -1.0 1.27e-01    -  9.92e-01 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of Iterations....: 5
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: (scaled)                 (unscaled)
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Constraint violation....:   4.2680665616048879e-11    2.1109808585606515e-06
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Overall NLP error.......:   4.2680665616048879e-11    2.1109808585606515e-06
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of objective function evaluations             = 6
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of objective gradient evaluations             = 6
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of equality constraint evaluations            = 6
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of equality constraint Jacobian evaluations   = 6
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Number of Lagrangian Hessian evaluations             = 5
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.F101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Ipopt 3.13.2:
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: contain the following acknowledgement:
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in equality constraint Jacobian...:       29
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of nonzeros in Lagrangian Hessian.............:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Total number of variables............................:       21
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: variables with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: variables with lower and upper bounds:       20
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: variables with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Total number of equality constraints.................:       21
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: 1  0.0000000e+00 1.00e-04 2.20e-06  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: 2  0.0000000e+00 9.98e-07 2.00e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: 3  0.0000000e+00 8.00e-09 2.01e+02  -1.0 9.98e-07    -  9.94e-01 9.92e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of Iterations....: 3
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: (scaled)                 (unscaled)
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Constraint violation....:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Overall NLP error.......:   7.9999999999999045e-09    7.9999999999999045e-09
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of objective function evaluations             = 4
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of equality constraint evaluations            = 4
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.S101: 
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.C101: Initialization Step 1 Complete.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: contain the following acknowledgement:
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in equality constraint Jacobian...:       74
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of nonzeros in Lagrangian Hessian.............:       61
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Total number of variables............................:       32
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: variables with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: variables with lower and upper bounds:        9
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: variables with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Total number of equality constraints.................:       32
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: 0  0.0000000e+00 1.00e-02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: 1  0.0000000e+00 1.00e-04 1.60e-03  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: 2  0.0000000e+00 9.84e-07 9.84e+00  -1.0 1.00e-04    -  1.00e+00 9.90e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of Iterations....: 2
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: (scaled)                 (unscaled)
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Constraint violation....:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Overall NLP error.......:   9.8400000480001186e-07    9.8400000480001186e-07
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of objective function evaluations             = 3
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of objective gradient evaluations             = 3
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of equality constraint evaluations            = 3
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of equality constraint Jacobian evaluations   = 3
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Number of Lagrangian Hessian evaluations             = 2
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.C101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.C101: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Ipopt 3.13.2:
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: contain the following acknowledgement:
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in equality constraint Jacobian...:      117
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of nonzeros in Lagrangian Hessian.............:       63
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Total number of variables............................:       53
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: variables with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: variables with lower and upper bounds:       10
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: variables with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Total number of equality constraints.................:       53
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: 0  0.0000000e+00 1.26e+02 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: 1  0.0000000e+00 2.12e+00 3.37e+00  -1.0 5.78e+02    -  7.71e-01 9.92e-01H  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: 2  0.0000000e+00 2.40e-01 9.99e+00  -1.0 7.39e+00    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: 3  0.0000000e+00 7.45e-09 3.70e+01  -1.0 5.27e-03    -  9.90e-01 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of Iterations....: 3
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: (scaled)                 (unscaled)
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Overall NLP error.......:   2.9103830456733704e-11    7.4505805969238281e-09
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of objective function evaluations             = 5
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of objective gradient evaluations             = 4
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of equality constraint evaluations            = 5
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of equality constraint Jacobian evaluations   = 4
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Number of Lagrangian Hessian evaluations             = 3
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.M101: 
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
     WARNING: Wegstein failed to converge in 5 iterations
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.F102: Initialization Step 1 Complete.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Ipopt 3.13.2: tol=1e-06
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: This program contains Ipopt, a library for large-scale nonlinear optimization.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Ipopt is released as open source code under the Eclipse Public License (EPL).
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: For more information visit http://projects.coin-or.org/Ipopt
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: This version of Ipopt was compiled from source code available at
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: This version of Ipopt was compiled using HSL, a collection of Fortran codes
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: for large-scale scientific computation.  All technical papers, sales and
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: publicity material resulting from use of the HSL codes within IPOPT must
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: contain the following acknowledgement:
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: HSL, a collection of Fortran codes for large-scale scientific
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: computation. See http://www.hsl.rl.ac.uk.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: ******************************************************************************
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: This is Ipopt version 3.13.2, running with linear solver ma27.
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in equality constraint Jacobian...:      124
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in inequality constraint Jacobian.:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in Lagrangian Hessian.............:      112
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Total number of variables............................:       41
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: variables with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: variables with lower and upper bounds:        9
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: variables with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Total number of equality constraints.................:       41
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Total number of inequality constraints...............:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: inequality constraints with only lower bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: inequality constraints with lower and upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: inequality constraints with only upper bounds:        0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: 0  0.0000000e+00 6.83e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: 1  0.0000000e+00 2.82e+04 5.69e+00  -1.0 2.00e+05    -  1.98e-01 8.56e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: 2  0.0000000e+00 8.44e+03 1.15e+02  -1.0 2.88e+04    -  8.76e-01 9.57e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: 3  0.0000000e+00 1.46e+03 8.84e+04  -1.0 1.94e+03    -  4.14e-01 9.65e-01h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: 4  0.0000000e+00 1.42e+03 1.94e+06  -1.0 9.53e+02    -  9.91e-01 1.00e+00h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: 5  0.0000000e+00 9.65e-01 8.14e+04  -1.0 1.42e+01    -  9.91e-01 1.00e+00h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: 6  0.0000000e+00 2.25e-04 9.29e+01  -1.0 3.62e-01    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: 7  0.0000000e+00 1.46e-11 1.72e-04  -2.5 8.18e-06    -  1.00e+00 1.00e+00h  1
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of Iterations....: 7
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: (scaled)                 (unscaled)
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Constraint violation....:   2.2737367544323206e-13    1.4551915228366852e-11
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Overall NLP error.......:   2.2737367544323206e-13    1.4551915228366852e-11
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of objective function evaluations             = 8
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of objective gradient evaluations             = 8
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of equality constraint evaluations            = 8
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of inequality constraint evaluations          = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of equality constraint Jacobian evaluations   = 8
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of inequality constraint Jacobian evaluations = 0
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Number of Lagrangian Hessian evaluations             = 7
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: Total CPU secs in NLP function evaluations           =      0.000
-    2020-05-07 00:22:14 [DEBUG] idaes.solve.fs.F102: EXIT: Optimal Solution Found.
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.F102: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:14 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.F102: Initialization Step 1 Complete.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Ipopt 3.13.2: tol=1e-06
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: For more information visit http://projects.coin-or.org/Ipopt
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: This version of Ipopt was compiled from source code available at
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: for large-scale scientific computation.  All technical papers, sales and
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: publicity material resulting from use of the HSL codes within IPOPT must
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: contain the following acknowledgement:
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: HSL, a collection of Fortran codes for large-scale scientific
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: computation. See http://www.hsl.rl.ac.uk.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: ******************************************************************************
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in equality constraint Jacobian...:      124
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in inequality constraint Jacobian.:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of nonzeros in Lagrangian Hessian.............:      112
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Total number of variables............................:       41
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: variables with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: variables with lower and upper bounds:        9
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: variables with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Total number of equality constraints.................:       41
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Total number of inequality constraints...............:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: inequality constraints with only lower bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: inequality constraints with lower and upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: inequality constraints with only upper bounds:        0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: 0  0.0000000e+00 6.83e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: 1  0.0000000e+00 2.82e+04 5.69e+00  -1.0 2.00e+05    -  1.98e-01 8.56e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: 2  0.0000000e+00 8.44e+03 1.15e+02  -1.0 2.88e+04    -  8.76e-01 9.57e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: 3  0.0000000e+00 1.46e+03 8.84e+04  -1.0 1.94e+03    -  4.14e-01 9.65e-01h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: 4  0.0000000e+00 1.42e+03 1.94e+06  -1.0 9.53e+02    -  9.91e-01 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: 5  0.0000000e+00 9.65e-01 8.14e+04  -1.0 1.42e+01    -  9.91e-01 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: 6  0.0000000e+00 2.25e-04 9.29e+01  -1.0 3.62e-01    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: 7  0.0000000e+00 1.46e-11 1.72e-04  -2.5 8.18e-06    -  1.00e+00 1.00e+00h  1
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of Iterations....: 7
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: (scaled)                 (unscaled)
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Constraint violation....:   2.2737367544323206e-13    1.4551915228366852e-11
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Overall NLP error.......:   2.2737367544323206e-13    1.4551915228366852e-11
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of objective function evaluations             = 8
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of objective gradient evaluations             = 8
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of equality constraint evaluations            = 8
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of inequality constraint evaluations          = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of equality constraint Jacobian evaluations   = 8
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of inequality constraint Jacobian evaluations = 0
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Number of Lagrangian Hessian evaluations             = 7
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: Total CPU secs in NLP function evaluations           =      0.000
+    2020-05-07 21:27:24 [DEBUG] idaes.solve.fs.F102: EXIT: Optimal Solution Found.
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.F102: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:24 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
 
 
 .. raw:: html
@@ -3642,8 +3642,8 @@ solve this problem.
     Number of equality constraint Jacobian evaluations   = 23
     Number of inequality constraint Jacobian evaluations = 23
     Number of Lagrangian Hessian evaluations             = 22
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.015
-    Total CPU secs in NLP function evaluations           =      0.002
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.008
+    Total CPU secs in NLP function evaluations           =      0.001
     
     EXIT: Optimal Solution Found.
 

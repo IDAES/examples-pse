@@ -427,19 +427,19 @@ initialize the model.
 
 .. parsed-literal::
 
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
-    2020-05-07 00:22:00 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
+    2020-05-07 21:27:12 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
+    2020-05-07 21:27:13 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
 
 
 Now that the model has been defined and intialized, we can solve the
@@ -895,20 +895,20 @@ Remove any unnecessary printing to create cleaner results.
 
 .. parsed-literal::
 
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash.control_volume.properties_in: State Released.
-    2020-05-07 00:22:03 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash.control_volume.properties_in: State Released.
+    2020-05-07 21:27:14 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
 
 
 
@@ -966,20 +966,20 @@ heat duty.
 
 .. parsed-literal::
 
-    2020-05-07 00:22:04 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
-    2020-05-07 00:22:04 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:04 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-05-07 00:22:04 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-05-07 00:22:04 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-05-07 00:22:05 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
-    2020-05-07 00:22:05 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-05-07 00:22:05 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-05-07 00:22:05 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-05-07 00:22:05 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-05-07 00:22:05 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
-    2020-05-07 00:22:05 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
-    2020-05-07 00:22:05 [INFO] idaes.init.fs.flash.control_volume.properties_in: State Released.
-    2020-05-07 00:22:05 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash.control_volume.properties_in: State Released.
+    2020-05-07 21:27:16 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
     Ipopt 3.13.2: 
     
     ******************************************************************************
