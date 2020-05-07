@@ -100,15 +100,3 @@ def test_strip_tagged_cells(tmp_path, hello_world_nb):
     nb_builder.build(options)
 
 
-@pytest.mark.component
-def test_strip_clean_mode(tmp_path, hello_world_nb):
-    nb_builder, options = _setup_builder(tmp_path, hello_world_nb)
-    options["notebook.rebuild"] = True
-    options["notebook.clean"] = True
-    nb_builder.build(options)
-    # load the notebooks as raw json
-    tmp_path = Path(options["paths.source"])
-    nb1 = json.load((tmp_path / "hello_world.ipynb").open())
-    nb2 = json.load((tmp_path / f"hello_world{nb_builder.TEST_SUFFIX}.ipynb").open())
-    # 1 cell should have been stripped
-    assert len(nb1["cells"]) == len(nb2["cells"]) - 1

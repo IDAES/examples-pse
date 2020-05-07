@@ -428,48 +428,8 @@ by using the Python *help* function.
 
 .. parsed-literal::
 
-    
-    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-      with Simplex, Mixed Integer & Barrier Optimizers
-    5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-    Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
-    
-    Type 'help' for a list of available commands.
-    Type 'help' followed by a command name for more
-    information on commands.
-    
-    CPLEX> Logfile 'cplex.log' closed.
-    Logfile '/tmp/tmpwf39p94i.cplex.log' open.
-    CPLEX> New value for absolute mixed integer optimality gap tolerance: 0
-    CPLEX> New value for mixed integer optimality gap tolerance: 0
-    CPLEX> New value for time limit in seconds: 100
-    CPLEX> Problem '/tmp/tmpn0jk7bdk.pyomo.lp' read.
-    Read time = 0.05 sec. (0.28 ticks)
-    CPLEX> Problem name         : /tmp/tmpn0jk7bdk.pyomo.lp
-    Objective sense      : Maximize
-    Variables            :    1920  [Nneg: 1,  Fix: 1,  Box: 55,  Free: 661,
-                                     Binary: 1147,  General Integer: 55]
-    Objective nonzeros   :       1
-    Linear constraints   :    2839  [Less: 2561,  Greater: 55,  Equal: 223]
-      Nonzeros           :    8904
-      RHS nonzeros       :     488
-    
-    Variables            : Min LB: 0.000000         Max UB: 22.00000       
-    Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
-    Linear constraints   :
-      Nonzeros           : Min   : 0.01312160       Max   : 12.00000       
-      RHS nonzeros       : Min   : 1.000000         Max   : 1.000000       
-    CPLEX> CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
-    
-    Error termination, CPLEX Error  1016.
-    Solution time =    0.00 sec.
-    Deterministic time = 0.00 ticks  (0.00 ticks/sec)
-    
-    CPLEX> CPLEX Error  1217: No solution exists.
-    No file written.
-    CPLEX> ERROR: evaluating object as numeric value: obj
-            (object: <class 'pyomo.core.base.objective.SimpleObjective'>)
-        No value for uninitialized NumericValue object obj
+    WARNING: Could not locate the 'cplex' executable, which is required for solver
+        cplex
     MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
 
 

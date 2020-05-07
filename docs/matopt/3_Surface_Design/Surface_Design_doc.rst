@@ -3,10 +3,7 @@ Surface Design
 
 .. only:: html
 
-    Click here to view or download the `Jupyter Notebook file <Surface_Design.ipynb>`_.
-
-Jupyter Notebook
-----------------
+`Source file <Surface_Design.ipynb>`_
 
 .. raw:: html
     :file: Surface_Design.html

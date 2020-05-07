@@ -13046,7 +13046,22 @@ div#notebook {
 </style>
 
 <!-- Custom stylesheet, it must be in the same directory as the html file -->
-<link rel="stylesheet" href="custom.css">
+<style type="text/css">
+    #notebook-container {
+      box-shadow: none;  /* get rid of cheesy shadow */
+      -webkit-box-shadow: none;
+      padding 5px;
+      width: auto !important; /* expand to container */
+      min-width: 400px !important;
+    }
+    .wy-nav-content {
+      max-width: 90%; /* top container for notebook */
+    }
+    .run_this_cell {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+    </style>
 
 <!-- Loading mathjax macro -->
 <!-- Load mathjax -->
@@ -14201,7 +14216,7 @@ Number of inequality constraint evaluations          = 0
 Number of equality constraint Jacobian evaluations   = 2
 Number of inequality constraint Jacobian evaluations = 0
 Number of Lagrangian Hessian evaluations             = 1
-Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
 Total CPU secs in NLP function evaluations           =      0.000
 
 EXIT: Optimal Solution Found.

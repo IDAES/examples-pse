@@ -3,10 +3,7 @@ Module 2 Flowsheet Solution
 
 .. only:: html
 
-    Click here to view or download the `Jupyter Notebook file <Module_2_Flowsheet_Solution.ipynb>`_.
-
-Jupyter Notebook
-----------------
+`Source file <Module_2_Flowsheet_Solution.ipynb>`_
 
 .. raw:: html
     :file: Module_2_Flowsheet_Solution.html

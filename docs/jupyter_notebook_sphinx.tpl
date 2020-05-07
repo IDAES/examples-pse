@@ -3,10 +3,7 @@ $title_underline
 
 .. only:: html
 
-    Click here to view or download the `Jupyter Notebook file <$notebook_name.ipynb>`_.
-
-Jupyter Notebook
-----------------
+`Source file <$notebook_name.ipynb>`_
 
 .. raw:: html
     :file: $notebook_name.html
