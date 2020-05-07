@@ -14,17 +14,7 @@ their constructor and actually do something when you call "build()". The
 default values for settings are defined in the class.
 
 Most of the code is devoted to running and exporting the Jupyter notebooks,
-in the NotebookBuilder class. This can operate in two basic modes, controlled
-by the "notebook.test_mode" setting:
-
-    * Documentation mode (the default), will create ReStructuredText and HTML
-      versions of the notebooks, after executing them. Execution of the notebooks
-      is optional, but needed for full results. By default, the timestamps of the
-      generated files and notebook source are compared, and execution is skipped if
-      the generated files are newer.
-
-    * Test mode will run the notebooks, but not try and generate any documentation.
-      This is useful, obviously, from within Python tests.
+in the NotebookBuilder class.
 
 There are some quirks to the NotebookBuilder that require further explanation.
 First, you will notice some postprocess functions for both the RST and HTML output
@@ -71,7 +61,6 @@ For example command lines see the README.md in this directory.
 """
 from abc import ABC, abstractmethod
 import argparse
-from dataclasses import dataclass
 import logging
 import os
 from pathlib import Path
@@ -257,18 +246,33 @@ class NotebookBuilder(Builder):
 
     JUPYTER_NB_VERSION = 4  # for parsing
 
-    @dataclass
+    #: CSS stylesheet for notebooks
+    STYLESHEET = """
+    #notebook-container {
+      box-shadow: none;  /* get rid of cheesy shadow */
+      -webkit-box-shadow: none;
+      padding 5px;
+      width: auto !important; /* expand to container */
+      min-width: 400px !important;
+    }
+    .wy-nav-content {
+      max-width: 90%; /* top container for notebook */
+    }
+    .run_this_cell {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+    """
+
     class Results:
         """Stores results from build().
         """
-
-        _t = None
-        failed: List[str]
-        cached: List[str]
-        dirs_processed: List[str]
-        duration: float = -1.0
-        n_fail: int = 0
-        n_success: int = 0
+        def __init__(self):
+            self.failed, self.cached = [], []
+            self.dirs_processed = []
+            self.duration = -1.0
+            self.n_fail, self.n_success = 0, 0
+            self._t = None
 
         def start(self):
             self._t = time.time()
@@ -312,7 +316,7 @@ class NotebookBuilder(Builder):
         ]  # for some reason, this only works with the full module path
         self._nb_remove_config = c
         nb_dirs = self.s.get("directories")
-        self._results = self.Results(failed=[], dirs_processed=[], cached=[])
+        self._results = self.Results()
         self._results.start()
         for item in nb_dirs:
             self._build_tree(item)
@@ -672,7 +676,27 @@ class NotebookBuilder(Builder):
         for i in range(1, len(splits), 2):
             splits[i] = f'<img src="{prefix}/{splits[i]}>'
         # rejoin splits, to make the modified body text
-        return "".join(splits)
+        body = "".join(splits)
+        # hack in some CSS, replacing useless link
+        custom = re.search(r'<\s*link.*href="custom.css"\s*>', body)
+        if custom:
+            p1, p2 = custom.span()
+            body = "".join(
+                (
+                    body[:p1],
+                    '<style type="text/css">',
+                    self.STYLESHEET,
+                    "</style>",
+                    body[p2:],
+                )
+            )
+        else:
+            _log.warning("Could not insert stylesheet in HTML")
+        # done
+        return body
+
+
+#
 
 
 class SphinxBuilder(Builder):
@@ -697,7 +721,8 @@ class SphinxBuilder(Builder):
             html_dir.mkdir(parents=True)
         # copy images
         notify(
-            f"Copying image files from '{self.s.get('paths.source')}' -> " f"'{doc_dir}'",
+            f"Copying image files from '{self.s.get('paths.source')}' -> "
+            f"'{doc_dir}'",
             1,
         )
         self._copy_aux(doc_dir, ["png", "jpg", "jpeg", "pdf"])
@@ -712,7 +737,9 @@ class SphinxBuilder(Builder):
             log_error = self._extract_sphinx_error(errfile)
             raise SphinxError(cmdline, f"return code = {status}", log_error)
         # copy notebooks
-        notify(f"Copying notebooks from '{self.s.get('paths.source')}' -> '{html_dir}'", 1)
+        notify(
+            f"Copying notebooks from '{self.s.get('paths.source')}' -> '{html_dir}'", 1
+        )
         self._copy_aux(html_dir, ["ipynb"])
 
     def _copy_aux(self, dest, ext_list):
