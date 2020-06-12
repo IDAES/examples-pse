@@ -1,0 +1,69 @@
+ ***************************************************************************
+ ALAMO version 2019.10.16. Built: WIN-64 Wed Oct 16 10:42:39 EDT 2019
+
+ If you use this software, please cite:
+ Cozad, A., N. V. Sahinidis and D. C. Miller,
+ Automatic Learning of Algebraic Models for Optimization,
+ AIChE Journal, 60, 2211-2227, 2014.
+
+ ALAMO is powered by the BARON software from http://www.minlp.com/
+ ***************************************************************************
+ Licensee: Oluwamayowa Amusat at US Department of Energy, OOAmusat@lbl.gov.
+ ***************************************************************************
+ Reading input data
+ Checking input consistency and initializing data structures
+ Warning: powers of 1 will be discarded from the set of basis functions.
+ 
+ Step 0: Initializing data set
+ User provided an initial data set of 10 data points
+ We will sample no more data points at this stage
+ ***************************************************************************
+ Iteration 1 (Approx. elapsed time 0.0 s)
+ 
+ Step 1: Model building using BIC
+ 
+ Model building for variable z1
+ ----
+ BIC = -6.44 with z1 = 0.89 * x1^2
+ ----
+ BIC = -8.37 with z1 = 1.6 * x1^2 - 1.5 * (x1*x2)^2
+ ----
+ BIC = -15.3 with z1 = 2.8 * x1 - 2.2 * x1^3 + 0.30 * x1^6
+ ----
+ BIC = -25.1 with z1 = 0.82 * x1 + 2.1 * x1^2 + 0.71 * x1*x2 - 3.9 * (x1*x2)^2
+ ----
+ BIC = -34.3 with z1 = 2.7 * x1^2 - 3.3 * x2^2 - 0.69 * x1^4 + 3.2 * x2^4 + 1.4 * x1*x2
+ ----
+ BIC = -674. with z1 = 4.0 * x1^2 - 4.0 * x2^2 - 2.1 * x1^4 + 4.0 * x2^4 + 0.33 * x1^6 + 1.0 * x1*x2
+ 
+ Step 2: Adaptive sampling using RANDOM sampler
+ 
+ Calculating quality metrics on observed data set.
+ 
+ Quality metrics for output z1
+ -----------------------------
+ SSE OLR:           0.139E-28
+ SSE:               0.139E-28
+ RMSE:              0.118E-14
+ R2:                1.00
+ R2 adjusted:       1.00
+ Model size:        6
+ BIC:               -674.
+ Cp:                2.00
+ AICc:              -647.
+ HQC:               -677.
+ MSE:               0.464E-29
+ SSEp:              0.139E-28
+ RIC:               32.5
+ MADp:              0.326E-12
+ 
+ Total execution time 65. s
+ Times breakdown
+     OLR time:        0.11 s in 16384 ordinary linear regression problem(s)
+     MIP time:        0.0 s in 0 quadratic integer problem(s)
+     Simulation time: 65. s to simulate 0 point(s)
+     All other time:  0.78E-01 s in 1 iteration(s)
+ 
+ ALAMO terminated with termination code 38 
+ Error while attempting to read the external simulator output file.
+ ***************************************************************************
