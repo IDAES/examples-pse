@@ -1,3 +1,5 @@
+.. _idaes_tutorials:
+
 IDAES Tutorials
 ===============
 
