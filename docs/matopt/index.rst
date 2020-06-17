@@ -1,3 +1,5 @@
+.. _matopt_examples:
+
 MatOpt Examples
 ===============
 
