@@ -42,7 +42,6 @@ def test_build_notebooks(settings):
 @pytest.mark.component
 def test_convert_notebooks():
     build._log.setLevel(logging.INFO)  # otherwise DEBUG for some reason
-    print(f"@@ log level = {build._log.getEffectiveLevel()}")
     os.chdir(_root)
     settings = build.Settings(open("circleci-test.yml", "r"))
     nb = build.NotebookBuilder(settings)
