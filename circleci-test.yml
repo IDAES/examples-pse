@@ -13,10 +13,9 @@ paths:
 # Settings for running and converting Jupyter Notebooks
 notebook:
     # continue on errors (otherwise stop)
-    continue_on_error: false
-    # if this is true, strip 'remove_cell' cells from the notebook as they
-    # are converted
+    continue_on_error: true
     strip: true
+    test_mode: true
     # where to put error files. special values: '__stdout__',  '__stderr__'
     error_file: circleci-test-errors.txt
     # template file for the "_doc" wrapper RST file
@@ -24,7 +23,7 @@ notebook:
     directories:
         - source: workshops
           output: tutorials
-          match: "[Ss]olution"
+          match: "Flash"
         - source: surrogate
           output: surrogate_models
 # Settings for running Sphinx build

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 """
 Build Jupyter notebooks and Sphinx docs.
 
@@ -82,11 +82,13 @@ from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
 import nbformat
 from traitlets.config import Config
 
-_log = logging.getLogger("build_notebook_html")
+_log = logging.getLogger("build_notebooks")
 _hnd = logging.StreamHandler()
+_hnd.setLevel(logging.NOTSET)
 _hnd.setFormatter(logging.Formatter("%(asctime)s %(levelname)s - %(message)s"))
 _log.addHandler(_hnd)
-
+_log.propagate = False
+_log.setLevel(logging.INFO)
 
 class NotebookError(Exception):
     pass
@@ -179,8 +181,10 @@ class Settings:
         if val not in values:
             if default is self._NULL:
                 raise KeyError(f"get() failed for value '{val}' in section '{section}'")
-            return self._subst_paths(default)
-        return self._subst_paths(values[val])
+            result = self._subst_paths(default)
+        else:
+            result = self._subst_paths(values[val])
+        return result
 
     def set(self, key: str, value):
         section, val = self._split_key(key)
@@ -267,6 +271,7 @@ class NotebookBuilder(Builder):
     class Results:
         """Stores results from build().
         """
+
         def __init__(self):
             self.failed, self.cached = [], []
             self.dirs_processed = []
@@ -333,31 +338,30 @@ class NotebookBuilder(Builder):
             n += 1
         return n
 
-    def report(self):
+    def report(self) -> (int, int):
         """Print some messages to the user.
+
+        Returns:
+            (total, num_failed) number of notebooks processed and failed.
         """
         r = self._results  # alias
         total = r.n_fail + r.n_success
-        notify(
-            f"Processed {len(r.dirs_processed)} directories: "
-            f"cached={len(r.cached)}, "
-            f"converted={r.n_success}/{total}, "
-            f"duration={r.duration:.3f}s",
-            level=1,
-        )
-        notify("Notebook build summary", level=1)
+        notify(f"Processed {len(r.dirs_processed)} directories in {r.duration:.3f}s", level=1)
         if total == 0:
             notify(f"No notebooks converted", level=2)
-        elif r.n_fail == 0:
-            notify(f"All {r.total} notebooks executed successfully", level=2)
         else:
-            notify(
-                f"The following {len(r.failed)} notebooks had failures: "
-                f"{r.failures()}",
-                level=2,
-            )
-            if self._nb_error_file is not sys.stderr:
-                notify(f"Notebook errors are in '{self._nb_error_file.name}'", level=2)
+            if len(r.cached) > 0:
+                notify(f"  {len(r.cached)} notebooks were cached", level=2)
+            if r.n_success == total:
+                notify(f"  All {total} notebooks converted successfully", level=2)
+            else:
+                notify(f"  Out of {total} notebooks, {r.n_success} converted and {r.n_fail} failed", level=2)
+                notify(f"The following {len(r.failed)} notebooks had failures: ", level=1)
+                for failure in r.failed:
+                    notify(f"-  {failure}", level=2)
+                if self._nb_error_file is not sys.stderr:
+                    notify(f"Notebook errors are in '{self._nb_error_file.name}'", level=2)
+        return total, r.n_fail
 
     def _open_error_file(self):
         """Open error file from value in settings.
@@ -454,7 +458,9 @@ class NotebookBuilder(Builder):
                         failed += 1
                         self._notebook_error(entry, err)
                         if continue_on_err:
-                            _log.warning(f"generating partial output for '{entry}'")
+                            _log.warning(
+                                f"Execution failed: generating partial output for '{entry}'"
+                            )
                             continue
                         raise
                     except NotebookError as err:
@@ -808,7 +814,7 @@ class Cleaner(Builder):
             docs_output = docs_path / notebook_dirs["output"]
             for file_type in "rst", "html", "png", "jpg":
                 for f in docs_output.glob(f"**/*.{file_type}"):
-                    if not f.name in stop_list:
+                    if f.name not in stop_list:
                         notify(f"remove: {f}", 1)
                         f.unlink()
                         removed_any = True
@@ -935,7 +941,6 @@ def main():
     )
     ap.add_argument("--clean", "-c", action="store_true", help="Clean built objects")
     ap.add_argument("--docs", "-d", action="store_true", help="Build documentation")
-    ap.add_argument("--exit", "-x", action="store_true", help="Exit on first error")
     ap.add_argument(
         "--notebooks",
         "-r",
@@ -998,7 +1003,6 @@ def main():
         return 1
 
     # set local variables from command-line arguments
-    exit_on_error = args.exit
     run_notebooks = args.notebooks
     rebuild_notebooks = args.rebuild
     strip_notebooks = args.strip
@@ -1010,6 +1014,8 @@ def main():
         cleaner = Cleaner(settings)
         cleaner.build({})
 
+    status_code = 0  # start with success
+
     nbb = None
     if run_notebooks:
         notify("Convert Jupyter notebooks")
@@ -1018,7 +1024,6 @@ def main():
             nbb.build(
                 {
                     "rebuild": rebuild_notebooks,
-                    "continue_on_error": not exit_on_error,
                     "strip": strip_notebooks,
                     "test_mode": False,
                 }
@@ -1026,7 +1031,9 @@ def main():
         except NotebookError as err:
             _log.fatal(f"Could not build notebooks: {err}")
             return -1
-        nbb.report()
+        run_total, run_failed = nbb.report()
+        if run_failed > 0:
+            status_code = 1
 
     if build_docs:
         notify("Build documentation with Sphinx")
@@ -1043,7 +1050,7 @@ def main():
         n = nbb.remove_generated_files()
         notify(f"Removed {n} files", 1)
 
-    return 0
+    return status_code
 
 
 if __name__ == "__main__":

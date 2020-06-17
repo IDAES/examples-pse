@@ -2,8 +2,8 @@
 Test notebooks
 """
 # stdlib
+import logging
 import os
-from pathlib import Path
 import sys
 
 # third-party
@@ -37,6 +37,19 @@ def test_build_notebooks(settings):
     )
     assert res.n_success > 0  # something ran
     assert res.n_fail == 0  # nothing failed
+
+
+@pytest.mark.component
+def test_convert_notebooks():
+    build._log.setLevel(logging.INFO)  # otherwise DEBUG for some reason
+    print(f"@@ log level = {build._log.getEffectiveLevel()}")
+    os.chdir(_root)
+    settings = build.Settings(open("circleci-test.yml", "r"))
+    nb = build.NotebookBuilder(settings)
+    nb.build({"rebuild": True})
+    total, num_failed = nb.report()
+    assert total > 0
+    assert num_failed == 0
 
 
 @pytest.mark.unit
