@@ -249,7 +249,8 @@ class NotebookBuilder(Builder):
     # Mapping from {meaning: tag_name}
     _cell_tags = {"remove": "remove_cell",
                   "exercise": "exercise",
-                  "testing": "testing"}
+                  "testing": "testing",
+                  "solution": "solution"}
     JUPYTER_NB_VERSION = 4  # for parsing
 
     #: CSS stylesheet for notebooks
@@ -315,8 +316,6 @@ class NotebookBuilder(Builder):
         self._read_template()
         # Set up configuration for removing specially tagged cells
         c = Config()
-        # Configure tag removal
-        c.TagRemovePreprocessor.remove_cell_tags = (self._cell_tags["remove"])
         # Configure for exporters
         c.NotebookExporter.preprocessors = [
             "nbconvert.preprocessors.TagRemovePreprocessor"
@@ -495,22 +494,22 @@ class NotebookBuilder(Builder):
             self._parse_and_execute(entry)
             return
         # optionally strip special cells.
-        if self.s.get("strip") and self._has_tagged_cells(entry, self.):
+        if self.s.get("strip") and self._has_tagged_cells(entry, set(self._cell_tags.values())):
             _log.debug(f"notebook '{entry}' has test cell(s)")
             tmpdir = Path(tempfile.mkdtemp())
             entries = {}  # notebook suffix -> entry
             for tags_to_strip, notebook_suffix in ((["remove", "exercise"], "solution"),
                                                    (["remove", "solution"], "exercise")):
-
-                stripped_entry = self._strip_tagged_cells(tmpdir, entry, tags_to_strip)
-                entries[notebook_suffix] = entry
+                stripped_entry, _ = self._strip_tagged_cells(tmpdir, entry, tags_to_strip, "solution_testing",
+                                                             notebook_suffix)
+                entries[notebook_suffix] = stripped_entry
         else:
             tmpdir = None
             entries = {None: entry}
         # main loop
         try:
             for notebook_suffix, e in entries.items():  # notebooks to export
-                _log.debug(f"exporting '{e}' to directory {outdir}")
+                _log.debug(f"exporting notebook '{e}' to directory {outdir}")
                 nb = self._parse_and_execute(e)
                 wrt = FilesWriter()
                 # export each notebook into multiple target formats
@@ -524,13 +523,10 @@ class NotebookBuilder(Builder):
                     (body, resources) = exp.from_notebook_node(nb)
                     body = postprocess_func(body, *pp_args)
                     wrt.build_directory = str(outdir)
-                    if notebook_suffix is None:
-                        nb_name = e.stem
-                    else:
-                        nb_name = "_".join([e.stem, notebook_suffix])
-                    wrt.write(body, resources, notebook_name=nb_name)
-                    # create a 'wrapper' page for all the entries
-                    self._create_notebook_wrapper_page(nb_name, outdir)
+                    wrt.write(body, resources, notebook_name=e.stem)
+                    # create a 'wrapper' page
+                    _log.debug(f"create wrapper page for '{e.name}' in '{outdir}'")
+                    self._create_notebook_wrapper_page(e.name, outdir)
         finally:
             # clean up any temporary directories
             if tmpdir is not None:
@@ -560,45 +556,54 @@ class NotebookBuilder(Builder):
         # no tagged cells
         return False
 
-    def _strip_tagged_cells(self, tmpdir, entry, tags):
+    def _strip_tagged_cells(self, tmpdir, entry, tags, remove_suffix, add_suffix):
         """Strip specially tagged cells from a notebook.
+
         Copy notebook to a temporary location, and generate a stripped
         version there. No files are modified in the original directory.
+
+        Args:
+            tmpdir: directory to copy notebook into
+            entry: original notebook
+            tags: List of tags (strings) to strip
+            remove_suffix: Suffix to remove from the notebook (not including the .ipynb extension).
+                If the notebook doesn't end with this, then just leave it.
+            add_suffix: Suffix to add after removing the `remove_suffix`. If this is empty, do nothing.
+
+        Returns:
+            stripped-entry, original-entry - both in the temporary directory
         """
-
-
-        STOPPED HERE
-
-
         _log.debug(f"run notebook in temporary directory: {tmpdir}")
         # Copy notebook to temporary directory
-        raw_entry = tmpdir / entry.name
-        shutil.copy(entry, raw_entry)
-        # Remove the special tags
+        orig_entry = tmpdir / entry.name
+        shutil.copy(entry, orig_entry)
+        # Remove the given tags
+        # Configure tag removal
+        tag_names = [self._cell_tags[t] for t in tags]
+        self._nb_remove_config.TagRemovePreprocessor.remove_cell_tags = tag_names
+        _log.debug(f"removing tag(s) <{', '.join(tag_names)}'> from notebook: {entry.name}")
         (body, resources) = NotebookExporter(
             config=self._nb_remove_config
-        ).from_filename(str(raw_entry))
+        ).from_filename(str(orig_entry))
         # Determine output notebook name:
-        # either strip test suffix, or append "clean" suffix
-        cleaned_name = None
-        for suffix in self.TEST_SUFFIXES:
-            if entry.stem.endswith(suffix):
-                cleaned_name = entry.stem[: entry.stem.rfind("_")]
-                break
-        if cleaned_name is None:
-            cleaned_name = f"{entry.stem}{self.CLEAN_SUFFIX}"
+        # (1) remove existing suffix
+        nb_name = entry.stem
+        if nb_name.lower().endswith(remove_suffix):
+            nb_name = nb_name[:-len(remove_suffix)]
+            if nb_name.endswith("_"):
+                nb_name = nb_name[:-1]
+        # (2) add new suffix
+        if add_suffix:
+            nb_name += "_" + add_suffix
         # Create the new notebook
         wrt = nbconvert.writers.FilesWriter()
         wrt.build_directory = str(entry.parent)
-        wrt.write(body, resources, notebook_name=cleaned_name)
-        _log.debug(
-            f"stripped tags from '{raw_entry}' -> '{cleaned_name}' in "
-            f"{wrt.build_directory}"
-        )
+        _log.debug(f"writing stripped notebook: {nb_name}")
+        wrt.write(body, resources, notebook_name=nb_name)
         # Return both notebook names, and temporary directory (for cleanup)
-        cleaned_entry = entry.parent / f"{cleaned_name}.ipynb"
-        self._cleaned.append(cleaned_entry)
-        return [cleaned_entry, raw_entry], tmpdir
+        stripped_entry = entry.parent / f"{nb_name}.ipynb"
+        self._cleaned.append(stripped_entry)
+        return stripped_entry, orig_entry
 
     def _parse_and_execute(self, entry):
         # parse
@@ -918,7 +923,7 @@ def print_usage():
         "# be re-executed. Converted notebooks are stored in the 'docs'\n"
         "# directory, in locations configured in the 'build.yml'\n"
         "# configuration file.\n"
-        "./build.py --notebooks\n"
+        "./build.py --run\n"
         "./build.py -r  # <-- short option\n"
         "\n"
         "# Run and convert Jupyter notebooks, as in previous command,\n"
@@ -963,7 +968,7 @@ def main():
     ap.add_argument("--clean", "-c", action="store_true", help="Clean built objects")
     ap.add_argument("--docs", "-d", action="store_true", help="Build documentation")
     ap.add_argument(
-        "--notebooks",
+        "--run",
         "-r",
         action="store_true",
         help="Run/convert" " Jupyter notebooks",
@@ -1024,7 +1029,7 @@ def main():
         return 1
 
     # set local variables from command-line arguments
-    run_notebooks = args.notebooks
+    run_notebooks = args.run
     rebuild_notebooks = args.rebuild
     strip_notebooks = args.strip
     build_docs = args.docs
@@ -1055,6 +1060,8 @@ def main():
         run_total, run_failed = nbb.report()
         if run_failed > 0:
             status_code = 1
+    elif strip_notebooks:
+        notify("Strip option (-s/--strip) does not have an effect without the run option (-r/--run)")
 
     if build_docs:
         notify("Build documentation with Sphinx")
