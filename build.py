@@ -246,8 +246,10 @@ class NotebookBuilder(Builder):
     TEST_SUFFIX = "_test"  # for notebooks *with* tests
     CLEAN_SUFFIX = "_clean"  # for notebooks without tests
     TEST_SUFFIXES = ("_test", "_testing")  # test notebook suffixes
-    REMOVE_CELL_TAG = "remove_cell"
-
+    # Mapping from {meaning: tag_name}
+    _cell_tags = {"remove": "remove_cell",
+                  "exercise": "exercise",
+                  "testing": "testing"}
     JUPYTER_NB_VERSION = 4  # for parsing
 
     #: CSS stylesheet for notebooks
@@ -314,7 +316,7 @@ class NotebookBuilder(Builder):
         # Set up configuration for removing specially tagged cells
         c = Config()
         # Configure tag removal
-        c.TagRemovePreprocessor.remove_cell_tags = (self.REMOVE_CELL_TAG,)
+        c.TagRemovePreprocessor.remove_cell_tags = (self._cell_tags["remove"])
         # Configure for exporters
         c.NotebookExporter.preprocessors = [
             "nbconvert.preprocessors.TagRemovePreprocessor"
@@ -492,15 +494,22 @@ class NotebookBuilder(Builder):
         if self.s.get("test_mode"):
             self._parse_and_execute(entry)
             return
-        # optionally strip special cells
-        if self.s.get("strip") and self._has_tagged_cells(entry):
+        # optionally strip special cells.
+        if self.s.get("strip") and self._has_tagged_cells(entry, self.):
             _log.debug(f"notebook '{entry}' has test cell(s)")
-            entries, tmpdir = self._strip_tagged_cells(entry)
+            tmpdir = Path(tempfile.mkdtemp())
+            entries = {}  # notebook suffix -> entry
+            for tags_to_strip, notebook_suffix in ((["remove", "exercise"], "solution"),
+                                                   (["remove", "solution"], "exercise")):
+
+                stripped_entry = self._strip_tagged_cells(tmpdir, entry, tags_to_strip)
+                entries[notebook_suffix] = entry
         else:
-            entries, tmpdir = [entry], None
+            tmpdir = None
+            entries = {None: entry}
         # main loop
         try:
-            for e in entries:  # notebooks to export
+            for notebook_suffix, e in entries.items():  # notebooks to export
                 _log.debug(f"exporting '{e}' to directory {outdir}")
                 nb = self._parse_and_execute(e)
                 wrt = FilesWriter()
@@ -509,21 +518,27 @@ class NotebookBuilder(Builder):
                     (RSTExporter(), self._postprocess_rst, ()),
                     (HTMLExporter(), self._postprocess_html, (depth,)),
                 ):
-                    _log.debug(f"export '{e}' with {exp}")
+                    if _log.isEnabledFor(logging.DEBUG):
+                        sfx_name = notebook_suffix if notebook_suffix is not None else "(no suffix)"
+                        _log.debug(f"export '{e}' with {exp} to notebook with suffix {sfx_name}")
                     (body, resources) = exp.from_notebook_node(nb)
                     body = postprocess_func(body, *pp_args)
                     wrt.build_directory = str(outdir)
-                    wrt.write(body, resources, notebook_name=e.stem)
-            # create a 'wrapper' page for the main (first) entry
-            self._create_notebook_wrapper_page(entries[0].stem, entry.stem, outdir)
+                    if notebook_suffix is None:
+                        nb_name = e.stem
+                    else:
+                        nb_name = "_".join([e.stem, notebook_suffix])
+                    wrt.write(body, resources, notebook_name=nb_name)
+                    # create a 'wrapper' page for all the entries
+                    self._create_notebook_wrapper_page(nb_name, outdir)
         finally:
             # clean up any temporary directories
             if tmpdir is not None:
                 _log.debug(f"remove temporary directory at '{tmpdir.name}'")
                 shutil.rmtree(str(tmpdir))
 
-    def _has_tagged_cells(self, entry: Path) -> bool:
-        """Quickly check whether this notebook has any cells with the "special" tag.
+    def _has_tagged_cells(self, entry: Path, tags: set) -> bool:
+        """Quickly check whether this notebook has any cells with the given tag(s).
 
         Returns:
             True = yes, it does; False = no specially tagged cells
@@ -537,18 +552,24 @@ class NotebookBuilder(Builder):
             raise NotebookFormatError(f"'{entry}' is not JSON")
         # look for tagged cells; return immediately if one is found
         for i, c in enumerate(nb.cells):
-            if "tags" in c.metadata and self.REMOVE_CELL_TAG in c.metadata.tags:
-                _log.debug(f"Found {self.REMOVE_CELL_TAG} tag in cell {i}")
-                return True  # can stop now, one is enough
+            if "tags" in c.metadata:
+                for tag in tags:
+                    if tag in c.metadata.tags:
+                        _log.debug(f"Found tag '{tag}' in cell {i}")
+                        return True  # can stop now, one is enough
         # no tagged cells
         return False
 
-    def _strip_tagged_cells(self, entry):
+    def _strip_tagged_cells(self, tmpdir, entry, tags):
         """Strip specially tagged cells from a notebook.
         Copy notebook to a temporary location, and generate a stripped
         version there. No files are modified in the original directory.
         """
-        tmpdir = Path(tempfile.mkdtemp())  # already checked this
+
+
+        STOPPED HERE
+
+
         _log.debug(f"run notebook in temporary directory: {tmpdir}")
         # Copy notebook to temporary directory
         raw_entry = tmpdir / entry.name
@@ -557,7 +578,7 @@ class NotebookBuilder(Builder):
         (body, resources) = NotebookExporter(
             config=self._nb_remove_config
         ).from_filename(str(raw_entry))
-        # Determine outbook notebook name:
+        # Determine output notebook name:
         # either strip test suffix, or append "clean" suffix
         cleaned_name = None
         for suffix in self.TEST_SUFFIXES:
@@ -597,19 +618,19 @@ class NotebookBuilder(Builder):
         return nb
 
     def _create_notebook_wrapper_page(
-        self, nb_file: str, nb_base_file: str, output_dir: Path
+        self, nb_file: str, output_dir: Path
     ):
         """Generate a Sphinx documentation page for the Module.
         """
         # interpret some characters in filename differently for title
-        title = nb_base_file.replace("_", " ")
+        title = nb_file.replace("_", " ")
         title_under = "=" * len(title)
         # create document from template
         doc = self.s.get("Template").substitute(
             title=title, notebook_name=nb_file, title_underline=title_under
         )
         # write out the new doc
-        doc_rst = output_dir / (nb_base_file + "_doc.rst")
+        doc_rst = output_dir / (nb_file + "_doc.rst")
         with doc_rst.open("w") as f:
             _log.info(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
             f.write(doc)
