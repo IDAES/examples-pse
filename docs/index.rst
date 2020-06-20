@@ -11,6 +11,9 @@ augment the core IDAES functionality.
 * :ref:`surrogate_modeling_examples` demonstrate the surrogate modeling capabilities of PySMO, ALAMO, and RIPE.
 * :ref:`matopt_examples` Show how to use the MatOpt application
 
+.. note:: Please see the `IDAES PSE documentation <https://idaes-pse.readthedocs.io/en/stable/>`_ for details on
+          installing and running the examples on your own computer.
+
 .. toctree::
     :hidden:
     :maxdepth: 2
