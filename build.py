@@ -471,7 +471,7 @@ class NotebookBuilder(Builder):
             for entry in notebooks_to_convert:
                 if not self._test_mode:
                     os.makedirs(outdir, exist_ok=True)
-                # build, if 'rebuild'-mode or the output file is missing/stale
+                # build, if the output file is missing/stale
                 verb = "Running" if self._test_mode else "Converting"
                 notify(f"{verb}: {entry.name}", level=2)
                 continue_on_err = self.s.get("continue_on_error", None)
@@ -550,7 +550,7 @@ class NotebookBuilder(Builder):
         # main loop
         for notebook_suffix, e in entries.items():  # notebooks to export
             # before running, check if converted result is newer than source file
-            if not self.s.get("rebuild") and self._is_cached(entry, e.stem, outdir):
+            if not self._is_cached(entry, e.stem, outdir):
                 notify(f"Skip export, output is newer, for: {e.name}", 3)
                 self._results.cached.append(entry)
                 continue
@@ -951,10 +951,11 @@ def get_git_branch():
 def print_usage():
     """Print a detailed usage message.
     """
+    command = "python build.py"
     message = (
         "\n"
-        "# tl;dr - To build the documentation, running Jupyter Notebooks\n"
-        "# as needed, etc., use this command: ./build.py -drs\n"
+        "# tl;dr To convert notebooks and build docs, use this command:\n"
+        "{command} -crd\n"
         "\n"
         "The build.py command is used to create the documentation from\n"
         "the Jupyter Notebooks and hand-written '.rst' files in this\n"
@@ -962,49 +963,43 @@ def print_usage():
         "the notebooks. Some sample command-lines, with comments as to \n"
         "what they will do, follow. The operation of this script is also\n"
         "controlled by the configuration file, 'build.yml' by default.\n"
-        "Options specified on the command line will override options of\n"
-        "the same name in the configuration file.\n"
-        "\n"
         "\n"
         "# Read the default configuration file, but do nothing else\n"
-        "./build.py\n"
+        "{command}\n"
         "\n"
         "# Build the Sphinx documentation, only\n"
-        "./build.py --docs\n"
-        "./build.py -d  # <-- short option\n"
+        "{command} --docs\n"
+        "{command} -d  # <-- short option\n"
         "\n"
-        "# Run and convert Jupyter notebooks. Only those notebooks\n"
+        "# Remove all built documentation files\n"
+        "{command} --remove\n"
+        "{command} -r  # <-- short option\n"
+        "\n"
+        "# Convert Jupyter notebooks. Only those notebooks\n"
         "# that have not changed since the last time this was run will\n"
         "# be re-executed. Converted notebooks are stored in the 'docs'\n"
         "# directory, in locations configured in the 'build.yml'\n"
         "# configuration file.\n"
-        "./build.py --convert\n"
-        "./build.py -c  # <-- short option\n"
+        "{command} --convert\n"
+        "{command} -c  # <-- short option\n"
         "\n"
-        "# Run and convert Jupyter notebooks, as in previous command,\n"
-        "# but also strip any cells marked as 'test' cells, and run those \n"
-        "# notebooks as well.\n"
-        "./build.py -cs\n"
+        "# Convert Jupyter notebooks, as in previous command,\n"
+        "# then build Sphinx documentation.\n"
+        "# This can be combined with -r/--remove to convert all notebooks.\n"
+        "{command} -cd\n"
         "\n"
-        "# Run and convert Jupyter notebooks, as in previous command,\n"
-        "# but also force a rebuild of all notebooks whether or not they\n"
-        "# were changed since the last time they were converted.\n"
-        "./build.py -Cs\n"
-        "\n"
-        "# Convert Jupyter notebooks and build documentation\n"
-        "./build.py -dcs\n"
-        "\n"
-        "# Remove all built documentation files\n"
-        "./build.py --remove\n"
-        "./build.py -r  # <-- short option\n"
+        "# Run notebooks, but do not convert them into any other form.\n"
+        "# This can be combined with -r/--remove to run all notebooks.\n"
+        "{command} --test\n"
+        "{command} -t  # <-- short option\n"
         "\n"
         "# Run with <options> at different levels of verbosity\n"
-        "./build.py <options>      # Show warning, error, fatal messages\n"
-        "./build.py -v <options>   # Add informational (info) messages\n"
-        "./build.py -vv <options>  # Add debug messages\n"
+        "{command} <options>      # Show warning, error, fatal messages\n"
+        "{command} -v <options>   # Add informational (info) messages\n"
+        "{command} -vv <options>  # Add debug messages\n"
         "\n"
     )
-    print(message)
+    print(message.format(command=command))
 
 
 def main():
@@ -1013,23 +1008,18 @@ def main():
     )
     ap.add_argument(
         "--config",
+        "-C",
         default="build.yml",
+        metavar="FILE",
         help="Location of configuration file (default=./build.yml)",
     )
     ap.add_argument(
         "--usage", "-U", action="store_true", help="Print a more detailed usage message"
     )
-    ap.add_argument("--remove", "-r", action="store_true", help="Clean built objects")
+    ap.add_argument("--remove", "-r", action="store_true", help="Remove generated files")
     ap.add_argument("--docs", "-d", action="store_true", help="Build documentation")
     ap.add_argument(
         "--convert", "-c", action="store_true", help="Convert Jupyter notebooks",
-    )
-    ap.add_argument(
-        "--force-convert",
-        "-C",
-        dest="rebuild",
-        action="store_true",
-        help="For Jupyter notebooks, re-run even if no change",
     )
     ap.add_argument(
         "--test",
@@ -1054,13 +1044,9 @@ def main():
         return 0
 
     # Check for confusing option combinations
-    if args.convert and args.rebuild:
-        _log.warning(
-            "-c/--convert and -C/--force-convert are redundant; using -C/--force-convert"
-        )
-    if (args.convert or args.rebuild) and args.test_mode:
+    if args.convert and args.test_mode:
         ap.error(
-            "-t/--test conflicts with notebook conversion (-c/--convert or -C/--force-convert); pick one"
+            "-t/--test conflicts with notebook conversion -c/--convert; pick one"
         )
     if args.docs and args.test_mode:
         ap.error(
@@ -1097,11 +1083,11 @@ def main():
 
     # set local variables from command-line arguments
     run_notebooks = args.convert
-    rebuild_notebooks = args.rebuild
     build_docs = args.docs
     clean_files = args.remove
     test_mode = args.test_mode
 
+    # Clean first, if requested
     if clean_files:
         notify("Clean all built files")
         cleaner = Cleaner(settings)
@@ -1110,13 +1096,13 @@ def main():
     status_code = 0  # start with success
 
     nbb = None
-    if run_notebooks or rebuild_notebooks or test_mode:
+    if run_notebooks or test_mode:
         verb = "Run" if test_mode else "Convert"
         notify(f"{verb} Jupyter notebooks")
         nbb = NotebookBuilder(settings)
         try:
             nbb.build(
-                {"rebuild": rebuild_notebooks, "test_mode": test_mode,}
+                {"test_mode": test_mode}
             )
         except NotebookError as err:
             _log.fatal(f"Could not build notebooks: {err}")
