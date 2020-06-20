@@ -480,7 +480,8 @@ class NotebookBuilder(Builder):
                     success += 1
                 except NotebookExecError as err:
                     failed += 1
-                    self._notebook_error(entry, err)
+                    self._write_notebook_error(entry, err)
+                    self._write_failed_marker(entry, outdir)
                     if continue_on_err:
                         _log.warning(
                             f"Execution failed: generating partial output for '{entry}'"
@@ -513,12 +514,21 @@ class NotebookBuilder(Builder):
             except Exception as err:
                 _log.error(f"could not remove temporary directory '{tmpdir}': {err}")
 
-    def _notebook_error(self, entry, error):
+    def _write_notebook_error(self, entry, error):
         filename = str(entry)
         self._nb_error_file.write(f"\n====> File: {filename}\n")
         self._nb_error_file.write(str(error))
         self._nb_error_file.flush()  # in case someone is tailing the file
         self._results.failed.append(filename)
+
+    @staticmethod
+    def _write_failed_marker(entry, outdir):
+        """Put a marker into the output directory for the failed notebook, so we
+        can tell whether we need to bother trying to re-run it later.
+        """
+        marker = outdir / (entry.stem + ".failed")
+        _log.debug(f"write failed marker '{marker}' for entry={entry} outdir={outdir}")
+        marker.open("w").write("This file is a marker for avoiding re-runs of failed notebooks that haven't changed")
 
     def _convert(self, tmpdir: Path, entry: Path, outdir: Path, depth: int):
         """Convert a notebook.
@@ -547,11 +557,12 @@ class NotebookBuilder(Builder):
             tmp_entry = tmpdir / entry.name
             shutil.copy(entry, tmp_entry)
             entries = {None: tmp_entry}
-        # main loop
+
+        # convert all tag-stripped versions of the notebook
         for notebook_suffix, e in entries.items():  # notebooks to export
             # before running, check if converted result is newer than source file
-            if self._is_cached(entry, e.stem, outdir):
-                notify(f"Skip export, output is newer, for: {e.name}", 3)
+            if self._already_converted(entry, e.stem, outdir):
+                notify(f"Skip notebook conversion, output is newer, for: {e.name}", 3)
                 self._results.cached.append(entry)
                 continue
             notify(f"Running notebook: {e.name}", 3)
@@ -693,20 +704,35 @@ class NotebookBuilder(Builder):
             _log.info(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
             f.write(doc)
 
-    def _is_cached(self, source_nb: Path, dest_nb_stem: str, outdir: Path) -> bool:
+    def _already_converted(self, source_nb: Path, dest_nb_stem: str, outdir: Path) -> bool:
         """Check if a any of the output files are either missing or older than
         the input file ('entry').
 
         Returns:
             True if the output is newer than the input, otherwise False.
         """
+        source_time = source_nb.stat().st_mtime
+
+        # First see if there is a 'failed' marker. If so,
+        # compare timestamps: if marker is newer than file, it's converted
+        failed_file = outdir / (dest_nb_stem + ".failed")
+        if failed_file.exists():
+            failed_time = failed_file.stat().st_ctime
+            ac = failed_time > source_time
+            if ac:
+                notify(f"Notebook '{dest_nb_stem}.ipynb' unchanged since previous failed conversion", 3)
+            return ac
+
+        # Otherwise look at all the output files and see if any one of them is
+        # older than the source file (in which case it's NOT converted)
         for fmt, ext in self.FORMATS.items():
             output_file = outdir / f"{dest_nb_stem}{ext}"
             _log.debug(f"checking if cached: {output_file} src={source_nb}")
             if not output_file.exists():
                 return False
-            if source_nb.stat().st_mtime >= output_file.stat().st_mtime:
+            if source_time >= output_file.stat().st_mtime:
                 return False
+
         return True
 
     def _postprocess_rst(self, body):
@@ -900,7 +926,7 @@ class Cleaner(Builder):
         stop_list = {"index.rst"}
         for notebook_dirs in self.s.get("notebook.directories"):
             docs_output = docs_path / notebook_dirs["output"]
-            for file_type in "rst", "html", "png", "jpg", "ipynb":
+            for file_type in "rst", "html", "png", "jpg", "ipynb", "failed":
                 for f in docs_output.glob(f"**/*.{file_type}"):
                     if f.name not in stop_list:
                         notify(f"remove: {f}", 1)
