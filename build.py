@@ -924,9 +924,10 @@ class Cleaner(Builder):
     def _clean_docs(self, docs_path):
         removed_any = False
         stop_list = {"index.rst"}
+        file_types = ["rst", "html", "ipynb", "failed"] + list(IMAGE_SUFFIXES)
         for notebook_dirs in self.s.get("notebook.directories"):
             docs_output = docs_path / notebook_dirs["output"]
-            for file_type in "rst", "html", "png", "jpg", "ipynb", "failed":
+            for file_type in file_types:
                 for f in docs_output.glob(f"**/*.{file_type}"):
                     if f.name not in stop_list:
                         notify(f"remove: {f}", 1)
