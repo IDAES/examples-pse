@@ -7,14 +7,13 @@ paths:
   # where the Jupyter notebook source files are
   source: src
   # where the documentation (generated, hand-written) lives
-  output: docs
+  output: docs_test
   # the HTML output directory
   html: _build/html
 # Settings for running and converting Jupyter Notebooks
 notebook:
     # continue on errors (otherwise stop)
     continue_on_error: true
-    strip: true
     test_mode: true
     # where to put error files. special values: '__stdout__',  '__stderr__'
     error_file: circleci-test-errors.txt
@@ -24,9 +23,7 @@ notebook:
         - source: workshops
           output: tutorials
           match: "Flash"
-        - source: surrogate
-          output: surrogate_models
 # Settings for running Sphinx build
 sphinx:
-    args: "-b html -T docs docs/_build/html"
+    args: "-b html -T docs_test docs_test/_build/html"
     error_file: sphinx-errors.txt

@@ -26,7 +26,7 @@ def settings():
 @pytest.fixture(scope="module")
 def settings_component():
     os.chdir(_root)
-    return build.Settings(open("circleci-test.yml", "r"))
+    return build.Settings(open("build-circleci.yml", "r"))
     # clean up directory created by the
 
 
