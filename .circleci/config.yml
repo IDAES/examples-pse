@@ -24,3 +24,11 @@ jobs:
       - store_artifacts:
           path: test-reports
           destination: test-reports
+
+      - store_artifacts:
+          path: circleci-test-errors.txt
+          destination: build-errors
+
+      - store_artifacts:
+          path: sphinx-errors.txt
+          destination: build-errors
