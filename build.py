@@ -550,7 +550,7 @@ class NotebookBuilder(Builder):
         # main loop
         for notebook_suffix, e in entries.items():  # notebooks to export
             # before running, check if converted result is newer than source file
-            if not self._is_cached(entry, e.stem, outdir):
+            if self._is_cached(entry, e.stem, outdir):
                 notify(f"Skip export, output is newer, for: {e.name}", 3)
                 self._results.cached.append(entry)
                 continue
