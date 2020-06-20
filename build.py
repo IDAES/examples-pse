@@ -298,7 +298,6 @@ class NotebookBuilder(Builder):
         self._nb_error_file = None  # error file, for notebook execution failures
         self._results = None  # record results here
         self._nb_remove_config = None  # traitlets.Config for removing test cells
-        self._cleaned = []  # remember generated "clean" entries
 
     def build(self, options):
         self.s.set_default_section("notebook")
@@ -329,16 +328,6 @@ class NotebookBuilder(Builder):
         self._results.stop()
         return self._results
 
-    def remove_generated_files(self):
-        if not self._cleaned:
-            return 0
-        n = 0
-        for c in self._cleaned:
-            _log.debug(f"remove: {c}")
-            c.unlink()
-            n += 1
-        return n
-
     def report(self) -> (int, int):
         """Print some messages to the user.
 
@@ -347,16 +336,19 @@ class NotebookBuilder(Builder):
         """
         r = self._results  # alias
         total = r.n_fail + r.n_success
-        notify(f"Processed {len(r.dirs_processed)} directories in {r.duration:.3f}s", level=1)
+        _dirs = "y" if len(r.dirs_processed) == 1 else "ies"
+        notify(f"Processed {len(r.dirs_processed)} director{_dirs} in {r.duration:.3f}s", level=1)
         if total == 0:
             notify(f"No notebooks converted", level=2)
         else:
             if len(r.cached) > 0:
-                notify(f"  {len(r.cached)} notebooks were cached", level=2)
+                s_verb = " was" if len(r.cached) == 1 else "s were"
+                notify(f"{len(r.cached)} notebook{s_verb} cached", level=2)
             if r.n_success == total:
-                notify(f"  All {total} notebooks converted successfully", level=2)
+                s_verb = " was" if total == 1 else "s were"
+                notify(f"{total} notebook{s_verb} converted successfully", level=2)
             else:
-                notify(f"  Out of {total} notebooks, {r.n_success} converted and {r.n_fail} failed", level=2)
+                notify(f"  Out of {total} notebook(s), {r.n_success} converted and {r.n_fail} failed", level=2)
                 notify(f"The following {len(r.failed)} notebooks had failures: ", level=1)
                 for failure in r.failed:
                     notify(f"-  {failure}", level=2)
@@ -446,30 +438,26 @@ class NotebookBuilder(Builder):
                     continue
                 self._ensure_target_dir(outdir)
                 # build, if 'rebuild'-mode or the output file is missing/stale
-                if not self.s.get("rebuild") and self._is_cached(entry, outdir):
-                    _log.info(f"skip converting notebook '{entry}': not changed")
-                    self._results.cached.append(entry)
-                else:
-                    notify(f"{entry}", level=2)
-                    continue_on_err = self.s.get("continue_on_error", None)
-                    try:
-                        self._convert(entry, outdir, depth)
-                        success += 1
-                    except NotebookExecError as err:
-                        failed += 1
-                        self._notebook_error(entry, err)
-                        if continue_on_err:
-                            _log.warning(
-                                f"Execution failed: generating partial output for '{entry}'"
-                            )
-                            continue
-                        raise
-                    except NotebookError as err:
-                        failed += 1
-                        if continue_on_err:
-                            _log.warning(f"failed to convert {entry}: {err}")
-                            continue
-                        raise  # abort all processing
+                notify(f"Converting: {entry.name}", level=2)
+                continue_on_err = self.s.get("continue_on_error", None)
+                try:
+                    self._convert(entry, outdir, depth)
+                    success += 1
+                except NotebookExecError as err:
+                    failed += 1
+                    self._notebook_error(entry, err)
+                    if continue_on_err:
+                        _log.warning(
+                            f"Execution failed: generating partial output for '{entry}'"
+                        )
+                        continue
+                    raise
+                except NotebookError as err:
+                    failed += 1
+                    if continue_on_err:
+                        _log.warning(f"failed to convert {entry}: {err}")
+                        continue
+                    raise  # abort all processing
         _log.debug(f"build.end subtree={srcdir} {success}/{success + failed}")
         self._results.n_fail += failed
         self._results.n_success += success
@@ -498,18 +486,23 @@ class NotebookBuilder(Builder):
             _log.debug(f"notebook '{entry}' has test cell(s)")
             tmpdir = Path(tempfile.mkdtemp())
             entries = {}  # notebook suffix -> entry
-            for tags_to_strip, notebook_suffix in ((["remove", "exercise"], "solution"),
-                                                   (["remove", "solution"], "exercise")):
+            for tags_to_strip, notebook_suffix in ((["remove", "exercise"], "solution"),):
                 stripped_entry, _ = self._strip_tagged_cells(tmpdir, entry, tags_to_strip, "solution_testing",
                                                              notebook_suffix)
                 entries[notebook_suffix] = stripped_entry
+            notify(f"Stripped tags from: {entry.name}", 3)
         else:
             tmpdir = None
             entries = {None: entry}
         # main loop
         try:
             for notebook_suffix, e in entries.items():  # notebooks to export
-                _log.debug(f"exporting notebook '{e}' to directory {outdir}")
+                # before running, check if converted result is newer than source file
+                if not self.s.get("rebuild") and self._is_cached(entry, e.stem, outdir):
+                    notify(f"Skip export, output is newer, for: {e.name}", 3)
+                    self._results.cached.append(entry)
+                    continue
+                notify(f"Exporting notebook '{e.name}' to directory {outdir}", 3)
                 nb = self._parse_and_execute(e)
                 wrt = FilesWriter()
                 # export each notebook into multiple target formats
@@ -526,7 +519,10 @@ class NotebookBuilder(Builder):
                     wrt.write(body, resources, notebook_name=e.stem)
                     # create a 'wrapper' page
                     _log.debug(f"create wrapper page for '{e.name}' in '{outdir}'")
-                    self._create_notebook_wrapper_page(e.name, outdir)
+                    self._create_notebook_wrapper_page(e.stem, outdir)
+                # move notebooks into docs directory
+                _log.debug(f"move notebook '{e} to output directory: {outdir} ")
+                shutil.copy(e, outdir / e.name)
         finally:
             # clean up any temporary directories
             if tmpdir is not None:
@@ -575,8 +571,8 @@ class NotebookBuilder(Builder):
         """
         _log.debug(f"run notebook in temporary directory: {tmpdir}")
         # Copy notebook to temporary directory
-        orig_entry = tmpdir / entry.name
-        shutil.copy(entry, orig_entry)
+        tmp_entry = tmpdir / entry.name
+        shutil.copy(entry, tmp_entry)
         # Remove the given tags
         # Configure tag removal
         tag_names = [self._cell_tags[t] for t in tags]
@@ -584,7 +580,7 @@ class NotebookBuilder(Builder):
         _log.debug(f"removing tag(s) <{', '.join(tag_names)}'> from notebook: {entry.name}")
         (body, resources) = NotebookExporter(
             config=self._nb_remove_config
-        ).from_filename(str(orig_entry))
+        ).from_filename(str(tmp_entry))
         # Determine output notebook name:
         # (1) remove existing suffix
         nb_name = entry.stem
@@ -597,13 +593,12 @@ class NotebookBuilder(Builder):
             nb_name += "_" + add_suffix
         # Create the new notebook
         wrt = nbconvert.writers.FilesWriter()
-        wrt.build_directory = str(entry.parent)
+        wrt.build_directory = str(tmpdir)
         _log.debug(f"writing stripped notebook: {nb_name}")
         wrt.write(body, resources, notebook_name=nb_name)
         # Return both notebook names, and temporary directory (for cleanup)
-        stripped_entry = entry.parent / f"{nb_name}.ipynb"
-        self._cleaned.append(stripped_entry)
-        return stripped_entry, orig_entry
+        stripped_entry = tmpdir / f"{nb_name}.ipynb"
+        return stripped_entry, tmp_entry
 
     def _parse_and_execute(self, entry):
         # parse
@@ -646,7 +641,7 @@ class NotebookBuilder(Builder):
             _log.debug(f"Creating output directory {p}")
             p.mkdir()
 
-    def _is_cached(self, entry: Path, outdir: Path) -> bool:
+    def _is_cached(self, source_nb: Path, dest_nb_stem: str, outdir: Path) -> bool:
         """Check if a any of the output files are either missing or older than
         the input file ('entry').
 
@@ -654,10 +649,11 @@ class NotebookBuilder(Builder):
             True if the output is newer than the input, otherwise False.
         """
         for fmt, ext in self.FORMATS.items():
-            output_file = outdir / f"{entry.stem}{ext}"
+            output_file = outdir / f"{dest_nb_stem}{ext}"
+            _log.debug(f"checking if cached: {output_file} src={source_nb}")
             if not output_file.exists():
                 return False
-            if entry.stat().st_mtime >= output_file.stat().st_mtime:
+            if source_nb.stat().st_mtime >= output_file.stat().st_mtime:
                 return False
         return True
 
@@ -758,6 +754,7 @@ class SphinxBuilder(Builder):
             1,
         )
         self._copy_aux(doc_dir, ["png", "jpg", "jpeg", "pdf"])
+        # Run Sphinx command
         errfile = self.s.get("error_file")
         cmdargs = ["sphinx-build", "-a", "-w", errfile] + args
         cmdline = " ".join(cmdargs)
@@ -768,11 +765,17 @@ class SphinxBuilder(Builder):
         if status != 0:
             log_error = self._extract_sphinx_error(errfile)
             raise SphinxError(cmdline, f"return code = {status}", log_error)
-        # copy notebooks
-        notify(
-            f"Copying notebooks from '{self.s.get('paths.source')}' -> '{html_dir}'", 1
-        )
-        self._copy_aux(html_dir, ["ipynb"])
+
+        # copy notebooks from doc directory into html directory
+        notify(f"Copying notebooks from '{doc_dir}' -> '{html_dir}'", 1)
+        for nb_dir in self.s.get("notebook.directories"):
+            nb_output_dir = doc_dir / nb_dir["output"]
+            _log.debug(f"find notebooks in path: {nb_output_dir}")
+            for nb_path in Path(nb_output_dir).glob("**/*.ipynb"):
+                nb_dest = html_dir / nb_path.relative_to(doc_dir)
+                notify(f"Copy notebook {nb_path} -> {nb_dest}", 2)
+                shutil.copy(nb_path, nb_dest)
+        #self._copy_aux(html_dir, ["ipynb"])
 
     def _copy_aux(self, dest, ext_list):
         """Copy auxiliary files in 'src' into a built directory.
@@ -838,7 +841,7 @@ class Cleaner(Builder):
         stop_list = set(["index.rst"])
         for notebook_dirs in self.s.get("notebook.directories"):
             docs_output = docs_path / notebook_dirs["output"]
-            for file_type in "rst", "html", "png", "jpg":
+            for file_type in "rst", "html", "png", "jpg", "ipynb":
                 for f in docs_output.glob(f"**/*.{file_type}"):
                     if f.name not in stop_list:
                         notify(f"remove: {f}", 1)
@@ -872,9 +875,10 @@ class Color:
 
 def notify(message, level=0):
     c = [Color.MAGENTA, Color.GREEN, Color.WHITE][min(level, 2)]
+    indent = '  ' * level
     if level == 0:
         print()
-    print(f"{c}{message}{Color.RESET}")
+    print(f"{indent}{c}{message}{Color.RESET}")
 
 
 def get_git_branch():
@@ -923,26 +927,25 @@ def print_usage():
         "# be re-executed. Converted notebooks are stored in the 'docs'\n"
         "# directory, in locations configured in the 'build.yml'\n"
         "# configuration file.\n"
-        "./build.py --run\n"
-        "./build.py -r  # <-- short option\n"
+        "./build.py --convert\n"
+        "./build.py -c  # <-- short option\n"
         "\n"
         "# Run and convert Jupyter notebooks, as in previous command,\n"
         "# but also strip any cells marked as 'test' cells, and run those \n"
         "# notebooks as well.\n"
-        "./build.py -rs\n"
+        "./build.py -cs\n"
         "\n"
         "# Run and convert Jupyter notebooks, as in previous command,\n"
         "# but also force a rebuild of all notebooks whether or not they\n"
         "# were changed since the last time they were converted.\n"
-        "./build.py -Rrs\n"
+        "./build.py -Cs\n"
         "\n"
-        "# Build documentation, run and convert notebooks, both testing and\n"
-        "# test-cell-stripped versions.\n"
-        "./build.py -drs\n"
+        "# Convert Jupyter notebooks and build documentation\n"
+        "./build.py -dcs\n"
         "\n"
         "# Remove all built documentation files\n"
-        "./build.py --clean\n"
-        "./build.py -c  # <-- short option\n"
+        "./build.py --remove\n"
+        "./build.py -r  # <-- short option\n"
         "\n"
         "# Run with <options> at different levels of verbosity\n"
         "./build.py <options>      # Show warning, error, fatal messages\n"
@@ -965,26 +968,27 @@ def main():
     ap.add_argument(
         "--usage", "-U", action="store_true", help="Print a more detailed usage message"
     )
-    ap.add_argument("--clean", "-c", action="store_true", help="Clean built objects")
+    ap.add_argument("--remove", "-r", action="store_true", help="Clean built objects")
     ap.add_argument("--docs", "-d", action="store_true", help="Build documentation")
     ap.add_argument(
-        "--run",
-        "-r",
+        "--convert",
+        "-c",
         action="store_true",
-        help="Run/convert" " Jupyter notebooks",
+        help="Convert Jupyter notebooks",
     )
     ap.add_argument(
-        "--rebuild",
-        "-R",
+        "--force-convert",
+        "-C",
+        dest="rebuild",
         action="store_true",
         help="For Jupyter notebooks, re-run even if no change",
     )
-    ap.add_argument(
-        "--strip",
-        "-s",
-        action="store_true",
-        help="For Jupyter notebooks, strip cells marked for tests",
-    )
+    # ap.add_argument(
+    #     "--strip",
+    #     "-s",
+    #     action="store_true",
+    #     help="For Jupyter notebooks, strip cells marked for tests",
+    # )
     ap.add_argument(
         "-v",
         "--verbose",
@@ -1029,11 +1033,11 @@ def main():
         return 1
 
     # set local variables from command-line arguments
-    run_notebooks = args.run
+    run_notebooks = args.convert
     rebuild_notebooks = args.rebuild
-    strip_notebooks = args.strip
+    strip_notebooks = True  # args.strip
     build_docs = args.docs
-    clean_files = args.clean
+    clean_files = args.remove
 
     if clean_files:
         notify("Clean all built files")
@@ -1043,7 +1047,7 @@ def main():
     status_code = 0  # start with success
 
     nbb = None
-    if run_notebooks:
+    if run_notebooks or rebuild_notebooks:
         notify("Convert Jupyter notebooks")
         nbb = NotebookBuilder(settings)
         try:
@@ -1060,8 +1064,6 @@ def main():
         run_total, run_failed = nbb.report()
         if run_failed > 0:
             status_code = 1
-    elif strip_notebooks:
-        notify("Strip option (-s/--strip) does not have an effect without the run option (-r/--run)")
 
     if build_docs:
         notify("Build documentation with Sphinx")
@@ -1071,12 +1073,6 @@ def main():
         except SphinxError as err:
             _log.fatal(f"Could not build Sphinx docs: {err}")
             return -1
-
-    # cleanup, if the notebooks were run
-    if nbb:
-        notify("Removing any generated notebook files")
-        n = nbb.remove_generated_files()
-        notify(f"Removed {n} files", 1)
 
     return status_code
 
