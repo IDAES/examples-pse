@@ -111,6 +111,7 @@ class SphinxError(Exception):
 
 
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
+DATA_SUFFIXES = ".csv", ".json"
 NOTEBOOK_SUFFIX = ".ipynb"
 TERM_WIDTH = 60  # for notification message underlines
 
@@ -418,6 +419,8 @@ class NotebookBuilder(Builder):
         """
         _log.debug(f"build.begin subtree={srcdir}")
         success, failed = 0, 0
+        notebooks_to_convert = []
+        data_files = []
         for entry in srcdir.iterdir():
             filename = entry.parts[-1]
             if filename.startswith(".") or filename.startswith("__"):
@@ -430,18 +433,30 @@ class NotebookBuilder(Builder):
                 os.makedirs(self._imgdir, exist_ok=True)
                 shutil.copy(str(entry), str(self._imgdir))
                 _log.debug(f"copied image {entry} to {self._imgdir}/")
+            elif entry.suffix in DATA_SUFFIXES:
+                data_files.append(entry)
             elif entry.suffix == NOTEBOOK_SUFFIX:
                 _log.debug(f"found notebook at: {entry}")
                 # check against match expression
                 if self._match_expr and not self._match_expr.search(filename):
                     _log.debug(f"does not match {self._match_expr}, skip {entry}")
-                    continue
+                else:
+                    notebooks_to_convert.append(entry)
+
+        # convert notebooks last, allowing for discovery of all the data files
+        if notebooks_to_convert:
+            tmpdir = Path(tempfile.mkdtemp())
+            if data_files:
+                _log.debug(f"copy {len(data_files)} data file(s) into temp dir '{tmpdir}'")
+                for fp in data_files:
+                    shutil.copy(fp, tmpdir)
+            for entry in notebooks_to_convert:
                 self._ensure_target_dir(outdir)
                 # build, if 'rebuild'-mode or the output file is missing/stale
                 notify(f"Converting: {entry.name}", level=2)
                 continue_on_err = self.s.get("continue_on_error", None)
                 try:
-                    self._convert(entry, outdir, depth)
+                    self._convert(tmpdir, entry, outdir, depth)
                     success += 1
                 except NotebookExecError as err:
                     failed += 1
@@ -458,9 +473,20 @@ class NotebookBuilder(Builder):
                         _log.warning(f"failed to convert {entry}: {err}")
                         continue
                     raise  # abort all processing
-        _log.debug(f"build.end subtree={srcdir} {success}/{success + failed}")
-        self._results.n_fail += failed
-        self._results.n_success += success
+                # quick cleanup of contents of temporary dir
+                for f in tmpdir.iterdir():
+                    if f.suffix not in DATA_SUFFIXES:
+                        f.unlink()
+
+            _log.debug(f"build.end subtree={srcdir} {success}/{success + failed}")
+            self._results.n_fail += failed
+            self._results.n_success += success
+            # clean up any temporary directories
+            _log.debug(f"remove temporary directory at '{tmpdir.name}'")
+            try:
+                shutil.rmtree(str(tmpdir))
+            except Exception as err:
+                _log.error(f"could not remove temporary directory '{tmpdir}': {err}")
 
     def _notebook_error(self, entry, error):
         filename = str(entry)
@@ -469,22 +495,22 @@ class NotebookBuilder(Builder):
         self._nb_error_file.flush()  # in case someone is tailing the file
         self._results.failed.append(filename)
 
-    def _convert(self, entry: Path, outdir: Path, depth: int):
+    def _convert(self, tmpdir: Path, entry: Path, outdir: Path, depth: int):
         """Convert a notebook.
 
         Args:
+            tmpdir: Temporary working directory
             entry: notebook to convert
             outdir: output directory for .html and .rst files
             depth: depth below root, for fixing image paths
         """
         # optionally just execute notebook and stop
         if self.s.get("test_mode"):
-            self._parse_and_execute(entry)
+            self._parse_and_execute(tmpdir, entry)
             return
         # optionally strip special cells.
         if self.s.get("strip") and self._has_tagged_cells(entry, set(self._cell_tags.values())):
-            _log.debug(f"notebook '{entry}' has test cell(s)")
-            tmpdir = Path(tempfile.mkdtemp())
+            _log.debug(f"notebook '{entry.name}' has test cell(s)")
             entries = {}  # notebook suffix -> entry
             for tags_to_strip, notebook_suffix in ((["remove", "exercise"], "solution"),):
                 stripped_entry, _ = self._strip_tagged_cells(tmpdir, entry, tags_to_strip, "solution_testing",
@@ -492,42 +518,38 @@ class NotebookBuilder(Builder):
                 entries[notebook_suffix] = stripped_entry
             notify(f"Stripped tags from: {entry.name}", 3)
         else:
-            tmpdir = None
-            entries = {None: entry}
+            # copy to temporary directory just to protect from output cruft
+            tmp_entry = tmpdir / entry.name
+            shutil.copy(entry, tmp_entry)
+            entries = {None: tmp_entry}
         # main loop
-        try:
-            for notebook_suffix, e in entries.items():  # notebooks to export
-                # before running, check if converted result is newer than source file
-                if not self.s.get("rebuild") and self._is_cached(entry, e.stem, outdir):
-                    notify(f"Skip export, output is newer, for: {e.name}", 3)
-                    self._results.cached.append(entry)
-                    continue
-                notify(f"Exporting notebook '{e.name}' to directory {outdir}", 3)
-                nb = self._parse_and_execute(e)
-                wrt = FilesWriter()
-                # export each notebook into multiple target formats
-                for (exp, postprocess_func, pp_args) in (
-                    (RSTExporter(), self._postprocess_rst, ()),
-                    (HTMLExporter(), self._postprocess_html, (depth,)),
-                ):
-                    if _log.isEnabledFor(logging.DEBUG):
-                        sfx_name = notebook_suffix if notebook_suffix is not None else "(no suffix)"
-                        _log.debug(f"export '{e}' with {exp} to notebook with suffix {sfx_name}")
-                    (body, resources) = exp.from_notebook_node(nb)
-                    body = postprocess_func(body, *pp_args)
-                    wrt.build_directory = str(outdir)
-                    wrt.write(body, resources, notebook_name=e.stem)
-                    # create a 'wrapper' page
-                    _log.debug(f"create wrapper page for '{e.name}' in '{outdir}'")
-                    self._create_notebook_wrapper_page(e.stem, outdir)
-                # move notebooks into docs directory
-                _log.debug(f"move notebook '{e} to output directory: {outdir} ")
-                shutil.copy(e, outdir / e.name)
-        finally:
-            # clean up any temporary directories
-            if tmpdir is not None:
-                _log.debug(f"remove temporary directory at '{tmpdir.name}'")
-                shutil.rmtree(str(tmpdir))
+        for notebook_suffix, e in entries.items():  # notebooks to export
+            # before running, check if converted result is newer than source file
+            if not self.s.get("rebuild") and self._is_cached(entry, e.stem, outdir):
+                notify(f"Skip export, output is newer, for: {e.name}", 3)
+                self._results.cached.append(entry)
+                continue
+            notify(f"Exporting notebook '{e.name}' to directory {outdir}", 3)
+            nb = self._parse_and_execute(e)
+            wrt = FilesWriter()
+            # export each notebook into multiple target formats
+            for (exp, postprocess_func, pp_args) in (
+                (RSTExporter(), self._postprocess_rst, ()),
+                (HTMLExporter(), self._postprocess_html, (depth,)),
+            ):
+                if _log.isEnabledFor(logging.DEBUG):
+                    sfx_name = notebook_suffix if notebook_suffix is not None else "(no suffix)"
+                    _log.debug(f"export '{e}' with {exp} to notebook with suffix {sfx_name}")
+                (body, resources) = exp.from_notebook_node(nb)
+                body = postprocess_func(body, *pp_args)
+                wrt.build_directory = str(outdir)
+                wrt.write(body, resources, notebook_name=e.stem)
+                # create a 'wrapper' page
+                _log.debug(f"create wrapper page for '{e.name}' in '{outdir}'")
+                self._create_notebook_wrapper_page(e.stem, outdir)
+            # move notebooks into docs directory
+            _log.debug(f"move notebook '{e} to output directory: {outdir}")
+            shutil.copy(e, outdir / e.name)
 
     def _has_tagged_cells(self, entry: Path, tags: set) -> bool:
         """Quickly check whether this notebook has any cells with the given tag(s).
