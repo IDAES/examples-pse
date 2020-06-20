@@ -52,7 +52,7 @@ table of contents::
 
     Welcome tutorial (short) <Module_0_Welcome/Module_0_Welcome_Short_Solution_doc>
 
-The SphinxBuilder pretty much just runs Sphinx in HTML mode (PDF coming R.S.N.),
+The SphinxBuilder pretty much just runs Sphinx in HTML and PDF modes,
 dumping errors to, by default, "sphinx-errors.txt" as well as logging them.
 It doesn't do any other accommodations, as all the work of dealing what Sphinx wants
 to do by default is handled in the NotebookBuilder.
@@ -90,6 +90,7 @@ _log.addHandler(_hnd)
 _log.propagate = False
 _log.setLevel(logging.INFO)
 
+
 class NotebookError(Exception):
     pass
 
@@ -103,6 +104,10 @@ class NotebookFormatError(NotebookError):
 
 
 class SphinxError(Exception):
+    pass
+
+
+class SphinxCommandError(Exception):
     def __init__(self, cmdline, errmsg, details):
         msg = (
             f"Sphinx error while running '{cmdline}': {errmsg}. " f"Details: {details}"
@@ -112,6 +117,7 @@ class SphinxError(Exception):
 
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
 DATA_SUFFIXES = ".csv", ".json"
+CODE_SUFFIXES = (".py",)
 NOTEBOOK_SUFFIX = ".ipynb"
 TERM_WIDTH = 60  # for notification message underlines
 
@@ -134,7 +140,6 @@ class Settings:
             "directories": [],
             "kernel": None,
             "test_mode": False,
-            "strip": False,
         },
     }
 
@@ -171,8 +176,7 @@ class Settings:
 
         Raises:
             ValueError: if the key is malformed
-            KeyError: if there is no such value in the section, and no default
-                      is provided.
+            KeyError: if there is no such value in the section, and no default is provided.
 
         Returns:
             setting value (dict, list, or str)
@@ -244,14 +248,14 @@ class NotebookBuilder(Builder):
     FORMATS = {"html": ".html", "rst": ".rst"}
 
     HTML_IMAGE_DIR = "_images"
-    TEST_SUFFIX = "_test"  # for notebooks *with* tests
-    CLEAN_SUFFIX = "_clean"  # for notebooks without tests
     TEST_SUFFIXES = ("_test", "_testing")  # test notebook suffixes
     # Mapping from {meaning: tag_name}
-    _cell_tags = {"remove": "remove_cell",
-                  "exercise": "exercise",
-                  "testing": "testing",
-                  "solution": "solution"}
+    _cell_tags = {
+        "remove": "remove_cell",
+        "exercise": "exercise",
+        "testing": "testing",
+        "solution": "solution",
+    }
     JUPYTER_NB_VERSION = 4  # for parsing
 
     #: CSS stylesheet for notebooks
@@ -303,6 +307,7 @@ class NotebookBuilder(Builder):
     def build(self, options):
         self.s.set_default_section("notebook")
         self._merge_options(options)
+        self._test_mode = self.s.get("test_mode")
         self._open_error_file()
         self._ep = self._create_preprocessor()
         self._imgdir = (
@@ -338,7 +343,10 @@ class NotebookBuilder(Builder):
         r = self._results  # alias
         total = r.n_fail + r.n_success
         _dirs = "y" if len(r.dirs_processed) == 1 else "ies"
-        notify(f"Processed {len(r.dirs_processed)} director{_dirs} in {r.duration:.3f}s", level=1)
+        notify(
+            f"Processed {len(r.dirs_processed)} director{_dirs} in {r.duration:.3f}s",
+            level=1,
+        )
         if total == 0:
             notify(f"No notebooks converted", level=2)
         else:
@@ -349,12 +357,19 @@ class NotebookBuilder(Builder):
                 s_verb = " was" if total == 1 else "s were"
                 notify(f"{total} notebook{s_verb} converted successfully", level=2)
             else:
-                notify(f"  Out of {total} notebook(s), {r.n_success} converted and {r.n_fail} failed", level=2)
-                notify(f"The following {len(r.failed)} notebooks had failures: ", level=1)
+                notify(
+                    f"  Out of {total} notebook(s), {r.n_success} converted and {r.n_fail} failed",
+                    level=2,
+                )
+                notify(
+                    f"The following {len(r.failed)} notebooks had failures: ", level=1
+                )
                 for failure in r.failed:
                     notify(f"-  {failure}", level=2)
                 if self._nb_error_file is not sys.stderr:
-                    notify(f"Notebook errors are in '{self._nb_error_file.name}'", level=2)
+                    notify(
+                        f"Notebook errors are in '{self._nb_error_file.name}'", level=2
+                    )
         return total, r.n_fail
 
     def _open_error_file(self):
@@ -407,7 +422,8 @@ class NotebookBuilder(Builder):
             self.root_path() / self.s.get("paths.output"),
         )
         srcdir, outdir = sroot / source, oroot / output
-        notify(f"Converting notebooks in '{srcdir}'", level=1)
+        verb = "Running" if self._test_mode else "Converting"
+        notify(f"{verb} notebooks in '{srcdir}'", level=1)
         self._match_expr = re.compile(match) if match else None
         # build, starting at this directory
         self._build_subtree(srcdir, outdir, depth=1)
@@ -429,17 +445,17 @@ class NotebookBuilder(Builder):
             if entry.is_dir():
                 # build sub-directory (filename is really directory name)
                 self._build_subtree(entry, outdir / filename, depth + 1)
-            elif entry.suffix in IMAGE_SUFFIXES:
+            elif entry.suffix in IMAGE_SUFFIXES and not self._test_mode:
                 os.makedirs(self._imgdir, exist_ok=True)
                 shutil.copy(str(entry), str(self._imgdir))
                 _log.debug(f"copied image {entry} to {self._imgdir}/")
-            elif entry.suffix in DATA_SUFFIXES:
+            elif entry.suffix in DATA_SUFFIXES or entry.suffix in CODE_SUFFIXES:
                 data_files.append(entry)
             elif entry.suffix == NOTEBOOK_SUFFIX:
                 _log.debug(f"found notebook at: {entry}")
                 # check against match expression
                 if self._match_expr and not self._match_expr.search(filename):
-                    _log.debug(f"does not match {self._match_expr}, skip {entry}")
+                    _log.debug(f"Skip: {entry} does not match {self._match_expr}")
                 else:
                     notebooks_to_convert.append(entry)
 
@@ -447,13 +463,17 @@ class NotebookBuilder(Builder):
         if notebooks_to_convert:
             tmpdir = Path(tempfile.mkdtemp())
             if data_files:
-                _log.debug(f"copy {len(data_files)} data file(s) into temp dir '{tmpdir}'")
+                _log.debug(
+                    f"copy {len(data_files)} data file(s) into temp dir '{tmpdir}'"
+                )
                 for fp in data_files:
                     shutil.copy(fp, tmpdir)
             for entry in notebooks_to_convert:
-                self._ensure_target_dir(outdir)
+                if not self._test_mode:
+                    os.makedirs(outdir, exist_ok=True)
                 # build, if 'rebuild'-mode or the output file is missing/stale
-                notify(f"Converting: {entry.name}", level=2)
+                verb = "Running" if self._test_mode else "Converting"
+                notify(f"{verb}: {entry.name}", level=2)
                 continue_on_err = self.s.get("continue_on_error", None)
                 try:
                     self._convert(tmpdir, entry, outdir, depth)
@@ -475,8 +495,13 @@ class NotebookBuilder(Builder):
                     raise  # abort all processing
                 # quick cleanup of contents of temporary dir
                 for f in tmpdir.iterdir():
-                    if f.suffix not in DATA_SUFFIXES:
-                        f.unlink()
+                    if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
+                        try:  # may fail for things like __pycache__
+                            f.unlink()
+                        except Exception as err:
+                            _log.debug(
+                                f"Could not unlink file in temp execution dir: {err}"
+                            )
 
             _log.debug(f"build.end subtree={srcdir} {success}/{success + failed}")
             self._results.n_fail += failed
@@ -504,17 +529,17 @@ class NotebookBuilder(Builder):
             outdir: output directory for .html and .rst files
             depth: depth below root, for fixing image paths
         """
-        # optionally just execute notebook and stop
-        if self.s.get("test_mode"):
-            self._parse_and_execute(tmpdir, entry)
-            return
-        # optionally strip special cells.
-        if self.s.get("strip") and self._has_tagged_cells(entry, set(self._cell_tags.values())):
+        test_mode = self.s.get("test_mode")
+        # strip special cells.
+        if self._has_tagged_cells(entry, set(self._cell_tags.values())):
             _log.debug(f"notebook '{entry.name}' has test cell(s)")
             entries = {}  # notebook suffix -> entry
-            for tags_to_strip, notebook_suffix in ((["remove", "exercise"], "solution"),):
-                stripped_entry, _ = self._strip_tagged_cells(tmpdir, entry, tags_to_strip, "solution_testing",
-                                                             notebook_suffix)
+            for tags_to_strip, notebook_suffix in (
+                (["remove", "exercise"], "solution"),
+            ):
+                stripped_entry, _ = self._strip_tagged_cells(
+                    tmpdir, entry, tags_to_strip, "solution_testing", notebook_suffix
+                )
                 entries[notebook_suffix] = stripped_entry
             notify(f"Stripped tags from: {entry.name}", 3)
         else:
@@ -529,8 +554,11 @@ class NotebookBuilder(Builder):
                 notify(f"Skip export, output is newer, for: {e.name}", 3)
                 self._results.cached.append(entry)
                 continue
-            notify(f"Exporting notebook '{e.name}' to directory {outdir}", 3)
+            notify(f"Running notebook: {e.name}", 3)
             nb = self._parse_and_execute(e)
+            if test_mode:
+                continue  # don't do conversion in test mode
+            notify(f"Exporting notebook '{e.name}' to directory {outdir}", 3)
             wrt = FilesWriter()
             # export each notebook into multiple target formats
             for (exp, postprocess_func, pp_args) in (
@@ -538,8 +566,14 @@ class NotebookBuilder(Builder):
                 (HTMLExporter(), self._postprocess_html, (depth,)),
             ):
                 if _log.isEnabledFor(logging.DEBUG):
-                    sfx_name = notebook_suffix if notebook_suffix is not None else "(no suffix)"
-                    _log.debug(f"export '{e}' with {exp} to notebook with suffix {sfx_name}")
+                    sfx_name = (
+                        notebook_suffix
+                        if notebook_suffix is not None
+                        else "(no suffix)"
+                    )
+                    _log.debug(
+                        f"export '{e}' with {exp} to notebook with suffix {sfx_name}"
+                    )
                 (body, resources) = exp.from_notebook_node(nb)
                 body = postprocess_func(body, *pp_args)
                 wrt.build_directory = str(outdir)
@@ -599,7 +633,9 @@ class NotebookBuilder(Builder):
         # Configure tag removal
         tag_names = [self._cell_tags[t] for t in tags]
         self._nb_remove_config.TagRemovePreprocessor.remove_cell_tags = tag_names
-        _log.debug(f"removing tag(s) <{', '.join(tag_names)}'> from notebook: {entry.name}")
+        _log.debug(
+            f"removing tag(s) <{', '.join(tag_names)}'> from notebook: {entry.name}"
+        )
         (body, resources) = NotebookExporter(
             config=self._nb_remove_config
         ).from_filename(str(tmp_entry))
@@ -607,7 +643,7 @@ class NotebookBuilder(Builder):
         # (1) remove existing suffix
         nb_name = entry.stem
         if nb_name.lower().endswith(remove_suffix):
-            nb_name = nb_name[:-len(remove_suffix)]
+            nb_name = nb_name[: -len(remove_suffix)]
             if nb_name.endswith("_"):
                 nb_name = nb_name[:-1]
         # (2) add new suffix
@@ -623,6 +659,7 @@ class NotebookBuilder(Builder):
         return stripped_entry, tmp_entry
 
     def _parse_and_execute(self, entry):
+
         # parse
         _log.debug(f"parsing '{entry}'")
         try:
@@ -631,6 +668,7 @@ class NotebookBuilder(Builder):
             raise NotebookFormatError(f"'{entry}' is not JSON")
         except AttributeError:
             raise NotebookFormatError(f"'{entry}' has invalid format")
+
         # execute
         _log.debug(f"executing '{entry}'")
         try:
@@ -639,9 +677,7 @@ class NotebookBuilder(Builder):
             raise NotebookExecError(f"execution error for '{entry}': {err}")
         return nb
 
-    def _create_notebook_wrapper_page(
-        self, nb_file: str, output_dir: Path
-    ):
+    def _create_notebook_wrapper_page(self, nb_file: str, output_dir: Path):
         """Generate a Sphinx documentation page for the Module.
         """
         # interpret some characters in filename differently for title
@@ -656,12 +692,6 @@ class NotebookBuilder(Builder):
         with doc_rst.open("w") as f:
             _log.info(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
             f.write(doc)
-
-    @staticmethod
-    def _ensure_target_dir(p: Path):
-        if not p.exists():
-            _log.debug(f"Creating output directory {p}")
-            p.mkdir()
 
     def _is_cached(self, source_nb: Path, dest_nb_stem: str, outdir: Path) -> bool:
         """Check if a any of the output files are either missing or older than
@@ -766,6 +796,15 @@ class SphinxBuilder(Builder):
             self.root_path() / self.s.get("paths.output") / self.s.get("paths.html")
         )
         doc_dir = self.root_path() / self.s.get("paths.output")
+
+        # Catch some problems that may cause an ugly stack trace from Sphinx
+        if not doc_dir.exists():
+            raise SphinxError(f"Input directory does not exist: {doc_dir}")
+        if not (doc_dir / "conf.py").exists():
+            raise SphinxError(
+                f"Input directory does not have 'conf.py' file: {doc_dir}"
+            )
+
         if not os.path.exists(html_dir):
             _log.warning(f"Target HTML directory {html_dir} does not exist: creating")
             html_dir.mkdir(parents=True)
@@ -786,7 +825,7 @@ class SphinxBuilder(Builder):
         status = proc.returncode
         if status != 0:
             log_error = self._extract_sphinx_error(errfile)
-            raise SphinxError(cmdline, f"return code = {status}", log_error)
+            raise SphinxCommandError(cmdline, f"return code = {status}", log_error)
 
         # copy notebooks from doc directory into html directory
         notify(f"Copying notebooks from '{doc_dir}' -> '{html_dir}'", 1)
@@ -797,7 +836,7 @@ class SphinxBuilder(Builder):
                 nb_dest = html_dir / nb_path.relative_to(doc_dir)
                 notify(f"Copy notebook {nb_path} -> {nb_dest}", 2)
                 shutil.copy(nb_path, nb_dest)
-        #self._copy_aux(html_dir, ["ipynb"])
+        # self._copy_aux(html_dir, ["ipynb"])
 
     def _copy_aux(self, dest, ext_list):
         """Copy auxiliary files in 'src' into a built directory.
@@ -838,8 +877,6 @@ class Cleaner(Builder):
     """Clean up all the pre-generated files, mostly in the docs.
     """
 
-    CLEAN_SUFFIX = NotebookBuilder.CLEAN_SUFFIX
-
     def build(self, options):
         root = self.root_path()
         docs_path = root / self.s.get("paths.output")
@@ -847,11 +884,11 @@ class Cleaner(Builder):
         did_remove = False
         did_remove |= self._clean_html(docs_path / self.s.get("paths.html"))
         did_remove |= self._clean_docs(docs_path)
-        did_remove |= self._clean_src(root / self.s.get("paths.source"))
         if not did_remove:
             notify("No files removed", 1)
 
-    def _clean_html(self, html_path):
+    @staticmethod
+    def _clean_html(html_path):
         if html_path.exists():
             notify(f"remove directory: {html_path}", 1)
             shutil.rmtree(html_path)
@@ -860,7 +897,7 @@ class Cleaner(Builder):
 
     def _clean_docs(self, docs_path):
         removed_any = False
-        stop_list = set(["index.rst"])
+        stop_list = {"index.rst"}
         for notebook_dirs in self.s.get("notebook.directories"):
             docs_output = docs_path / notebook_dirs["output"]
             for file_type in "rst", "html", "png", "jpg", "ipynb":
@@ -869,16 +906,6 @@ class Cleaner(Builder):
                         notify(f"remove: {f}", 1)
                         f.unlink()
                         removed_any = True
-        return removed_any
-
-    def _clean_src(self, src_path):
-        removed_any = False
-        for notebook_dirs in self.s.get("notebook.directories"):
-            src_input = src_path / notebook_dirs["source"]
-            for f in src_input.glob(f"**/*{self.CLEAN_SUFFIX}.ipynb"):
-                notify(f"remove: {f}", 1)
-                f.unlink()
-                removed_any = True
         return removed_any
 
 
@@ -896,8 +923,10 @@ class Color:
 
 
 def notify(message, level=0):
-    c = [Color.MAGENTA, Color.GREEN, Color.WHITE][min(level, 2)]
-    indent = '  ' * level
+    """Multicolored, indented, messages to the user.
+    """
+    c = [Color.MAGENTA, Color.GREEN, Color.CYAN][min(level, 2)]
+    indent = "  " * level
     if level == 0:
         print()
     print(f"{indent}{c}{message}{Color.RESET}")
@@ -993,10 +1022,7 @@ def main():
     ap.add_argument("--remove", "-r", action="store_true", help="Clean built objects")
     ap.add_argument("--docs", "-d", action="store_true", help="Build documentation")
     ap.add_argument(
-        "--convert",
-        "-c",
-        action="store_true",
-        help="Convert Jupyter notebooks",
+        "--convert", "-c", action="store_true", help="Convert Jupyter notebooks",
     )
     ap.add_argument(
         "--force-convert",
@@ -1005,12 +1031,13 @@ def main():
         action="store_true",
         help="For Jupyter notebooks, re-run even if no change",
     )
-    # ap.add_argument(
-    #     "--strip",
-    #     "-s",
-    #     action="store_true",
-    #     help="For Jupyter notebooks, strip cells marked for tests",
-    # )
+    ap.add_argument(
+        "--test",
+        "-t",
+        dest="test_mode",
+        action="store_true",
+        help="Run notebooks but do not convert them.",
+    )
     ap.add_argument(
         "-v",
         "--verbose",
@@ -1025,6 +1052,20 @@ def main():
     if args.usage:
         print_usage()
         return 0
+
+    # Check for confusing option combinations
+    if args.convert and args.rebuild:
+        _log.warning(
+            "-c/--convert and -C/--force-convert are redundant; using -C/--force-convert"
+        )
+    if (args.convert or args.rebuild) and args.test_mode:
+        ap.error(
+            "-t/--test conflicts with notebook conversion (-c/--convert or -C/--force-convert); pick one"
+        )
+    if args.docs and args.test_mode:
+        ap.error(
+            "-t/--test should not be used with -d/--docs, as it does not convert any notebooks"
+        )
 
     # If building docs, check for working Sphinx command
     if args.docs:
@@ -1057,9 +1098,9 @@ def main():
     # set local variables from command-line arguments
     run_notebooks = args.convert
     rebuild_notebooks = args.rebuild
-    strip_notebooks = True  # args.strip
     build_docs = args.docs
     clean_files = args.remove
+    test_mode = args.test_mode
 
     if clean_files:
         notify("Clean all built files")
@@ -1069,16 +1110,13 @@ def main():
     status_code = 0  # start with success
 
     nbb = None
-    if run_notebooks or rebuild_notebooks:
-        notify("Convert Jupyter notebooks")
+    if run_notebooks or rebuild_notebooks or test_mode:
+        verb = "Run" if test_mode else "Convert"
+        notify(f"{verb} Jupyter notebooks")
         nbb = NotebookBuilder(settings)
         try:
             nbb.build(
-                {
-                    "rebuild": rebuild_notebooks,
-                    "strip": strip_notebooks,
-                    "test_mode": False,
-                }
+                {"rebuild": rebuild_notebooks, "test_mode": test_mode,}
             )
         except NotebookError as err:
             _log.fatal(f"Could not build notebooks: {err}")
