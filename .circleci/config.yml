@@ -17,8 +17,9 @@ jobs:
             conda init bash
       - run:
             name: install dependencies
-            conda activate idaes
-            pip install --progress-bar=off -r requirements.txt
+            command: |
+              conda activate idaes
+              pip install --progress-bar=off -r requirements.txt
       - run:
           name: install idaes-dev/master
           command: |
