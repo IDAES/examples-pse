@@ -14,16 +14,11 @@ jobs:
           name: setup conda
           command: |
             conda create -yv -n idaes python=3
-            conda init bash
       - run:
-            name: install dependencies
-            command: |
-              conda activate idaes
-              pip install --progress-bar=off -r requirements.txt
-      - run:
-          name: install idaes-dev/master
+          name: install dependencies
           command: |
-            conda activate idaes
+            source activate idaes
+            pip install --progress-bar=off -r requirements.txt
             git clone https://github.com/IDAES/idaes-dev.git
             cd idaes-dev
             pip install .
@@ -31,7 +26,7 @@ jobs:
       - run:
           name: run tests
           command: |
-            conda activate idaes
+            source activate idaes
             pytest -m "not integration" tests
       - store_artifacts:
           path: test-reports
