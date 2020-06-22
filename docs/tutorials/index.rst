@@ -13,7 +13,8 @@ from the prior one, so it is recommended that the new user view them in order.
 
 .. toctree::
 
-    Introduction to Python and Pyomo<Introduction to Python and Pyomo/Introduction_solution_doc.rst>
+    Short Introduction to Python and Pyomo<Introduction to Python and Pyomo/Introduction_Short_solution_doc.rst>
+    Longer Introduction to Python and Pyomo<Introduction to Python and Pyomo/Introduction_solution_doc.rst>
     Flash Unit Model <Flash Unit Model/Flash_Unit_solution_doc.rst>
     HDA Flowsheet Optimization <HDA Flowsheet Optimization/HDA_Flowsheet_solution_doc.rst>
     Parameter Estimation (NRTL) using state blocks <Parameter Estimation/Parameter_estimation_NRTL_using_state_block_solution_doc.rst>
