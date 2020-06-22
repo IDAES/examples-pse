@@ -6,20 +6,28 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.7.5-stretch
+      - image: idaes/ubuntu18-conda:2.1
     working_directory: ~/repo
     steps:
       - checkout
       - run:
           name: install dependencies
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
+            conda create -yv -n idaes python=3
+            conda activate idaes
             pip install --progress-bar=off -r requirements.txt
+      - run:
+          name: install idaes-dev/master
+          command: |
+            conda activate idaes
+            git clone https://github.com/IDAES/idaes-dev.git
+            cd idaes-dev
+            pip install .
+            idaes get-extensions --platform ubuntu1804
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
+            conda activate idaes
             pytest -m "not integration" tests
       - store_artifacts:
           path: test-reports
