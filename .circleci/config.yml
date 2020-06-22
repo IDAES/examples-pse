@@ -11,10 +11,12 @@ jobs:
     steps:
       - checkout
       - run:
-          name: install dependencies
+          name: setup conda
           command: |
             conda create -yv -n idaes python=3
             conda init bash
+      - run:
+            name: install dependencies
             conda activate idaes
             pip install --progress-bar=off -r requirements.txt
       - run:
