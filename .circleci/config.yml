@@ -14,6 +14,7 @@ jobs:
           name: install dependencies
           command: |
             conda create -yv -n idaes python=3
+            conda init bash
             conda activate idaes
             pip install --progress-bar=off -r requirements.txt
       - run:
