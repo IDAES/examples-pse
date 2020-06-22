@@ -19,7 +19,7 @@ jobs:
           command: |
             source activate idaes
             pip install --progress-bar=off -r requirements.txt
-            git clone https://github.com/IDAES/idaes-dev.git
+            git clone "https://idaes-build:${IDAESBUILDPASS}@github.com/IDAES/idaes-dev.git"
             cd idaes-dev
             pip install .
             idaes get-extensions --platform ubuntu1804
