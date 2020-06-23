@@ -4,7 +4,7 @@
 #
 version: 2
 jobs:
-  build:
+  examples_dev:
     docker:
       - image: idaes/ubuntu18-conda:2.1
     working_directory: ~/repo
@@ -40,9 +40,11 @@ workflows:
   version: 2
   build:
     jobs:
-      - build:
+      - examples_dev:
+          name: "python3.7"
           context: "IDAES Build User"
-          python_ver: 3.7
-      - build:
+          python_ver: "3.7"
+      - examples_dev:
+          name: "python3.6"
           context: "IDAES Build User"
-          python_ver: 3.6
+          python_ver: "3.6"
