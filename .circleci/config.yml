@@ -20,6 +20,11 @@ jobs:
           command: |
             conda create -yv -n idaes python=<<parameters.python_ver>>
       - run:
+          name: "Set locale to 'C.UTF-8'"
+          command: |
+            echo "export LANG=C.UTF-8" >> $BASH_ENV
+            echo "export LC_ALL=C.UTF-8" >> $BASH_ENV
+      - run:
           name: install dependencies
           command: |
             source activate idaes
