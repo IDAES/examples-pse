@@ -31,7 +31,7 @@ jobs:
             pip install --progress-bar=off -r requirements.txt
             git clone "https://idaes-build:${IDAESBUILDPASS}@github.com/IDAES/idaes-dev.git"
             cd idaes-dev
-            pip install .
+            pip install --progress-bar=off .
             idaes get-extensions --platform ubuntu1804
       - run:
           name: run tests
