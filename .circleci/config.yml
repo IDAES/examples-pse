@@ -29,15 +29,19 @@ jobs:
           command: |
             source activate idaes
             pip install --progress-bar=off -r requirements.txt
-            git clone "https://idaes-build:${IDAESBUILDPASS}@github.com/IDAES/idaes-dev.git"
-            cd idaes-dev
-            pip install --progress-bar=off .
-            idaes get-extensions --platform ubuntu1804
+            if test -n "$IDAESBUILDPASS"; then
+              git clone "https://idaes-build:${IDAESBUILDPASS}@github.com/IDAES/idaes-dev.git"
+              cd idaes-dev
+              pip install --progress-bar=off .
+              idaes get-extensions --platform ubuntu1804
+            fi
       - run:
           name: run tests
           command: |
-            source activate idaes
-            pytest -m "not integration" tests
+            if test -n "$IDAESBUILDPASS"; then
+              source activate idaes
+              pytest -m "not integration" tests
+            fi
       - store_artifacts:
           path: test-reports
           destination: test-reports
