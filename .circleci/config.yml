@@ -8,12 +8,16 @@ jobs:
     docker:
       - image: idaes/ubuntu18-conda:2.1
     working_directory: ~/repo
+    parameters:
+      python_ver:
+        type: string
+        default: "3.7"
     steps:
       - checkout
       - run:
           name: setup conda
           command: |
-            conda create -yv -n idaes python=3
+            conda create -yv -n idaes python=<<parameters.python_ver>>
       - run:
           name: install dependencies
           command: |
@@ -31,3 +35,14 @@ jobs:
       - store_artifacts:
           path: test-reports
           destination: test-reports
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          context: "IDAES Build User"
+          python_ver: 3.7
+      - build:
+          context: "IDAES Build User"
+          python_ver: 3.6
