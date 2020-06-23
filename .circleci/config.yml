@@ -41,6 +41,12 @@ jobs:
       - store_artifacts:
           path: test-reports
           destination: test-reports
+      - store_artifacts:
+          path: circleci-test-errors.txt
+          destination: circleci-errors
+      - store_artifacts:
+          path: sphinx-errors.txt
+          destination: sphinx-errors
 
 workflows:
   version: 2
@@ -54,9 +60,3 @@ workflows:
           name: "python3.6"
           context: IDAES
           python_ver: "3.6"
-      - store_artifacts:
-          path: circleci-test-errors.txt
-          destination: circleci-errors
-      - store_artifacts:
-          path: sphinx-errors.txt
-          destination: sphinx-errors
