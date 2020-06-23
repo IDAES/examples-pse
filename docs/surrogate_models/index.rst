@@ -1,5 +1,8 @@
+.. _surrogate_modeling_examples:
+
 Surrogate Modeling Examples
 ===========================
+
 Below are examples for the surrogate modeling packages available in the IDAES PSE.
 
 .. toctree::
