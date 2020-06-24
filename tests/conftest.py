@@ -1,3 +1,15 @@
+"""
+This file is automatically run by pytest.
+
+The `pytest_generate_tests` function is a hook called during pytest's collection
+process. We use this hook to have the "notebook" parameter include a list of all
+the Jupyter notebooks under the top-level "src" directory. Given this,
+any test that takes a parameter called "notebook" will actually be run on each of
+these notebooks.
+
+See https://docs.pytest.org/en/stable/parametrize.html#pytest-generate-tests
+for more details on how this works.
+"""
 import os
 from pathlib import Path
 

@@ -1,1 +1,0 @@
-To make the examples work, confs.zip and motifs.zip need to be extracted so that the scripts can read structure files from desinated folders. Users can also change the input file path in the scripts.

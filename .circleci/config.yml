@@ -2,25 +2,65 @@
 #
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
-version: 2
+version: 2.1
+
 jobs:
-  build:
+  examples_dev:
     docker:
-      - image: circleci/python:3.7.5-stretch
+      - image: idaes/ubuntu18-conda:2.1
     working_directory: ~/repo
+    parameters:
+      python_ver:
+        type: string
+        default: "3.7"
     steps:
       - checkout
       - run:
+          name: setup conda
+          command: |
+            conda create -yv -n idaes python=<<parameters.python_ver>>
+      - run:
+          name: "Set locale to 'C.UTF-8'"
+          command: |
+            echo "export LANG=C.UTF-8" >> $BASH_ENV
+            echo "export LC_ALL=C.UTF-8" >> $BASH_ENV
+      - run:
           name: install dependencies
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
+            source activate idaes
             pip install --progress-bar=off -r requirements.txt
+            if test -n "$IDAESBUILDPASS"; then
+              git clone "https://idaes-build:${IDAESBUILDPASS}@github.com/IDAES/idaes-dev.git"
+              cd idaes-dev
+              pip install --progress-bar=off .
+              idaes get-extensions --platform ubuntu1804
+            fi
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            pytest -m "not integration" tests
+            if test -n "$IDAESBUILDPASS"; then
+              source activate idaes
+              pytest -m "not integration" tests
+            fi
       - store_artifacts:
           path: test-reports
           destination: test-reports
+      - store_artifacts:
+          path: circleci-test-errors.txt
+          destination: circleci-errors
+      - store_artifacts:
+          path: sphinx-errors.txt
+          destination: sphinx-errors
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - examples_dev:
+          name: "python3.7"
+          context: IDAES
+          python_ver: "3.7"
+      - examples_dev:
+          name: "python3.6"
+          context: IDAES
+          python_ver: "3.6"
