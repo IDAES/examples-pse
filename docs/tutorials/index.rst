@@ -12,10 +12,11 @@ from the prior one, so it is recommended that the new user view them in order.
 
 
 .. toctree::
-    :maxdepth: 1
 
-    Welcome tutorial (short) <Module_0_Welcome/Module_0_Welcome_Short_Solution_doc>
-    Welcome tutorial (full) <Module_0_Welcome/Module_0_Welcome_Solution_doc>
-    Flash Unit tutorial <Module_1_Flash_Unit/Module_1_Flash_Unit_Solution_doc>
-    Flowsheet tutorial <Module_2_Flowsheet/Module_2_Flowsheet_Solution_doc>
-    Custom Unit Model tutorial <Module_3_Custom_Unit_Model/Module_3_Exercise_1_Solution_doc>
+    Short Introduction to Python and Pyomo<Introduction to Python and Pyomo/Introduction_Short_solution_doc.rst>
+    Longer Introduction to Python and Pyomo<Introduction to Python and Pyomo/Introduction_solution_doc.rst>
+    Flash Unit Model <Flash Unit Model/Flash_Unit_solution_doc.rst>
+    HDA Flowsheet Optimization <HDA Flowsheet Optimization/HDA_Flowsheet_solution_doc.rst>
+    Parameter Estimation (NRTL) using state blocks <Parameter Estimation/Parameter_estimation_NRTL_using_state_block_solution_doc.rst>
+    Parameter Estimation (NRTL) using unit models <Parameter Estimation/Parameter_estimation_NRTL_using_unit_model_solution_doc>
+
