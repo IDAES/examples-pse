@@ -231,5 +231,5 @@ def boiler_flowsheet():
 
 
 if __name__ == "__main__":
-    m = main_datarec()
-    deactivate_performance(m)
+    m = boiler_flowsheet()
+    deactivate_performance_constraints(m)
