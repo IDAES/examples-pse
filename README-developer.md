@@ -1,60 +1,47 @@
 # IDAES Examples
 
-See the main README.md for user instructions.
+This information is for people creating or modifying the 
+example notebooks, scripts, etc.
+Please see the main README.md for user instructions.
 
-## Developer information
+## Building
 
-### Rebuild the documentation
+The documentation is built by running the `build.py` script in this directory.
 
-To rebuild the docs, the easiest and most useful thing to do is  
-run in "_dev_" mode with no options:
+Run `python build.py --help` to see basic help information and `python build.py --usage`
+to see a more detailed explanation of usage.
 
-    ./build.py dev
+If you add new directories with Jupyter notebooks, you will need to let the
+script know about them by adding the directories (and the desired target directory
+for the rendered documentation) to the `build.yml` file in this directory.
+The comments in that file should explain how to add the new information.
 
-This will re-run any notebooks that have changed since the last
-time, and generate versions of the notebooks needed for the
-documentation.
+## Testing
 
-If you really don't want to re-run the notebooks, even ones that
-have changed since you last did this, then add the _--no-notebooks_
-option:
+You can run the `build.py` script in testing mode (see `-h` option for details) in order
+to test the notebooks.
 
-    # only build docs
-    ./build.py dev --no-notebooks
+A more limited set of notebooks to examine is configured in the
+`build-circleci.yml` file, which you can pass to the `--config` option of the build
+script. This will emulate how the code is tested on CircleCI during a pull request.
 
-### Just test notebooks
+## Adding new examples
 
-If you want to test an individual notebook, you can of course
-just open it and run it in the Jupyter Notebook environment.
-You can also run the `nbconvert` tool from the command-line, which
-has an option to execute the notebook and "convert" it to a
-Jupyter notebook (which you can throw away or keep, as you wish).
+To add a new example, add a directory (or use an existing one) under `src`. Place all
+code, data files, Jupyter Notebooks, etc. in that directory. Also add a corresponding
+directory under `docs`, with an `index.rst` file (see other directories for examples
+of how to do this) and add this directory to the table of contents in the `index.rst`
+file at top level of `docs`. Finally, if this is a new directory, add an entry in the
+"directories" section of the `build.yml` file. Follow the pattern of existing entries,
+and use documentation 
+provided in comments in that file.
 
-To test all the notebooks at once, you can use the "_test_" mode of the
-build script:
+Add all these files to Git, as these are all source material. Files generated with
+subsequent steps should *not* be added to Git.
 
-    ./build.py test
+To test your new examples, simply run `build.py` with appropriate arguments and look
+at the output, including opening the built documentation with a browser to make sure
+nothing is missing or malformed. 
 
-This will execute all the notebooks, but not modify anything under the
-`docs` directory.
-
-### Build for a release
-
-If you are releasing the code, first you must be on a branch
-that starts with the word "release". This is to avoid accidentally
-doing release actions in a local developer checkout. The release
-build will, in addition to running notebooks and generating
-documentation, remove any "test" cells in the notebooks in the `src`
-directory, adding a notebook with a suffix "_test.ipynb" for every
-notebook that had any test cells in it. The reason for doing this is
-to make the notebook with the shorter name test-free for the user.
-The release mode may also do some miscellaneous cleanup. Like the other  
-build commands, it will create a bunch of generated docs.  
-To run the release-mode:
-
-    ./build.py release
-
-When actually doing a release, you should rebuild the "release"
-branch of the _examples-dev_ repository, tag and push it, and then
-use this branch to populate the master branch of the _examples-pse_ 
-repository.
+Note: The first run may take a while, as it needs to execute
+the notebooks to create their output. After that, only modified notebooks will be re-run.
