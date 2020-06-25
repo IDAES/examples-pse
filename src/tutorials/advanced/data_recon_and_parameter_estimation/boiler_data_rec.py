@@ -56,7 +56,7 @@ from idaes.core.util import model_serializer as ms
 from idaes.core.util.model_statistics import degrees_of_freedom
 
 
-def deactivate_performance(m):
+def deactivate_performance_constraints(m):
     for blk in m.fs.component_objects(pyo.Block, descend_into=False):
         try:
             Uval = value(blk.overall_heat_transfer_coefficient[0])
@@ -101,7 +101,7 @@ def deactivate_performance(m):
     print('degrees of freedom = ' + str(degrees_of_freedom(m)))
 
 
-def main_datarec():
+def boiler_flowsheet():
     """
     Make the flowsheet object, fix some variables, and solve the problem
     """
