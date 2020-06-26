@@ -4,9 +4,9 @@ $title_underline
 .. only:: html
 
 .. image:: /_static/idaes-notebook-banner.png
-    :height: 100
+    :height: 80
 
-`Source file <$notebook_name.ipynb>`_
+`Jupyter Notebook source file <$notebook_name.ipynb>`_
 
 .. raw:: html
     :file: $notebook_name.html
