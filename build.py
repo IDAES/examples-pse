@@ -27,10 +27,9 @@ images sequentially.
 For HTML, a whole different kind of problem with the images is that
 the Sphinx builder will copy all the images from each subdirectory into a single
 "_images" directory in the HTML build area. This will break the image references,
-which are simple filenames for the current directory. The preprocessor goes through
-and replaces all <img> tags, with ".png" file source, with a path to the
-images directory. This has two corollaries: no two images anywhere in the tree
-should have the same name, and all images should be PNG format.
+which are simple filenames for the current directory. The Sphinx build step now
+copies anything that looks like an image file from the source directory to the
+HTML build directory.
 
 Finally, you can see that there is a "wrapper" file generated in ReStructuredText,
 i.e. for Sphinx, that uses a template file in `docs/jupyter_notebook_sphinx.tpl`.
@@ -47,15 +46,13 @@ the whole procedure would generate these files:
 
 Any images exported by running the notebook would also be in the directory.
 At any rate, this means that references to "the notebook" in the Sphinx documentation
-should be to the "_doc" version of the notebook, e.g. from the `tutorials/index.rst`
-table of contents::
-
-    Welcome tutorial (short) <Module_0_Welcome/Module_0_Welcome_Short_Solution_doc>
+should be to the "_doc" version of the notebook.
 
 The SphinxBuilder pretty much just runs Sphinx in HTML and PDF modes,
 dumping errors to, by default, "sphinx-errors.txt" as well as logging them.
-It doesn't do any other accommodations, as all the work of dealing what Sphinx wants
-to do by default is handled in the NotebookBuilder.
+As mentioned above, it copies images and also the raw notebooks (.ipynb) themselves
+into the appropriate HTML directory. This will make the notebooks render
+properly and also makes it easy to see the "source" of the notebook.
 
 For example command lines see the README.md in this directory.
 """
@@ -118,7 +115,7 @@ class SphinxCommandError(Exception):
 # Images to copy to the build directory
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
 # These should catch all data files in the same directory as the notebook, needed for execution.
-DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx", ".pdf"
+DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx", ".txt"
 CODE_SUFFIXES = (".py",)
 NOTEBOOK_SUFFIX = ".ipynb"
 TERM_WIDTH = 60  # for notification message underlines
@@ -569,6 +566,7 @@ class NotebookBuilder(Builder):
         notify(f"Exporting notebook '{entry.name}' to directory {outdir}", 3)
         wrt = FilesWriter()
         # export each notebook into multiple target formats
+        created_wrapper = False
         for (exp, postprocess_func, pp_args) in (
             (RSTExporter(), self._postprocess_rst, ()),
             (HTMLExporter(), self._postprocess_html, (depth,)),
@@ -579,8 +577,10 @@ class NotebookBuilder(Builder):
             wrt.build_directory = str(outdir)
             wrt.write(body, resources, notebook_name=entry.stem)
             # create a 'wrapper' page
-            _log.debug(f"create wrapper page for '{entry.name}' in '{outdir}'")
-            self._create_notebook_wrapper_page(entry.stem, outdir)
+            if not created_wrapper:
+                _log.debug(f"create wrapper page for '{entry.name}' in '{outdir}'")
+                self._create_notebook_wrapper_page(entry.stem, outdir)
+                created_wrapper = True
             # move notebooks into docs directory
             _log.debug(f"move notebook '{entry} to output directory: {outdir}")
             shutil.copy(entry, outdir / entry.name)
