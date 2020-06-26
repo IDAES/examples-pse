@@ -9,3 +9,4 @@ Below are examples for the surrogate modeling packages available in the IDAES PS
     :maxdepth: 1
 
     ALAMO <alamo_python/sixhumcamel_doc>
+    PySMO <pysmo/PySMOTutorial_doc>
