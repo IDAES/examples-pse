@@ -673,7 +673,7 @@ class NotebookBuilder(Builder):
         """Generate a Sphinx documentation page for the Module.
         """
         # interpret some characters in filename differently for title
-        title = nb_file.replace("_", " ").capitalize()
+        title = nb_file.replace("_", " ").title()
         title_under = "=" * len(title)
         # create document from template
         doc = self.s.get("Template").substitute(

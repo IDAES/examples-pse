@@ -7,6 +7,7 @@ Below are examples for the surrogate modeling packages available in the IDAES PS
 
 .. toctree::
     :maxdepth: 1
+    :titlesonly:
 
-    ALAMO <alamo_python/sixhumcamel_doc>
-    PySMO <pysmo/PySMOTutorial_doc>
+    ALAMO <alamo_python/Six_Hump_Camel_doc>
+    PySMO <pysmo/PySMO_Tutorial_doc>
