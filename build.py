@@ -116,7 +116,8 @@ class SphinxCommandError(Exception):
 
 
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
-DATA_SUFFIXES = ".csv", ".json"
+# These should catch all data files in the same directory as the notebook, needed for execution.
+DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx"
 CODE_SUFFIXES = (".py",)
 NOTEBOOK_SUFFIX = ".ipynb"
 TERM_WIDTH = 60  # for notification message underlines
@@ -445,12 +446,6 @@ class NotebookBuilder(Builder):
             if entry.is_dir():
                 # build sub-directory (filename is really directory name)
                 self._build_subtree(entry, outdir / filename, depth + 1)
-            elif entry.suffix in IMAGE_SUFFIXES and not self._test_mode:
-                os.makedirs(self._imgdir, exist_ok=True)
-                shutil.copy(str(entry), str(self._imgdir))
-                _log.debug(f"copied image {entry} to {self._imgdir}/")
-            elif entry.suffix in DATA_SUFFIXES or entry.suffix in CODE_SUFFIXES:
-                data_files.append(entry)
             elif entry.suffix == NOTEBOOK_SUFFIX:
                 _log.debug(f"found notebook at: {entry}")
                 # check against match expression
@@ -458,6 +453,13 @@ class NotebookBuilder(Builder):
                     _log.debug(f"Skip: {entry} does not match {self._match_expr}")
                 else:
                     notebooks_to_convert.append(entry)
+            else:  # these may all be true
+                if entry.suffix in IMAGE_SUFFIXES and not self._test_mode:
+                    os.makedirs(self._imgdir, exist_ok=True)
+                    shutil.copy(str(entry), str(self._imgdir))
+                    _log.debug(f"copied image {entry} to {self._imgdir}/")
+                if entry.suffix in DATA_SUFFIXES or entry.suffix in CODE_SUFFIXES:
+                    data_files.append(entry)
 
         # convert notebooks last, allowing for discovery of all the data files
         if notebooks_to_convert:
@@ -467,6 +469,7 @@ class NotebookBuilder(Builder):
                     f"copy {len(data_files)} data file(s) into temp dir '{tmpdir}'"
                 )
                 for fp in data_files:
+                    print(f"@@ copy {fp} -> {tmpdir}")
                     shutil.copy(fp, tmpdir)
             for entry in notebooks_to_convert:
                 if not self._test_mode:
