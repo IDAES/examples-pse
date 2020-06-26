@@ -1,4 +1,4 @@
-.. _surrogate_modeling_examples:
+.. _x_surrogate_models:
 
 Surrogate Modeling Examples
 ===========================

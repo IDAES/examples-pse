@@ -1,4 +1,4 @@
-.. _idaes_tutorials:
+.. _x_tutorials:
 
 IDAES Tutorials
 ===============
