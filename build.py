@@ -115,7 +115,7 @@ class SphinxCommandError(Exception):
 # Images to copy to the build directory
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
 # These should catch all data files in the same directory as the notebook, needed for execution.
-DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx", ".txt"
+DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx", ".txt", ".zip"
 CODE_SUFFIXES = (".py",)
 NOTEBOOK_SUFFIX = ".ipynb"
 TERM_WIDTH = 60  # for notification message underlines
