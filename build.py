@@ -543,58 +543,43 @@ class NotebookBuilder(Builder):
         # strip special cells.
         if self._has_tagged_cells(entry, set(self._cell_tags.values())):
             _log.debug(f"notebook '{entry.name}' has test cell(s)")
-            entries = {}  # notebook suffix -> entry
-            for tags_to_strip, notebook_suffix in (
-                (["remove", "exercise"], "solution"),
-            ):
-                stripped_entry, _ = self._strip_tagged_cells(
-                    tmpdir, entry, tags_to_strip, "solution_testing", notebook_suffix
-                )
-                entries[notebook_suffix] = stripped_entry
-            notify(f"Stripped tags from: {entry.name}", 3)
+            orig_entry, entry = entry, self._strip_tagged_cells(
+                tmpdir, entry, ("remove", "exercise"), "testing")
+            notify(f"Stripped tags from: {orig_entry.name}", 3)
         else:
             # copy to temporary directory just to protect from output cruft
             tmp_entry = tmpdir / entry.name
             shutil.copy(entry, tmp_entry)
-            entries = {None: tmp_entry}
+            orig_entry, entry = entry, tmp_entry
 
-        # convert all tag-stripped versions of the notebook
-        for notebook_suffix, e in entries.items():  # notebooks to export
-            # before running, check if converted result is newer than source file
-            if self._already_converted(entry, e.stem, outdir):
-                notify(f"Skip notebook conversion, output is newer, for: {e.name}", 3)
-                self._results.cached.append(entry)
-                continue
-            notify(f"Running notebook: {e.name}", 3)
-            nb = self._parse_and_execute(e)
-            if test_mode:
-                continue  # don't do conversion in test mode
-            notify(f"Exporting notebook '{e.name}' to directory {outdir}", 3)
-            wrt = FilesWriter()
-            # export each notebook into multiple target formats
-            for (exp, postprocess_func, pp_args) in (
-                (RSTExporter(), self._postprocess_rst, ()),
-                (HTMLExporter(), self._postprocess_html, (depth,)),
-            ):
-                if _log.isEnabledFor(logging.DEBUG):
-                    sfx_name = (
-                        notebook_suffix
-                        if notebook_suffix is not None
-                        else "(no suffix)"
-                    )
-                    _log.debug(
-                        f"export '{e}' with {exp} to notebook with suffix {sfx_name}"
-                    )
-                (body, resources) = exp.from_notebook_node(nb)
-                body = postprocess_func(body, *pp_args)
-                wrt.build_directory = str(outdir)
-                wrt.write(body, resources, notebook_name=e.stem)
-                # create a 'wrapper' page
-                _log.debug(f"create wrapper page for '{e.name}' in '{outdir}'")
-                self._create_notebook_wrapper_page(e.stem, outdir)
+        # convert all tag-stripped versions of the notebook.
+        # before running, check if converted result is newer than source file
+        if self._already_converted(orig_entry, entry, outdir):
+            notify(f"Skip notebook conversion, output is newer, for: {entry.name}", 3)
+            self._results.cached.append(entry)
+            return
+        notify(f"Running notebook: {entry.name}", 3)
+        nb = self._parse_and_execute(entry)
+        if test_mode:  # don't do conversion in test mode
+            return
+        notify(f"Exporting notebook '{entry.name}' to directory {outdir}", 3)
+        wrt = FilesWriter()
+        # export each notebook into multiple target formats
+        for (exp, postprocess_func, pp_args) in (
+            (RSTExporter(), self._postprocess_rst, ()),
+            (HTMLExporter(), self._postprocess_html, (depth,)),
+        ):
+            _log.debug(f"export '{orig_entry}' with {exp} to notebook '{entry}'")
+            (body, resources) = exp.from_notebook_node(nb)
+            body = postprocess_func(body, *pp_args)
+            wrt.build_directory = str(outdir)
+            wrt.write(body, resources, notebook_name=entry.stem)
+            # create a 'wrapper' page
+            _log.debug(f"create wrapper page for '{entry.name}' in '{outdir}'")
+            self._create_notebook_wrapper_page(entry.stem, outdir)
             # move notebooks into docs directory
-            _log.debug(f"move notebook '{e} to output directory: {outdir}")
-            shutil.copy(e, outdir / e.name)
+            _log.debug(f"move notebook '{entry} to output directory: {outdir}")
+            shutil.copy(entry, outdir / entry.name)
 
     def _has_tagged_cells(self, entry: Path, tags: set) -> bool:
         """Quickly check whether this notebook has any cells with the given tag(s).
@@ -619,7 +604,7 @@ class NotebookBuilder(Builder):
         # no tagged cells
         return False
 
-    def _strip_tagged_cells(self, tmpdir, entry, tags, remove_suffix, add_suffix):
+    def _strip_tagged_cells(self, tmpdir, entry, tags, remove_name: str):
         """Strip specially tagged cells from a notebook.
 
         Copy notebook to a temporary location, and generate a stripped
@@ -629,9 +614,7 @@ class NotebookBuilder(Builder):
             tmpdir: directory to copy notebook into
             entry: original notebook
             tags: List of tags (strings) to strip
-            remove_suffix: Suffix to remove from the notebook (not including the .ipynb extension).
-                If the notebook doesn't end with this, then just leave it.
-            add_suffix: Suffix to add after removing the `remove_suffix`. If this is empty, do nothing.
+            remove_name: Remove this component from the name
 
         Returns:
             stripped-entry, original-entry - both in the temporary directory
@@ -651,15 +634,9 @@ class NotebookBuilder(Builder):
             config=self._nb_remove_config
         ).from_filename(str(tmp_entry))
         # Determine output notebook name:
-        # (1) remove existing suffix
-        nb_name = entry.stem
-        if nb_name.lower().endswith(remove_suffix):
-            nb_name = nb_name[: -len(remove_suffix)]
-            if nb_name.endswith("_"):
-                nb_name = nb_name[:-1]
-        # (2) add new suffix
-        if add_suffix:
-            nb_name += "_" + add_suffix
+        # remove suffixes, either "Capitalized" or "lowercase" version
+        nmc, nml = remove_name.capitalize(), remove_name.lower()
+        nb_name = re.sub(f'(_{nmc}|_{nml}|_{nmc}_|_{nml}_|{nmc}_|{nml}_)', '', entry.stem)
         # Create the new notebook
         wrt = nbconvert.writers.FilesWriter()
         wrt.build_directory = str(tmpdir)
@@ -667,7 +644,7 @@ class NotebookBuilder(Builder):
         wrt.write(body, resources, notebook_name=nb_name)
         # Return both notebook names, and temporary directory (for cleanup)
         stripped_entry = tmpdir / f"{nb_name}.ipynb"
-        return stripped_entry, tmp_entry
+        return stripped_entry
 
     def _parse_and_execute(self, entry):
 
@@ -692,7 +669,7 @@ class NotebookBuilder(Builder):
         """Generate a Sphinx documentation page for the Module.
         """
         # interpret some characters in filename differently for title
-        title = nb_file.replace("_", " ")
+        title = nb_file.replace("_", " ").capitalize()
         title_under = "=" * len(title)
         # create document from template
         doc = self.s.get("Template").substitute(
@@ -704,30 +681,30 @@ class NotebookBuilder(Builder):
             _log.info(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
             f.write(doc)
 
-    def _already_converted(self, source_nb: Path, dest_nb_stem: str, outdir: Path) -> bool:
+    def _already_converted(self, orig: Path, dest: Path, outdir: Path) -> bool:
         """Check if a any of the output files are either missing or older than
         the input file ('entry').
 
         Returns:
             True if the output is newer than the input, otherwise False.
         """
-        source_time = source_nb.stat().st_mtime
+        source_time = orig.stat().st_mtime
 
         # First see if there is a 'failed' marker. If so,
         # compare timestamps: if marker is newer than file, it's converted
-        failed_file = outdir / (dest_nb_stem + ".failed")
+        failed_file = outdir / (orig.stem + ".failed")
         if failed_file.exists():
             failed_time = failed_file.stat().st_ctime
             ac = failed_time > source_time
             if ac:
-                notify(f"Notebook '{dest_nb_stem}.ipynb' unchanged since previous failed conversion", 3)
+                notify(f"Notebook '{orig.stem}.ipynb' unchanged since previous failed conversion", 3)
             return ac
 
         # Otherwise look at all the output files and see if any one of them is
         # older than the source file (in which case it's NOT converted)
         for fmt, ext in self.FORMATS.items():
-            output_file = outdir / f"{dest_nb_stem}{ext}"
-            _log.debug(f"checking if cached: {output_file} src={source_nb}")
+            output_file = outdir / f"{dest.stem}{ext}"
+            _log.debug(f"checking if cached: {output_file} src={orig}")
             if not output_file.exists():
                 return False
             if source_time >= output_file.stat().st_mtime:
