@@ -273,6 +273,10 @@ class NotebookBuilder(Builder):
         padding-left: 0px;
         padding-right: 0px;
     }
+    /* Hide section name (at top) */
+    div.section > h1 {
+        display: none;
+    }
     """
 
     class Results:
