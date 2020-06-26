@@ -749,7 +749,7 @@ class NotebookBuilder(Builder):
         return "".join(chars)
 
     def _postprocess_html(self, body, depth):
-        """Change path on `.png` image refs to point into HTML build dir.
+        """Change path on image refs to point into HTML build dir.
         """
         # create prefix for <img src='..'> attribute values, which is a relative path
         # to the (single) images directory, from within the HTML build tree
@@ -761,7 +761,9 @@ class NotebookBuilder(Builder):
         splits = re.split(r'<img src="(.*\.png"[^>]*)>', body)
         # replace grouping in odd-numbered splits with modified <img>
         for i in range(1, len(splits), 2):
+            orig = splits[i]
             splits[i] = f'<img src="{prefix}/{splits[i]}>'
+            # print(f"@@ depth={depth}; rewrote image link '{orig}' as '{splits[i]}'")
         # rejoin splits, to make the modified body text
         body = "".join(splits)
         # hack in some CSS, replacing useless link
@@ -803,6 +805,7 @@ class SphinxBuilder(Builder):
             self.root_path() / self.s.get("paths.output") / self.s.get("paths.html")
         )
         doc_dir = self.root_path() / self.s.get("paths.output")
+        src_dir = self.root_path() / self.s.get("paths.source")
 
         # Catch some problems that may cause an ugly stack trace from Sphinx
         if not doc_dir.exists():
@@ -815,13 +818,7 @@ class SphinxBuilder(Builder):
         if not os.path.exists(html_dir):
             _log.warning(f"Target HTML directory {html_dir} does not exist: creating")
             html_dir.mkdir(parents=True)
-        # copy images
-        notify(
-            f"Copying image files from '{self.s.get('paths.source')}' -> "
-            f"'{doc_dir}'",
-            1,
-        )
-        self._copy_aux(doc_dir, ["png", "jpg", "jpeg", "pdf"])
+
         # Run Sphinx command
         errfile = self.s.get("error_file")
         cmdargs = ["sphinx-build", "-a", "-w", errfile] + args
@@ -834,36 +831,23 @@ class SphinxBuilder(Builder):
             log_error = self._extract_sphinx_error(errfile)
             raise SphinxCommandError(cmdline, f"return code = {status}", log_error)
 
-        # copy notebooks from doc directory into html directory
+        # copy notebooks from doc & src directories into html directory
         notify(f"Copying notebooks from '{doc_dir}' -> '{html_dir}'", 1)
         for nb_dir in self.s.get("notebook.directories"):
             nb_output_dir = doc_dir / nb_dir["output"]
+            nb_source_dir = src_dir / nb_dir["source"]
             _log.debug(f"find notebooks in path: {nb_output_dir}")
             for nb_path in Path(nb_output_dir).glob("**/*.ipynb"):
                 nb_dest = html_dir / nb_path.relative_to(doc_dir)
-                notify(f"Copy notebook {nb_path} -> {nb_dest}", 2)
+                notify(f"Copy notebook {nb_path.name} -> {nb_dest.parent}", 2)
                 shutil.copy(nb_path, nb_dest)
-        # self._copy_aux(html_dir, ["ipynb"])
-
-    def _copy_aux(self, dest, ext_list):
-        """Copy auxiliary files in 'src' into a built directory.
-        """
-        root = self.root_path()
-        for nbdir in self.s.get("notebook.directories"):
-            source, output = nbdir["source"], nbdir["output"]
-            src_dir = root / self.s.get("paths.source") / source
-            files = []
-            for ext in ext_list:
-                files.extend(list(Path(src_dir).glob(f"**/*.{ext}")))
-            for aux_file in files:
-                if any((part.startswith(".") for part in aux_file.parts)):
-                    continue
-                copy_to = dest / output / aux_file.relative_to(src_dir)
-                _log.info(f"copy: {aux_file} -> {copy_to}")
-                try:
-                    shutil.copy(str(aux_file), str(copy_to))
-                except IOError as err:
-                    _log.warning(f"Copy failed: {err}")
+            _log.info(f"find supporting files in path: {nb_output_dir}")
+            for ext in IMAGE_SUFFIXES:
+                pattern = f"**/*{ext}"
+                for nb_path in Path(nb_source_dir).glob(pattern):
+                    nb_dest = html_dir / nb_path.relative_to(src_dir)
+                    notify(f"Copy supporting file {nb_path.name} -> {nb_dest.parent}", 3)
+                    shutil.copy(nb_path, nb_dest)
 
     @staticmethod
     def _extract_sphinx_error(errfile: str):
