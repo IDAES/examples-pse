@@ -115,9 +115,10 @@ class SphinxCommandError(Exception):
         super().__init__(msg)
 
 
+# Images to copy to the build directory
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
 # These should catch all data files in the same directory as the notebook, needed for execution.
-DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx"
+DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx", ".pdf"
 CODE_SUFFIXES = (".py",)
 NOTEBOOK_SUFFIX = ".ipynb"
 TERM_WIDTH = 60  # for notification message underlines
@@ -469,7 +470,7 @@ class NotebookBuilder(Builder):
                     f"copy {len(data_files)} data file(s) into temp dir '{tmpdir}'"
                 )
                 for fp in data_files:
-                    print(f"@@ copy {fp} -> {tmpdir}")
+                    # print(f"@@ copy {fp} -> {tmpdir}")
                     shutil.copy(fp, tmpdir)
             for entry in notebooks_to_convert:
                 if not self._test_mode:
