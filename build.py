@@ -115,7 +115,7 @@ class SphinxCommandError(Exception):
 # Images to copy to the build directory
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
 # These should catch all data files in the same directory as the notebook, needed for execution.
-DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx", ".txt", ".zip"
+DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx", ".txt", ".zip", ".pdf"
 CODE_SUFFIXES = (".py",)
 NOTEBOOK_SUFFIX = ".ipynb"
 TERM_WIDTH = 60  # for notification message underlines
@@ -499,6 +499,11 @@ class NotebookBuilder(Builder):
                         _log.warning(f"failed to convert {entry}: {err}")
                         continue
                     raise  # abort all processing
+                # remove failed marker, if there was one from a previous execution
+                failed_marker = self._get_failed_marker(entry, outdir)
+                if failed_marker:
+                    _log.info(f"Remove stale marker of failed execution: {failed_marker}")
+                    failed_marker.unlink()
                 # quick cleanup of contents of temporary dir
                 for f in tmpdir.iterdir():
                     if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
@@ -534,6 +539,13 @@ class NotebookBuilder(Builder):
         marker = outdir / (entry.stem + ".failed")
         _log.debug(f"write failed marker '{marker}' for entry={entry} outdir={outdir}")
         marker.open("w").write("This file is a marker for avoiding re-runs of failed notebooks that haven't changed")
+
+    @staticmethod
+    def _get_failed_marker(entry, outdir) -> Path:
+        marker = outdir / (entry.stem + ".failed")
+        if marker.exists():
+            return marker
+        return None
 
     def _convert(self, tmpdir: Path, entry: Path, outdir: Path, depth: int):
         """Convert a notebook.
