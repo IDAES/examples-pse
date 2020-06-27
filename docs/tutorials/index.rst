@@ -28,6 +28,8 @@ from the prior one, so it is recommended that the new user view them in order.
         - For a single unit: Economizer
     - :doc:`Data Reconciliation for a Single Unit <advanced/data_recon_and_parameter_estimation/econ_recon_doc>`
         - For a single unit: Economizer
+    - :doc:`Boiler Data Reconciliation <advanced/data_recon_and_parameter_estimation/boiler_flowsheet_recon_doc>`
+        - Data Reconciliation of a Supercritical Coal-Fired Boiler, Flowsheet  Example
 
 .. toctree::
     :hidden:
@@ -39,4 +41,5 @@ from the prior one, so it is recommended that the new user view them in order.
     advanced/custom_model_development/Custom_Heater_Unit_Model_doc
     advanced/data_recon_and_parameter_estimation/econ_parmest_doc
     advanced/data_recon_and_parameter_estimation/econ_recon_doc
+    advanced/data_recon_and_parameter_estimation/boiler_flowsheet_recon_doc
 

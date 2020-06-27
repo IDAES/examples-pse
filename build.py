@@ -460,7 +460,8 @@ class NotebookBuilder(Builder):
                     os.makedirs(self._imgdir, exist_ok=True)
                     shutil.copy(str(entry), str(self._imgdir))
                     _log.debug(f"copied image {entry} to {self._imgdir}/")
-                if entry.suffix in DATA_SUFFIXES or entry.suffix in CODE_SUFFIXES:
+                # notebooks might try to open any of these files, sneaky as they are
+                if entry.suffix in DATA_SUFFIXES or entry.suffix in CODE_SUFFIXES or entry.suffix in IMAGE_SUFFIXES:
                     data_files.append(entry)
 
         # convert notebooks last, allowing for discovery of all the data files
