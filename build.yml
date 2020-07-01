@@ -28,14 +28,19 @@ notebook:
     # have that expression (here a simple string) in them will be processed.
     directories:
         - source: workshops
-          output: tutorials
+          output: workshops
           match: "[Ss]olution"
+        - source: tutorials/advanced
+          output: tutorials/advanced
+        - source: tutorials/unit_models
+          output: tutorials/unit_models
         - source: surrogate
           output: surrogate_models
         - source: matopt
           output: matopt
         - source: surrogate/pysmo
           output: surrogate_models/pysmo
+
 # Settings for running Sphinx build
 sphinx:
     # Arguments that are given to 'sphinx-build' after arguments fixed in the code

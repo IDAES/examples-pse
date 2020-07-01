@@ -1,4 +1,4 @@
-.. _matopt_examples:
+.. _x_matopt:
 
 MatOpt Examples
 ===============

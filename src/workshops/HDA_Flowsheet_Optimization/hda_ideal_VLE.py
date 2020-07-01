@@ -39,9 +39,10 @@ from idaes.core.util.misc import add_object_reference
 from idaes.core.util.model_statistics import degrees_of_freedom, \
                                              number_unfixed_variables
 from idaes.core.util.misc import extract_data
+import idaes.logger as idaeslog
 
 # Set up logger
-_log = logging.getLogger(__name__)
+_log = idaeslog.getLogger(__name__)
 
 
 @declare_process_block_class("HDAParameterBlock")
@@ -340,7 +341,7 @@ class _IdealStateBlock(StateBlock):
     """
 
     def initialize(blk, state_args={}, state_vars_fixed=False,
-                   hold_state=False, outlvl=1,
+                   hold_state=False, outlvl=idaeslog.NOTSET,
                    solver='ipopt', optarg={'tol': 1e-8}):
         """
         Initialization routine for property package.
@@ -387,7 +388,8 @@ class _IdealStateBlock(StateBlock):
             which states were fixed during initialization.
         """
 
-        _log.info('Starting {} initialization'.format(blk.name))
+        init_log = idaeslog.getInitLogger(blk.name, outlvl, tag="properties")
+        solve_log = idaeslog.getSolveLogger(blk.name, outlvl, tag="properties")
 
         # Fix state variables if not already fixed
         if state_vars_fixed is False:
@@ -401,13 +403,8 @@ class _IdealStateBlock(StateBlock):
                                     "for state block is not zero during "
                                     "initialization.")
         # Set solver options
-        if outlvl > 1:
-            stee = True
-        else:
-            stee = False
-
         if optarg is None:
-            sopt = {'tol': 1e-8}
+            sopt = {"tol": 1e-8}
         else:
             sopt = optarg
 
@@ -425,9 +422,8 @@ class _IdealStateBlock(StateBlock):
                 calculate_variable_from_constraint(blk[k].pressure_dew,
                                                    blk[k].eq_pressure_dew)
 
-        if outlvl > 0:
-            _log.info("Dew and bubble points initialization for "
-                      "{} completed".format(blk.name))
+        init_log.info_high("Initialization Step 1 - Dew and bubble points "
+                      "calculation completed.")
 
         # ---------------------------------------------------------------------
         # If flash, initialize T1 and Teq
@@ -439,13 +435,12 @@ class _IdealStateBlock(StateBlock):
                 blk[k]._teq.value = min(blk[k]._t1.value,
                                         blk[k].temperature_dew.value)
 
-        if outlvl > 0:
-            _log.info("Equilibrium temperature initialization for "
-                      "{} completed".format(blk.name))
+        init_log.info_high("Initialization Step 2 - Equilibrium temperature "
+                           " calculation completed.")
 
         # ---------------------------------------------------------------------
         # Initialize flow rates and compositions
-        # TODO : This will need ot be generalised more when we move to a
+        # TODO : This will need to be generalised more when we move to a
         # modular implementation
         for k in blk.keys():
             # Deactivate equilibrium constraints, as state is fixed
@@ -457,25 +452,17 @@ class _IdealStateBlock(StateBlock):
             free_vars += number_unfixed_variables(blk[k])
         if free_vars > 0:
             try:
-                results = solve_indexed_blocks(opt, [blk], tee=stee)
+                with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+                    res = solve_indexed_blocks(opt, [blk], tee=slc.tee)
             except:
-                results = None
+                res = None
         else:
-            results = None
+            res = None
 
         for k in blk.keys():
             # Reactivate equilibrium constraints
             if hasattr(blk[k], 'equilibrium_constraint'):
                 blk[k].equilibrium_constraint.activate()
-
-        if outlvl > 0:
-            if results is None or results.solver.termination_condition \
-                    == TerminationCondition.optimal:
-                _log.info("Property initialization for "
-                          "{} completed".format(blk.name))
-            else:
-                _log.warning("Property initialization for "
-                             "{} failed".format(blk.name))
 
         # ---------------------------------------------------------------------
         # Return state to initial conditions
@@ -485,8 +472,7 @@ class _IdealStateBlock(StateBlock):
             else:
                 blk.release_state(flags)
 
-        if outlvl > 0:
-            _log.info("Initialization completed for {}".format(blk.name))
+        init_log.info("Initialization Complete")
 
     def release_state(blk, flags, outlvl=0):
         '''
@@ -498,15 +484,15 @@ class _IdealStateBlock(StateBlock):
                     hold_state=True.
             outlvl : sets output level of of logging
         '''
+        init_log = idaeslog.getInitLogger(blk.name, outlvl, tag="properties")
         if flags is None:
+            init_log.debug("No flags passed to release_state().")
             return
 
         # Unfix state variables
         revert_state_vars(blk, flags)
 
-        if outlvl > 0:
-            if outlvl > 0:
-                _log.info('{} states released.'.format(blk.name))
+        init_log.info_high("State Released.")
 
 
 @declare_process_block_class("IdealStateBlock",

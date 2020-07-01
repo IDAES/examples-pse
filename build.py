@@ -27,10 +27,9 @@ images sequentially.
 For HTML, a whole different kind of problem with the images is that
 the Sphinx builder will copy all the images from each subdirectory into a single
 "_images" directory in the HTML build area. This will break the image references,
-which are simple filenames for the current directory. The preprocessor goes through
-and replaces all <img> tags, with ".png" file source, with a path to the
-images directory. This has two corollaries: no two images anywhere in the tree
-should have the same name, and all images should be PNG format.
+which are simple filenames for the current directory. The Sphinx build step now
+copies anything that looks like an image file from the source directory to the
+HTML build directory.
 
 Finally, you can see that there is a "wrapper" file generated in ReStructuredText,
 i.e. for Sphinx, that uses a template file in `docs/jupyter_notebook_sphinx.tpl`.
@@ -47,15 +46,13 @@ the whole procedure would generate these files:
 
 Any images exported by running the notebook would also be in the directory.
 At any rate, this means that references to "the notebook" in the Sphinx documentation
-should be to the "_doc" version of the notebook, e.g. from the `tutorials/index.rst`
-table of contents::
-
-    Welcome tutorial (short) <Module_0_Welcome/Module_0_Welcome_Short_Solution_doc>
+should be to the "_doc" version of the notebook.
 
 The SphinxBuilder pretty much just runs Sphinx in HTML and PDF modes,
 dumping errors to, by default, "sphinx-errors.txt" as well as logging them.
-It doesn't do any other accommodations, as all the work of dealing what Sphinx wants
-to do by default is handled in the NotebookBuilder.
+As mentioned above, it copies images and also the raw notebooks (.ipynb) themselves
+into the appropriate HTML directory. This will make the notebooks render
+properly and also makes it easy to see the "source" of the notebook.
 
 For example command lines see the README.md in this directory.
 """
@@ -115,8 +112,10 @@ class SphinxCommandError(Exception):
         super().__init__(msg)
 
 
+# Images to copy to the build directory
 IMAGE_SUFFIXES = ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"
-DATA_SUFFIXES = ".csv", ".json"
+# These should catch all data files in the same directory as the notebook, needed for execution.
+DATA_SUFFIXES = ".csv", ".json", ".svg", ".xls", ".xlsx", ".txt", ".zip", ".pdf"
 CODE_SUFFIXES = (".py",)
 NOTEBOOK_SUFFIX = ".ipynb"
 TERM_WIDTH = 60  # for notification message underlines
@@ -273,6 +272,10 @@ class NotebookBuilder(Builder):
     .run_this_cell {
         padding-left: 0px;
         padding-right: 0px;
+    }
+    /* Hide section name (at top) */
+    div.section > h1 {
+        display: none;
     }
     """
 
@@ -445,12 +448,6 @@ class NotebookBuilder(Builder):
             if entry.is_dir():
                 # build sub-directory (filename is really directory name)
                 self._build_subtree(entry, outdir / filename, depth + 1)
-            elif entry.suffix in IMAGE_SUFFIXES and not self._test_mode:
-                os.makedirs(self._imgdir, exist_ok=True)
-                shutil.copy(str(entry), str(self._imgdir))
-                _log.debug(f"copied image {entry} to {self._imgdir}/")
-            elif entry.suffix in DATA_SUFFIXES or entry.suffix in CODE_SUFFIXES:
-                data_files.append(entry)
             elif entry.suffix == NOTEBOOK_SUFFIX:
                 _log.debug(f"found notebook at: {entry}")
                 # check against match expression
@@ -458,6 +455,14 @@ class NotebookBuilder(Builder):
                     _log.debug(f"Skip: {entry} does not match {self._match_expr}")
                 else:
                     notebooks_to_convert.append(entry)
+            else:  # these may all be true
+                if entry.suffix in IMAGE_SUFFIXES and not self._test_mode:
+                    os.makedirs(self._imgdir, exist_ok=True)
+                    shutil.copy(str(entry), str(self._imgdir))
+                    _log.debug(f"copied image {entry} to {self._imgdir}/")
+                # notebooks might try to open any of these files, sneaky as they are
+                if entry.suffix in DATA_SUFFIXES or entry.suffix in CODE_SUFFIXES or entry.suffix in IMAGE_SUFFIXES:
+                    data_files.append(entry)
 
         # convert notebooks last, allowing for discovery of all the data files
         if notebooks_to_convert:
@@ -467,6 +472,7 @@ class NotebookBuilder(Builder):
                     f"copy {len(data_files)} data file(s) into temp dir '{tmpdir}'"
                 )
                 for fp in data_files:
+                    # print(f"@@ copy {fp} -> {tmpdir}")
                     shutil.copy(fp, tmpdir)
             for entry in notebooks_to_convert:
                 if not self._test_mode:
@@ -494,6 +500,11 @@ class NotebookBuilder(Builder):
                         _log.warning(f"failed to convert {entry}: {err}")
                         continue
                     raise  # abort all processing
+                # remove failed marker, if there was one from a previous execution
+                failed_marker = self._get_failed_marker(entry, outdir)
+                if failed_marker:
+                    _log.info(f"Remove stale marker of failed execution: {failed_marker}")
+                    failed_marker.unlink()
                 # quick cleanup of contents of temporary dir
                 for f in tmpdir.iterdir():
                     if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
@@ -530,6 +541,13 @@ class NotebookBuilder(Builder):
         _log.debug(f"write failed marker '{marker}' for entry={entry} outdir={outdir}")
         marker.open("w").write("This file is a marker for avoiding re-runs of failed notebooks that haven't changed")
 
+    @staticmethod
+    def _get_failed_marker(entry, outdir) -> Path:
+        marker = outdir / (entry.stem + ".failed")
+        if marker.exists():
+            return marker
+        return None
+
     def _convert(self, tmpdir: Path, entry: Path, outdir: Path, depth: int):
         """Convert a notebook.
 
@@ -543,58 +561,46 @@ class NotebookBuilder(Builder):
         # strip special cells.
         if self._has_tagged_cells(entry, set(self._cell_tags.values())):
             _log.debug(f"notebook '{entry.name}' has test cell(s)")
-            entries = {}  # notebook suffix -> entry
-            for tags_to_strip, notebook_suffix in (
-                (["remove", "exercise"], "solution"),
-            ):
-                stripped_entry, _ = self._strip_tagged_cells(
-                    tmpdir, entry, tags_to_strip, "solution_testing", notebook_suffix
-                )
-                entries[notebook_suffix] = stripped_entry
-            notify(f"Stripped tags from: {entry.name}", 3)
+            orig_entry, entry = entry, self._strip_tagged_cells(
+                tmpdir, entry, ("remove", "exercise"), "testing")
+            notify(f"Stripped tags from: {orig_entry.name}", 3)
         else:
             # copy to temporary directory just to protect from output cruft
             tmp_entry = tmpdir / entry.name
             shutil.copy(entry, tmp_entry)
-            entries = {None: tmp_entry}
+            orig_entry, entry = entry, tmp_entry
 
-        # convert all tag-stripped versions of the notebook
-        for notebook_suffix, e in entries.items():  # notebooks to export
-            # before running, check if converted result is newer than source file
-            if self._already_converted(entry, e.stem, outdir):
-                notify(f"Skip notebook conversion, output is newer, for: {e.name}", 3)
-                self._results.cached.append(entry)
-                continue
-            notify(f"Running notebook: {e.name}", 3)
-            nb = self._parse_and_execute(e)
-            if test_mode:
-                continue  # don't do conversion in test mode
-            notify(f"Exporting notebook '{e.name}' to directory {outdir}", 3)
-            wrt = FilesWriter()
-            # export each notebook into multiple target formats
-            for (exp, postprocess_func, pp_args) in (
-                (RSTExporter(), self._postprocess_rst, ()),
-                (HTMLExporter(), self._postprocess_html, (depth,)),
-            ):
-                if _log.isEnabledFor(logging.DEBUG):
-                    sfx_name = (
-                        notebook_suffix
-                        if notebook_suffix is not None
-                        else "(no suffix)"
-                    )
-                    _log.debug(
-                        f"export '{e}' with {exp} to notebook with suffix {sfx_name}"
-                    )
-                (body, resources) = exp.from_notebook_node(nb)
-                body = postprocess_func(body, *pp_args)
-                wrt.build_directory = str(outdir)
-                wrt.write(body, resources, notebook_name=e.stem)
-                # create a 'wrapper' page
-                _log.debug(f"create wrapper page for '{e.name}' in '{outdir}'")
-                self._create_notebook_wrapper_page(e.stem, outdir)
+        # convert all tag-stripped versions of the notebook.
+        # before running, check if converted result is newer than source file
+        if self._already_converted(orig_entry, entry, outdir):
+            notify(f"Skip notebook conversion, output is newer, for: {entry.name}", 3)
+            self._results.cached.append(entry)
+            return
+        notify(f"Running notebook: {entry.name}", 3)
+        nb = self._parse_and_execute(entry)
+        if test_mode:  # don't do conversion in test mode
+            return
+        notify(f"Exporting notebook '{entry.name}' to directory {outdir}", 3)
+        wrt = FilesWriter()
+        # export each notebook into multiple target formats
+        created_wrapper = False
+        for (exp, postprocess_func, pp_args) in (
+            (RSTExporter(), self._postprocess_rst, ()),
+            (HTMLExporter(), self._postprocess_html, (depth,)),
+        ):
+            _log.debug(f"export '{orig_entry}' with {exp} to notebook '{entry}'")
+            (body, resources) = exp.from_notebook_node(nb)
+            body = postprocess_func(body, *pp_args)
+            wrt.build_directory = str(outdir)
+            wrt.write(body, resources, notebook_name=entry.stem)
+            # create a 'wrapper' page
+            if not created_wrapper:
+                _log.debug(f"create wrapper page for '{entry.name}' in '{outdir}'")
+                self._create_notebook_wrapper_page(entry.stem, outdir)
+                created_wrapper = True
             # move notebooks into docs directory
-            _log.debug(f"move notebook '{e} to output directory: {outdir}")
-            shutil.copy(e, outdir / e.name)
+            _log.debug(f"move notebook '{entry} to output directory: {outdir}")
+            shutil.copy(entry, outdir / entry.name)
 
     def _has_tagged_cells(self, entry: Path, tags: set) -> bool:
         """Quickly check whether this notebook has any cells with the given tag(s).
@@ -619,7 +625,7 @@ class NotebookBuilder(Builder):
         # no tagged cells
         return False
 
-    def _strip_tagged_cells(self, tmpdir, entry, tags, remove_suffix, add_suffix):
+    def _strip_tagged_cells(self, tmpdir, entry, tags, remove_name: str):
         """Strip specially tagged cells from a notebook.
 
         Copy notebook to a temporary location, and generate a stripped
@@ -629,9 +635,7 @@ class NotebookBuilder(Builder):
             tmpdir: directory to copy notebook into
             entry: original notebook
             tags: List of tags (strings) to strip
-            remove_suffix: Suffix to remove from the notebook (not including the .ipynb extension).
-                If the notebook doesn't end with this, then just leave it.
-            add_suffix: Suffix to add after removing the `remove_suffix`. If this is empty, do nothing.
+            remove_name: Remove this component from the name
 
         Returns:
             stripped-entry, original-entry - both in the temporary directory
@@ -651,15 +655,9 @@ class NotebookBuilder(Builder):
             config=self._nb_remove_config
         ).from_filename(str(tmp_entry))
         # Determine output notebook name:
-        # (1) remove existing suffix
-        nb_name = entry.stem
-        if nb_name.lower().endswith(remove_suffix):
-            nb_name = nb_name[: -len(remove_suffix)]
-            if nb_name.endswith("_"):
-                nb_name = nb_name[:-1]
-        # (2) add new suffix
-        if add_suffix:
-            nb_name += "_" + add_suffix
+        # remove suffixes, either "Capitalized" or "lowercase" version
+        nmc, nml = remove_name.capitalize(), remove_name.lower()
+        nb_name = re.sub(f'(_{nmc}|_{nml}|_{nmc}_|_{nml}_|{nmc}_|{nml}_)', '', entry.stem)
         # Create the new notebook
         wrt = nbconvert.writers.FilesWriter()
         wrt.build_directory = str(tmpdir)
@@ -667,7 +665,7 @@ class NotebookBuilder(Builder):
         wrt.write(body, resources, notebook_name=nb_name)
         # Return both notebook names, and temporary directory (for cleanup)
         stripped_entry = tmpdir / f"{nb_name}.ipynb"
-        return stripped_entry, tmp_entry
+        return stripped_entry
 
     def _parse_and_execute(self, entry):
 
@@ -692,7 +690,7 @@ class NotebookBuilder(Builder):
         """Generate a Sphinx documentation page for the Module.
         """
         # interpret some characters in filename differently for title
-        title = nb_file.replace("_", " ")
+        title = nb_file.replace("_", " ").title()
         title_under = "=" * len(title)
         # create document from template
         doc = self.s.get("Template").substitute(
@@ -704,30 +702,30 @@ class NotebookBuilder(Builder):
             _log.info(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
             f.write(doc)
 
-    def _already_converted(self, source_nb: Path, dest_nb_stem: str, outdir: Path) -> bool:
+    def _already_converted(self, orig: Path, dest: Path, outdir: Path) -> bool:
         """Check if a any of the output files are either missing or older than
         the input file ('entry').
 
         Returns:
             True if the output is newer than the input, otherwise False.
         """
-        source_time = source_nb.stat().st_mtime
+        source_time = orig.stat().st_mtime
 
         # First see if there is a 'failed' marker. If so,
         # compare timestamps: if marker is newer than file, it's converted
-        failed_file = outdir / (dest_nb_stem + ".failed")
+        failed_file = outdir / (orig.stem + ".failed")
         if failed_file.exists():
             failed_time = failed_file.stat().st_ctime
             ac = failed_time > source_time
             if ac:
-                notify(f"Notebook '{dest_nb_stem}.ipynb' unchanged since previous failed conversion", 3)
+                notify(f"Notebook '{orig.stem}.ipynb' unchanged since previous failed conversion", 3)
             return ac
 
         # Otherwise look at all the output files and see if any one of them is
         # older than the source file (in which case it's NOT converted)
         for fmt, ext in self.FORMATS.items():
-            output_file = outdir / f"{dest_nb_stem}{ext}"
-            _log.debug(f"checking if cached: {output_file} src={source_nb}")
+            output_file = outdir / f"{dest.stem}{ext}"
+            _log.debug(f"checking if cached: {output_file} src={orig}")
             if not output_file.exists():
                 return False
             if source_time >= output_file.stat().st_mtime:
@@ -768,7 +766,7 @@ class NotebookBuilder(Builder):
         return "".join(chars)
 
     def _postprocess_html(self, body, depth):
-        """Change path on `.png` image refs to point into HTML build dir.
+        """Change path on image refs to point into HTML build dir.
         """
         # create prefix for <img src='..'> attribute values, which is a relative path
         # to the (single) images directory, from within the HTML build tree
@@ -780,7 +778,9 @@ class NotebookBuilder(Builder):
         splits = re.split(r'<img src="(.*\.png"[^>]*)>', body)
         # replace grouping in odd-numbered splits with modified <img>
         for i in range(1, len(splits), 2):
+            orig = splits[i]
             splits[i] = f'<img src="{prefix}/{splits[i]}>'
+            # print(f"@@ depth={depth}; rewrote image link '{orig}' as '{splits[i]}'")
         # rejoin splits, to make the modified body text
         body = "".join(splits)
         # hack in some CSS, replacing useless link
@@ -822,6 +822,7 @@ class SphinxBuilder(Builder):
             self.root_path() / self.s.get("paths.output") / self.s.get("paths.html")
         )
         doc_dir = self.root_path() / self.s.get("paths.output")
+        src_dir = self.root_path() / self.s.get("paths.source")
 
         # Catch some problems that may cause an ugly stack trace from Sphinx
         if not doc_dir.exists():
@@ -834,13 +835,7 @@ class SphinxBuilder(Builder):
         if not os.path.exists(html_dir):
             _log.warning(f"Target HTML directory {html_dir} does not exist: creating")
             html_dir.mkdir(parents=True)
-        # copy images
-        notify(
-            f"Copying image files from '{self.s.get('paths.source')}' -> "
-            f"'{doc_dir}'",
-            1,
-        )
-        self._copy_aux(doc_dir, ["png", "jpg", "jpeg", "pdf"])
+
         # Run Sphinx command
         errfile = self.s.get("error_file")
         cmdargs = ["sphinx-build", "-a", "-w", errfile] + args
@@ -853,36 +848,23 @@ class SphinxBuilder(Builder):
             log_error = self._extract_sphinx_error(errfile)
             raise SphinxCommandError(cmdline, f"return code = {status}", log_error)
 
-        # copy notebooks from doc directory into html directory
+        # copy notebooks from doc & src directories into html directory
         notify(f"Copying notebooks from '{doc_dir}' -> '{html_dir}'", 1)
         for nb_dir in self.s.get("notebook.directories"):
             nb_output_dir = doc_dir / nb_dir["output"]
+            nb_source_dir = src_dir / nb_dir["source"]
             _log.debug(f"find notebooks in path: {nb_output_dir}")
             for nb_path in Path(nb_output_dir).glob("**/*.ipynb"):
                 nb_dest = html_dir / nb_path.relative_to(doc_dir)
-                notify(f"Copy notebook {nb_path} -> {nb_dest}", 2)
+                notify(f"Copy notebook {nb_path.name} -> {nb_dest.parent}", 2)
                 shutil.copy(nb_path, nb_dest)
-        # self._copy_aux(html_dir, ["ipynb"])
-
-    def _copy_aux(self, dest, ext_list):
-        """Copy auxiliary files in 'src' into a built directory.
-        """
-        root = self.root_path()
-        for nbdir in self.s.get("notebook.directories"):
-            source, output = nbdir["source"], nbdir["output"]
-            src_dir = root / self.s.get("paths.source") / source
-            files = []
-            for ext in ext_list:
-                files.extend(list(Path(src_dir).glob(f"**/*.{ext}")))
-            for aux_file in files:
-                if any((part.startswith(".") for part in aux_file.parts)):
-                    continue
-                copy_to = dest / output / aux_file.relative_to(src_dir)
-                _log.info(f"copy: {aux_file} -> {copy_to}")
-                try:
-                    shutil.copy(str(aux_file), str(copy_to))
-                except IOError as err:
-                    _log.warning(f"Copy failed: {err}")
+            _log.info(f"find supporting files in path: {nb_output_dir}")
+            for ext in IMAGE_SUFFIXES:
+                pattern = f"**/*{ext}"
+                for nb_path in Path(nb_source_dir).glob(pattern):
+                    nb_dest = html_dir / nb_path.relative_to(src_dir)
+                    notify(f"Copy supporting file {nb_path.name} -> {nb_dest.parent}", 3)
+                    shutil.copy(nb_path, nb_dest)
 
     @staticmethod
     def _extract_sphinx_error(errfile: str):
