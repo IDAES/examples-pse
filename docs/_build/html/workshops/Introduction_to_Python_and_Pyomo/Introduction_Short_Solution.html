@@ -1,0 +1,813 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Outline of Workshop &mdash; IDAES v1.6.0rc0 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="copyright" title="Copyright" href="../../copyright.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">IDAES Workshop Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">IDAES Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../surrogate_models/index.html">Surrogate Modeling Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../matopt/index.html">MatOpt Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../copyright.html">Copyright</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Outline of Workshop</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/workshops/Introduction_to_Python_and_Pyomo/Introduction_Short_Solution.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1><center><p>Welcome to the IDAES Workshop</p>
+</center></h1><p>Welcome and thank you for taking the time to attend today’s workshop.
+Today we will introduce you to the fundamentals of working with the
+IDAES process modeling toolset, and we will demonstrate how these tools
+can be applied for optimization applications.</p>
+<p>Today’s workshop will be conducted using Jupyter Notebooks which provide
+an online, interactive Python environment for you to use (without the
+need for installing anything).</p>
+<p>Before we get started on some actual examples, let’s make sure that
+everything is working correctly. The cell below contains a command to
+run a simple test script that will test that everything we will need for
+today is working properly.</p>
+<p>You can execute a cell by pressing <code class="docutils literal notranslate"><span class="pre">Shift+Enter</span></code>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">run</span> <span class="s2">&quot;notebook_test_script.py&quot;</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Pyomo Import Checks:        Passed
+IDAES Import Checks:        Passed
+Solver Availability Check:  Passed
+Simple Model Check:         Passed
+
+All Good!
+</pre></div>
+</div>
+<p>If everything worked properly, you should see a message saying
+<code class="docutils literal notranslate"><span class="pre">All</span> <span class="pre">good!</span></code> and a summary of all the checks that were run. If you
+don’t see this, please contact someone for assistance.</p>
+<div class="section" id="outline-of-workshop">
+<h1>Outline of Workshop<a class="headerlink" href="#outline-of-workshop" title="Permalink to this headline">¶</a></h1>
+<p>Today’s workshop is divided into four modules which will take you
+through the steps of setting up a flowsheet within the IDAES framework.</p>
+<p>Welcome Module (this one):</p>
+<ul class="simple">
+<li><p>Introduction to Jupyter notebooks and Python</p></li>
+<li><p>Introduction to Pyomo</p></li>
+</ul>
+<p>Module 1 will cover:</p>
+<ul class="simple">
+<li><p>how to import models from the core IDAES model library,</p></li>
+<li><p>how to create a model for a single unit operation,</p></li>
+<li><p>how to define feed and operating conditions,</p></li>
+<li><p>how to initialize and solve a single unit model,</p></li>
+<li><p>some ways we can manipulate the model and examine the results.</p></li>
+</ul>
+<p>Module 2 will demonstrate:</p>
+<ul class="simple">
+<li><p>how to combine unit models together to form flowsheets,</p></li>
+<li><p>tools to initialize and solve flowsheets with recycle loops,</p></li>
+<li><p>how to optimize process operating conditions to meet product
+specifications.</p></li>
+</ul>
+<p>Module 3 will demonstrate:</p>
+<ul class="simple">
+<li><p>how to build new unit models using the IDAES tools,</p></li>
+<li><p>how to include new unit models into flowsheets.</p></li>
+</ul>
+</div>
+<div class="section" id="introduction-to-jupyter-notebooks-and-python">
+<h1>Introduction to Jupyter Notebooks and Python<a class="headerlink" href="#introduction-to-jupyter-notebooks-and-python" title="Permalink to this headline">¶</a></h1>
+<p>In this short notebook, we will briefly describe the uses of Jupyter
+notebooks like this one, and provide you with the necessary background
+in Python for this workshop. We will cover <code class="docutils literal notranslate"><span class="pre">if</span></code> statements, looping,
+array-like containers called lists and dictionaries, as well as the use
+of some external packages for working with data.</p>
+<p>There are many additional tutorials online to learn more about the
+Python syntax. One recommended by the IDAES team is
+<a class="reference external" href="https://www.coursera.org/learn/python">https://www.coursera.org/learn/python</a>.</p>
+<p>In Python, variables do not need to be declared before they are used.
+You can simply define a new variable using <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">=</span> <span class="pre">5</span></code>.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: In the cell below, assign a value of 5 to the variable
+x. Don’t forget to type Shift+Enter to execute the line.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Todo: Assign a value of 5 to the variable x</span>
+<span class="n">x</span> <span class="o">=</span> <span class="mi">5</span>
+</pre></div>
+</div>
+<p>You can easily see the value of a variable using the built-in <code class="docutils literal notranslate"><span class="pre">print</span></code>
+function. For example, to print the value of <code class="docutils literal notranslate"><span class="pre">x</span></code> use <code class="docutils literal notranslate"><span class="pre">print(x)</span></code>.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Write the code to print the value of x. Don’t forget to
+hit Shift+Enter to execute the cell.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Todo: print the value of x</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">5</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Now change the value of the x variable to 8 and execute
+the cell.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Todo: Assign a value of 8 to the variable x</span>
+<span class="n">x</span> <span class="o">=</span> <span class="mi">8</span>
+</pre></div>
+</div>
+<div class="section" id="jupyter-notebooks-and-execution-order">
+<h2>Jupyter notebooks and execution order<a class="headerlink" href="#jupyter-notebooks-and-execution-order" title="Permalink to this headline">¶</a></h2>
+<div class="alert alert-block alert-warning"><p>Note: When using Jupyter notebooks, it is very important to know that
+the cells can be executed out of order (intentionally or not). The state
+of the environment (e.g., values of variables, imports, etc.) is defined
+by the execution order.</p>
+</div><div class="alert alert-block alert-info"><p>Inline Exercise: To see this concept, select the cell above that
+contained the print statement and execute the cell again using
+Shift+Enter.</p>
+</div><p>You should see that the value <code class="docutils literal notranslate"><span class="pre">8</span></code> is now printed. This may seem
+problematic if you are used to programming in environments where the
+state is linked to the order of the commands as <em>written</em>, not as
+<em>executed</em>.</p>
+<p><strong>Again, notice that the state of the environment is determined by the
+execution order.</strong></p>
+<p>Note also that the square brackets to the left of the cell show the
+order that cells were executed. If you scroll to the top, you should see
+that the code cells show an execution order of <code class="docutils literal notranslate"><span class="pre">[1]</span></code>, <code class="docutils literal notranslate"><span class="pre">[2]</span></code>,
+<code class="docutils literal notranslate"><span class="pre">[5]</span></code>, and <code class="docutils literal notranslate"><span class="pre">[4]</span></code>, indicating the actual execution order.</p>
+<p>There are some useful menu commands at the top of the Jupyter notebook
+to help with these problems and make sure you retain the execution order
+as expected.</p>
+<p>Some important commands to remember: * You can clear the current state
+with the menu item <code class="docutils literal notranslate"><span class="pre">Kernel</span> <span class="pre">|</span> <span class="pre">Restart</span> <span class="pre">&amp;</span> <span class="pre">Clear</span> <span class="pre">Output</span></code> * It is often
+useful to clear the state using the menu command just described, and
+then execute all the lines <strong>above the currently selected cell</strong> using
+<code class="docutils literal notranslate"><span class="pre">Cell</span> <span class="pre">|</span> <span class="pre">Run</span> <span class="pre">All</span> <span class="pre">Above</span></code>. * You can clear all the state and re-run the
+entire notebook using <code class="docutils literal notranslate"><span class="pre">Kernel</span> <span class="pre">|</span> <span class="pre">Restart</span> <span class="pre">&amp;</span> <span class="pre">Run</span> <span class="pre">All</span></code>.</p>
+<p>To show the use of these commands, complete the following.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise:</p>
+<ul><li><p>Clear the current state (using Kernel | Restart &amp; Clear Output). You
+should notice that the square brackets that listed the execution order
+are all now empty.</p>
+</li><li><p>Select the cell immediately below this text</p>
+<li><p>Re-run all the code up to this point (Cell | Run All Above). You should
+now see that the square brackets indicate the expected execution order.</p>
+</li><li><p>Print the value of x again using the print function. You should see the
+value 8 printed, while the earlier cell printing x shows the value of 5
+as expected.</p>
+</li></ul></div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">8</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="python-if-statements">
+<h2>Python <code class="docutils literal notranslate"><span class="pre">if</span></code> statements<a class="headerlink" href="#python-if-statements" title="Permalink to this headline">¶</a></h2>
+<p>In the code below, we show an example of an <code class="docutils literal notranslate"><span class="pre">if</span></code> statement in Python.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">temp</span> <span class="o">=</span> <span class="mi">325</span>
+<span class="c1"># some other code</span>
+<span class="k">if</span> <span class="n">temp</span> <span class="o">&gt;</span> <span class="mi">320</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;temperature is too high&#39;</span><span class="p">)</span>
+<span class="k">elif</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">290</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;temperature is too low&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;temperature is just right&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-warning"><p>Note: You will notice that there are no braces to separate blocks in the
+if-else tree. In Python, indentation is used to delineate blocks of code
+throughout Python (e.g., if statements, for loops, functions, etc.). The
+indentation in the above example is not only to improve legibility of
+the code. It is necessary for the code to run correctly. As well, the
+number of spaces required to define the indentation is arbitrary, but it
+must be consistent throughout the code. For example, we could use 3
+spaces (instead of the 4 used in the example above, but we could not use
+3 for one of the blocks and 4 for another).</p>
+</div><p>Using the syntax above for the <code class="docutils literal notranslate"><span class="pre">if</span></code> statement, write the following
+code.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise:</p>
+<ul><div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;li&gt;set the value of the variable T_degC to 20&lt;/li&gt;
+&lt;li&gt;convert this from degrees Celsius to degrees Fahrenheit (use variable name T_degF)&lt;/li&gt;
+&lt;li&gt;write an `if` statement that prints a  message if the degrees Fahrenheit are below 70&lt;/li&gt;
+</pre></div>
+</div>
+</ul></div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">T_degC</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="c1"># some other code</span>
+<span class="n">T_degF</span> <span class="o">=</span> <span class="p">(</span><span class="n">T_degC</span> <span class="o">*</span> <span class="mf">9.0</span><span class="o">/</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">32.0</span>
+
+<span class="c1"># Todo: put the if statement here</span>
+<span class="k">if</span> <span class="n">T_degF</span> <span class="o">&lt;</span> <span class="mi">70</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The room is too cold.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">room</span> <span class="ow">is</span> <span class="n">too</span> <span class="n">cold</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="python-list-containers">
+<h2>Python list containers<a class="headerlink" href="#python-list-containers" title="Permalink to this headline">¶</a></h2>
+<p>Now we will illustrate the use of lists in Python. Lists are similar to
+vectors or arrays in other languages. A list in Python is indexed by
+integers from 0 up to the length of the array minus 1. The list can
+contain standard types (int, float, string), or other objects.</p>
+<p>In the next inline exercise, we will create a list that contains the
+values from 0 to 50 by steps of 5 using a for loop. Note that the python
+function <code class="docutils literal notranslate"><span class="pre">range(n)</span></code> can be used to iterate from 0 to (n-1) in a for
+loop. Also note that lists have an <code class="docutils literal notranslate"><span class="pre">append</span></code> method which adds an entry
+to the end of the list (e.g., if the list <code class="docutils literal notranslate"><span class="pre">l</span></code> currently has 5
+elements, then <code class="docutils literal notranslate"><span class="pre">l.append('temp')</span></code> will add the string “temp” as the
+sixth element). Print the new list after the for loop. If this is done
+correctly, you should see:
+<code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">5,</span> <span class="pre">10,</span> <span class="pre">15,</span> <span class="pre">20,</span> <span class="pre">25,</span> <span class="pre">30,</span> <span class="pre">35,</span> <span class="pre">40,</span> <span class="pre">45,</span> <span class="pre">50]</span></code> printed after the cell.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Complete the code block below to create the desired
+list and print the result.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a list with the values 0 to 50 with steps of 5.</span>
+<span class="n">xlist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">11</span><span class="p">):</span>
+    <span class="c1"># Todo: use the append method of list to append the correct value</span>
+    <span class="n">xlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">xlist</span><span class="p">)</span> <span class="c1"># Todo: print the value of xlist to verify the results</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">50</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>You can easily check the length of a list using the python <code class="docutils literal notranslate"><span class="pre">len(l)</span></code>
+function.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Print the length of <code class="docutils literal notranslate"><span class="pre">xlist</span></code>. It should be 11.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xlist</span><span class="p">))</span> <span class="c1"># Todo: print the len of the list</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">11</span>
+</pre></div>
+</div>
+<p>If you have a list of values or objects, it is easy to iterate through
+that list in a for loop. In the next inline exercise, we will create
+another list, <code class="docutils literal notranslate"><span class="pre">ylist</span></code> where each of the values is equal to the
+corresponding value in <code class="docutils literal notranslate"><span class="pre">xlist</span></code> squared. That is, <span class="math notranslate nohighlight">\(y_i = x_i^2\)</span>.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Modify the code below to create ylist as described
+above. Print the values in ylist to check the result.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ylist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+<span class="c1"># Todo: define the for loop to add elements to ylist using the values in xlist</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">:</span>
+    <span class="n">ylist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">ylist</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">225</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">625</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">1225</span><span class="p">,</span> <span class="mi">1600</span><span class="p">,</span> <span class="mi">2025</span><span class="p">,</span> <span class="mi">2500</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="python-dictionary-containers">
+<h2>Python dictionary containers<a class="headerlink" href="#python-dictionary-containers" title="Permalink to this headline">¶</a></h2>
+<p>Another valuable data structure in Python are <em>dictionaries</em>.
+Dictionaries are an associative array; that is, a map from keys to
+values or objects. The keys can be <em>almost</em> anything, including floats,
+integers, and strings. The code below shows an example of creating a
+dictionary (here, to store the areas of some of the states).</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Execute the lines below to see the areas dictionary.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">areas</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="n">areas</span><span class="p">[</span><span class="s1">&#39;South Dakota&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">199742</span>
+<span class="n">areas</span><span class="p">[</span><span class="s1">&#39;Oklahoma&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">181035</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">areas</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;South Dakota&#39;</span><span class="p">:</span> <span class="mi">199742</span><span class="p">,</span> <span class="s1">&#39;Oklahoma&#39;</span><span class="p">:</span> <span class="mi">181035</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Dictionaries can contain mixed types (i.e., it is valid to add
+<code class="docutils literal notranslate"><span class="pre">areas['Texas']</span> <span class="pre">=</span> <span class="pre">'Really</span> <span class="pre">big!'</span></code>) but this may lead to unpredictable
+behavior if the different types are unexpected in other parts of the
+code.</p>
+<p>You can loop through dictionaries in different ways. For example,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">}</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="c1"># loop through the keys in the dictionary</span>
+    <span class="c1"># access the value with d[k]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;key=&#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="s1">&#39;value=&#39;</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+<span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+    <span class="c1"># loop through the values in the dictionary, ignoring the keys</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;value=&#39;</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="c1"># loop through the entries in the dictionary, retrieving both</span>
+    <span class="c1"># the key and the value</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;key=&#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="s1">&#39;value=&#39;</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: The areas listed above for the two states are in square
+kilometers. Modify the loop below to create a new dictionary that
+contains the areas in square miles. Print the new dictionary to verify
+the correct behavior. Note that 1 kilometer is equal to 0.62137 miles.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">areas_mi</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">state_name</span><span class="p">,</span> <span class="n">area</span> <span class="ow">in</span> <span class="n">areas</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="c1"># Todo: convert the area to sq. mi and assign to the areas_mi dict.</span>
+    <span class="n">areas_mi</span><span class="p">[</span><span class="n">state_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">area</span><span class="o">*</span><span class="p">(</span><span class="mf">0.62137</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">areas_mi</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;South Dakota&#39;</span><span class="p">:</span> <span class="mf">77120.5214053598</span><span class="p">,</span> <span class="s1">&#39;Oklahoma&#39;</span><span class="p">:</span> <span class="mf">69897.7360425915</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="matplotlib-for-generating-figures">
+<h2>Matplotlib for generating figures<a class="headerlink" href="#matplotlib-for-generating-figures" title="Permalink to this headline">¶</a></h2>
+<p>We will now briefly explore the use of the <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> package to
+generate figures. Before we do this, we will introduce some other
+helpful tools.</p>
+<p>Another effective way to create a list of evenly spaced numbers (e.g.,
+for plotting or other computation) is to use the <code class="docutils literal notranslate"><span class="pre">linspace</span></code> function
+from the <code class="docutils literal notranslate"><span class="pre">numpy</span></code> package (more information
+<a class="reference external" href="https://www.numpy.org/devdocs/">here</a>). Let’s import the <code class="docutils literal notranslate"><span class="pre">numpy</span></code>
+package and use linspace function to create a list of 15 evenly spaced
+intervals (that is, 16 points) from 0 to 50 and store this in <code class="docutils literal notranslate"><span class="pre">xlist</span></code>.
+We will also create the <code class="docutils literal notranslate"><span class="pre">ylist</span></code> that corresponds to the square of the
+values in <code class="docutils literal notranslate"><span class="pre">xlist</span></code>. Note, we must first import the <code class="docutils literal notranslate"><span class="pre">numpy</span></code> package.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Execute the next two cells to see the output.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">xlist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">50</span><span class="p">,</span><span class="mi">16</span><span class="p">))</span>
+<span class="n">ylist</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">xlist</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ylist</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">3.3333333333333335</span><span class="p">,</span> <span class="mf">6.666666666666667</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">13.333333333333334</span><span class="p">,</span> <span class="mf">16.666666666666668</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">23.333333333333336</span><span class="p">,</span> <span class="mf">26.666666666666668</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span> <span class="mf">33.333333333333336</span><span class="p">,</span> <span class="mf">36.66666666666667</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">,</span> <span class="mf">43.333333333333336</span><span class="p">,</span> <span class="mf">46.66666666666667</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">]</span>
+<span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">11.111111111111112</span><span class="p">,</span> <span class="mf">44.44444444444445</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">,</span> <span class="mf">177.7777777777778</span><span class="p">,</span> <span class="mf">277.7777777777778</span><span class="p">,</span> <span class="mf">400.0</span><span class="p">,</span> <span class="mf">544.4444444444446</span><span class="p">,</span> <span class="mf">711.1111111111112</span><span class="p">,</span> <span class="mf">900.0</span><span class="p">,</span> <span class="mf">1111.1111111111113</span><span class="p">,</span> <span class="mf">1344.4444444444448</span><span class="p">,</span> <span class="mf">1600.0</span><span class="p">,</span> <span class="mf">1877.777777777778</span><span class="p">,</span> <span class="mf">2177.7777777777783</span><span class="p">,</span> <span class="mf">2500.0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This printed output is not a very effective way to communicate these
+results. Let’s use matplotlib to create a figure of x versus y. A full
+treatment of the <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> package is beyond the scope of this
+tutorial, and further documentation can be found
+<a class="reference external" href="https://matplotlib.org/">here</a>. For now, we will import the plotting
+capability and show how to generate a straightforward figure. You can
+consult the documentation for matplotlib for further details.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Execute the next two cells to see the output.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xlist</span><span class="p">,</span> <span class="n">ylist</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Embedded x vs y figure&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;data&#39;</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_31_0.png" src="../../_images/output_31_0.png" />
+<p>Next, we will use what you have learned so far to create a plot of
+<code class="docutils literal notranslate"><span class="pre">sin(x)</span></code> for <code class="docutils literal notranslate"><span class="pre">x</span></code> from 0 to <span class="math notranslate nohighlight">\(2 \pi\)</span> with 100 points. Note, you
+can get the <code class="docutils literal notranslate"><span class="pre">sin</span></code> function and the value for <span class="math notranslate nohighlight">\(\pi\)</span> from the
+<code class="docutils literal notranslate"><span class="pre">math</span></code> package.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Execute the import statement in the next cell, and then
+complete the missing code in the following cell to create the figure
+discussed above.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+
+<span class="c1"># Todo: create the list for y</span>
+<span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">xv</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+    <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">xv</span><span class="p">))</span>
+
+<span class="c1"># Todo: Generate the figure</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Trig: sin function&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x in radians&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;sin(x)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_34_0.png" src="../../_images/output_34_0.png" />
+</div>
+<div class="section" id="further-information">
+<h2>Further Information<a class="headerlink" href="#further-information" title="Permalink to this headline">¶</a></h2>
+<p>Further information of the packages mentioned above can be found using
+the following links:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.numpy.org/devdocs/">numpy</a></p></li>
+<li><p><a class="reference external" href="https://matplotlib.org/">matplotlib</a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="introduction-to-pyomo">
+<h1>Introduction to Pyomo<a class="headerlink" href="#introduction-to-pyomo" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="www.pyomo.org">Pyomo</a> is an object-oriented, python-based package
+for equation-oriented (or <em>algebraic</em>) modeling and optimization, and
+the IDAES framework is built upon the Pyomo package. IDAES extends the
+Pyomo package and defines a class heirarchy for flowsheet based
+modeling, including definition of property packages, unit models, and
+flowsheets.</p>
+<p>The use of IDAES does not require extensive knowledge about Pyomo,
+however, it can be beneficial to have some familiarity with the Pyomo
+package for certain tasks: * IDAES models are open, and you can
+interrogating the underlying Pyomo model to view the variables,
+constraints, and objective functions defined in the model. * You can
+use Pyomo components to define your objective function or to create
+additional constraints. * Since IDAES models <strong>are</strong> Pyomo models, any
+advanced meta-algorithms or analysis tools that can be developed and/or
+used on a Pyomo model can also be used on an IDAES model.</p>
+<p>A full tutorial on Pyomo is beyond the scope of this workshop, however
+in this section we will briefly cover the commands required to specify
+an objective function or add a constraint to an existing model.</p>
+<p>In the next cell, we will create a Pyomo model, and add a couple of
+variables to that model. When using IDAES, you will define a flowsheet
+and the addition of variables and model equations will be handled by the
+IDAES framework.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Execute the following cell to create a Pyomo model with
+some variables that will be used later.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">Var</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">Var</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">Var</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The Pyomo syntax to define a scalar objective function is shown below.
+This defines the objective function as <span class="math notranslate nohighlight">\(x^2\)</span>. By default Pyomo
+models (and IDAES models) seek to <em>minimize</em> the objective function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To maximize a quantity, include the keyword argument <code class="docutils literal notranslate"><span class="pre">sense=maximize</span></code>
+as in the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">maximize</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">Objective</span></code> and <code class="docutils literal notranslate"><span class="pre">maximize</span></code> would need to be imported from
+<code class="docutils literal notranslate"><span class="pre">pyomo.environ</span></code>.</p>
+<p>The Pyomo syntax to define a scalar constraint is shown below. This code
+defines the equality constraint <span class="math notranslate nohighlight">\(x^2 + y^2 = 1\)</span>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">on_unit_circle_con</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Pyomo also supports inequalities. For example, the code for the
+inequality constraint <span class="math notranslate nohighlight">\(x^2 + y^2 \le 1\)</span> is given as the following.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">inside_unit_circle_con</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that, as before, we would need to include the appropriate imports.
+In this case <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> would need to be imported from
+<code class="docutils literal notranslate"><span class="pre">pyomo.environ</span></code>.</p>
+<p>Using the syntax shown above, we will now add the objective function:
+<span class="math notranslate nohighlight">\(\min x^2 + y^2\)</span> and the constraint <span class="math notranslate nohighlight">\(x + y = 1\)</span>.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Complete the missing code in the cell below. If this is
+done correctly, after executing the cell, you should see the log output
+from the solver and the printed solution should show that x, y, and the
+objective value are all equal to 0.5.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">SolverFactory</span>
+
+<span class="c1"># Todo: add the objective function here</span>
+<span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Todo: add the constraint here</span>
+<span class="n">model</span><span class="o">.</span><span class="n">con</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">y</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># now solve the problem</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># tee=True shows the solver log</span>
+
+<span class="c1"># print the values of x, y, and the objective function at the solution</span>
+<span class="c1"># Note that the results are automatically stored in the model variables</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;x =&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;y =&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;obj =&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:        2
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:        2
+
+Total number of variables............................:        2
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        0
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        1
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 1.00e+00 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  5.0000000e-01 0.00e+00 0.00e+00  -1.7 5.00e-01    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 1
+
+                                   (scaled)                 (unscaled)
+Objective...............:   5.0000000000000000e-01    5.0000000000000000e-01
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   0.0000000000000000e+00    0.0000000000000000e+00
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   0.0000000000000000e+00    0.0000000000000000e+00
+
+
+Number of objective function evaluations             = 2
+Number of objective gradient evaluations             = 2
+Number of equality constraint evaluations            = 2
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 2
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 1
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+x = 0.5
+y = 0.5
+obj = 0.5</pre>
+<p>Notice that the code above also imported the <code class="docutils literal notranslate"><span class="pre">value</span></code> function. This is
+a Pyomo function that should be used to retrieve the value of variables
+in Pyomo (or IDAES) models. Note that you can display the complete list
+of all variables, objectives, and constraints (with their expressions)
+using <code class="docutils literal notranslate"><span class="pre">model.pprint()</span></code>. The <code class="docutils literal notranslate"><span class="pre">display</span></code> method is similar to the
+<code class="docutils literal notranslate"><span class="pre">pprint</span></code> method except that is shows the <em>values</em> of the constraints
+and objectives instead of the underlying expressions. The <code class="docutils literal notranslate"><span class="pre">pprint</span></code> and
+<code class="docutils literal notranslate"><span class="pre">display</span></code> methods can also be used on individual components.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Execute the lines of code below to see the output from
+pprint and display for a Pyomo model.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check the solution</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">obj</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.5</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.5</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.5</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;*** Output from model.pprint():&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;*** Output from model.display():&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+<pre class="literal-block"><strong>* Output from model.pprint():
+2 Var Declarations
+    x : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :   0.5 :  None : False : False :  Reals
+    y : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :   0.5 :  None : False : False :  Reals
+
+1 Objective Declarations
+    obj : Size=1, Index=None, Active=True
+        Key  : Active : Sense    : Expression
+        None :   True : minimize : x**2 + y**2
+
+1 Constraint Declarations
+    con : Size=1, Index=None, Active=True
+        Key  : Lower : Body  : Upper : Active
+        None :   1.0 : x + y :   1.0 :   True
+
+4 Declarations: x y obj con
+
+*</strong> Output from model.display():
+Model unknown
+
+  Variables:
+    x : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :   0.5 :  None : False : False :  Reals
+    y : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :   0.5 :  None : False : False :  Reals
+
+  Objectives:
+    obj : Size=1, Index=None, Active=True
+        Key  : Active : Value
+        None :   True :   0.5
+
+  Constraints:
+    con : Size=1
+        Key  : Lower : Body : Upper
+        None :   1.0 :  1.0 :   1.0</pre>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        
+        &copy; <a href="../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>
