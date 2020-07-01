@@ -58,12 +58,13 @@ For example command lines see the README.md in this directory.
 """
 from abc import ABC, abstractmethod
 import argparse
+import json
 import logging
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
-import re
 from string import Template
 import sys
 import tempfile
@@ -882,18 +883,24 @@ class SphinxBuilder(Builder):
 
 
 class Cleaner(Builder):
-    """Clean up all the pre-generated files, mostly in the docs.
+    """Clean up all the pre-generated files.
     """
 
-    def build(self, options):
+    def build(self, options, source=False, docs=True):
         root = self.root_path()
         docs_path = root / self.s.get("paths.output")
+        src_path = root / self.s.get("paths.source")
         # clean in each path
-        did_remove = False
-        did_remove |= self._clean_html(docs_path / self.s.get("paths.html"))
-        did_remove |= self._clean_docs(docs_path)
-        if not did_remove:
-            notify("No files removed", 1)
+        did_remove, did_clean = False, False
+        if docs:
+            did_remove |= self._clean_html(docs_path / self.s.get("paths.html"))
+            did_remove |= self._clean_docs(docs_path)
+            if not did_remove:
+                notify("No files removed", 1)
+        if source:
+            did_clean |= self._clean_src(src_path)
+            if not did_clean:
+                notify("No source files were modified", 1)
 
     @staticmethod
     def _clean_html(html_path):
@@ -916,6 +923,41 @@ class Cleaner(Builder):
                         f.unlink()
                         removed_any = True
         return removed_any
+
+    def _clean_src(self, src_path):
+        """Clean Jupyter notebook sources.
+        """
+        notify(f"Removing output cells from Jupyter notebooks in {src_path}", 1)
+        total_num_modified = 0
+        for notebook_dirs in self.s.get("notebook.directories"):
+            nb_subdir = notebook_dirs["source"]
+            sourcedir = src_path / nb_subdir
+            num_mod = 0
+            for nb_path in sourcedir.glob("**/*.ipynb"):
+                # remove outputs in all cells
+                try:
+                    nb_dict = json.load(nb_path.open())
+                except Exception as err:
+                    _log.warning(f"Error loading & parsing Jupyter Notebook: {err}")
+                    continue
+                # Replace all outputs with empty lists
+                had_output = False
+                for cell in nb_dict["cells"]:
+                    if "outputs" in cell and len(cell["outputs"]) > 0:
+                        cell["outputs"] = []
+                        had_output = True
+                # If any outputs were changed, write back modified notebook
+                if had_output:
+                    with nb_path.open("w") as nb_file:
+                        json.dump(nb_dict, nb_file, indent=2)
+                    num_mod += 1
+            if num_mod == 0:
+                notify(f"No output cells found in {nb_subdir}", 2)
+            else:
+                notify(f"Removed output cells from {num_mod} Jupyter notebook(s) in {nb_subdir}", 2)
+                total_num_modified += num_mod
+        # return whether or not some were modified
+        return total_num_modified > 0
 
 
 class Color:
@@ -1025,7 +1067,8 @@ def main():
     ap.add_argument(
         "--usage", "-U", action="store_true", help="Print a more detailed usage message"
     )
-    ap.add_argument("--remove", "-r", action="store_true", help="Remove generated files")
+    ap.add_argument("--remove", "-r", action="store_true", help="Remove all generated files in docs")
+    ap.add_argument("--clean", "-S", action="store_true", help="Clean source directory")
     ap.add_argument("--docs", "-d", action="store_true", help="Build documentation")
     ap.add_argument(
         "--convert", "-c", action="store_true", help="Convert Jupyter notebooks",
@@ -1094,13 +1137,17 @@ def main():
     run_notebooks = args.convert
     build_docs = args.docs
     clean_files = args.remove
+    clean_src = args.clean
     test_mode = args.test_mode
 
     # Clean first, if requested
-    if clean_files:
-        notify("Clean all built files")
+    if clean_files or clean_src:
+        if clean_files:
+            notify("Clean all built files")
+        if clean_src:
+            notify("Clean source directory")
         cleaner = Cleaner(settings)
-        cleaner.build({})
+        cleaner.build({}, source=clean_src, docs=clean_files)
 
     status_code = 0  # start with success
 
