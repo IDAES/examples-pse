@@ -1,0 +1,408 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Custom Compressor Unit Model &mdash; IDAES v1.6.0rc1 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="copyright" title="Copyright" href="../../../copyright.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../workshops/index.html">IDAES Workshop Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">IDAES Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../surrogate_models/index.html">Surrogate Modeling Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../matopt/index.html">MatOpt Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../copyright.html">Copyright</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Custom Compressor Unit Model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/tutorials/advanced/custom_model_development/Custom_Compressor_Unit_Model.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="custom-compressor-unit-model">
+<h1>Custom Compressor Unit Model<a class="headerlink" href="#custom-compressor-unit-model" title="Permalink to this headline">¶</a></h1>
+<p>To demonstrate creation of a new unit model, we will create a
+constant-heat-capacity ideal-gas isentropic compressor. This will be a
+simple textbook model. We will utilize the mass and energy balances
+provided by IDAES control volumes, but we will write our own isentropic
+constraint based off of equations 7.18 and 7.23 from “Introduction to
+Chemical Engineering Thermodynamics” by J.M. Smith, H.C. Van Ness, and
+M.M. Abbott.</p>
+<p>The outlet temperature of an ideal gas undergoing isentropic compression
+is given by</p>
+<p>where <span class="math notranslate nohighlight">\(p\)</span> is pressure, <span class="math notranslate nohighlight">\(t\)</span> is temperature, and
+<span class="math notranslate nohighlight">\(\gamma\)</span> is the ratio of constant pressure heat capacity to
+constant volume heat capacity.</p>
+<p>We will begin with relevant imports. We will need</p>
+<ul class="simple">
+<li><p>Pyomo for writing our energy balance constraints</p></li>
+<li><p>ConfigBlocks for specifying options for our compressor</p></li>
+<li><p>ControlVolume0DBlocks for creating the appropriate state blocks for
+the inlet and outlet and for defining mas balances</p></li>
+<li><p>IdealParameterBlock which provides a simple ideal-gas property
+package.</p></li>
+<li><p>A few other helpful functions and enums from IDAES</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pe</span>
+<span class="kn">from</span> <span class="nn">pyomo.common.config</span> <span class="kn">import</span> <span class="n">ConfigBlock</span><span class="p">,</span> <span class="n">ConfigValue</span><span class="p">,</span> <span class="n">In</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ControlVolume0DBlock</span><span class="p">,</span>
+                        <span class="n">declare_process_block_class</span><span class="p">,</span>
+                        <span class="n">EnergyBalanceType</span><span class="p">,</span>
+                        <span class="n">MomentumBalanceType</span><span class="p">,</span>
+                        <span class="n">MaterialBalanceType</span><span class="p">,</span>
+                        <span class="n">UnitModelBlockData</span><span class="p">,</span>
+                        <span class="n">useDefault</span><span class="p">,</span>
+                        <span class="n">FlowsheetBlock</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.config</span> <span class="kn">import</span> <span class="n">is_physical_parameter_block</span>
+<span class="kn">from</span> <span class="nn">methanol_param_VLE</span> <span class="kn">import</span> <span class="n">PhysicalParameterBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.misc</span> <span class="kn">import</span> <span class="n">add_object_reference</span>
+</pre></div>
+</div>
+<p>Now, we can write a function to create a control volume for our
+compressor. The control volume will define the inlet and outlet streams
+along with the appropriate state variables (specified by the property
+package). We will also use the control volume to create mass and energy
+balance constraints.</p>
+<p>Our function will take the compressor unit model object, the name of the
+control volume, and configuration options as arguments. Our compressor
+will only support steady-state models, so we will first ensure that
+<code class="docutils literal notranslate"><span class="pre">dynamic</span></code> and <code class="docutils literal notranslate"><span class="pre">has_holdup</span></code> are both <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<p>Next, we will create a 0D control volume. We are using a 0D control
+volume because our model does not depend on space. We then</p>
+<ol class="arabic simple">
+<li><p>Attach the control volume to the compressor</p></li>
+<li><p>Create the appropriate state blocks with the control volume (for the
+inlet and outlet streams)</p></li>
+<li><p>Use the control volume to add mass balance constraints</p></li>
+<li><p>Use the control volume to add energy balance constraints</p></li>
+</ol>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_control_volume</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">dynamic</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;IdealGasIsentropcCompressor does not support dynamics&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_holdup</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;IdealGasIsentropcCompressor does not support holdup&#39;</span><span class="p">)</span>
+
+    <span class="n">control_volume</span> <span class="o">=</span> <span class="n">ControlVolume0DBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">property_package</span><span class="p">,</span>
+                                                   <span class="s2">&quot;property_package_args&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">property_package_args</span><span class="p">})</span>
+
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">control_volume</span><span class="p">)</span>
+
+    <span class="n">control_volume</span><span class="o">.</span><span class="n">add_state_blocks</span><span class="p">(</span><span class="n">has_phase_equilibrium</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">has_phase_equilibrium</span><span class="p">)</span>
+    <span class="n">control_volume</span><span class="o">.</span><span class="n">add_material_balances</span><span class="p">(</span><span class="n">balance_type</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">material_balance_type</span><span class="p">,</span>
+                                         <span class="n">has_phase_equilibrium</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">has_phase_equilibrium</span><span class="p">)</span>
+    <span class="n">control_volume</span><span class="o">.</span><span class="n">add_total_enthalpy_balances</span><span class="p">(</span><span class="n">has_heat_of_reaction</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                               <span class="n">has_heat_transfer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                               <span class="n">has_work_transfer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, we will write a function to add constraints to specify that the
+compressor is isentropic. 1. Create a <code class="docutils literal notranslate"><span class="pre">pressure_ratio</span></code> variable to
+represent <span class="math notranslate nohighlight">\(p_{out}/p_{in}\)</span>. The lower bound is <span class="math notranslate nohighlight">\(1\)</span>, because
+we only want to allow compression (and not expansion). 2. Create a
+<code class="docutils literal notranslate"><span class="pre">ConstraintList</span></code> to hold the constraints. 3. Add the
+<code class="docutils literal notranslate"><span class="pre">ConstraintList</span></code> to the compressor 4. Create the local variables
+<code class="docutils literal notranslate"><span class="pre">inlet</span></code> and <code class="docutils literal notranslate"><span class="pre">outlet</span></code> to reference the inlet and outlet state blocks.
+5. Add a constraint relating the inlet pressure, outlet pressure, and
+pressure ratio variables:</p>
+<ol class="arabic" start="6">
+<li><p>Add a constraint relating the inlet and outlet temperatures:</p>
+</li>
+</ol>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add_isentropic</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">pressure_ratio</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">cons</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">ConstraintList</span><span class="p">()</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">cons</span><span class="p">)</span>
+    <span class="n">inlet</span> <span class="o">=</span> <span class="n">unit</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>
+    <span class="n">outlet</span> <span class="o">=</span> <span class="n">unit</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>
+    <span class="n">gamma</span> <span class="o">=</span> <span class="n">inlet</span><span class="o">.</span><span class="n">_params</span><span class="o">.</span><span class="n">gamma</span>
+    <span class="n">cons</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">pressure_ratio</span> <span class="o">==</span> <span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">)</span>
+    <span class="n">cons</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span> <span class="o">==</span>
+             <span class="p">(</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span> <span class="o">+</span>
+              <span class="mi">1</span><span class="o">/</span><span class="n">config</span><span class="o">.</span><span class="n">compressor_efficiency</span> <span class="o">*</span>
+              <span class="p">(</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">pressure_ratio</span><span class="o">**</span><span class="p">((</span><span class="n">gamma</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">-</span>
+               <span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>We also need a function to specify configuration options for the
+compressor.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_compressor_config_block</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;material_balance_type&quot;</span><span class="p">,</span> <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">MaterialBalanceType</span><span class="o">.</span><span class="n">componentPhase</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">(</span><span class="n">MaterialBalanceType</span><span class="p">)))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;energy_balance_type&quot;</span><span class="p">,</span> <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">EnergyBalanceType</span><span class="o">.</span><span class="n">enthalpyTotal</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">([</span><span class="n">EnergyBalanceType</span><span class="o">.</span><span class="n">enthalpyTotal</span><span class="p">])))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;momentum_balance_type&quot;</span><span class="p">,</span> <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">MomentumBalanceType</span><span class="o">.</span><span class="n">none</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">([</span><span class="n">MomentumBalanceType</span><span class="o">.</span><span class="n">none</span><span class="p">])))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;has_phase_equilibrium&quot;</span><span class="p">,</span> <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">([</span><span class="kc">False</span><span class="p">])))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;has_pressure_change&quot;</span><span class="p">,</span> <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">([</span><span class="kc">False</span><span class="p">])))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;property_package&quot;</span><span class="p">,</span> <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">useDefault</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">is_physical_parameter_block</span><span class="p">))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;property_package_args&quot;</span><span class="p">,</span> <span class="n">ConfigBlock</span><span class="p">(</span><span class="n">implicit</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;compressor_efficiency&quot;</span><span class="p">,</span> <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Finally, we can define the ideal-gas isentropic compressor. To do so, we
+create a class called <code class="docutils literal notranslate"><span class="pre">IdealGasIsentropicCompressorData</span></code> and use the
+<code class="docutils literal notranslate"><span class="pre">declare_process_block_class</span></code> decorator. For now, just consider the
+decorator to be boiler-plate. We then need to define the config block
+and write the <code class="docutils literal notranslate"><span class="pre">build</span></code> method. The <code class="docutils literal notranslate"><span class="pre">build</span></code> method should alwasy call
+<code class="docutils literal notranslate"><span class="pre">super</span></code>. Next, we simply call the functions we wrote to build the
+control volume, energy balance, and electricity requirement performance
+equation. Finally, we need to call <code class="docutils literal notranslate"><span class="pre">self.add_inlet_port()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">self.add_outlet_port()</span></code>. These methods need to be called in order to
+create the ports which are used for connecting the unit to other units.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@declare_process_block_class</span><span class="p">(</span><span class="s2">&quot;IdealGasIsentropicCompressor&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">IdealGasIsentropicCompressorData</span><span class="p">(</span><span class="n">UnitModelBlockData</span><span class="p">):</span>
+    <span class="n">CONFIG</span> <span class="o">=</span> <span class="n">UnitModelBlockData</span><span class="o">.</span><span class="n">CONFIG</span><span class="p">()</span>
+    <span class="n">make_compressor_config_block</span><span class="p">(</span><span class="n">CONFIG</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">IdealGasIsentropicCompressorData</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+        <span class="n">make_control_volume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;control_volume&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">add_isentropic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;isentropic&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_inlet_port</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_outlet_port</span><span class="p">()</span>
+
+        <span class="n">add_object_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;work&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">work</span><span class="p">[</span><span class="mf">0.0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The compressor model is complete and can now be used like other IDAES
+unit models:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">props</span> <span class="o">=</span> <span class="n">PhysicalParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Cp&#39;</span><span class="p">:</span> <span class="mf">0.038056</span><span class="p">,</span> <span class="s1">&#39;valid_phase&#39;</span><span class="p">:</span> <span class="s1">&#39;Vap&#39;</span><span class="p">})</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span> <span class="o">=</span> <span class="n">IdealGasIsentropicCompressor</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">props</span><span class="p">,</span>
+                                                      <span class="s2">&quot;has_phase_equilibrium&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;CH3OH&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;CH4&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;H2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;CO&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.14</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">2.9315</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.56</span><span class="p">)</span>
+
+<span class="n">opt</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">opt</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;linear_solver&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;ma27&#39;</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;work: &#39;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">compressor</span><span class="o">.</span><span class="n">work</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39; MJ&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">10</span> <span class="mi">21</span><span class="p">:</span><span class="mi">55</span><span class="p">:</span><span class="mi">01</span> <span class="p">[</span><span class="n">WARNING</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">property_base</span><span class="p">:</span> <span class="n">DEPRECATED</span><span class="p">:</span> <span class="n">state_block_class</span> <span class="n">should</span> <span class="ow">not</span> <span class="n">be</span> <span class="nb">set</span> <span class="n">directly</span><span class="o">.</span> <span class="n">Property</span> <span class="n">package</span> <span class="n">developers</span> <span class="n">should</span> <span class="nb">set</span> <span class="n">the</span> <span class="n">_state_block_class</span> <span class="n">attribute</span> <span class="n">instead</span><span class="o">.</span>
+<span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">10</span> <span class="mi">21</span><span class="p">:</span><span class="mi">55</span><span class="p">:</span><span class="mi">01</span> <span class="p">[</span><span class="n">WARNING</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">property_base</span><span class="p">:</span> <span class="n">DEPRECATED</span><span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="n">appears</span> <span class="n">to</span> <span class="n">be</span> <span class="n">an</span> <span class="n">old</span><span class="o">-</span><span class="n">style</span> <span class="nb">property</span> <span class="n">package</span><span class="o">.</span> <span class="n">It</span> <span class="n">will</span> <span class="n">be</span> <span class="n">automatically</span> <span class="n">converted</span> <span class="n">to</span> <span class="n">a</span> <span class="n">new</span><span class="o">-</span><span class="n">style</span> <span class="n">package</span><span class="p">,</span> <span class="n">however</span> <span class="n">users</span> <span class="n">are</span> <span class="n">strongly</span> <span class="n">encouraged</span> <span class="n">to</span> <span class="n">convert</span> <span class="n">their</span> <span class="nb">property</span> <span class="n">packages</span> <span class="n">to</span> <span class="n">use</span> <span class="n">phase</span> <span class="ow">and</span> <span class="n">component</span> <span class="n">objects</span><span class="o">.</span>
+<span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">10</span> <span class="mi">21</span><span class="p">:</span><span class="mi">55</span><span class="p">:</span><span class="mi">01</span> <span class="p">[</span><span class="n">WARNING</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">property_base</span><span class="p">:</span> <span class="n">DEPRECATED</span><span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="n">appears</span> <span class="n">to</span> <span class="n">be</span> <span class="n">an</span> <span class="n">old</span><span class="o">-</span><span class="n">style</span> <span class="nb">property</span> <span class="n">package</span><span class="o">.</span> <span class="n">It</span> <span class="n">will</span> <span class="n">be</span> <span class="n">automatically</span> <span class="n">converted</span> <span class="n">to</span> <span class="n">a</span> <span class="n">new</span><span class="o">-</span><span class="n">style</span> <span class="n">package</span><span class="p">,</span> <span class="n">however</span> <span class="n">users</span> <span class="n">are</span> <span class="n">strongly</span> <span class="n">encouraged</span> <span class="n">to</span> <span class="n">convert</span> <span class="n">their</span> <span class="nb">property</span> <span class="n">packages</span> <span class="n">to</span> <span class="n">use</span> <span class="n">phase</span> <span class="ow">and</span> <span class="n">component</span> <span class="n">objects</span><span class="o">.</span>
+<span class="n">optimal</span>
+<span class="n">outlet</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span>
+    <span class="n">Key</span>  <span class="p">:</span> <span class="n">Name</span>           <span class="p">:</span> <span class="n">Value</span>
+    <span class="kc">None</span> <span class="p">:</span>       <span class="n">flow_mol</span> <span class="p">:</span> <span class="p">{</span><span class="mf">0.0</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
+         <span class="p">:</span> <span class="n">mole_frac_comp</span> <span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;CH3OH&#39;</span><span class="p">):</span> <span class="mf">0.25</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;CH4&#39;</span><span class="p">):</span> <span class="mf">0.25</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;CO&#39;</span><span class="p">):</span> <span class="mf">0.25</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;H2&#39;</span><span class="p">):</span> <span class="mf">0.25</span><span class="p">}</span>
+         <span class="p">:</span>       <span class="n">pressure</span> <span class="p">:</span> <span class="p">{</span><span class="mf">0.0</span><span class="p">:</span> <span class="mf">0.56</span><span class="p">}</span>
+         <span class="p">:</span>    <span class="n">temperature</span> <span class="p">:</span> <span class="p">{</span><span class="mf">0.0</span><span class="p">:</span> <span class="mf">4.314094393272423</span><span class="p">}</span>
+<span class="n">work</span><span class="p">:</span>  <span class="mf">5.26</span>  <span class="n">MJ</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        
+        &copy; <a href="../../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

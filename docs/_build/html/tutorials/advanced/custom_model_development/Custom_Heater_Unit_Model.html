@@ -1,0 +1,396 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Custom Heater Unit Model &mdash; IDAES v1.6.0rc1 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="copyright" title="Copyright" href="../../../copyright.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../workshops/index.html">IDAES Workshop Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">IDAES Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../surrogate_models/index.html">Surrogate Modeling Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../matopt/index.html">MatOpt Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../copyright.html">Copyright</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Custom Heater Unit Model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/tutorials/advanced/custom_model_development/Custom_Heater_Unit_Model.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="custom-heater-unit-model">
+<h1>Custom Heater Unit Model<a class="headerlink" href="#custom-heater-unit-model" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pe</span>
+<span class="kn">from</span> <span class="nn">pyomo.common.config</span> <span class="kn">import</span> <span class="n">ConfigBlock</span><span class="p">,</span> <span class="n">ConfigValue</span><span class="p">,</span> <span class="n">In</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ControlVolume0DBlock</span><span class="p">,</span>
+                        <span class="n">declare_process_block_class</span><span class="p">,</span>
+                        <span class="n">EnergyBalanceType</span><span class="p">,</span>
+                        <span class="n">MomentumBalanceType</span><span class="p">,</span>
+                        <span class="n">MaterialBalanceType</span><span class="p">,</span>
+                        <span class="n">UnitModelBlockData</span><span class="p">,</span>
+                        <span class="n">useDefault</span><span class="p">,</span>
+                        <span class="n">FlowsheetBlock</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.config</span> <span class="kn">import</span> <span class="n">is_physical_parameter_block</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.misc</span> <span class="kn">import</span> <span class="n">add_object_reference</span>
+<span class="kn">from</span> <span class="nn">methanol_param_VLE</span> <span class="kn">import</span> <span class="n">PhysicalParameterBlock</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_control_volume</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">dynamic</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;IdealGasIsentropcCompressor does not support dynamics&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_holdup</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;IdealGasIsentropcCompressor does not support holdup&#39;</span><span class="p">)</span>
+
+    <span class="n">control_volume</span> <span class="o">=</span> <span class="n">ControlVolume0DBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">property_package</span><span class="p">,</span>
+                                                   <span class="s2">&quot;property_package_args&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">property_package_args</span><span class="p">})</span>
+
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">control_volume</span><span class="p">)</span>
+
+    <span class="n">control_volume</span><span class="o">.</span><span class="n">add_state_blocks</span><span class="p">(</span><span class="n">has_phase_equilibrium</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">has_phase_equilibrium</span><span class="p">)</span>
+    <span class="n">control_volume</span><span class="o">.</span><span class="n">add_material_balances</span><span class="p">(</span><span class="n">balance_type</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">material_balance_type</span><span class="p">,</span>
+                                         <span class="n">has_phase_equilibrium</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">has_phase_equilibrium</span><span class="p">)</span>
+    <span class="n">control_volume</span><span class="o">.</span><span class="n">add_total_enthalpy_balances</span><span class="p">(</span><span class="n">has_heat_of_reaction</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                               <span class="n">has_heat_transfer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                               <span class="n">has_work_transfer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">control_volume</span><span class="o">.</span><span class="n">add_total_pressure_balances</span><span class="p">(</span><span class="n">has_pressure_change</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_config_block</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;material_balance_type&quot;</span><span class="p">,</span>
+        <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">MaterialBalanceType</span><span class="o">.</span><span class="n">componentPhase</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">(</span><span class="n">MaterialBalanceType</span><span class="p">)))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;energy_balance_type&quot;</span><span class="p">,</span>
+        <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">EnergyBalanceType</span><span class="o">.</span><span class="n">enthalpyTotal</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">([</span><span class="n">EnergyBalanceType</span><span class="o">.</span><span class="n">enthalpyTotal</span><span class="p">])))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;momentum_balance_type&quot;</span><span class="p">,</span>
+        <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">MomentumBalanceType</span><span class="o">.</span><span class="n">pressureTotal</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">([</span><span class="n">MomentumBalanceType</span><span class="o">.</span><span class="n">pressureTotal</span><span class="p">])))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;has_phase_equilibrium&quot;</span><span class="p">,</span>
+        <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">([</span><span class="kc">False</span><span class="p">])))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;has_pressure_change&quot;</span><span class="p">,</span>
+        <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">In</span><span class="p">([</span><span class="kc">False</span><span class="p">])))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;property_package&quot;</span><span class="p">,</span>
+        <span class="n">ConfigValue</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">useDefault</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">is_physical_parameter_block</span><span class="p">))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="s2">&quot;property_package_args&quot;</span><span class="p">,</span>
+        <span class="n">ConfigBlock</span><span class="p">(</span><span class="n">implicit</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@declare_process_block_class</span><span class="p">(</span><span class="s2">&quot;Heater&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">HeaterData</span><span class="p">(</span><span class="n">UnitModelBlockData</span><span class="p">):</span>
+    <span class="n">CONFIG</span> <span class="o">=</span> <span class="n">UnitModelBlockData</span><span class="o">.</span><span class="n">CONFIG</span><span class="p">()</span>
+    <span class="n">make_config_block</span><span class="p">(</span><span class="n">CONFIG</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HeaterData</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+        <span class="n">make_control_volume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;control_volume&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_inlet_port</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_outlet_port</span><span class="p">()</span>
+
+        <span class="n">add_object_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;heat&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">heat</span><span class="p">[</span><span class="mf">0.0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">props</span> <span class="o">=</span> <span class="n">PhysicalParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Cp&#39;</span><span class="p">:</span> <span class="mf">0.038056</span><span class="p">,</span> <span class="s1">&#39;valid_phase&#39;</span><span class="p">:</span> <span class="s1">&#39;Vap&#39;</span><span class="p">})</span>
+
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span> <span class="o">=</span> <span class="n">Heater</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">props</span><span class="p">,</span> <span class="s1">&#39;has_phase_equilibrium&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;CH3OH&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;CH4&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;H2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;CO&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">heat</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">opt</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span><span class="p">)</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+<pre class="literal-block">2020-07-10 21:54:59 [WARNING] idaes.core.property_base: DEPRECATED: state_block_class should not be set directly. Property package developers should set the _state_block_class attribute instead.
+2020-07-10 21:54:59 [WARNING] idaes.core.property_base: DEPRECATED: fs.properties appears to be an old-style property package. It will be automatically converted to a new-style package, however users are strongly encouraged to convert their property packages to use phase and component objects.
+2020-07-10 21:54:59 [WARNING] idaes.core.property_base: DEPRECATED: fs.properties appears to be an old-style property package. It will be automatically converted to a new-style package, however users are strongly encouraged to convert their property packages to use phase and component objects.
+Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       51
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       13
+
+Total number of variables............................:       17
+                     variables with only lower bounds:        5
+                variables with lower and upper bounds:       12
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       17
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 5.00e-01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 5.00e-06 5.26e+00  -1.0 2.63e+00    -  5.37e-01 1.00e+00h  1
+   2  0.0000000e+00 0.00e+00 2.22e+00  -1.7 1.31e+00    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 2
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   0.0000000000000000e+00    0.0000000000000000e+00
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   0.0000000000000000e+00    0.0000000000000000e+00
+
+
+Number of objective function evaluations             = 3
+Number of objective gradient evaluations             = 3
+Number of equality constraint evaluations            = 3
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 3
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 2
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+optimal
+outlet : Size=1
+    Key  : Name           : Value
+    None :       flow_mol : {0.0: 1.0}
+         : mole_frac_comp : {(0.0, 'CH3OH'): 0.25, (0.0, 'CH4'): 0.25, (0.0, 'CO'): 0.25, (0.0, 'H2'): 0.25}
+         :       pressure : {0.0: 0.1}
+         :    temperature : {0.0: 4.313853268866933}</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># For testing purposes</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">TerminationCondition</span><span class="p">,</span> <span class="n">value</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+
+<span class="k">assert</span> <span class="n">res</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">4.3138</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        
+        &copy; <a href="../../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>
