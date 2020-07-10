@@ -35,8 +35,8 @@ Examples presented at technical workshops.
     We demonstrate these tools by estimating the parameters associated with the NRTL property model for a
     benzene-toluene mixture. We demonstrate two different approaches to solving this problem:
 
-    - :doc:`Using the NRTL State Block <Parameter_Estimation/Parameter_estimation_NRTL_using_state_block_solution_testing_doc>`
-    - :doc:`Using unit models <Parameter_Estimation/Parameter_estimation_NRTL_using_unit_model_solution_testing_doc>`
+    - :doc:`Using the NRTL State Block <Parameter_Estimation/Parameter_estimation_NRTL_using_state_block_solution_doc>`
+    - :doc:`Using unit models <Parameter_Estimation/Parameter_estimation_NRTL_using_unit_model_solution_doc>`
 
 .. toctree::
     :hidden:
@@ -46,6 +46,6 @@ Examples presented at technical workshops.
     Introduction_to_Python_and_Pyomo/Introduction_Solution_doc
     Flash_Unit_Model/Flash_Unit_Solution_doc
     HDA_Flowsheet_Optimization/HDA_Flowsheet_Solution_doc
-    Parameter_Estimation/Parameter_estimation_NRTL_using_state_block_solution_testing_doc
-    Parameter_Estimation/Parameter_estimation_NRTL_using_unit_model_solution_testing_doc
+    Parameter_Estimation/Parameter_estimation_NRTL_using_state_block_solution_doc
+    Parameter_Estimation/Parameter_estimation_NRTL_using_unit_model_solution_doc
 
