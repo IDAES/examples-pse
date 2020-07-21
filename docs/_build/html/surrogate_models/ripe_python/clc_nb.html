@@ -1,0 +1,450 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>&lt;no title&gt; &mdash; IDAES v1.6.0 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="copyright" title="Copyright" href="../../copyright.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops/index.html">IDAES Workshop Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">IDAES Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Surrogate Modeling Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../matopt/index.html">MatOpt Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../copyright.html">Copyright</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>&lt;no title&gt;</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/surrogate_models/ripe_python/clc_nb.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <p>Example from:</p>
+<p>Wilson, Zachary T., and Nikolaos V. Sahinidis. “Automated learning of
+chemical reaction networks.” Computers &amp; Chemical Engineering 127
+(2019): 88-98. <a class="reference external" href="https://doi.org/10.1016/j.compchemeng.2019.05.020">https://doi.org/10.1016/j.compchemeng.2019.05.020</a></p>
+<p>Case 2: Dynamic Chemical Looping Combusion Reactor</p>
+<p>This is an example of a CLC reactor. The kinetic reaction rates
+encapsulate solid-gas reactions. The kinetic rate laws for this example
+are semi-physical or empirical to provide insights on the underlying
+physical mechanisms.</p>
+<p>The rate laws are often expressed in terms similar to</p>
+<p>$ <a href="#id1"><span class="problematic" id="id2">:raw-latex:`\frac{dX}{dT}`</span></a> = kA(X)g(F) $</p>
+<p>where $ A(X) $ is a mechanism-dependent activity term, and the function
+$ g(F) $ is a parametric function of processss conditions, typically in
+this case the partial pressure of methane used as a fuel.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports and data</span>
+
+<span class="kn">from</span> <span class="nn">idaes.surrogate</span> <span class="kn">import</span> <span class="n">ripe</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">idaes.surrogate.ripe</span> <span class="kn">import</span> <span class="n">mechs</span> <span class="k">as</span> <span class="n">mechs</span>
+
+
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># Import data from csv</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="s1">&#39;clc.csv&#39;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">xdata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="c1"># Stoichiometry</span>
+<span class="c1"># One species</span>
+<span class="n">stoich</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>We are going to use empirical pre-defined functions from RIPE, defined
+in the idaes.surrogate.ripe.mechs. The mechanisms depend on only one
+species for these pre-defined rate forms.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Rate
+Equat
+ion</p></th>
+<th class="head"><p>$
+A(x)
+$</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Rando
+m
+Nucle
+ation</p></td>
+<td><p>$ 1-x
+$</p></td>
+</tr>
+<tr class="row-odd"><td><p>Power
+law
+$n =
+2/3,
+1.5,
+2, 3,
+4 $</p></td>
+<td><p>$
+nx^{(
+n-1/n
+)}
+$</p></td>
+</tr>
+<tr class="row-even"><td><p>Avram
+i-Ero
+feev
+$ n =
+0.5,
+1.5,
+2, 3,
+4$</p></td>
+<td><p>$
+n(1-x
+)(-lo
+g(1-x
+))^{(
+n-1/n
+)}
+$</p></td>
+</tr>
+<tr class="row-odd"><td><p>Prout
+Tompk
+ins</p></td>
+<td><p>$
+x(x-1
+)
+$</p></td>
+</tr>
+<tr class="row-even"><td><p>Jande
+r</p></td>
+<td><p>$
+3(1-x
+)^{1/
+3}
+(1/(1
++x)^{
+((-1/
+3)-1)
+})
+$</p></td>
+</tr>
+<tr class="row-odd"><td><p>Antij
+ander</p></td>
+<td><p>$
+3/2(1
+-x):sup:
+<cite>{(2/
+3)}(1
+/(1+x
+)</cite>{
+((-1/
+3)-1)
+})
+$</p></td>
+</tr>
+<tr class="row-even"><td><p>Valen
+si</p></td>
+<td><p>$
+1/(-l
+og(1-
+x))
+$</p></td>
+</tr>
+<tr class="row-odd"><td><p>Parab
+olic</p></td>
+<td><p>$
+1/2x
+$</p></td>
+</tr>
+<tr class="row-even"><td><p>Ginst
+ling-
+Broun
+tstei
+n
+diffu
+sion-
+3d</p></td>
+<td><p>$
+(3/2)
+(1-x)
+:sup:
+<a href="#id3"><span class="problematic" id="id4">`</span></a>{(4/
+3)}/(
+(1-x)
+<a href="#id5"><span class="problematic" id="id6">`</span></a>{(
+-1/3)
+}-1)
+$</p></td>
+</tr>
+<tr class="row-odd"><td><p>Zhura
+lev-L
+eshok
+in-Te
+mpelm
+an</p></td>
+<td><p>$
+(3/2)
+/((1-
+x)^{(
+-1/3)
+}-1)
+$</p></td>
+</tr>
+<tr class="row-even"><td><p>Grain
+model</p></td>
+<td><p>$
+(1-x)
+^{(2/
+3)}
+$</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># User pre-defined clc rate forms found in RIPE</span>
+<span class="c1"># mechs = ripe.clcforms</span>
+<span class="n">clc_mechs</span> <span class="o">=</span> <span class="p">[</span><span class="n">mechs</span><span class="o">.</span><span class="n">randomnuc</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">powerlawp5</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">powerlaw2</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">powerlaw3</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">powerlaw4</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">avrami2</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">avrami3</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">avrami4</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">avrami5</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">ptompkins</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">jander</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">antijander</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">valensi</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">parabolic</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">gb3d</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">zlt</span><span class="p">,</span>
+             <span class="n">mechs</span><span class="o">.</span><span class="n">grain</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>All that is left is to run the ripe modeler:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Identify optimal kinetic mechanism</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">ripe</span><span class="o">.</span><span class="n">ripemodel</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span>
+                         <span class="n">stoichiometry</span><span class="o">=</span><span class="n">stoich</span><span class="p">,</span>
+                         <span class="n">mechanisms</span><span class="o">=</span><span class="n">clc_mechs</span><span class="p">,</span>
+                         <span class="n">time</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Calcuating</span> <span class="n">residual</span> <span class="n">variance</span> <span class="k">with</span> <span class="n">data</span> <span class="n">provided</span> <span class="k">with</span> <span class="n">cc</span> <span class="o">=</span> <span class="mi">1</span>
+   <span class="o">----</span> <span class="n">Calculating</span> <span class="n">null</span> <span class="n">values</span> <span class="k">for</span> <span class="n">model</span> <span class="n">selection</span> <span class="o">----</span>
+ <span class="o">-</span> <span class="n">Null</span> <span class="n">model</span> <span class="n">BIC</span> <span class="o">=</span> <span class="mf">1852.1442125511533</span>
+ <span class="o">-</span> <span class="n">Solving</span> <span class="n">RIPE</span> <span class="n">model</span> <span class="k">with</span> <span class="n">cardinality</span> <span class="n">constraint</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span>
+ <span class="o">-</span> <span class="mi">1</span><span class="o">-</span><span class="n">term</span> <span class="n">model</span> <span class="n">BIC</span> <span class="o">=</span> <span class="mf">35.49650756146648</span>
+  <span class="o">----</span>  <span class="n">RIPE</span> <span class="n">selected</span> <span class="mi">1</span> <span class="n">models</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">optimal</span> <span class="n">reaction</span> <span class="n">network</span>  <span class="o">----</span>
+ <span class="o">-+-</span>  <span class="n">Overall</span> <span class="n">R2</span> <span class="n">of</span> <span class="n">selected</span> <span class="n">model</span> <span class="p">:</span> <span class="mf">0.18192441981887375</span>
+ <span class="o">-</span> <span class="n">Stochiometry</span> <span class="n">selected</span> <span class="k">for</span> <span class="n">reaction</span> <span class="mi">1</span>
+         <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+   <span class="n">Mechanism</span> <span class="n">selected</span> <span class="k">for</span> <span class="n">reaction</span> <span class="mi">1</span>
+         <span class="o">&lt;</span><span class="n">function</span> <span class="n">antijander</span> <span class="n">at</span> <span class="mh">0x7f57b5e87290</span><span class="o">&gt;</span>
+   <span class="n">Kinetic</span> <span class="n">rate</span> <span class="n">constant</span> <span class="o">&amp;</span> <span class="mi">95</span><span class="o">%</span> <span class="n">confidence</span> <span class="n">interval</span>
+         <span class="mf">0.33776767685854847</span> <span class="o">+/-</span> <span class="mf">44.373722881991505</span>
+</pre></div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        
+        &copy; <a href="../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>
