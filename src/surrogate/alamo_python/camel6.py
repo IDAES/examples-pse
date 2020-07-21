@@ -51,8 +51,7 @@ def _main():
         multi2power=(1, 2),
         simulator=almsim,
         expandoutput=True,
-        maxiter=20,
-        cvfun=True,
+        savepyfcn = True
     )
     #    print res
     print("Model: {}".format(res["model"]))
