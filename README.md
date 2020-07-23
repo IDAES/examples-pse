@@ -7,6 +7,10 @@ some are Python scripts.
 The examples can be viewed online at 
 [this page](https://examples-pse.readthedocs.io/).
 
+*If you are a developer who wants to add a new example to this repository,
+please refer to the [README-developer.md](README-developer.md)
+in this directory for instructions.*
+
 ## Install
 
 First, you need to download and install the examples locally, on your own computer.
