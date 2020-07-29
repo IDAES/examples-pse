@@ -1,0 +1,1192 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Module 4a: Parameter Estimation Using Flash Unit Model &mdash; IDAES v1.7.0dev0 Examples</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="copyright" title="Copyright" href="../../copyright.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">IDAES Workshop Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">IDAES Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../surrogate_models/index.html">Surrogate Modeling Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../matopt/index.html">MatOpt Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../copyright.html">Copyright</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+      <li>Module 4a: Parameter Estimation Using Flash Unit Model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/workshops/Parameter_Estimation/Parameter_estimation_NRTL_using_state_block_DMF_solution.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-4a-parameter-estimation-using-flash-unit-model">
+<h1>Module 4a: Parameter Estimation Using Flash Unit Model<a class="headerlink" href="#module-4a-parameter-estimation-using-flash-unit-model" title="Permalink to this headline">¶</a></h1>
+<p>In this module, we will be using Pyomo’s <code class="docutils literal notranslate"><span class="pre">parmest</span></code> tool in conjuction
+with IDAES models for parameter estimation. We demonstrate these tools
+by estimating the parameters associated with the NRTL property model for
+a benzene-toluene mixture. The NRTL model has 2 sets of parameters: the
+non-randomness parameter (<code class="docutils literal notranslate"><span class="pre">alpha_ij</span></code>) and the binary interaction
+parameter (<code class="docutils literal notranslate"><span class="pre">tau_ij</span></code>), where <code class="docutils literal notranslate"><span class="pre">i</span></code> and <code class="docutils literal notranslate"><span class="pre">j</span></code> is the pure component
+species. In this example, we will be only estimate the binary
+interaction parameter (<code class="docutils literal notranslate"><span class="pre">tau_ij</span></code>) for a given dataset. When estimating
+parameters associated with the property package, IDAES provides the
+flexibility of doing the parameter estimation by just using the state
+block or by using a unit model with a specified property package. This
+module will demonstrate parameter estimation by using the flash unit
+model with the NRTL property package.</p>
+<p>We will complete the following tasks: * Set up a method to return an
+initialized model * Set up the parameter estimation problem using
+<code class="docutils literal notranslate"><span class="pre">parmest</span></code> * Analyze the results * Demonstrate advanced features from
+<code class="docutils literal notranslate"><span class="pre">parmest</span></code></p>
+</div>
+<div class="section" id="key-links-to-documentation">
+<h1>Key links to documentation:<a class="headerlink" href="#key-links-to-documentation" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p>NRTL Model -
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/property_models/activity_coefficient.html">https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/property_models/activity_coefficient.html</a></p></li>
+<li><p>parmest -
+<a class="reference external" href="https://pyomo.readthedocs.io/en/stable/contributed_packages/parmest/index.html">https://pyomo.readthedocs.io/en/stable/contributed_packages/parmest/index.html</a></p></li>
+</ul>
+<div class="alert alert-block alert-info"><p>Inline Exercise: import <code class="docutils literal notranslate"><span class="pre">ConcreteModel</span></code> from Pyomo, <code class="docutils literal notranslate"><span class="pre">FlowsheetBlock</span></code>
+and <code class="docutils literal notranslate"><span class="pre">Flash</span></code> from IDAES.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Todo: import ConcreteModel from pyomo.environ</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">value</span>
+
+<span class="c1"># Todo: import FlowsheetBlock from idaes.core</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+
+<span class="c1"># Todo: import Flash unit model from idaes.generic_models.unit_models</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.unit_models</span> <span class="kn">import</span> <span class="n">Flash</span>
+</pre></div>
+</div>
+<p>In the next cell, we will be importing the parameter block that we will
+be using in this module and the idaes logger.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.generic_models.properties.activity_coeff_models.</span>\
+    <span class="n">BTX_activity_coeff_VLE</span> <span class="kn">import</span> <span class="nn">BTXParameterBlock</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+</pre></div>
+</div>
+<p>In the next cell, we import <code class="docutils literal notranslate"><span class="pre">parmest</span></code> from Pyomo and the <code class="docutils literal notranslate"><span class="pre">pandas</span></code>
+package. We need <code class="docutils literal notranslate"><span class="pre">pandas</span></code> as <code class="docutils literal notranslate"><span class="pre">parmest</span></code> uses <code class="docutils literal notranslate"><span class="pre">pandas.dataframe</span></code> for
+handling the input data and the results.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyomo.contrib.parmest.parmest</span> <span class="k">as</span> <span class="nn">parmest</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="setting-up-an-initialized-model">
+<h1>Setting up an initialized model<a class="headerlink" href="#setting-up-an-initialized-model" title="Permalink to this headline">¶</a></h1>
+<p>We need to provide a method that returns an initialized model to the
+<code class="docutils literal notranslate"><span class="pre">parmest</span></code> tool in Pyomo.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Using what you have learned from previous modules, fill
+in the missing code below to return an initialized IDAES model.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">NRTL_model</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+
+    <span class="c1">#Todo: Create a ConcreteModel object</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+
+    <span class="c1">#Todo: Create FlowsheetBlock object</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+
+
+    <span class="c1">#Todo: Create a properties parameter object with the following options:</span>
+    <span class="c1"># &quot;valid_phase&quot;: (&#39;Liq&#39;, &#39;Vap&#39;)</span>
+    <span class="c1"># &quot;activity_coeff_model&quot;: &#39;NRTL&#39;</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">BTXParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;valid_phase&quot;</span><span class="p">:</span>
+                                                 <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;Vap&#39;</span><span class="p">),</span>
+                                                 <span class="s2">&quot;activity_coeff_model&quot;</span><span class="p">:</span>
+                                                 <span class="s1">&#39;NRTL&#39;</span><span class="p">})</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span> <span class="o">=</span> <span class="n">Flash</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">})</span>
+
+    <span class="c1"># Initialize at a certain inlet condition</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">368</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c1"># Set Flash unit specifications</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Fix NRTL specific variables</span>
+    <span class="c1"># alpha values (set at 0.3)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">alpha</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">alpha</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">alpha</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">alpha</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.3</span><span class="p">)</span>
+
+    <span class="c1"># initial tau values</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.1690</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1559</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the flash unit</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+
+    <span class="c1"># Fix at actual temperature</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">]))</span>
+
+    <span class="c1"># Set bounds on variables to be estimated</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="c1"># Return initialized flash model</span>
+    <span class="k">return</span> <span class="n">m</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parameter-estimation-using-parmest">
+<h1>Parameter estimation using parmest<a class="headerlink" href="#parameter-estimation-using-parmest" title="Permalink to this headline">¶</a></h1>
+<p>In addition to providing a method to return an initialized model, the
+<code class="docutils literal notranslate"><span class="pre">parmest</span></code> tool needs the following:</p>
+<ul class="simple">
+<li><p>List of variable names to be estimated</p></li>
+<li><p>Dataset with multiple scenarios</p></li>
+<li><p>Expression to compute the sum of squared errors</p></li>
+</ul>
+<p>In this example, we only estimate the binary interaction parameter
+(<code class="docutils literal notranslate"><span class="pre">tau_ij</span></code>). Given that this variable is usually indexed as
+<code class="docutils literal notranslate"><span class="pre">tau_ij</span> <span class="pre">=</span> <span class="pre">Var(component_list,</span> <span class="pre">component_list)</span></code>, there are 2*2=4
+degrees of freedom. However, when i=j, the binary interaction parameter
+is 0. Therefore, in this problem, we estimate the binary interaction
+parameter for the following variables only:</p>
+<ul class="simple">
+<li><p>fs.properties.tau[‘benzene’, ‘toluene’]</p></li>
+<li><p>fs.properties.tau[‘toluene’, ‘benzene’]</p></li>
+</ul>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Create a list called <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> with the
+above-mentioned variables declared as strings.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Todo: Create a list of vars to estimate</span>
+<span class="n">variable_name</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;fs.properties.tau[&#39;benzene&#39;, &#39;toluene&#39;]&quot;</span><span class="p">,</span>
+                 <span class="s2">&quot;fs.properties.tau[&#39;toluene&#39;, &#39;benzene&#39;]&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Pyomo’s <code class="docutils literal notranslate"><span class="pre">parmest</span></code> tool supports the following data formats: - pandas
+dataframe - list of dictionaries - list of json file names.</p>
+<p>Please see the documentation for more details.</p>
+<p>For this example, we load data from the csv file
+<code class="docutils literal notranslate"><span class="pre">BT_NRTL_dataset.csv</span></code>. The dataset consists of fifty data points which
+provide the mole fraction of benzene in the vapor and liquid phase as a
+function of temperature.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load all data from csv</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;BT_NRTL_dataset.csv&#39;</span><span class="p">)</span>
+
+<span class="c1"># Display the dataset</span>
+<span class="c1">#display(data)</span>
+
+<span class="c1"># Split the data set into two data sets</span>
+<span class="n">data_subset_1</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">24</span><span class="p">]</span>
+<span class="c1">#display(data_subset_1)</span>
+
+<span class="n">data_subset_2</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">25</span><span class="p">:</span><span class="mi">49</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="c1">#display(data_subset_2)</span>
+</pre></div>
+</div>
+<div class="section" id="set-up-dmf">
+<h2>Set up DMF<a class="headerlink" href="#set-up-dmf" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Perform imports</p></li>
+<li><p>Create a new workspace in a temporary directory under <code class="docutils literal notranslate"><span class="pre">~/.idaes</span></code>.
+You can modify this path if you need to.</p></li>
+<li><p>Set that workspace as the default to use for <code class="docutils literal notranslate"><span class="pre">%dmf</span></code> “magics” in
+this Jupyter Notebook</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># DMF imports</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">idaes.dmf</span> <span class="kn">import</span> <span class="n">DMF</span><span class="p">,</span> <span class="n">magics</span>
+<span class="kn">from</span> <span class="nn">idaes.dmf.resource</span> <span class="kn">import</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">PR_DERIVED</span><span class="p">,</span> <span class="n">create_relation_args</span>
+<span class="c1"># use or create idaes &quot;dotfile&quot; in home directory</span>
+<span class="n">wspath</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;~/.idaes&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">wspath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="n">wspath</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
+<span class="c1"># use/create a subdirectory as a DMF workspace for the workshop</span>
+<span class="n">wspath</span> <span class="o">=</span> <span class="n">wspath</span> <span class="o">/</span> <span class="s2">&quot;workshop_workspace&quot;</span>
+<span class="n">_dmf</span> <span class="o">=</span> <span class="n">DMF</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">wspath</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="ow">not</span> <span class="n">wspath</span><span class="o">.</span><span class="n">exists</span><span class="p">())</span>
+
+<span class="o">%</span><span class="k">dmf</span> init ~/.idaes/workshop_workspace
+</pre></div>
+</div>
+<p><em>Success!</em> Using workspace at
+“C:<a href="#id1"><span class="problematic" id="id2">:raw-latex:`\Users`</span></a><a href="#id3"><span class="problematic" id="id4">:raw-latex:`\dkgun`</span></a>/.idaes/workshop_workspace”</p>
+</div>
+<div class="section" id="show-contents-of-dmf-workspace">
+<h2>Show contents of DMF workspace<a class="headerlink" href="#show-contents-of-dmf-workspace" title="Permalink to this headline">¶</a></h2>
+<p>This shows what is currently in the DMF workspace. If you ran this
+notebook earlier with the same workspace location, you will see the DMF
+resources you created at that time. Otherwise it will be empty.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show current contents of DMF workspace</span>
+<span class="o">%</span><span class="k">dmf</span> list
+</pre></div>
+</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 22%" />
+<col style="width: 12%" />
+<col style="width: 26%" />
+<col style="width: 35%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>I
+D</p></th>
+<th class="head"><p>Name(s)</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Modified</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1
+5
+b
+3
+a
+2
+e
+9
+d
+8
+e
+e
+4
+6
+8
+a
+b
+4
+a
+7
+d
+9
+f
+4
+0
+7
+b
+1
+7
+9
+0
+0</p></td>
+<td><p>BT NRTL
+dataset</p></td>
+<td><p>data</p></td>
+<td><p>1594873599.7213
+72</p></td>
+<td><p>BT_NRTL_dataset.csv</p></td>
+</tr>
+<tr class="row-odd"><td><p>3
+5
+c
+b
+4
+a
+a
+f
+1
+f
+5
+a
+4
+6
+a
+b
+a
+1
+7
+4
+8
+d
+a
+f
+1
+4
+2
+4
+3
+a
+3
+c</p></td>
+<td><p>BT NRTL
+split1</p></td>
+<td><p>data</p></td>
+<td><p>1594873599.7368
+89</p></td>
+<td><p>BT_NRTL_dataset_split
+1.csv</p></td>
+</tr>
+<tr class="row-even"><td><p>3
+d
+e
+b
+e
+1
+4
+d
+6
+3
+a
+6
+4
+e
+7
+1
+8
+5
+3
+d
+2
+e
+1
+1
+9
+d
+a
+e
+e
+5
+5
+5</p></td>
+<td><p>BT NRTL
+split2</p></td>
+<td><p>data</p></td>
+<td><p>1594873599.7468
+88</p></td>
+<td><p>BT_NRTL_dataset_split
+2.csv</p></td>
+</tr>
+<tr class="row-odd"><td><p>f
+1
+b
+7
+d
+2
+5
+d
+7
+d
+8
+1
+4
+0
+e
+c
+b
+3
+b
+e
+5
+2
+f
+b
+5
+e
+c
+c
+2
+8
+6
+1</p></td>
+<td><p>BT NRTL est
+param1</p></td>
+<td><p>other</p></td>
+<td><p>1594873686.7431</p></td>
+<td><p>Solution for data
+subset 1</p></td>
+</tr>
+<tr class="row-even"><td><p>7
+5
+9
+3
+b
+7
+4
+8
+8
+6
+0
+d
+4
+b
+4
+0
+a
+6
+a
+b
+4
+f
+2
+b
+7
+c
+7
+3
+5
+8
+f
+d</p></td>
+<td><p>BT NRTL est
+param2</p></td>
+<td><p>other</p></td>
+<td><p>1594873686.7470
+82</p></td>
+<td><p>Solution for data
+subset 2</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">True</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Base dataset</span>
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;BT NRTL dataset&quot;</span>
+<span class="n">ds_base</span> <span class="o">=</span> <span class="n">_dmf</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">ds_base</span><span class="p">:</span>
+    <span class="n">ds_base</span> <span class="o">=</span> <span class="n">_dmf</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="s2">&quot;BT_NRTL_dataset.csv&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+<span class="c1"># Splits</span>
+<span class="n">ds_splits</span><span class="p">,</span> <span class="n">new_relations</span> <span class="o">=</span> <span class="p">[],</span> <span class="kc">False</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;BT NRTL split</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">data_subset_1</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">data_subset_2</span>
+    <span class="n">df_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;BT_NRTL_dataset_split</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.csv&#39;</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">df_file</span><span class="p">)</span>
+    <span class="n">dss</span> <span class="o">=</span> <span class="n">_dmf</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dss</span><span class="p">:</span>
+        <span class="n">dss</span> <span class="o">=</span> <span class="n">_dmf</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">df_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">create_relation_args</span><span class="p">(</span><span class="n">dss</span><span class="p">,</span> <span class="n">PR_DERIVED</span><span class="p">,</span> <span class="n">ds_base</span><span class="p">)</span>
+        <span class="n">new_relations</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">ds_splits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dss</span><span class="p">)</span>
+
+<span class="c1"># Update if relations were added</span>
+<span class="k">if</span> <span class="n">new_relations</span><span class="p">:</span>
+    <span class="n">_dmf</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">done</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="list-dmf-objects">
+<h2>List DMF objects<a class="headerlink" href="#list-dmf-objects" title="Permalink to this headline">¶</a></h2>
+<p>Check if the raw data and splits are recorded in the DMF. Note that if
+you ran this notebook earlier, the estimated parameters will also be
+listed. This is a feature, not a bug!</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">_dmf</span><span class="o">.</span><span class="n">resource_count</span>
+<span class="o">%</span><span class="k">dmf</span> list
+</pre></div>
+</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 22%" />
+<col style="width: 12%" />
+<col style="width: 26%" />
+<col style="width: 35%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>I
+D</p></th>
+<th class="head"><p>Name(s)</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Modified</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1
+5
+b
+3
+a
+2
+e
+9
+d
+8
+e
+e
+4
+6
+8
+a
+b
+4
+a
+7
+d
+9
+f
+4
+0
+7
+b
+1
+7
+9
+0
+0</p></td>
+<td><p>BT NRTL
+dataset</p></td>
+<td><p>data</p></td>
+<td><p>1594873599.7213
+72</p></td>
+<td><p>BT_NRTL_dataset.csv</p></td>
+</tr>
+<tr class="row-odd"><td><p>3
+5
+c
+b
+4
+a
+a
+f
+1
+f
+5
+a
+4
+6
+a
+b
+a
+1
+7
+4
+8
+d
+a
+f
+1
+4
+2
+4
+3
+a
+3
+c</p></td>
+<td><p>BT NRTL
+split1</p></td>
+<td><p>data</p></td>
+<td><p>1594873599.7368
+89</p></td>
+<td><p>BT_NRTL_dataset_split
+1.csv</p></td>
+</tr>
+<tr class="row-even"><td><p>3
+d
+e
+b
+e
+1
+4
+d
+6
+3
+a
+6
+4
+e
+7
+1
+8
+5
+3
+d
+2
+e
+1
+1
+9
+d
+a
+e
+e
+5
+5
+5</p></td>
+<td><p>BT NRTL
+split2</p></td>
+<td><p>data</p></td>
+<td><p>1594873599.7468
+88</p></td>
+<td><p>BT_NRTL_dataset_split
+2.csv</p></td>
+</tr>
+<tr class="row-odd"><td><p>f
+1
+b
+7
+d
+2
+5
+d
+7
+d
+8
+1
+4
+0
+e
+c
+b
+3
+b
+e
+5
+2
+f
+b
+5
+e
+c
+c
+2
+8
+6
+1</p></td>
+<td><p>BT NRTL est
+param1</p></td>
+<td><p>other</p></td>
+<td><p>1594873686.7431</p></td>
+<td><p>Solution for data
+subset 1</p></td>
+</tr>
+<tr class="row-even"><td><p>7
+5
+9
+3
+b
+7
+4
+8
+8
+6
+0
+d
+4
+b
+4
+0
+a
+6
+a
+b
+4
+f
+2
+b
+7
+c
+7
+3
+5
+8
+f
+d</p></td>
+<td><p>BT NRTL est
+param2</p></td>
+<td><p>other</p></td>
+<td><p>1594873686.7470
+82</p></td>
+<td><p>Solution for data
+subset 2</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">True</span>
+</pre></div>
+</div>
+<p>We need to provide a method to return an expression to compute the sum
+of squared errors that will be used as the objective in solving the
+parameter estimation problem. For this problem, the error will be
+computed for the mole fraction of benzene in the vapor and liquid phase
+between the model prediction and data.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Complete the following cell by adding an expression to
+compute the sum of square errors.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create method to return an expression that computes the sum of squared error</span>
+<span class="k">def</span> <span class="nf">SSE</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="c1"># Todo: Add expression for computing the sum of squared errors in mole fraction of benzene in the liquid</span>
+    <span class="c1"># and vapor phase. For example, the squared error for the vapor phase is:</span>
+    <span class="c1"># (float(data[&quot;vap_benzene&quot;]) - m.fs.flash.vap_outlet.mole_frac_comp[0, &quot;benzene&quot;])**2</span>
+    <span class="n">expr</span> <span class="o">=</span> <span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;vap_benzene&quot;</span><span class="p">])</span> <span class="o">-</span>
+             <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+            <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;liq_benzene&quot;</span><span class="p">])</span> <span class="o">-</span>
+             <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">expr</span><span class="o">*</span><span class="mf">1E4</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-warning"><p>Note: Notice that we have scaled the expression up by a factor of 10000
+as the SSE computed here will be an extremely small number given that we
+are using the difference in mole fraction in our expression. A
+well-scaled objective will help improve solve robustness when using
+IPOPT.</p>
+</div><p>We are now ready to set up the parameter estimation problem. We will
+create a parameter estimation object called <code class="docutils literal notranslate"><span class="pre">pest</span></code>. As shown below, we
+pass the method that returns an initialized model, dataset, list of
+variable names to estimate, and the SSE expression to the Estimator
+object. <code class="docutils literal notranslate"><span class="pre">tee=True</span></code> will print the solver output after solving the
+parameter estimation problem.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize a parameter estimation object for data subset 1</span>
+<span class="n">pest_data_subset_1</span> <span class="o">=</span> <span class="n">parmest</span><span class="o">.</span><span class="n">Estimator</span><span class="p">(</span><span class="n">NRTL_model</span><span class="p">,</span> <span class="n">data_subset_1</span><span class="p">,</span> <span class="n">variable_name</span><span class="p">,</span> <span class="n">SSE</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Initialize a parameter estimation object for data subset 2</span>
+<span class="n">pest_data_subset_2</span> <span class="o">=</span> <span class="n">parmest</span><span class="o">.</span><span class="n">Estimator</span><span class="p">(</span><span class="n">NRTL_model</span><span class="p">,</span> <span class="n">data_subset_2</span><span class="p">,</span> <span class="n">variable_name</span><span class="p">,</span> <span class="n">SSE</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Run parameter estimation using data subset 1</span>
+<span class="n">obj_value_1</span><span class="p">,</span> <span class="n">parameters_1</span> <span class="o">=</span> <span class="n">pest_data_subset_1</span><span class="o">.</span><span class="n">theta_est</span><span class="p">()</span>
+
+<span class="c1"># Run parameter estimation using data subset 2</span>
+<span class="n">obj_value_2</span><span class="p">,</span> <span class="n">parameters_2</span> <span class="o">=</span> <span class="n">pest_data_subset_2</span><span class="o">.</span><span class="n">theta_est</span><span class="p">()</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     5475
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     3000
+
+Total number of variables............................:     1477
+                     variables with only lower bounds:       75
+                variables with lower and upper bounds:      300
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:     1475
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  3.5426061e+01 4.44e+05 6.42e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  4.2720443e-02 1.12e+03 6.73e-01  -1.0 1.09e+04    -  9.90e-01 1.00e+00h  1
+   2  2.6570363e-03 3.11e+01 1.62e-02  -1.0 2.91e+02    -  9.90e-01 1.00e+00h  1
+   3  2.7282936e-03 8.14e+01 7.79e-04  -1.0 1.17e+00    -  1.00e+00 1.00e+00h  1
+   4  1.8813329e-03 5.86e-03 4.58e-04  -1.7 6.48e+00    -  1.00e+00 1.00e+00h  1
+   5  1.8343356e-03 1.10e+00 1.33e-04  -3.8 1.61e+00    -  1.00e+00 1.00e+00h  1
+   6  1.5590450e-03 1.64e+03 1.25e-02  -3.8 4.73e+00    -  1.00e+00 1.00e+00h  1
+   7  1.6739801e-03 4.24e+02 2.93e-03  -3.8 2.51e+00    -  1.00e+00 1.00e+00h  1
+   8  1.6483588e-03 3.19e+01 2.05e-02  -3.8 2.37e-01  -4.0 1.00e+00 1.00e+00h  1
+   9  1.5493448e-03 1.09e+02 3.42e-02  -3.8 2.31e+00    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  1.5252573e-03 5.77e-01 5.54e-05  -3.8 1.62e+00    -  1.00e+00 1.00e+00h  1
+  11  1.5256820e-03 9.79e-02 1.40e-06  -3.8 1.32e-01    -  1.00e+00 1.00e+00h  1
+  12  1.5249505e-03 4.03e-01 7.10e-06  -5.7 3.07e-01    -  1.00e+00 1.00e+00h  1
+  13  1.5249388e-03 3.37e-04 2.82e-09  -5.7 3.42e-03    -  1.00e+00 1.00e+00h  1
+  14  1.5249387e-03 5.63e-05 1.02e-09  -8.6 3.75e-03    -  1.00e+00 1.00e+00h  1
+  15  1.5249387e-03 1.49e-08 4.40e-14  -8.6 5.04e-07    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 15
+
+                                   (scaled)                 (unscaled)
+Objective...............:   1.5249387142682634e-03    1.5249387142682634e-03
+Dual infeasibility......:   4.3989813379080935e-14    4.3989813379080935e-14
+Constraint violation....:   1.4104644499482428e-11    1.4901161193847656e-08
+Complementarity.........:   2.5059035596800622e-09    2.5059035596800622e-09
+Overall NLP error.......:   2.5059035596800622e-09    1.4901161193847656e-08
+
+
+Number of objective function evaluations             = 16
+Number of objective gradient evaluations             = 16
+Number of equality constraint evaluations            = 16
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 16
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 15
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.029
+Total CPU secs in NLP function evaluations           =      0.027
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     5475
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     3000
+
+Total number of variables............................:     1477
+                     variables with only lower bounds:       75
+                variables with lower and upper bounds:      300
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:     1475
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  7.6288921e+01 5.63e+05 8.31e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  1.3734835e-01 1.79e+03 7.85e-01  -1.0 1.37e+04    -  9.82e-01 1.00e+00h  1
+   2  1.3721263e-01 1.79e+03 9.44e-01  -1.0 4.74e+02  -4.0 4.88e-01 1.18e-03h 10
+   3  1.3704308e-01 1.78e+03 1.11e+00  -1.0 4.73e+02  -3.6 9.90e-01 1.38e-03h 10
+   4  2.4267165e-03 3.62e+02 1.61e+00  -1.0 4.73e+02    -  1.00e+00 1.00e+00h  1
+   5  2.5973494e-03 2.11e+01 1.95e-03  -1.0 1.32e+00    -  1.00e+00 1.00e+00h  1
+   6  1.7859553e-03 1.68e-02 4.97e-04  -2.5 7.90e+00    -  1.00e+00 1.00e+00h  1
+   7  1.7850947e-03 2.82e-02 3.19e-06  -3.8 2.68e-01    -  1.00e+00 1.00e+00h  1
+   8  1.7843920e-03 6.72e+00 4.20e-05  -5.7 2.11e-01    -  1.00e+00 1.00e+00h  1
+   9  1.7841357e-03 9.01e+00 5.35e-05  -5.7 2.55e-01    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  1.7840877e-03 5.22e-01 2.79e-06  -5.7 4.41e-02    -  1.00e+00 1.00e+00h  1
+  11  1.7840844e-03 1.27e-06 6.90e-11  -5.7 7.76e-04    -  1.00e+00 1.00e+00h  1
+  12  1.7840842e-03 3.35e-03 2.09e-08  -8.6 5.71e-03    -  1.00e+00 1.00e+00h  1
+  13  1.7840842e-03 3.04e-08 2.24e-13  -8.6 2.82e-05    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 13
+
+                                   (scaled)                 (unscaled)
+Objective...............:   1.7840841987734508e-03    1.7840841987734508e-03
+Dual infeasibility......:   2.2377781051796664e-13    2.2377781051796664e-13
+Constraint violation....:   1.1236944121857032e-10    3.0413502827286720e-08
+Complementarity.........:   2.5059036700307325e-09    2.5059036700307325e-09
+Overall NLP error.......:   2.5059036700307325e-09    3.0413502827286720e-08
+
+
+Number of objective function evaluations             = 34
+Number of objective gradient evaluations             = 14
+Number of equality constraint evaluations            = 34
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 14
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 13
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.032
+Total CPU secs in NLP function evaluations           =      0.043
+
+EXIT: Optimal Solution Found.
+</pre>
+<p>You will notice that the resulting parameter estimation problem, when
+using the flash unit model, will have 2952 variables and 2950
+constraints. This is because the unit models in IDAES use control volume
+blocks which have two state blocks attached; one at the inlet and one at
+the outlet. Even though there are two state blocks, they still use the
+same parameter block i.e. <code class="docutils literal notranslate"><span class="pre">m.fs.properties</span></code> in our example which is
+where our parameters that need to be estimated exist.</p>
+<p>Let us display the results by running the next cell.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;----Using Data Subset 1----&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The SSE at the optimal solution is </span><span class="si">%0.6f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">obj_value_1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The values for the parameters are as follows:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">parameters_1</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;----Using Data Subset 2----&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The SSE at the optimal solution is </span><span class="si">%0.6f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">obj_value_2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The values for the parameters are as follows:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">parameters_2</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">----</span><span class="n">Using</span> <span class="n">Data</span> <span class="n">Subset</span> <span class="mi">1</span><span class="o">----</span>
+
+<span class="n">The</span> <span class="n">SSE</span> <span class="n">at</span> <span class="n">the</span> <span class="n">optimal</span> <span class="n">solution</span> <span class="ow">is</span> <span class="mf">0.001525</span>
+
+<span class="n">The</span> <span class="n">values</span> <span class="k">for</span> <span class="n">the</span> <span class="n">parameters</span> <span class="n">are</span> <span class="k">as</span> <span class="n">follows</span><span class="p">:</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">tau</span><span class="p">[(</span><span class="s1">&#39;benzene&#39;</span><span class="p">,</span> <span class="s1">&#39;toluene&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.3217100103610996</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">tau</span><span class="p">[(</span><span class="s1">&#39;toluene&#39;</span><span class="p">,</span> <span class="s1">&#39;benzene&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.28307944072207775</span>
+
+<span class="o">----</span><span class="n">Using</span> <span class="n">Data</span> <span class="n">Subset</span> <span class="mi">2</span><span class="o">----</span>
+
+<span class="n">The</span> <span class="n">SSE</span> <span class="n">at</span> <span class="n">the</span> <span class="n">optimal</span> <span class="n">solution</span> <span class="ow">is</span> <span class="mf">0.001784</span>
+
+<span class="n">The</span> <span class="n">values</span> <span class="k">for</span> <span class="n">the</span> <span class="n">parameters</span> <span class="n">are</span> <span class="k">as</span> <span class="n">follows</span><span class="p">:</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">tau</span><span class="p">[(</span><span class="s1">&#39;benzene&#39;</span><span class="p">,</span> <span class="s1">&#39;toluene&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.07397102640934188</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">tau</span><span class="p">[(</span><span class="s1">&#39;toluene&#39;</span><span class="p">,</span> <span class="s1">&#39;benzene&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.0645984121830132</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="save-parameters-in-dmf">
+<h2>Save parameters in DMF<a class="headerlink" href="#save-parameters-in-dmf" title="Permalink to this headline">¶</a></h2>
+<p>The estimated parameters will be saved in the DMF and a “relation” will
+be recorded that remembers which data split each set of estimated
+parameters came from. When we’re done the relations in the DMF will look
+like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>BT NRTL dataset
+    │
+    ├───◀─┤derived│ BT NRTL split2 ◀─┤derived│ BT NRTL est param2
+    │
+    └───◀─┤derived│ BT NRTL split1 ◀─┤derived│ BT NRTL est param1
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># save to DMF</span>
+<span class="c1"># create resources</span>
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;BT NRTL est param1&quot;</span>
+<span class="n">ds_s1</span> <span class="o">=</span> <span class="n">_dmf</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">ds_s1</span><span class="p">:</span>
+    <span class="n">ds_s1</span> <span class="o">=</span> <span class="n">_dmf</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Solution for data subset 1&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;SSE&#39;</span><span class="p">:</span> <span class="n">obj_value_1</span><span class="p">,</span> <span class="s1">&#39;parameters&#39;</span><span class="p">:</span>
+                                                                         <span class="p">{</span><span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;benzene,toluene&#39;</span><span class="p">:</span> <span class="n">parameters_1</span><span class="p">[</span><span class="s2">&quot;fs.properties.tau[(&#39;benzene&#39;, &#39;toluene&#39;)]&quot;</span><span class="p">],</span>
+                                                                                  <span class="s1">&#39;toluene,benzene&#39;</span><span class="p">:</span> <span class="n">parameters_1</span><span class="p">[</span><span class="s2">&quot;fs.properties.tau[(&#39;toluene&#39;, &#39;benzene&#39;)]&quot;</span><span class="p">]}}})</span>
+    <span class="n">create_relation_args</span><span class="p">(</span><span class="n">ds_s1</span><span class="p">,</span> <span class="n">PR_DERIVED</span><span class="p">,</span> <span class="n">ds_splits</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;BT NRTL est param2&quot;</span>
+<span class="n">ds_s2</span> <span class="o">=</span> <span class="n">_dmf</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">ds_s2</span><span class="p">:</span>
+    <span class="n">ds_s2</span> <span class="o">=</span> <span class="n">_dmf</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Solution for data subset 2&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;SSE&#39;</span><span class="p">:</span> <span class="n">obj_value_2</span><span class="p">,</span> <span class="s1">&#39;parameters&#39;</span><span class="p">:</span>
+                                                                         <span class="p">{</span><span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;benzene,toluene&#39;</span><span class="p">:</span> <span class="n">parameters_2</span><span class="p">[</span><span class="s2">&quot;fs.properties.tau[(&#39;benzene&#39;, &#39;toluene&#39;)]&quot;</span><span class="p">],</span>
+                                                                                  <span class="s1">&#39;toluene,benzene&#39;</span><span class="p">:</span> <span class="n">parameters_2</span><span class="p">[</span><span class="s2">&quot;fs.properties.tau[(&#39;toluene&#39;, &#39;benzene&#39;)]&quot;</span><span class="p">]}}})</span>
+
+    <span class="n">create_relation_args</span><span class="p">(</span><span class="n">ds_s2</span><span class="p">,</span> <span class="n">PR_DERIVED</span><span class="p">,</span> <span class="n">ds_splits</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="c1"># save relations (prints number of objects processed)</span>
+<span class="n">_dmf</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">5</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="done">
+<h1>Done<a class="headerlink" href="#done" title="Permalink to this headline">¶</a></h1>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; <a href="../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>
