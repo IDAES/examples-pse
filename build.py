@@ -538,9 +538,16 @@ class NotebookBuilder(Builder):
         """Put a marker into the output directory for the failed notebook, so we
         can tell whether we need to bother trying to re-run it later.
         """
+        if not outdir.exists():
+            _log.warning(f"Cannot write '{outdir}/{entry.stem}.failed': {outdir} does not exist ")
         marker = outdir / (entry.stem + ".failed")
         _log.debug(f"write failed marker '{marker}' for entry={entry} outdir={outdir}")
-        marker.open("w").write("This file is a marker for avoiding re-runs of failed notebooks that haven't changed")
+        try:
+            marker.open("w").write(
+                "This file is a marker for avoiding re-runs of failed notebooks that haven't changed")
+        except Exception as err:
+            _log.error(f"Error writing '{outdir}/{entry.stem}.failed': {err}")
+            # don't re raise; this is just a performance optimization anyways
 
     @staticmethod
     def _get_failed_marker(entry, outdir) -> Path:
