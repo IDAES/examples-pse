@@ -2,8 +2,9 @@
 Test notebooks
 """
 # stdlib
+import logging
 import os
-from pathlib import Path
+import subprocess
 import sys
 
 # third-party
@@ -17,31 +18,41 @@ import build
 
 
 @pytest.fixture(scope="module")
-def settings():
+def settings_ci():
     os.chdir(_root)
-    settings = build.Settings(open("build.yml", "r"))
+    return build.Settings(open("build-circleci.yml", "r"))
 
 
-@pytest.mark.integration
-def test_build_notebooks(settings):
+@pytest.mark.component
+def test_convert_some_notebooks(settings_ci):
+    build._log.setLevel(logging.INFO)  # otherwise DEBUG for some reason
     os.chdir(_root)
-    settings = build.Settings(open("build.yml", "r"))
-    nb = build.NotebookBuilder(settings)
-    res = nb.build(
-        {
-            "rebuild": True,
-            "continue_on_error": True,
-            "test_mode": True,
-            "error_file": "__stdout__",
-        }
-    )
-    assert res.n_success > 0  # something ran
-    assert res.n_fail == 0  # nothing failed
+    nb = build.NotebookBuilder(settings_ci)
+    nb.build({"rebuild": True})
+    total, num_failed = nb.report()
+    assert total > 0
+    assert num_failed == 0
 
 
 @pytest.mark.unit
 def test_parse_notebook(notebook):
-    """The parameter 'notebook' is parameterized in conftest.py, so that
+    """The parameter 'notebook' is parameterized in `conftest.py`, so that
     this test is called for every Jupyter notebook found under the "src/" dir.
     """
     nbformat.read(notebook, as_version=build.NotebookBuilder.JUPYTER_NB_VERSION)
+
+
+@pytest.mark.integration
+def test_run_all_notebooks():
+    os.chdir(_root)
+    # make sure we've cleaned up first
+    cmd = ["python", "build.py", "--remove"]
+    proc = subprocess.Popen(cmd)
+    proc.wait()
+    assert proc.returncode == 0
+    # now run
+    cmd = ["python", "build.py", "--test"]
+    proc = subprocess.Popen(cmd)
+    proc.wait()
+    assert proc.returncode == 0
+

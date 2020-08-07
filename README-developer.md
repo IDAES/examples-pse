@@ -1,60 +1,67 @@
 # IDAES Examples
 
-See the main README.md for user instructions.
+This information is for people creating or modifying the 
+content of this repo -- i.e. adding or modifying examples.
 
-## Developer information
+Please see the file [README.md](README.md), in this directory, if you are looking for instructions on running
+and using the examples.
 
-### Rebuild the documentation
+## Adding an example notebook
 
-To rebuild the docs, the easiest and most useful thing to do is  
-run in "_dev_" mode with no options:
+To add a new example, follow these instructions
 
-    ./build.py dev
+1. Put the notebook in an existing directory, or create a new one, under `src`. Use underscores in
+filenames instead of spaces or dashes, e.g. "my_new_notebook.ipynb" and NOT "my-new-notebook.ipynb"
+or "My New Notebook.ipynb". 
 
-This will re-run any notebooks that have changed since the last
-time, and generate versions of the notebooks needed for the
-documentation.
+2. If your notebook will be using tagged cells, please add (before the .ipynb extension)
+these suffixes:
 
-If you really don't want to re-run the notebooks, even ones that
-have changed since you last did this, then add the _--no-notebooks_
-option:
+   - for notebooks with "testing" cells, add "_testing"
+   - for notebooks with "exercise" / "solution" (and potentially testing) cells, use "_solution_testing"
 
-    # only build docs
-    ./build.py dev --no-notebooks
+3. Update the `build.yml` file, make sure your notebook will be found under one
+ of the notebook directories. Take note of the corresponding output directory in `docs`
 
-### Just test notebooks
+4. Add a corresponding entries in the `docs/<dir>/index.rst`, where "<dir>" is the
+output directory from `build.yml`. If this is a new directory, add the directory to the table of contents 
+in the `docs/index.rst` top-level index, and add some text there to describe the
+contents of the directory.
 
-If you want to test an individual notebook, you can of course
-just open it and run it in the Jupyter Notebook environment.
-You can also run the `nbconvert` tool from the command-line, which
-has an option to execute the notebook and "convert" it to a
-Jupyter notebook (which you can throw away or keep, as you wish).
+5. Test your new notebook by running `python build.py -cd` (see Build Script below) and seeing that it
+gets run and converted. *The first run may take a while, as it needs to execute
+the notebooks to create their output. After that, only modified notebooks will be re-run.*
 
-To test all the notebooks at once, you can use the "_test_" mode of the
-build script:
+6. Open the HTML documentation generated under
+`docs/_build/html` in yur browser and make sure the notebook is there and
+linked properly. You can also run the test suite with `pytest`, though this
+should usually be unaffected.
 
-    ./build.py test
+7. If you have any Python scripts included, write tests for them and put that
+under the `tests` directory.
 
-This will execute all the notebooks, but not modify anything under the
-`docs` directory.
+8. Add the notebook, supporting scripts, tests, and images in `src`, and the `index.rst` files
+that you added/changed in `docs`, to Git. Commit and push your result into a 
+pull request to this repo. Make sure tests pass on CircleCI.
 
-### Build for a release
+## Build Script
 
-If you are releasing the code, first you must be on a branch
-that starts with the word "release". This is to avoid accidentally
-doing release actions in a local developer checkout. The release
-build will, in addition to running notebooks and generating
-documentation, remove any "test" cells in the notebooks in the `src`
-directory, adding a notebook with a suffix "_test.ipynb" for every
-notebook that had any test cells in it. The reason for doing this is
-to make the notebook with the shorter name test-free for the user.
-The release mode may also do some miscellaneous cleanup. Like the other  
-build commands, it will create a bunch of generated docs.  
-To run the release-mode:
+The documentation is built by running the `build.py` script in this directory.
+This script uses the `build.yml` file as its configuration file. You can specify an
+alternate configuration file for testing, etc.
 
-    ./build.py release
+Run `python build.py --help` to see basic help information and `python build.py --usage`
+to see a more detailed explanation of usage.
 
-When actually doing a release, you should rebuild the "release"
-branch of the _examples-dev_ repository, tag and push it, and then
-use this branch to populate the master branch of the _examples-pse_ 
-repository.
+If you add new directories with Jupyter notebooks, you will need to let the
+script know about them by adding the directories (and the desired target directory
+for the rendered documentation) to the `build.yml` file in this directory.
+The comments in that file should explain how to add the new information.
+
+You can run the `build.py` script in testing mode (see `-h` option for details) in order
+to test the notebooks.
+
+A more limited set of notebooks to examine is configured in the
+`build-circleci.yml` file, which you can pass to the `--config` option of the build
+script. This will emulate how the code is tested on CircleCI during a pull request.
+
