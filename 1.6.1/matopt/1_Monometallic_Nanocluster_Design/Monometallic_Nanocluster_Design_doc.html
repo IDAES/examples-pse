@@ -1,15 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Monometallic Nanocluster Design &mdash; IDAES v1.7.0dev0 Examples</title>
+  <title>Monometallic Nanocluster Design &mdash; IDAES v1.6.1 Examples</title>
   
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
 
   
   
@@ -17,7 +20,9 @@
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -30,10 +35,6 @@
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="copyright" title="Copyright" href="../../copyright.html" />
@@ -56,7 +57,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
           
 
           
@@ -79,6 +80,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -105,6 +107,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -143,7 +146,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../index.html">MatOpt Examples</a> &raquo;</li>
         
@@ -13778,83 +13781,44 @@ optimize(self, func, sense, nSolns=1, tee=True, disp=1, keepfiles=False, tilim=3
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
-
 Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-
   with Simplex, Mixed Integer &amp; Barrier Optimizers
-
 5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-
 Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
 
-
-
 Type &#39;help&#39; for a list of available commands.
-
 Type &#39;help&#39; followed by a command name for more
-
 information on commands.
 
-
-
 CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
-
-Logfile &#39;C:\Users\dkgun\AppData\Local\Temp\tmpakk5lw79.cplex.log&#39; open.
-
+Logfile &#39;/tmp/tmpknbnk33r.cplex.log&#39; open.
 CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
-
 CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
-
 CPLEX&gt; New value for time limit in seconds: 100
-
-CPLEX&gt; Problem &#39;C:\Users\dkgun\AppData\Local\Temp\tmphdgmgqi5.pyomo.lp&#39; read.
-
-Read time = 0.02 sec. (0.28 ticks)
-
-CPLEX&gt; Problem name         : C:\Users\dkgun\AppData\Local\Temp\tmphdgmgqi5.pyomo.lp
-
+CPLEX&gt; Problem &#39;/tmp/tmp39sy9c3i.pyomo.lp&#39; read.
+Read time = 0.01 sec. (0.28 ticks)
+CPLEX&gt; Problem name         : /tmp/tmp39sy9c3i.pyomo.lp
 Objective sense      : Maximize
-
 Variables            :    1920  [Nneg: 1,  Fix: 1,  Box: 55,  Free: 661,
-
                                  Binary: 1147,  General Integer: 55]
-
 Objective nonzeros   :       1
-
 Linear constraints   :    2839  [Less: 2561,  Greater: 55,  Equal: 223]
-
   Nonzeros           :    8904
-
   RHS nonzeros       :     488
 
-
-
-Variables            : Min LB: 0.0000000        Max UB: 22.00000       
-
+Variables            : Min LB: 0.000000         Max UB: 22.00000       
 Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
-
 Linear constraints   :
-
   Nonzeros           : Min   : 0.01312160       Max   : 12.00000       
-
   RHS nonzeros       : Min   : 1.000000         Max   : 1.000000       
-
 CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
 
-
-
 Error termination, CPLEX Error  1016.
-
 Solution time =    0.00 sec.
-
 Deterministic time = 0.00 ticks  (0.00 ticks/sec)
 
-
-
 CPLEX&gt; CPLEX Error  1217: No solution exists.
-
 No file written.
-
 CPLEX&gt; ERROR: evaluating object as numeric value: obj
         (object: &lt;class &#39;pyomo.core.base.objective.SimpleObjective&#39;&gt;)
     No value for uninitialized NumericValue object obj
@@ -13920,11 +13884,20 @@ We provide interfaces to several standard crystal structure file formats, includ
 
   <div role="contentinfo">
     <p>
+        
+        
         &copy; <a href="../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -13935,7 +13908,6 @@ We provide interfaces to several standard crystal structure file formats, includ
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

@@ -1,15 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Data Reconciliation for a Single Unit - Economizer &mdash; IDAES v1.7.0dev0 Examples</title>
+  <title>Data Reconciliation for a Single Unit - Economizer &mdash; IDAES v1.6.1 Examples</title>
   
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
 
   
   
@@ -17,7 +20,9 @@
   
 
   
-  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
@@ -30,10 +35,6 @@
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <link rel="copyright" title="Copyright" href="../../../copyright.html" />
@@ -54,7 +55,7 @@
           
 
           
-            <a href="../../../index.html" class="icon icon-home"> IDAES Examples
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
           
 
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -96,6 +98,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -134,7 +137,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Data Reconciliation for a Single Unit - Economizer</li>
     
@@ -379,8 +382,8 @@ reconciliation can be deactivated.</p>
 <span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">17</span> <span class="mi">16</span><span class="p">:</span><span class="mi">24</span><span class="p">:</span><span class="mi">23</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">side_1</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
-<span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">17</span> <span class="mi">16</span><span class="p">:</span><span class="mi">24</span><span class="p">:</span><span class="mi">23</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">side_2</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2020</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">07</span> <span class="mi">15</span><span class="p">:</span><span class="mi">18</span><span class="p">:</span><span class="mi">20</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">side_1</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2020</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">07</span> <span class="mi">15</span><span class="p">:</span><span class="mi">18</span><span class="p">:</span><span class="mi">20</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">side_2</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
 </pre></div>
 </div>
 </div>
@@ -611,256 +614,256 @@ to compare the original measurements to the reconciled results.</p>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> -- </span><span class="si">{</span><span class="n">tc</span><span class="si">}</span><span class="s2">, objective: </span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">objective</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.1622013606258323</span>
-<span class="mi">1</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8197916348691271</span>
-<span class="mi">2</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.4704841795759487</span>
-<span class="mi">3</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.1898903619192303</span>
-<span class="mi">4</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.266902064585197</span>
-<span class="mi">5</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.353798975733188</span>
-<span class="mi">6</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.523236233470275</span>
-<span class="mi">7</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0234347889956799</span>
-<span class="mi">8</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6923646000307904</span>
-<span class="mi">9</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.200181602792017</span>
-<span class="mi">10</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.025678883244299</span>
-<span class="mi">11</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.3755282573108119</span>
-<span class="mi">12</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.8040411950227633</span>
-<span class="mi">13</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0820452722033682</span>
-<span class="mi">14</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.872550834678523</span>
-<span class="mi">15</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.6794314017712395</span>
-<span class="mi">16</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5285462489987105</span>
-<span class="mi">17</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.4190566068992694</span>
-<span class="mi">18</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.6733248046041042</span>
-<span class="mi">19</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.319117422958565</span>
-<span class="mi">20</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5911263697631206</span>
-<span class="mi">21</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.7284969800023046</span>
-<span class="mi">22</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.0960880080306734</span>
-<span class="mi">23</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.046882712392648</span>
-<span class="mi">24</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">9.434438819029108</span>
-<span class="mi">25</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.908666060555752</span>
-<span class="mi">26</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.76485477632321</span>
-<span class="mi">27</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.5869850001202876</span>
-<span class="mi">28</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9849706870360087</span>
-<span class="mi">29</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.420696622705007</span>
-<span class="mi">30</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.16069807809737868</span>
-<span class="mi">31</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9662633227541704</span>
-<span class="mi">32</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.631928468439302</span>
-<span class="mi">33</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.7898326457669774</span>
-<span class="mi">34</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.935316816207516</span>
-<span class="mi">35</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.782217553676702</span>
-<span class="mi">36</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.7936042118832582</span>
-<span class="mi">37</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">7.399694410587616</span>
-<span class="mi">38</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.8234931889047845</span>
-<span class="mi">39</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.123278203552243</span>
-<span class="mi">40</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.46698933026375</span>
-<span class="mi">41</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.059053759504663</span>
-<span class="mi">42</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.8248900459121975</span>
-<span class="mi">43</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.9053626799318653</span>
-<span class="mi">44</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.2572997144475635</span>
-<span class="mi">45</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.7626453809391314</span>
-<span class="mi">46</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.9106046062612636</span>
-<span class="mi">47</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.36384547188937144</span>
-<span class="mi">48</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.482123086792301</span>
-<span class="mi">49</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8862884524239143</span>
-<span class="mi">50</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3533378896238835</span>
-<span class="mi">51</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.6741934666895475</span>
-<span class="mi">52</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.4465665980891864</span>
-<span class="mi">53</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.3656921156999395</span>
-<span class="mi">54</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.4292836233967758</span>
-<span class="mi">55</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">11.608835808935947</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.1622013606259403</span>
+<span class="mi">1</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8197916348691106</span>
+<span class="mi">2</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.4704841795758476</span>
+<span class="mi">3</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.1898903619192618</span>
+<span class="mi">4</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.2669020645850475</span>
+<span class="mi">5</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.3537989757333984</span>
+<span class="mi">6</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.5232362334703197</span>
+<span class="mi">7</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0234347889957929</span>
+<span class="mi">8</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6923646000308887</span>
+<span class="mi">9</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.200181602792344</span>
+<span class="mi">10</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.0256788832442476</span>
+<span class="mi">11</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.3755282573108274</span>
+<span class="mi">12</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.8040411950227124</span>
+<span class="mi">13</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0820452722033589</span>
+<span class="mi">14</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.872550834678532</span>
+<span class="mi">15</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.679431401771564</span>
+<span class="mi">16</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5285462489989046</span>
+<span class="mi">17</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.4190566068988817</span>
+<span class="mi">18</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.673324804604065</span>
+<span class="mi">19</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.3191174229584879</span>
+<span class="mi">20</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.59112636976326</span>
+<span class="mi">21</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.7284969800022754</span>
+<span class="mi">22</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.0960880080304793</span>
+<span class="mi">23</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.046882712392671</span>
+<span class="mi">24</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">9.434438819029111</span>
+<span class="mi">25</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.9086660605554826</span>
+<span class="mi">26</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.7648547763232205</span>
+<span class="mi">27</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.586985000120259</span>
+<span class="mi">28</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9849706870360163</span>
+<span class="mi">29</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.420696622705059</span>
+<span class="mi">30</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.16069807809738007</span>
+<span class="mi">31</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9662633227541404</span>
+<span class="mi">32</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.631928468439229</span>
+<span class="mi">33</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.7898326457669502</span>
+<span class="mi">34</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.935316816207512</span>
+<span class="mi">35</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.782217553677175</span>
+<span class="mi">36</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.7936042118834172</span>
+<span class="mi">37</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">7.399694410587746</span>
+<span class="mi">38</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.823493188904721</span>
+<span class="mi">39</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.12327820355242</span>
+<span class="mi">40</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4669893302638024</span>
+<span class="mi">41</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.059053759504696</span>
+<span class="mi">42</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.8248900459121264</span>
+<span class="mi">43</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.905362679931912</span>
+<span class="mi">44</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.2572997144473075</span>
+<span class="mi">45</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.7626453809391722</span>
+<span class="mi">46</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.910604606261468</span>
+<span class="mi">47</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3638454718893506</span>
+<span class="mi">48</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.482123086792309</span>
+<span class="mi">49</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8862884524239214</span>
+<span class="mi">50</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.35333788962389834</span>
+<span class="mi">51</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.6741934666897099</span>
+<span class="mi">52</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.4465665980891884</span>
+<span class="mi">53</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.3656921156999724</span>
+<span class="mi">54</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.4292836233968338</span>
+<span class="mi">55</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">11.60883580893586</span>
 <span class="mi">56</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5845585364935517</span>
-<span class="mi">57</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.228031835877884</span>
-<span class="mi">58</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4953939655520303</span>
-<span class="mi">59</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.64728875900746</span>
-<span class="mi">60</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.024825566331522</span>
-<span class="mi">61</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.943553444690236</span>
-<span class="mi">62</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.3357860625600346</span>
-<span class="mi">63</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.385139025177312</span>
-<span class="mi">64</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.5607805981597906</span>
-<span class="mi">65</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.1768471356354873</span>
-<span class="mi">66</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.8232836736977323</span>
-<span class="mi">67</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.396906443658432</span>
-<span class="mi">68</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.3918559300376</span>
-<span class="mi">69</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.6148795243219267</span>
-<span class="mi">70</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3708280914480344</span>
-<span class="mi">71</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8762641868566469</span>
-<span class="mi">72</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.0086342942205486</span>
-<span class="mi">73</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.178275683704583</span>
-<span class="mi">74</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.451595716772191</span>
-<span class="mi">75</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.974736425709315</span>
-<span class="mi">76</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7706655882254374</span>
-<span class="mi">77</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.126518971476656</span>
-<span class="mi">78</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.205386216685993</span>
-<span class="mi">79</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.769597864830353</span>
-<span class="mi">80</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.816644746436775</span>
-<span class="mi">81</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.6532812835413797</span>
-<span class="mi">82</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4965181358356214</span>
-<span class="mi">83</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8032343482261983</span>
-<span class="mi">84</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.36282493375353664</span>
-<span class="mi">85</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.5238238194806737</span>
-<span class="mi">86</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.8657878309489013</span>
-<span class="mi">87</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7222749668706538</span>
-<span class="mi">88</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.9538769694017883</span>
-<span class="mi">89</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6523612442371824</span>
-<span class="mi">90</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.3510638416840344</span>
-<span class="mi">91</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.209395519639998</span>
-<span class="mi">92</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.578704532136329</span>
-<span class="mi">93</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.4104193014724813</span>
-<span class="mi">94</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.263897891350234</span>
-<span class="mi">95</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.2950093864132977</span>
-<span class="mi">96</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.5306978267035247</span>
-<span class="mi">97</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.0576162766855504</span>
-<span class="mi">98</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7332102521609027</span>
-<span class="mi">99</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.588275042310423</span>
-<span class="mi">100</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9295646078236883</span>
-<span class="mi">101</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.103556128419626</span>
-<span class="mi">102</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.005402403281227689</span>
-<span class="mi">103</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.030350825818049</span>
-<span class="mi">104</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.597768847187468</span>
-<span class="mi">105</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.718657215196669</span>
-<span class="mi">106</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.2200012303854417</span>
-<span class="mi">107</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.736182167287637</span>
-<span class="mi">108</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.782794817352393</span>
-<span class="mi">109</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8012022277038306</span>
-<span class="mi">110</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.4890697265298109</span>
-<span class="mi">111</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.625396349831095</span>
-<span class="mi">112</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.073050044232986</span>
-<span class="mi">113</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.984164789951575</span>
-<span class="mi">114</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.500918344081846</span>
-<span class="mi">115</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8012413198266244</span>
-<span class="mi">116</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.6875434017647444</span>
-<span class="mi">117</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.86493437908063</span>
-<span class="mi">118</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.037580586181626</span>
-<span class="mi">119</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4941088890247975</span>
-<span class="mi">120</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.46083351785486115</span>
-<span class="mi">121</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.04447133159167581</span>
-<span class="mi">122</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.909182664526004</span>
-<span class="mi">123</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.153927862805079</span>
-<span class="mi">124</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.635821162569034</span>
-<span class="mi">125</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.722448584729789</span>
-<span class="mi">126</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.838425864545334</span>
-<span class="mi">127</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.8953598470321937</span>
-<span class="mi">128</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.1700702801123608</span>
-<span class="mi">129</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9837813189594975</span>
-<span class="mi">130</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.05224454496612</span>
-<span class="mi">131</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.260349530090938</span>
-<span class="mi">132</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.572638735016645</span>
-<span class="mi">133</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.73323064993653</span>
-<span class="mi">134</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3400649625009756</span>
-<span class="mi">135</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.603279268838218</span>
+<span class="mi">57</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.228031835877924</span>
+<span class="mi">58</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4953939655523003</span>
+<span class="mi">59</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6472887590075036</span>
+<span class="mi">60</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.02482556633122</span>
+<span class="mi">61</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.943553444690135</span>
+<span class="mi">62</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.3357860625599907</span>
+<span class="mi">63</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.38513902517734</span>
+<span class="mi">64</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.5607805981597314</span>
+<span class="mi">65</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.176847135635505</span>
+<span class="mi">66</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.823283673697595</span>
+<span class="mi">67</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.396906443658454</span>
+<span class="mi">68</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.391855930037684</span>
+<span class="mi">69</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.6148795243219459</span>
+<span class="mi">70</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.37082809144804085</span>
+<span class="mi">71</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.876264186856611</span>
+<span class="mi">72</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.0086342942205317</span>
+<span class="mi">73</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.17827568370467</span>
+<span class="mi">74</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4515957167720552</span>
+<span class="mi">75</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.974736425709432</span>
+<span class="mi">76</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7706655882253928</span>
+<span class="mi">77</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.1265189714766537</span>
+<span class="mi">78</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.205386216685979</span>
+<span class="mi">79</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.769597864830404</span>
+<span class="mi">80</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.816644746436785</span>
+<span class="mi">81</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.6532812835413844</span>
+<span class="mi">82</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4965181358357427</span>
+<span class="mi">83</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8032343482262069</span>
+<span class="mi">84</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.362824933753557</span>
+<span class="mi">85</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.5238238194806089</span>
+<span class="mi">86</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.8657878309489</span>
+<span class="mi">87</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.722274966870722</span>
+<span class="mi">88</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.953876969401788</span>
+<span class="mi">89</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6523612442371725</span>
+<span class="mi">90</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.3510638416839695</span>
+<span class="mi">91</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.2093955196399642</span>
+<span class="mi">92</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.578704532136325</span>
+<span class="mi">93</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.4104193014724844</span>
+<span class="mi">94</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.2638978913502463</span>
+<span class="mi">95</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.2950093864133887</span>
+<span class="mi">96</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.5306978267035993</span>
+<span class="mi">97</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.0576162766855557</span>
+<span class="mi">98</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7332102521609185</span>
+<span class="mi">99</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.588275042310542</span>
+<span class="mi">100</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9295646078237197</span>
+<span class="mi">101</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.1035561284196103</span>
+<span class="mi">102</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.005402403281230255</span>
+<span class="mi">103</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.030350825818044</span>
+<span class="mi">104</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5977688471873943</span>
+<span class="mi">105</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.7186572151966146</span>
+<span class="mi">106</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.2200012303853773</span>
+<span class="mi">107</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7361821672875986</span>
+<span class="mi">108</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7827948173524062</span>
+<span class="mi">109</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8012022277038092</span>
+<span class="mi">110</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.489069726529739</span>
+<span class="mi">111</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.625396349830953</span>
+<span class="mi">112</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.073050044233075</span>
+<span class="mi">113</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.984164789951579</span>
+<span class="mi">114</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.500918344081859</span>
+<span class="mi">115</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.8012413198266072</span>
+<span class="mi">116</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.6875434017646866</span>
+<span class="mi">117</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.864934379080624</span>
+<span class="mi">118</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.037580586181703</span>
+<span class="mi">119</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.494108889024821</span>
+<span class="mi">120</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.4608335178548574</span>
+<span class="mi">121</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.04447133159167354</span>
+<span class="mi">122</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9091826645260614</span>
+<span class="mi">123</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.15392786280511</span>
+<span class="mi">124</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.635821162569064</span>
+<span class="mi">125</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.722448584729763</span>
+<span class="mi">126</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.8384258645453695</span>
+<span class="mi">127</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.8953598470321897</span>
+<span class="mi">128</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.17007028011237482</span>
+<span class="mi">129</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.983781318959416</span>
+<span class="mi">130</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.052244544966099</span>
+<span class="mi">131</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.260349530091071</span>
+<span class="mi">132</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5726387350164654</span>
+<span class="mi">133</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.7332306499363805</span>
+<span class="mi">134</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3400649625009724</span>
+<span class="mi">135</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.6032792688379254</span>
 <span class="mi">136</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5015728490600546</span>
-<span class="mi">137</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3964133949983703</span>
-<span class="mi">138</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.1414040424712123</span>
-<span class="mi">139</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.317240586450241</span>
-<span class="mi">140</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.42444870951965</span>
-<span class="mi">141</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.8357713483581333</span>
-<span class="mi">142</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.5375770466937337</span>
-<span class="mi">143</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.6241716128087664</span>
-<span class="mi">144</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.954731705445061</span>
-<span class="mi">145</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.5851578341559874</span>
-<span class="mi">146</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.899534932885194</span>
-<span class="mi">147</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.6822661736354982</span>
-<span class="mi">148</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.121107969962575</span>
-<span class="mi">149</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7199428397194763</span>
-<span class="mi">150</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.3189214980333306</span>
-<span class="mi">151</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.36851885526621403</span>
-<span class="mi">152</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9488105777325042</span>
-<span class="mi">153</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.674787042415955</span>
-<span class="mi">154</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">7.585656605848053</span>
-<span class="mi">155</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.3957387225187112</span>
-<span class="mi">156</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.149600126964533</span>
-<span class="mi">157</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0001276150026863</span>
-<span class="mi">158</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.0644614255860705</span>
-<span class="mi">159</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.013992307955607</span>
-<span class="mi">160</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.8398600172211</span>
-<span class="mi">161</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6576814936015702</span>
-<span class="mi">162</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.41178378891272593</span>
-<span class="mi">163</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.040684602784193</span>
-<span class="mi">164</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.0029977728129227</span>
-<span class="mi">165</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5114799236196643</span>
-<span class="mi">166</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.4825891465203669</span>
-<span class="mi">167</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.888976657613061</span>
-<span class="mi">168</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.07694653082199</span>
-<span class="mi">169</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4991932008773876</span>
-<span class="mi">170</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.8451901671291322</span>
-<span class="mi">171</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.516240233108405</span>
-<span class="mi">172</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.725949852223886</span>
-<span class="mi">173</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.920597530218781</span>
-<span class="mi">174</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6040513761216326</span>
-<span class="mi">175</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3297073490067809</span>
-<span class="mi">176</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.1773026407630907</span>
+<span class="mi">137</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3964133949983514</span>
+<span class="mi">138</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.14140404247121324</span>
+<span class="mi">139</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">8.317240586449977</span>
+<span class="mi">140</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.424448709519687</span>
+<span class="mi">141</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.835771348358169</span>
+<span class="mi">142</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.5375770466938208</span>
+<span class="mi">143</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.624171612808834</span>
+<span class="mi">144</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.954731705445279</span>
+<span class="mi">145</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.5851578341559879</span>
+<span class="mi">146</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.899534932885419</span>
+<span class="mi">147</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.6822661736354996</span>
+<span class="mi">148</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.1211079699625595</span>
+<span class="mi">149</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.719942839719281</span>
+<span class="mi">150</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.318921498033307</span>
+<span class="mi">151</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3685188552662153</span>
+<span class="mi">152</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9488105777326215</span>
+<span class="mi">153</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.6747870424160416</span>
+<span class="mi">154</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">7.585656605848192</span>
+<span class="mi">155</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.3957387225187117</span>
+<span class="mi">156</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.14960012696476</span>
+<span class="mi">157</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0001276150027434</span>
+<span class="mi">158</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.0644614255859404</span>
+<span class="mi">159</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.013992307955561</span>
+<span class="mi">160</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.8398600172210555</span>
+<span class="mi">161</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.657681493601502</span>
+<span class="mi">162</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.41178378891279976</span>
+<span class="mi">163</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.040684602784253</span>
+<span class="mi">164</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.0029977728129347</span>
+<span class="mi">165</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5114799236197083</span>
+<span class="mi">166</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.482589146520343</span>
+<span class="mi">167</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.8889766576130747</span>
+<span class="mi">168</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.076946530822019</span>
+<span class="mi">169</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4991932008773934</span>
+<span class="mi">170</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.8451901671290658</span>
+<span class="mi">171</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.516240233108687</span>
+<span class="mi">172</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.7259498522238985</span>
+<span class="mi">173</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9205975302187837</span>
+<span class="mi">174</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.604051376121633</span>
+<span class="mi">175</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.32970734900678306</span>
+<span class="mi">176</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.17730264076306</span>
 <span class="mi">177</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.892210628679246</span>
-<span class="mi">178</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.734442366701537</span>
-<span class="mi">179</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.0930393922511805</span>
-<span class="mi">180</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9821792611906741</span>
-<span class="mi">181</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.0950130851764084</span>
-<span class="mi">182</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5625429283081047</span>
-<span class="mi">183</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.469839914005335</span>
-<span class="mi">184</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.0674756021958216</span>
-<span class="mi">185</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.3845462972648566</span>
-<span class="mi">186</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.5119667475376197</span>
-<span class="mi">187</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.625376291000162</span>
-<span class="mi">188</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9836491008702384</span>
-<span class="mi">189</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9174021295224848</span>
-<span class="mi">190</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0200049678539824</span>
-<span class="mi">191</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.8111147486376113</span>
-<span class="mi">192</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">10.407007486641458</span>
-<span class="mi">193</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.725212636472864</span>
-<span class="mi">194</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.585121023629498</span>
-<span class="mi">195</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.1403803946151516</span>
-<span class="mi">196</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.63649607347344</span>
-<span class="mi">197</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.9217711869840994</span>
-<span class="mi">198</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0045702657467035</span>
-<span class="mi">199</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.418215480545959</span>
-<span class="mi">200</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.92435802152688</span>
-<span class="mi">201</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.9689758379664286</span>
-<span class="mi">202</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.615284972310984</span>
-<span class="mi">203</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4914091180308464</span>
+<span class="mi">178</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7344423667014435</span>
+<span class="mi">179</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.0930393922511814</span>
+<span class="mi">180</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9821792611907076</span>
+<span class="mi">181</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.0950130851762765</span>
+<span class="mi">182</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.562542928308156</span>
+<span class="mi">183</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.469839914004995</span>
+<span class="mi">184</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.0674756021957847</span>
+<span class="mi">185</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.3845462972648024</span>
+<span class="mi">186</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.5119667475375826</span>
+<span class="mi">187</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.625376291000332</span>
+<span class="mi">188</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9836491008702593</span>
+<span class="mi">189</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.9174021295224002</span>
+<span class="mi">190</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0200049678541216</span>
+<span class="mi">191</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.8111147486376133</span>
+<span class="mi">192</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">10.407007486641513</span>
+<span class="mi">193</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.725212636472786</span>
+<span class="mi">194</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">6.585121023629433</span>
+<span class="mi">195</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.1403803946151112</span>
+<span class="mi">196</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.636496073473488</span>
+<span class="mi">197</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.9217711869841874</span>
+<span class="mi">198</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0045702657467588</span>
+<span class="mi">199</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4182154805461566</span>
+<span class="mi">200</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.9243580215268454</span>
+<span class="mi">201</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.968975837966427</span>
+<span class="mi">202</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.615284972310998</span>
+<span class="mi">203</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.49140911803088</span>
 <span class="mi">204</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7943475942820328</span>
-<span class="mi">205</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.708286126985967</span>
-<span class="mi">206</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.405602484543313</span>
-<span class="mi">207</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9383328408601793</span>
-<span class="mi">208</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.7966629915070715</span>
-<span class="mi">209</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.5067734258626303</span>
-<span class="mi">210</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.1890884578825514</span>
-<span class="mi">211</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.216278312974754</span>
-<span class="mi">212</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.07969866183085542</span>
-<span class="mi">213</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3907166988147584</span>
-<span class="mi">214</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.0240014936663915</span>
-<span class="mi">215</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.594279949058917</span>
-<span class="mi">216</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6777856827371203</span>
-<span class="mi">217</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.848031703923873</span>
-<span class="mi">218</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.4885344108852833</span>
-<span class="mi">219</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">12.37457070507444</span>
-<span class="mi">220</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.4284110605000004</span>
-<span class="mi">221</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.8180427493589018</span>
-<span class="mi">222</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.4850085026530655</span>
-<span class="mi">223</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.506785181047701</span>
-<span class="mi">224</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.3976812984153097</span>
-<span class="mi">225</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9031717605985998</span>
-<span class="mi">226</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.7285447496525917</span>
-<span class="mi">227</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.470391275156837</span>
-<span class="mi">228</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.6751347847312803</span>
-<span class="mi">229</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.325674612580548</span>
-<span class="mi">230</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.599037298038793</span>
-<span class="mi">231</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.837605778150097</span>
-<span class="mi">232</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.1329234883415304</span>
-<span class="mi">233</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.639839943186599</span>
-<span class="mi">234</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.008983350550902</span>
-<span class="mi">235</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.412404308610275</span>
-<span class="mi">236</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.771998515378807</span>
-<span class="mi">237</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.1493890601568089</span>
-<span class="mi">238</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.205747487806092</span>
-<span class="mi">239</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7168126471500995</span>
-<span class="mi">240</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.602217912756654</span>
-<span class="mi">241</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.123629193962625</span>
-<span class="mi">242</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.531589994116715</span>
-<span class="mi">243</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.703140843014368</span>
-<span class="mi">244</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.2177940017210767</span>
-<span class="mi">245</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.6465659506433573</span>
-<span class="mi">246</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.291636517579119</span>
-<span class="mi">247</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">7.79024551981515</span>
-<span class="mi">248</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.0605580786755044</span>
-<span class="mi">249</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.1515108837628596</span>
+<span class="mi">205</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.708286126986131</span>
+<span class="mi">206</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4056024845433197</span>
+<span class="mi">207</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9383328408601778</span>
+<span class="mi">208</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.7966629915068015</span>
+<span class="mi">209</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.5067734258626277</span>
+<span class="mi">210</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.1890884578826935</span>
+<span class="mi">211</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.216278312974742</span>
+<span class="mi">212</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.0796986618308498</span>
+<span class="mi">213</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.3907166988147716</span>
+<span class="mi">214</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.024001493666669</span>
+<span class="mi">215</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.594279949059035</span>
+<span class="mi">216</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6777856827370754</span>
+<span class="mi">217</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.848031703923871</span>
+<span class="mi">218</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.48853441088520727</span>
+<span class="mi">219</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">12.374570705073896</span>
+<span class="mi">220</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.4284110604998381</span>
+<span class="mi">221</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.8180427493588949</span>
+<span class="mi">222</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.4850085026530658</span>
+<span class="mi">223</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.506785181047611</span>
+<span class="mi">224</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.397681298415294</span>
+<span class="mi">225</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.9031717605985932</span>
+<span class="mi">226</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.7285447496526384</span>
+<span class="mi">227</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.4703912751568806</span>
+<span class="mi">228</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.675134784731095</span>
+<span class="mi">229</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.3256746125806025</span>
+<span class="mi">230</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.5990372980386933</span>
+<span class="mi">231</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.837605778150171</span>
+<span class="mi">232</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.132923488341547</span>
+<span class="mi">233</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6398399431865467</span>
+<span class="mi">234</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">3.008983350550686</span>
+<span class="mi">235</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.4124043086102738</span>
+<span class="mi">236</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">5.7719985153787485</span>
+<span class="mi">237</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.1493890601568216</span>
+<span class="mi">238</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.2057474878060594</span>
+<span class="mi">239</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.7168126471500427</span>
+<span class="mi">240</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">4.602217912756635</span>
+<span class="mi">241</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.1236291939626275</span>
+<span class="mi">242</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.531589994116896</span>
+<span class="mi">243</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.703140843014465</span>
+<span class="mi">244</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">2.217794001721053</span>
+<span class="mi">245</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.6465659506433485</span>
+<span class="mi">246</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.2916365175791173</span>
+<span class="mi">247</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">7.790245519815092</span>
+<span class="mi">248</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.060558078675598</span>
+<span class="mi">249</span> <span class="o">--</span> <span class="n">optimal</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.1515108837628771</span>
 </pre></div>
 </div>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Save the reconciled data to be used for parameter estimation</span>
@@ -899,11 +902,20 @@ to compare the original measurements to the reconciled results.</p>
 
   <div role="contentinfo">
     <p>
+        
+        
         &copy; <a href="../../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -914,7 +926,6 @@ to compare the original measurements to the reconciled results.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

@@ -1,15 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Bifunctional Catalyst Design &mdash; IDAES v1.7.0dev0 Examples</title>
+  <title>Bifunctional Catalyst Design &mdash; IDAES v1.6.1 Examples</title>
   
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
 
   
   
@@ -17,7 +20,9 @@
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -30,10 +35,6 @@
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="copyright" title="Copyright" href="../../copyright.html" />
@@ -54,7 +55,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
           
 
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -96,6 +98,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -134,7 +137,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Bifunctional Catalyst Design</li>
     
@@ -287,13 +290,13 @@ creating the model.</p>
 <span class="n">Atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Ni&#39;</span><span class="p">),</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Pt&#39;</span><span class="p">)]</span>
 </pre></div>
 </div>
-<p>Next, we create a <strong>MatOptModel</strong> object.</p>
+<p>Next, we create a <strong>*MatOptModel*</strong> object.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">MatOptModel</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atoms</span><span class="p">,</span><span class="n">Confs</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>By default, several basic variables are pre-defined. See the first
-example, <strong>Monometallic_Nanocluster_Design.ipynb</strong> for a description of
-basic variables, expressions, and constraint rules.</p>
+example, <strong>*Monometallic_Nanocluster_Design.ipynb*</strong> for a description
+of basic variables, expressions, and constraint rules.</p>
 <p>First, we fix the composition of atoms in the appropriate layers.
 Effectively, we are designing the defects in a single layer of Ni on top
 of an undefected Pt surface.</p>
@@ -356,99 +359,62 @@ maximize method to optimize the balance of activity and stability</p>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<pre class="literal-block">WARNING: DEPRECATED: SetProduct.set_tuple is deprecated.  Use
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>WARNING: DEPRECATED: SetProduct.set_tuple is deprecated.  Use
     SetProduct.subsets() to get the operator arguments.  (deprecated in TBD)
-    (called from c:usersdkgunsrcidaesdangunteridaes-
-    devidaesappsmatopt/..matoptoptpyomo_modeling.py:284)
-
+    (called from /home/ksb/anaconda3/envs/idaes-pse/lib/python3.7/site-
+    packages/idaes/apps/matopt/../matopt/opt/pyomo_modeling.py:284)
 
 Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-
   with Simplex, Mixed Integer &amp; Barrier Optimizers
-
 5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-
 Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
 
-
-
-Type 'help' for a list of available commands.
-
-Type 'help' followed by a command name for more
-
+Type &#39;help&#39; for a list of available commands.
+Type &#39;help&#39; followed by a command name for more
 information on commands.
 
-
-
-CPLEX&gt; Logfile 'cplex.log' closed.
-
-Logfile 'C:UsersdkgunAppDataLocalTemptmpqkjahs0q.cplex.log' open.
-
+CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
+Logfile &#39;/tmp/tmpmp38nwpe.cplex.log&#39; open.
 CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
-
 CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
-
 CPLEX&gt; New value for time limit in seconds: 360
-
-CPLEX&gt; Problem 'C:UsersdkgunAppDataLocalTemptmpqpn1cyqv.pyomo.lp' read.
-
-Read time = 0.08 sec. (3.48 ticks)
-
-CPLEX&gt; Problem name         : C:UsersdkgunAppDataLocalTemptmpqpn1cyqv.pyomo.lp
-
+CPLEX&gt; Problem &#39;/tmp/tmpn99ocl40.pyomo.lp&#39; read.
+Read time = 0.06 sec. (3.48 ticks)
+CPLEX&gt; Problem name         : /tmp/tmpn99ocl40.pyomo.lp
 Objective sense      : Maximize
-
 Variables            :    8194  [Nneg: 1,  Free: 644,  Binary: 7165,
-
                                  General Integer: 384]
-
 Objective nonzeros   :       1
-
 Linear constraints   :   36613  [Less: 35200,  Greater: 128,  Equal: 1285]
-
   Nonzeros           :   92491
-
   RHS nonzeros       :   12680
 
-
-
-Variables            : Min LB: 0.0000000        Max UB: 12.00000
-
+Variables            : Min LB: 0.000000         Max UB: 12.00000
 Objective nonzeros   : Min   : 1.000000         Max   : 1.000000
-
 Linear constraints   :
-
   Nonzeros           : Min   : 0.002604167      Max   : 12.00000
-
   RHS nonzeros       : Min   : 0.1012080        Max   : 9.000000
-
 CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
 
-
-
 Error termination, CPLEX Error  1016.
-
 Solution time =    0.00 sec.
-
 Deterministic time = 0.00 ticks  (0.00 ticks/sec)
 
-
-
 CPLEX&gt; CPLEX Error  1217: No solution exists.
-
 No file written.
-
 CPLEX&gt; ERROR: evaluating object as numeric value: obj
-        (object: &lt;class 'pyomo.core.base.objective.SimpleObjective'&gt;)
+        (object: &lt;class &#39;pyomo.core.base.objective.SimpleObjective&#39;&gt;)
     No value for uninitialized NumericValue object obj
-MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)</pre>
+MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+</pre></div>
+</div>
 </div>
 <div class="section" id="processing-solutions">
 <h2>Processing Solutions<a class="headerlink" href="#processing-solutions" title="Permalink to this headline">¶</a></h2>
 <p>Once the model is solved, we can interpret the solutions as labelings of
-a Design object. To accompolish this, we use the <strong>setDesignFromModel</strong>
-function. Then, we can write the Design object to PDB or CFG files for
-plotting.</p>
+a Design object. To accompolish this, we use the
+<strong>*setDesignFromModel*</strong> function. Then, we can write the Design object
+to PDB or CFG files for plotting.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="p">(</span><span class="n">D</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
         <span class="n">D</span><span class="o">.</span><span class="n">toCFG</span><span class="p">(</span><span class="s1">&#39;result.cfg&#39;</span><span class="p">,</span><span class="n">BBox</span><span class="o">=</span><span class="n">S</span><span class="p">)</span>
         <span class="n">PeriodicD</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">replicateDesign</span><span class="p">(</span><span class="n">D</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
@@ -471,11 +437,20 @@ plotting.</p>
 
   <div role="contentinfo">
     <p>
+        
+        
         &copy; <a href="../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -486,7 +461,6 @@ plotting.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

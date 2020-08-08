@@ -1,15 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Bimetallic Nanocluster Cohesive Energy Minimization - via Labeling &mdash; IDAES v1.7.0dev0 Examples</title>
+  <title>Bimetallic Nanocluster Cohesive Energy Minimization - via Labeling &mdash; IDAES v1.6.1 Examples</title>
   
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
 
   
   
@@ -17,7 +20,9 @@
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -30,10 +35,6 @@
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="copyright" title="Copyright" href="../../copyright.html" />
@@ -54,7 +55,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
           
 
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -96,6 +98,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -134,7 +137,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Bimetallic Nanocluster Cohesive Energy Minimization - via Labeling</li>
     
@@ -161,9 +164,9 @@
 We consider an example optimization problem of identifying the global
 energy minimum bimetallic nanocluster configuration.</p>
 <p>This is a continuation of the example given in
-<strong>Monometallic_Nanocluster_Design.ipynb</strong>. In this example, we will show
-how a very similar model can be used to optimize a bimetallic cluster by
-“labelling” the sites of a pre-defined monometallic cluster.</p>
+<strong>*Monometallic_Nanocluster_Design.ipynb*</strong>. In this example, we will
+show how a very similar model can be used to optimize a bimetallic
+cluster by “labelling” the sites of a pre-defined monometallic cluster.</p>
 <p>The model for cohesive energy is based on:</p>
 <p>Yan, Z., Taylor, M. G., Mascareno, A., &amp; Mpourmpakis, G. (2018). Size-,
 Shape-, and Composition-Dependent Model for Metal Nanoparticle Stability
@@ -211,209 +214,119 @@ the code that wsas demonstrated in
     <span class="n">D</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># rest of this notebook won&#39;t do much</span>
 </pre></div>
 </div>
-<pre class="literal-block">Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-
-  with Simplex, Mixed Integer &amp; Barrier Optimizers
-
-5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-
-Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
-
-
-
-Type 'help' for a list of available commands.
-
-Type 'help' followed by a command name for more
-
-information on commands.
-
-
-
-CPLEX&gt; Logfile 'cplex.log' closed.
-
-Logfile 'C:UsersdkgunAppDataLocalTemptmp98a7j02b.cplex.log' open.
-
-CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
-
-CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
-
-CPLEX&gt; New value for time limit in seconds: 100
-
-CPLEX&gt; Problem 'C:UsersdkgunAppDataLocalTemptmp3xr2r2o4.pyomo.lp' read.
-
-Read time = 0.02 sec. (0.06 ticks)
-
-CPLEX&gt; Problem name         : C:UsersdkgunAppDataLocalTemptmp3xr2r2o4.pyomo.lp
-
-Objective sense      : Maximize
-
-Variables            :     426  [Nneg: 1,  Fix: 1,  Box: 13,  Free: 157,
-
-                                 Binary: 241,  General Integer: 13]
-
-Objective nonzeros   :       1
-
-Linear constraints   :     583  [Less: 515,  Greater: 13,  Equal: 55]
-
-  Nonzeros           :    1866
-
-  RHS nonzeros       :      86
-
-
-
-Variables            : Min LB: 0.0000000        Max UB: 12.00000
-
-Objective nonzeros   : Min   : 1.000000         Max   : 1.000000
-
-Linear constraints   :
-
-  Nonzeros           : Min   : 0.04811252       Max   : 12.00000
-
-  RHS nonzeros       : Min   : 1.000000         Max   : 1.000000
-
-CPLEX&gt; CPXPARAM_TimeLimit                               100
-
-CPXPARAM_MIP_Tolerances_AbsMIPGap                0
-
-CPXPARAM_MIP_Tolerances_MIPGap                   0
-
-Tried aggregator 2 times.
-
-MIP Presolve eliminated 171 rows and 147 columns.
-
-MIP Presolve modified 12 coefficients.
-
-Aggregator did 38 substitutions.
-
-Reduced MIP has 374 rows, 241 columns, and 1149 nonzeros.
-
-Reduced MIP has 156 binaries, 0 generals, 0 SOSs, and 0 indicators.
-
-Presolve time = 0.00 sec. (1.49 ticks)
-
-Found incumbent of value 0.521849 after 0.00 sec. (2.09 ticks)
-
-Probing time = 0.00 sec. (1.36 ticks)
-
-Cover probing fixed 0 vars, tightened 1 bounds.
-
-Tried aggregator 1 time.
-
-MIP Presolve eliminated 2 rows and 1 columns.
-
-Reduced MIP has 372 rows, 240 columns, and 1144 nonzeros.
-
-Reduced MIP has 156 binaries, 0 generals, 0 SOSs, and 0 indicators.
-
-Presolve time = 0.02 sec. (1.50 ticks)
-
-Probing time = 0.00 sec. (1.31 ticks)
-
-Clique table members: 880.
-
-MIP emphasis: balance optimality and feasibility.
-
-MIP search method: dynamic search.
-
-Parallel mode: deterministic, using up to 8 threads.
-
-Root relaxation solution time = 0.00 sec. (3.34 ticks)
-
-
-
-        Nodes                                         Cuts/
-
-   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
-
-
-
-*     0+    0                            0.5218        2.1667           315.19%
-
-      0     0        0.9861   103        0.5218        0.9861      291   88.96%
-
-      0     0        0.6455    96        0.5218      Cuts: 67      417   23.69%
-
-*     0+    0                            0.5485        0.6455            17.68%
-
-      0     0        0.6393    99        0.5485     Cuts: 159      460   16.55%
-
-      0     0        0.6390    98        0.5485  ZeroHalf: 19      465   16.50%
-
-      0     0        0.6356    99        0.5485      Cuts: 10      470   15.87%
-
-      0     0        0.6336    97        0.5485       Cuts: 9      485   15.51%
-
-      0     0        0.6108    97        0.5485      Cuts: 31      533   11.37%
-
-      0     0        0.6088    98        0.5485  ZeroHalf: 20      548   10.99%
-
-      0     0        0.6072    98        0.5485   ZeroHalf: 5      559   10.71%
-
-      0     0        0.6032    97        0.5485  ZeroHalf: 22      579    9.97%
-
-      0     0        0.6029    98        0.5485      Cuts: 20      588    9.92%
-
-      0     0        0.5970    93        0.5485  ZeroHalf: 26      610    8.83%
-
-      0     0        0.5970    96        0.5485      Cuts: 10      617    8.83%
-
-      0     0        0.5969    95        0.5485   ZeroHalf: 7      627    8.82%
-
-*     0+    0                            0.5500        0.5969             8.52%
-
-      0     0        cutoff              0.5500        0.5500      627    0.00%
-
-Elapsed time = 0.20 sec. (69.13 ticks, tree = 0.01 MB, solutions = 3)
-
-
-
-Clique cuts applied:  24
-
-Implied bound cuts applied:  20
-
-Zero-half cuts applied:  8
-
-Lift and project cuts applied:  1
-
-
-
-Root node processing (before b&amp;c):
-
-  Real time             =    0.20 sec. (69.15 ticks)
-
-Parallel b&amp;c, 8 threads:
-
-  Real time             =    0.00 sec. (0.00 ticks)
-
-  Sync time (average)   =    0.00 sec.
-
-  Wait time (average)   =    0.00 sec.
-
-                          ------------
-
-Total (root+branch&amp;cut) =    0.20 sec. (69.15 ticks)
-
-
-
-Solution pool: 3 solutions saved.
-
-
-
-MIP - Integer optimal solution:  Objective =  5.5003296046e-01
-
-Solution time =    0.20 sec.  Iterations = 627  Nodes = 0
-
-Deterministic time = 69.15 ticks  (340.66 ticks/sec)
-
-
-
-CPLEX&gt; Incumbent solution written to file 'C:UsersdkgunAppDataLocalTemptmpcsceotty.cplex.sol'.
-
-CPLEX&gt; The solver exited normally.
-A feasible and provably optimal solution is available.
-The Design has objective: 0.5500329604578591</pre>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Welcome</span> <span class="n">to</span> <span class="n">IBM</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="n">ILOG</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="n">CPLEX</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="n">Interactive</span> <span class="n">Optimizer</span> <span class="n">Community</span> <span class="n">Edition</span> <span class="mf">12.9</span><span class="o">.</span><span class="mf">0.0</span>
+  <span class="k">with</span> <span class="n">Simplex</span><span class="p">,</span> <span class="n">Mixed</span> <span class="n">Integer</span> <span class="o">&amp;</span> <span class="n">Barrier</span> <span class="n">Optimizers</span>
+<span class="mi">5725</span><span class="o">-</span><span class="n">A06</span> <span class="mi">5725</span><span class="o">-</span><span class="n">A29</span> <span class="mi">5724</span><span class="o">-</span><span class="n">Y48</span> <span class="mi">5724</span><span class="o">-</span><span class="n">Y49</span> <span class="mi">5724</span><span class="o">-</span><span class="n">Y54</span> <span class="mi">5724</span><span class="o">-</span><span class="n">Y55</span> <span class="mi">5655</span><span class="o">-</span><span class="n">Y21</span>
+<span class="n">Copyright</span> <span class="n">IBM</span> <span class="n">Corp</span><span class="o">.</span> <span class="mi">1988</span><span class="p">,</span> <span class="mf">2019.</span>  <span class="n">All</span> <span class="n">Rights</span> <span class="n">Reserved</span><span class="o">.</span>
+
+<span class="n">Type</span> <span class="s1">&#39;help&#39;</span> <span class="k">for</span> <span class="n">a</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">available</span> <span class="n">commands</span><span class="o">.</span>
+<span class="n">Type</span> <span class="s1">&#39;help&#39;</span> <span class="n">followed</span> <span class="n">by</span> <span class="n">a</span> <span class="n">command</span> <span class="n">name</span> <span class="k">for</span> <span class="n">more</span>
+<span class="n">information</span> <span class="n">on</span> <span class="n">commands</span><span class="o">.</span>
+
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">Logfile</span> <span class="s1">&#39;cplex.log&#39;</span> <span class="n">closed</span><span class="o">.</span>
+<span class="n">Logfile</span> <span class="s1">&#39;/tmp/tmpj5cqn5x6.cplex.log&#39;</span> <span class="nb">open</span><span class="o">.</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">New</span> <span class="n">value</span> <span class="k">for</span> <span class="n">absolute</span> <span class="n">mixed</span> <span class="n">integer</span> <span class="n">optimality</span> <span class="n">gap</span> <span class="n">tolerance</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">New</span> <span class="n">value</span> <span class="k">for</span> <span class="n">mixed</span> <span class="n">integer</span> <span class="n">optimality</span> <span class="n">gap</span> <span class="n">tolerance</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">New</span> <span class="n">value</span> <span class="k">for</span> <span class="n">time</span> <span class="n">limit</span> <span class="ow">in</span> <span class="n">seconds</span><span class="p">:</span> <span class="mi">100</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">Problem</span> <span class="s1">&#39;/tmp/tmp8xk1o70_.pyomo.lp&#39;</span> <span class="n">read</span><span class="o">.</span>
+<span class="n">Read</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.06</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">Problem</span> <span class="n">name</span>         <span class="p">:</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">tmp8xk1o70_</span><span class="o">.</span><span class="n">pyomo</span><span class="o">.</span><span class="n">lp</span>
+<span class="n">Objective</span> <span class="n">sense</span>      <span class="p">:</span> <span class="n">Maximize</span>
+<span class="n">Variables</span>            <span class="p">:</span>     <span class="mi">426</span>  <span class="p">[</span><span class="n">Nneg</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="n">Fix</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="n">Box</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>  <span class="n">Free</span><span class="p">:</span> <span class="mi">157</span><span class="p">,</span>
+                                 <span class="n">Binary</span><span class="p">:</span> <span class="mi">241</span><span class="p">,</span>  <span class="n">General</span> <span class="n">Integer</span><span class="p">:</span> <span class="mi">13</span><span class="p">]</span>
+<span class="n">Objective</span> <span class="n">nonzeros</span>   <span class="p">:</span>       <span class="mi">1</span>
+<span class="n">Linear</span> <span class="n">constraints</span>   <span class="p">:</span>     <span class="mi">583</span>  <span class="p">[</span><span class="n">Less</span><span class="p">:</span> <span class="mi">515</span><span class="p">,</span>  <span class="n">Greater</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>  <span class="n">Equal</span><span class="p">:</span> <span class="mi">55</span><span class="p">]</span>
+  <span class="n">Nonzeros</span>           <span class="p">:</span>    <span class="mi">1866</span>
+  <span class="n">RHS</span> <span class="n">nonzeros</span>       <span class="p">:</span>      <span class="mi">86</span>
+
+<span class="n">Variables</span>            <span class="p">:</span> <span class="n">Min</span> <span class="n">LB</span><span class="p">:</span> <span class="mf">0.000000</span>         <span class="n">Max</span> <span class="n">UB</span><span class="p">:</span> <span class="mf">12.00000</span>
+<span class="n">Objective</span> <span class="n">nonzeros</span>   <span class="p">:</span> <span class="n">Min</span>   <span class="p">:</span> <span class="mf">1.000000</span>         <span class="n">Max</span>   <span class="p">:</span> <span class="mf">1.000000</span>
+<span class="n">Linear</span> <span class="n">constraints</span>   <span class="p">:</span>
+  <span class="n">Nonzeros</span>           <span class="p">:</span> <span class="n">Min</span>   <span class="p">:</span> <span class="mf">0.04811252</span>       <span class="n">Max</span>   <span class="p">:</span> <span class="mf">12.00000</span>
+  <span class="n">RHS</span> <span class="n">nonzeros</span>       <span class="p">:</span> <span class="n">Min</span>   <span class="p">:</span> <span class="mf">1.000000</span>         <span class="n">Max</span>   <span class="p">:</span> <span class="mf">1.000000</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">CPXPARAM_TimeLimit</span>                               <span class="mi">100</span>
+<span class="n">CPXPARAM_MIP_Tolerances_AbsMIPGap</span>                <span class="mi">0</span>
+<span class="n">CPXPARAM_MIP_Tolerances_MIPGap</span>                   <span class="mi">0</span>
+<span class="n">Tried</span> <span class="n">aggregator</span> <span class="mi">2</span> <span class="n">times</span><span class="o">.</span>
+<span class="n">MIP</span> <span class="n">Presolve</span> <span class="n">eliminated</span> <span class="mi">171</span> <span class="n">rows</span> <span class="ow">and</span> <span class="mi">147</span> <span class="n">columns</span><span class="o">.</span>
+<span class="n">MIP</span> <span class="n">Presolve</span> <span class="n">modified</span> <span class="mi">12</span> <span class="n">coefficients</span><span class="o">.</span>
+<span class="n">Aggregator</span> <span class="n">did</span> <span class="mi">38</span> <span class="n">substitutions</span><span class="o">.</span>
+<span class="n">Reduced</span> <span class="n">MIP</span> <span class="n">has</span> <span class="mi">374</span> <span class="n">rows</span><span class="p">,</span> <span class="mi">241</span> <span class="n">columns</span><span class="p">,</span> <span class="ow">and</span> <span class="mi">1149</span> <span class="n">nonzeros</span><span class="o">.</span>
+<span class="n">Reduced</span> <span class="n">MIP</span> <span class="n">has</span> <span class="mi">156</span> <span class="n">binaries</span><span class="p">,</span> <span class="mi">0</span> <span class="n">generals</span><span class="p">,</span> <span class="mi">0</span> <span class="n">SOSs</span><span class="p">,</span> <span class="ow">and</span> <span class="mi">0</span> <span class="n">indicators</span><span class="o">.</span>
+<span class="n">Presolve</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">1.49</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Found</span> <span class="n">incumbent</span> <span class="n">of</span> <span class="n">value</span> <span class="mf">0.521849</span> <span class="n">after</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">2.09</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Probing</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">1.36</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Cover</span> <span class="n">probing</span> <span class="n">fixed</span> <span class="mi">0</span> <span class="nb">vars</span><span class="p">,</span> <span class="n">tightened</span> <span class="mi">1</span> <span class="n">bounds</span><span class="o">.</span>
+<span class="n">Tried</span> <span class="n">aggregator</span> <span class="mi">1</span> <span class="n">time</span><span class="o">.</span>
+<span class="n">MIP</span> <span class="n">Presolve</span> <span class="n">eliminated</span> <span class="mi">2</span> <span class="n">rows</span> <span class="ow">and</span> <span class="mi">1</span> <span class="n">columns</span><span class="o">.</span>
+<span class="n">Reduced</span> <span class="n">MIP</span> <span class="n">has</span> <span class="mi">372</span> <span class="n">rows</span><span class="p">,</span> <span class="mi">240</span> <span class="n">columns</span><span class="p">,</span> <span class="ow">and</span> <span class="mi">1144</span> <span class="n">nonzeros</span><span class="o">.</span>
+<span class="n">Reduced</span> <span class="n">MIP</span> <span class="n">has</span> <span class="mi">156</span> <span class="n">binaries</span><span class="p">,</span> <span class="mi">0</span> <span class="n">generals</span><span class="p">,</span> <span class="mi">0</span> <span class="n">SOSs</span><span class="p">,</span> <span class="ow">and</span> <span class="mi">0</span> <span class="n">indicators</span><span class="o">.</span>
+<span class="n">Presolve</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">1.50</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Probing</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">1.31</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Clique</span> <span class="n">table</span> <span class="n">members</span><span class="p">:</span> <span class="mf">880.</span>
+<span class="n">MIP</span> <span class="n">emphasis</span><span class="p">:</span> <span class="n">balance</span> <span class="n">optimality</span> <span class="ow">and</span> <span class="n">feasibility</span><span class="o">.</span>
+<span class="n">MIP</span> <span class="n">search</span> <span class="n">method</span><span class="p">:</span> <span class="n">dynamic</span> <span class="n">search</span><span class="o">.</span>
+<span class="n">Parallel</span> <span class="n">mode</span><span class="p">:</span> <span class="n">deterministic</span><span class="p">,</span> <span class="n">using</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">32</span> <span class="n">threads</span><span class="o">.</span>
+<span class="n">Root</span> <span class="n">relaxation</span> <span class="n">solution</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">3.19</span> <span class="n">ticks</span><span class="p">)</span>
+
+        <span class="n">Nodes</span>                                         <span class="n">Cuts</span><span class="o">/</span>
+   <span class="n">Node</span>  <span class="n">Left</span>     <span class="n">Objective</span>  <span class="n">IInf</span>  <span class="n">Best</span> <span class="n">Integer</span>    <span class="n">Best</span> <span class="n">Bound</span>    <span class="n">ItCnt</span>     <span class="n">Gap</span>
+
+<span class="o">*</span>     <span class="mi">0</span><span class="o">+</span>    <span class="mi">0</span>                            <span class="mf">0.5218</span>        <span class="mf">2.1667</span>           <span class="mf">315.19</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.9861</span>   <span class="mi">105</span>        <span class="mf">0.5218</span>        <span class="mf">0.9861</span>      <span class="mi">278</span>   <span class="mf">88.96</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6455</span>    <span class="mi">96</span>        <span class="mf">0.5218</span>      <span class="n">Cuts</span><span class="p">:</span> <span class="mi">68</span>      <span class="mi">386</span>   <span class="mf">23.69</span><span class="o">%</span>
+<span class="o">*</span>     <span class="mi">0</span><span class="o">+</span>    <span class="mi">0</span>                            <span class="mf">0.5485</span>        <span class="mf">0.6455</span>            <span class="mf">17.68</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6351</span>    <span class="mi">99</span>        <span class="mf">0.5485</span>      <span class="n">Cuts</span><span class="p">:</span> <span class="mi">82</span>      <span class="mi">430</span>   <span class="mf">15.80</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6329</span>    <span class="mi">93</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">24</span>      <span class="mi">446</span>   <span class="mf">15.39</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6326</span>    <span class="mi">99</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">34</span>      <span class="mi">465</span>   <span class="mf">15.33</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6324</span>    <span class="mi">99</span>        <span class="mf">0.5485</span>      <span class="n">Cuts</span><span class="p">:</span> <span class="mi">22</span>      <span class="mi">476</span>   <span class="mf">15.29</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6067</span>    <span class="mi">96</span>        <span class="mf">0.5485</span>      <span class="n">Cuts</span><span class="p">:</span> <span class="mi">41</span>      <span class="mi">533</span>   <span class="mf">10.62</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6050</span>    <span class="mi">96</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">19</span>      <span class="mi">553</span>   <span class="mf">10.30</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6048</span>    <span class="mi">97</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">28</span>      <span class="mi">563</span>   <span class="mf">10.27</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6033</span>    <span class="mi">99</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">18</span>      <span class="mi">591</span>    <span class="mf">9.99</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6021</span>    <span class="mi">97</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">20</span>      <span class="mi">619</span>    <span class="mf">9.77</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.6005</span>   <span class="mi">100</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">41</span>      <span class="mi">637</span>    <span class="mf">9.48</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.5994</span>    <span class="mi">95</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">35</span>      <span class="mi">671</span>    <span class="mf">9.28</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.5988</span>    <span class="mi">98</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">12</span>      <span class="mi">686</span>    <span class="mf">9.17</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.5983</span>    <span class="mi">99</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">19</span>      <span class="mi">719</span>    <span class="mf">9.08</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.5980</span>    <span class="mi">99</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">13</span>      <span class="mi">731</span>    <span class="mf">9.02</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.5976</span>    <span class="mi">99</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">11</span>      <span class="mi">753</span>    <span class="mf">8.95</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.5973</span>    <span class="mi">94</span>        <span class="mf">0.5485</span>  <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">15</span>      <span class="mi">769</span>    <span class="mf">8.90</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.5968</span>    <span class="mi">99</span>        <span class="mf">0.5485</span>   <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">4</span>      <span class="mi">793</span>    <span class="mf">8.81</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">0.5963</span>    <span class="mi">99</span>        <span class="mf">0.5485</span>   <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">4</span>      <span class="mi">815</span>    <span class="mf">8.72</span><span class="o">%</span>
+<span class="o">*</span>     <span class="mi">0</span><span class="o">+</span>    <span class="mi">0</span>                            <span class="mf">0.5500</span>        <span class="mf">0.5963</span>             <span class="mf">8.42</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="n">cutoff</span>              <span class="mf">0.5500</span>        <span class="mf">0.5500</span>      <span class="mi">831</span>    <span class="mf">0.00</span><span class="o">%</span>
+<span class="n">Elapsed</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.13</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">98.42</span> <span class="n">ticks</span><span class="p">,</span> <span class="n">tree</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="n">MB</span><span class="p">,</span> <span class="n">solutions</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="n">Clique</span> <span class="n">cuts</span> <span class="n">applied</span><span class="p">:</span>  <span class="mi">10</span>
+<span class="n">Implied</span> <span class="n">bound</span> <span class="n">cuts</span> <span class="n">applied</span><span class="p">:</span>  <span class="mi">20</span>
+<span class="n">Zero</span><span class="o">-</span><span class="n">half</span> <span class="n">cuts</span> <span class="n">applied</span><span class="p">:</span>  <span class="mi">17</span>
+<span class="n">Lift</span> <span class="ow">and</span> <span class="n">project</span> <span class="n">cuts</span> <span class="n">applied</span><span class="p">:</span>  <span class="mi">1</span>
+<span class="n">Gomory</span> <span class="n">fractional</span> <span class="n">cuts</span> <span class="n">applied</span><span class="p">:</span>  <span class="mi">1</span>
+
+<span class="n">Root</span> <span class="n">node</span> <span class="n">processing</span> <span class="p">(</span><span class="n">before</span> <span class="n">b</span><span class="o">&amp;</span><span class="n">c</span><span class="p">):</span>
+  <span class="n">Real</span> <span class="n">time</span>             <span class="o">=</span>    <span class="mf">0.13</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">98.44</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Parallel</span> <span class="n">b</span><span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">32</span> <span class="n">threads</span><span class="p">:</span>
+  <span class="n">Real</span> <span class="n">time</span>             <span class="o">=</span>    <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.00</span> <span class="n">ticks</span><span class="p">)</span>
+  <span class="n">Sync</span> <span class="n">time</span> <span class="p">(</span><span class="n">average</span><span class="p">)</span>   <span class="o">=</span>    <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span>
+  <span class="n">Wait</span> <span class="n">time</span> <span class="p">(</span><span class="n">average</span><span class="p">)</span>   <span class="o">=</span>    <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span>
+                          <span class="o">------------</span>
+<span class="n">Total</span> <span class="p">(</span><span class="n">root</span><span class="o">+</span><span class="n">branch</span><span class="o">&amp;</span><span class="n">cut</span><span class="p">)</span> <span class="o">=</span>    <span class="mf">0.13</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">98.44</span> <span class="n">ticks</span><span class="p">)</span>
+
+<span class="n">Solution</span> <span class="n">pool</span><span class="p">:</span> <span class="mi">3</span> <span class="n">solutions</span> <span class="n">saved</span><span class="o">.</span>
+
+<span class="n">MIP</span> <span class="o">-</span> <span class="n">Integer</span> <span class="n">optimal</span> <span class="n">solution</span><span class="p">:</span>  <span class="n">Objective</span> <span class="o">=</span>  <span class="mf">5.5003296046e-01</span>
+<span class="n">Solution</span> <span class="n">time</span> <span class="o">=</span>    <span class="mf">0.14</span> <span class="n">sec</span><span class="o">.</span>  <span class="n">Iterations</span> <span class="o">=</span> <span class="mi">831</span>  <span class="n">Nodes</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">Deterministic</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">98.45</span> <span class="n">ticks</span>  <span class="p">(</span><span class="mf">720.05</span> <span class="n">ticks</span><span class="o">/</span><span class="n">sec</span><span class="p">)</span>
+
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">Incumbent</span> <span class="n">solution</span> <span class="n">written</span> <span class="n">to</span> <span class="n">file</span> <span class="s1">&#39;/tmp/tmpyqi28llx.cplex.sol&#39;</span><span class="o">.</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">The</span> <span class="n">solver</span> <span class="n">exited</span> <span class="n">normally</span><span class="o">.</span>
+<span class="n">A</span> <span class="n">feasible</span> <span class="ow">and</span> <span class="n">provably</span> <span class="n">optimal</span> <span class="n">solution</span> <span class="ow">is</span> <span class="n">available</span><span class="o">.</span>
+<span class="n">The</span> <span class="n">Design</span> <span class="n">has</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">0.5500329604578591</span>
+</pre></div>
+</div>
 <p>We take the locations from the optimal monometallic problem to
-initialize a <strong>Canvas</strong> object for the bimetallic case.</p>
+initialize a <strong>*Canvas*</strong> object for the bimetallic case.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Canv</span> <span class="o">=</span> <span class="n">Canvas</span><span class="p">()</span>
 <span class="k">if</span> <span class="n">D</span><span class="p">:</span>  <span class="c1"># may be None if CPLEX was not found</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">D</span><span class="p">)):</span>
@@ -423,9 +336,9 @@ initialize a <strong>Canvas</strong> object for the bimetallic case.</p>
 </pre></div>
 </div>
 <p>Additionally, we create a few data structures for holding bimetallic
-material information. First, we make a list of multiple <strong>Atom</strong> objects
-that will be the building blocks of the model. Next, we specify a
-dictionary with the bounds to impose on composition.</p>
+material information. First, we make a list of multiple <strong>*Atom*</strong>
+objects that will be the building blocks of the model. Next, we specify
+a dictionary with the bounds to impose on composition.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Cu&#39;</span><span class="p">),</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Ag&#39;</span><span class="p">)]</span>
 <span class="n">CompBounds</span> <span class="o">=</span> <span class="p">{</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Cu&#39;</span><span class="p">):(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span>
               <span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Ag&#39;</span><span class="p">):(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)}</span>
@@ -434,7 +347,7 @@ dictionary with the bounds to impose on composition.</p>
 </div>
 <div class="section" id="specifying-an-optimization-model">
 <h2>Specifying an Optimization Model<a class="headerlink" href="#specifying-an-optimization-model" title="Permalink to this headline">¶</a></h2>
-<p>We start by creating a <strong>MatOptModel</strong> object that will hold the
+<p>We start by creating a <strong>*MatOptModel*</strong> object that will hold the
 information about the problem variables and constraints. At a minimum,
 ever model requires a Canvas object to be defined. Additionally, the
 list of building blocks and conformations that are present in the model
@@ -443,8 +356,8 @@ should be defined.</p>
 </pre></div>
 </div>
 <p>By default, several basic variables are pre-defined. See the first
-example, <strong>Monometallic_Nanocluster_Design.ipynb</strong> for a description of
-basic variables, expressions, and constraint rules.</p>
+example, <strong>*Monometallic_Nanocluster_Design.ipynb*</strong> for a description
+of basic variables, expressions, and constraint rules.</p>
 <p>To start, we inidcate that the choice to place an atom is fixed so that
 each canvas site is required to have an atom. This simplifies the
 problem significantly and results in a model that will seek to find the
@@ -502,199 +415,110 @@ parameters such as the time limit and memory limit* for the optimizer.</p>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<pre class="literal-block">WARNING: DEPRECATED: SetProduct.set_tuple is deprecated.  Use
-    SetProduct.subsets() to get the operator arguments.  (deprecated in TBD)
-    (called from c:usersdkgunsrcidaesdangunteridaes-
-    devidaesappsmatopt/..matoptoptpyomo_modeling.py:284)
-
-
-Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-
-  with Simplex, Mixed Integer &amp; Barrier Optimizers
-
-5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-
-Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
-
-
-
-Type 'help' for a list of available commands.
-
-Type 'help' followed by a command name for more
-
-information on commands.
-
-
-
-CPLEX&gt; Logfile 'cplex.log' closed.
-
-Logfile 'C:UsersdkgunAppDataLocalTemptmpaji7w433.cplex.log' open.
-
-CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
-
-CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
-
-CPLEX&gt; New value for time limit in seconds: 360
-
-CPLEX&gt; New value for upper limit on size of tree in megabytes: 4096
-
-CPLEX&gt; Problem 'C:UsersdkgunAppDataLocalTemptmpyecr13ty.pyomo.lp' read.
-
-Read time = 0.02 sec. (0.01 ticks)
-
-CPLEX&gt; Problem name         : C:UsersdkgunAppDataLocalTemptmpyecr13ty.pyomo.lp
-
-Objective sense      : Maximize
-
-Variables            :      71  [Nneg: 1,  Fix: 2,  Free: 12,  Binary: 56]
-
-Objective nonzeros   :       1
-
-Linear constraints   :     159  [Less: 138,  Equal: 21]
-
-  Nonzeros           :     414
-
-  RHS nonzeros       :      57
-
-
-
-Variables            : Min LB: 0.0000000        Max UB: 3.000000
-
-Objective nonzeros   : Min   : 1.000000         Max   : 1.000000
-
-Linear constraints   :
-
-  Nonzeros           : Min   : 0.04811252       Max   : 4.064546
-
-  RHS nonzeros       : Min   : 1.000000         Max   : 1.000000
-
-CPLEX&gt; CPXPARAM_TimeLimit                               360
-
-CPXPARAM_MIP_Tolerances_AbsMIPGap                0
-
-CPXPARAM_MIP_Tolerances_MIPGap                   0
-
-CPXPARAM_MIP_Limits_TreeMemory                   4096
-
-Tried aggregator 2 times.
-
-MIP Presolve eliminated 20 rows and 15 columns.
-
-Aggregator did 6 substitutions.
-
-Reduced MIP has 133 rows, 50 columns, and 314 nonzeros.
-
-Reduced MIP has 50 binaries, 0 generals, 0 SOSs, and 0 indicators.
-
-Presolve time = 0.00 sec. (0.44 ticks)
-
-Found incumbent of value 1.546227 after 0.00 sec. (0.80 ticks)
-
-Probing time = 0.00 sec. (0.23 ticks)
-
-Tried aggregator 1 time.
-
-Reduced MIP has 133 rows, 50 columns, and 314 nonzeros.
-
-Reduced MIP has 50 binaries, 0 generals, 0 SOSs, and 0 indicators.
-
-Presolve time = 0.00 sec. (0.30 ticks)
-
-Probing time = 0.00 sec. (0.23 ticks)
-
-Clique table members: 265.
-
-MIP emphasis: balance optimality and feasibility.
-
-MIP search method: dynamic search.
-
-Parallel mode: deterministic, using up to 8 threads.
-
-Root relaxation solution time = 0.00 sec. (0.34 ticks)
-
-
-
-        Nodes                                         Cuts/
-
-   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
-
-
-
-*     0+    0                            1.5462        6.5036           320.61%
-
-*     0+    0                            1.6357        6.5036           297.59%
-
-*     0+    0                            1.6556        6.5036           292.83%
-
-      0     0        3.2518    50        1.6556        3.2518       52   96.41%
-
-      0     0        2.1125    38        1.6556     Cuts: 108       91   27.60%
-
-      0     0        1.8234    26        1.6556      Cuts: 21      112   10.14%
-
-      0     0        1.8186    29        1.6556   ZeroHalf: 3      113    9.85%
-
-*     0+    0                            1.6754        1.8186             8.55%
-
-      0     0        1.7507    34        1.6754   ZeroHalf: 5      116    4.49%
-
-      0     0        cutoff              1.6754                    116     ---
-
-Elapsed time = 0.03 sec. (8.16 ticks, tree = 0.01 MB, solutions = 4)
-
-
-
-Clique cuts applied:  35
-
-Implied bound cuts applied:  6
-
-Zero-half cuts applied:  19
-
-Lift and project cuts applied:  1
-
-Gomory fractional cuts applied:  2
-
-
-
-Root node processing (before b&amp;c):
-
-  Real time             =    0.03 sec. (8.16 ticks)
-
-Parallel b&amp;c, 8 threads:
-
-  Real time             =    0.00 sec. (0.00 ticks)
-
-  Sync time (average)   =    0.00 sec.
-
-  Wait time (average)   =    0.00 sec.
-
-                          ------------
-
-Total (root+branch&amp;cut) =    0.03 sec. (8.16 ticks)
-
-
-
-Solution pool: 4 solutions saved.
-
-
-
-MIP - Integer optimal solution:  Objective =  1.6754118151e+00
-
-Solution time =    0.03 sec.  Iterations = 116  Nodes = 0
-
-Deterministic time = 8.16 ticks  (255.03 ticks/sec)
-
-
-
-CPLEX&gt; Incumbent solution written to file 'C:UsersdkgunAppDataLocalTemptmpoijg9tof.cplex.sol'.
-
-CPLEX&gt; The solver exited normally.
-A feasible and provably optimal solution is available.
-The Design has objective: 1.6754118151174977</pre>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">WARNING</span><span class="p">:</span> <span class="n">DEPRECATED</span><span class="p">:</span> <span class="n">SetProduct</span><span class="o">.</span><span class="n">set_tuple</span> <span class="ow">is</span> <span class="n">deprecated</span><span class="o">.</span>  <span class="n">Use</span>
+    <span class="n">SetProduct</span><span class="o">.</span><span class="n">subsets</span><span class="p">()</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">operator</span> <span class="n">arguments</span><span class="o">.</span>  <span class="p">(</span><span class="n">deprecated</span> <span class="ow">in</span> <span class="n">TBD</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">called</span> <span class="kn">from</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ksb</span><span class="o">/</span><span class="n">anaconda3</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">idaes</span><span class="o">-</span><span class="n">pse</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="o">.</span><span class="mi">7</span><span class="o">/</span><span class="n">site</span><span class="o">-</span>
+    <span class="n">packages</span><span class="o">/</span><span class="n">idaes</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">matopt</span><span class="o">/../</span><span class="n">matopt</span><span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">pyomo_modeling</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">284</span><span class="p">)</span>
+
+<span class="n">Welcome</span> <span class="n">to</span> <span class="n">IBM</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="n">ILOG</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="n">CPLEX</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="n">Interactive</span> <span class="n">Optimizer</span> <span class="n">Community</span> <span class="n">Edition</span> <span class="mf">12.9</span><span class="o">.</span><span class="mf">0.0</span>
+  <span class="k">with</span> <span class="n">Simplex</span><span class="p">,</span> <span class="n">Mixed</span> <span class="n">Integer</span> <span class="o">&amp;</span> <span class="n">Barrier</span> <span class="n">Optimizers</span>
+<span class="mi">5725</span><span class="o">-</span><span class="n">A06</span> <span class="mi">5725</span><span class="o">-</span><span class="n">A29</span> <span class="mi">5724</span><span class="o">-</span><span class="n">Y48</span> <span class="mi">5724</span><span class="o">-</span><span class="n">Y49</span> <span class="mi">5724</span><span class="o">-</span><span class="n">Y54</span> <span class="mi">5724</span><span class="o">-</span><span class="n">Y55</span> <span class="mi">5655</span><span class="o">-</span><span class="n">Y21</span>
+<span class="n">Copyright</span> <span class="n">IBM</span> <span class="n">Corp</span><span class="o">.</span> <span class="mi">1988</span><span class="p">,</span> <span class="mf">2019.</span>  <span class="n">All</span> <span class="n">Rights</span> <span class="n">Reserved</span><span class="o">.</span>
+
+<span class="n">Type</span> <span class="s1">&#39;help&#39;</span> <span class="k">for</span> <span class="n">a</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">available</span> <span class="n">commands</span><span class="o">.</span>
+<span class="n">Type</span> <span class="s1">&#39;help&#39;</span> <span class="n">followed</span> <span class="n">by</span> <span class="n">a</span> <span class="n">command</span> <span class="n">name</span> <span class="k">for</span> <span class="n">more</span>
+<span class="n">information</span> <span class="n">on</span> <span class="n">commands</span><span class="o">.</span>
+
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">Logfile</span> <span class="s1">&#39;cplex.log&#39;</span> <span class="n">closed</span><span class="o">.</span>
+<span class="n">Logfile</span> <span class="s1">&#39;/tmp/tmp7yc6tcb8.cplex.log&#39;</span> <span class="nb">open</span><span class="o">.</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">New</span> <span class="n">value</span> <span class="k">for</span> <span class="n">absolute</span> <span class="n">mixed</span> <span class="n">integer</span> <span class="n">optimality</span> <span class="n">gap</span> <span class="n">tolerance</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">New</span> <span class="n">value</span> <span class="k">for</span> <span class="n">mixed</span> <span class="n">integer</span> <span class="n">optimality</span> <span class="n">gap</span> <span class="n">tolerance</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">New</span> <span class="n">value</span> <span class="k">for</span> <span class="n">time</span> <span class="n">limit</span> <span class="ow">in</span> <span class="n">seconds</span><span class="p">:</span> <span class="mi">360</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">New</span> <span class="n">value</span> <span class="k">for</span> <span class="n">upper</span> <span class="n">limit</span> <span class="n">on</span> <span class="n">size</span> <span class="n">of</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">megabytes</span><span class="p">:</span> <span class="mi">4096</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">Problem</span> <span class="s1">&#39;/tmp/tmp6kslbue1.pyomo.lp&#39;</span> <span class="n">read</span><span class="o">.</span>
+<span class="n">Read</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.01</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">Problem</span> <span class="n">name</span>         <span class="p">:</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">tmp6kslbue1</span><span class="o">.</span><span class="n">pyomo</span><span class="o">.</span><span class="n">lp</span>
+<span class="n">Objective</span> <span class="n">sense</span>      <span class="p">:</span> <span class="n">Maximize</span>
+<span class="n">Variables</span>            <span class="p">:</span>      <span class="mi">71</span>  <span class="p">[</span><span class="n">Nneg</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="n">Fix</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">Free</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>  <span class="n">Binary</span><span class="p">:</span> <span class="mi">56</span><span class="p">]</span>
+<span class="n">Objective</span> <span class="n">nonzeros</span>   <span class="p">:</span>       <span class="mi">1</span>
+<span class="n">Linear</span> <span class="n">constraints</span>   <span class="p">:</span>     <span class="mi">159</span>  <span class="p">[</span><span class="n">Less</span><span class="p">:</span> <span class="mi">138</span><span class="p">,</span>  <span class="n">Equal</span><span class="p">:</span> <span class="mi">21</span><span class="p">]</span>
+  <span class="n">Nonzeros</span>           <span class="p">:</span>     <span class="mi">414</span>
+  <span class="n">RHS</span> <span class="n">nonzeros</span>       <span class="p">:</span>      <span class="mi">57</span>
+
+<span class="n">Variables</span>            <span class="p">:</span> <span class="n">Min</span> <span class="n">LB</span><span class="p">:</span> <span class="mf">0.000000</span>         <span class="n">Max</span> <span class="n">UB</span><span class="p">:</span> <span class="mf">3.000000</span>
+<span class="n">Objective</span> <span class="n">nonzeros</span>   <span class="p">:</span> <span class="n">Min</span>   <span class="p">:</span> <span class="mf">1.000000</span>         <span class="n">Max</span>   <span class="p">:</span> <span class="mf">1.000000</span>
+<span class="n">Linear</span> <span class="n">constraints</span>   <span class="p">:</span>
+  <span class="n">Nonzeros</span>           <span class="p">:</span> <span class="n">Min</span>   <span class="p">:</span> <span class="mf">0.04811252</span>       <span class="n">Max</span>   <span class="p">:</span> <span class="mf">4.064546</span>
+  <span class="n">RHS</span> <span class="n">nonzeros</span>       <span class="p">:</span> <span class="n">Min</span>   <span class="p">:</span> <span class="mf">1.000000</span>         <span class="n">Max</span>   <span class="p">:</span> <span class="mf">1.000000</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">CPXPARAM_TimeLimit</span>                               <span class="mi">360</span>
+<span class="n">CPXPARAM_MIP_Tolerances_AbsMIPGap</span>                <span class="mi">0</span>
+<span class="n">CPXPARAM_MIP_Tolerances_MIPGap</span>                   <span class="mi">0</span>
+<span class="n">CPXPARAM_MIP_Limits_TreeMemory</span>                   <span class="mi">4096</span>
+<span class="n">Tried</span> <span class="n">aggregator</span> <span class="mi">2</span> <span class="n">times</span><span class="o">.</span>
+<span class="n">MIP</span> <span class="n">Presolve</span> <span class="n">eliminated</span> <span class="mi">20</span> <span class="n">rows</span> <span class="ow">and</span> <span class="mi">15</span> <span class="n">columns</span><span class="o">.</span>
+<span class="n">Aggregator</span> <span class="n">did</span> <span class="mi">6</span> <span class="n">substitutions</span><span class="o">.</span>
+<span class="n">Reduced</span> <span class="n">MIP</span> <span class="n">has</span> <span class="mi">133</span> <span class="n">rows</span><span class="p">,</span> <span class="mi">50</span> <span class="n">columns</span><span class="p">,</span> <span class="ow">and</span> <span class="mi">314</span> <span class="n">nonzeros</span><span class="o">.</span>
+<span class="n">Reduced</span> <span class="n">MIP</span> <span class="n">has</span> <span class="mi">50</span> <span class="n">binaries</span><span class="p">,</span> <span class="mi">0</span> <span class="n">generals</span><span class="p">,</span> <span class="mi">0</span> <span class="n">SOSs</span><span class="p">,</span> <span class="ow">and</span> <span class="mi">0</span> <span class="n">indicators</span><span class="o">.</span>
+<span class="n">Presolve</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.44</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Found</span> <span class="n">incumbent</span> <span class="n">of</span> <span class="n">value</span> <span class="mf">1.546227</span> <span class="n">after</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.80</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Probing</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.23</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Tried</span> <span class="n">aggregator</span> <span class="mi">1</span> <span class="n">time</span><span class="o">.</span>
+<span class="n">Reduced</span> <span class="n">MIP</span> <span class="n">has</span> <span class="mi">133</span> <span class="n">rows</span><span class="p">,</span> <span class="mi">50</span> <span class="n">columns</span><span class="p">,</span> <span class="ow">and</span> <span class="mi">314</span> <span class="n">nonzeros</span><span class="o">.</span>
+<span class="n">Reduced</span> <span class="n">MIP</span> <span class="n">has</span> <span class="mi">50</span> <span class="n">binaries</span><span class="p">,</span> <span class="mi">0</span> <span class="n">generals</span><span class="p">,</span> <span class="mi">0</span> <span class="n">SOSs</span><span class="p">,</span> <span class="ow">and</span> <span class="mi">0</span> <span class="n">indicators</span><span class="o">.</span>
+<span class="n">Presolve</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.30</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Probing</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.23</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Clique</span> <span class="n">table</span> <span class="n">members</span><span class="p">:</span> <span class="mf">263.</span>
+<span class="n">MIP</span> <span class="n">emphasis</span><span class="p">:</span> <span class="n">balance</span> <span class="n">optimality</span> <span class="ow">and</span> <span class="n">feasibility</span><span class="o">.</span>
+<span class="n">MIP</span> <span class="n">search</span> <span class="n">method</span><span class="p">:</span> <span class="n">dynamic</span> <span class="n">search</span><span class="o">.</span>
+<span class="n">Parallel</span> <span class="n">mode</span><span class="p">:</span> <span class="n">deterministic</span><span class="p">,</span> <span class="n">using</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">32</span> <span class="n">threads</span><span class="o">.</span>
+<span class="n">Root</span> <span class="n">relaxation</span> <span class="n">solution</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.30</span> <span class="n">ticks</span><span class="p">)</span>
+
+        <span class="n">Nodes</span>                                         <span class="n">Cuts</span><span class="o">/</span>
+   <span class="n">Node</span>  <span class="n">Left</span>     <span class="n">Objective</span>  <span class="n">IInf</span>  <span class="n">Best</span> <span class="n">Integer</span>    <span class="n">Best</span> <span class="n">Bound</span>    <span class="n">ItCnt</span>     <span class="n">Gap</span>
+
+<span class="o">*</span>     <span class="mi">0</span><span class="o">+</span>    <span class="mi">0</span>                            <span class="mf">1.5462</span>        <span class="mf">6.5036</span>           <span class="mf">320.61</span><span class="o">%</span>
+<span class="o">*</span>     <span class="mi">0</span><span class="o">+</span>    <span class="mi">0</span>                            <span class="mf">1.6517</span>        <span class="mf">6.5036</span>           <span class="mf">293.74</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">3.2518</span>    <span class="mi">50</span>        <span class="mf">1.6517</span>        <span class="mf">3.2518</span>       <span class="mi">50</span>   <span class="mf">96.87</span><span class="o">%</span>
+<span class="o">*</span>     <span class="mi">0</span><span class="o">+</span>    <span class="mi">0</span>                            <span class="mf">1.6556</span>        <span class="mf">3.2518</span>            <span class="mf">96.41</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">2.1027</span>    <span class="mi">38</span>        <span class="mf">1.6556</span>     <span class="n">Cuts</span><span class="p">:</span> <span class="mi">112</span>       <span class="mi">96</span>   <span class="mf">27.01</span><span class="o">%</span>
+<span class="o">*</span>     <span class="mi">0</span><span class="o">+</span>    <span class="mi">0</span>                            <span class="mf">1.6754</span>        <span class="mf">2.1027</span>            <span class="mf">25.50</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">1.8260</span>    <span class="mi">31</span>        <span class="mf">1.6754</span>      <span class="n">Cuts</span><span class="p">:</span> <span class="mi">41</span>      <span class="mi">120</span>    <span class="mf">8.99</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">1.8217</span>    <span class="mi">16</span>        <span class="mf">1.6754</span>   <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">9</span>      <span class="mi">121</span>    <span class="mf">8.73</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">1.8121</span>    <span class="mi">33</span>        <span class="mf">1.6754</span>   <span class="n">ZeroHalf</span><span class="p">:</span> <span class="mi">2</span>      <span class="mi">124</span>    <span class="mf">8.16</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="mf">1.7548</span>    <span class="mi">15</span>        <span class="mf">1.6754</span>       <span class="n">Cuts</span><span class="p">:</span> <span class="mi">7</span>      <span class="mi">126</span>    <span class="mf">4.74</span><span class="o">%</span>
+      <span class="mi">0</span>     <span class="mi">0</span>        <span class="n">cutoff</span>              <span class="mf">1.6754</span>                    <span class="mi">129</span>     <span class="o">---</span>
+<span class="n">Elapsed</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">0.10</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">8.81</span> <span class="n">ticks</span><span class="p">,</span> <span class="n">tree</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="n">MB</span><span class="p">,</span> <span class="n">solutions</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
+
+<span class="n">Clique</span> <span class="n">cuts</span> <span class="n">applied</span><span class="p">:</span>  <span class="mi">40</span>
+<span class="n">Implied</span> <span class="n">bound</span> <span class="n">cuts</span> <span class="n">applied</span><span class="p">:</span>  <span class="mi">6</span>
+<span class="n">Zero</span><span class="o">-</span><span class="n">half</span> <span class="n">cuts</span> <span class="n">applied</span><span class="p">:</span>  <span class="mi">13</span>
+<span class="n">Lift</span> <span class="ow">and</span> <span class="n">project</span> <span class="n">cuts</span> <span class="n">applied</span><span class="p">:</span>  <span class="mi">1</span>
+
+<span class="n">Root</span> <span class="n">node</span> <span class="n">processing</span> <span class="p">(</span><span class="n">before</span> <span class="n">b</span><span class="o">&amp;</span><span class="n">c</span><span class="p">):</span>
+  <span class="n">Real</span> <span class="n">time</span>             <span class="o">=</span>    <span class="mf">0.10</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">8.81</span> <span class="n">ticks</span><span class="p">)</span>
+<span class="n">Parallel</span> <span class="n">b</span><span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">32</span> <span class="n">threads</span><span class="p">:</span>
+  <span class="n">Real</span> <span class="n">time</span>             <span class="o">=</span>    <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">0.00</span> <span class="n">ticks</span><span class="p">)</span>
+  <span class="n">Sync</span> <span class="n">time</span> <span class="p">(</span><span class="n">average</span><span class="p">)</span>   <span class="o">=</span>    <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span>
+  <span class="n">Wait</span> <span class="n">time</span> <span class="p">(</span><span class="n">average</span><span class="p">)</span>   <span class="o">=</span>    <span class="mf">0.00</span> <span class="n">sec</span><span class="o">.</span>
+                          <span class="o">------------</span>
+<span class="n">Total</span> <span class="p">(</span><span class="n">root</span><span class="o">+</span><span class="n">branch</span><span class="o">&amp;</span><span class="n">cut</span><span class="p">)</span> <span class="o">=</span>    <span class="mf">0.10</span> <span class="n">sec</span><span class="o">.</span> <span class="p">(</span><span class="mf">8.81</span> <span class="n">ticks</span><span class="p">)</span>
+
+<span class="n">Solution</span> <span class="n">pool</span><span class="p">:</span> <span class="mi">4</span> <span class="n">solutions</span> <span class="n">saved</span><span class="o">.</span>
+
+<span class="n">MIP</span> <span class="o">-</span> <span class="n">Integer</span> <span class="n">optimal</span> <span class="n">solution</span><span class="p">:</span>  <span class="n">Objective</span> <span class="o">=</span>  <span class="mf">1.6754118151e+00</span>
+<span class="n">Solution</span> <span class="n">time</span> <span class="o">=</span>    <span class="mf">0.10</span> <span class="n">sec</span><span class="o">.</span>  <span class="n">Iterations</span> <span class="o">=</span> <span class="mi">129</span>  <span class="n">Nodes</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">Deterministic</span> <span class="n">time</span> <span class="o">=</span> <span class="mf">8.81</span> <span class="n">ticks</span>  <span class="p">(</span><span class="mf">84.33</span> <span class="n">ticks</span><span class="o">/</span><span class="n">sec</span><span class="p">)</span>
+
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">Incumbent</span> <span class="n">solution</span> <span class="n">written</span> <span class="n">to</span> <span class="n">file</span> <span class="s1">&#39;/tmp/tmp8y1te3wh.cplex.sol&#39;</span><span class="o">.</span>
+<span class="n">CPLEX</span><span class="o">&gt;</span> <span class="n">The</span> <span class="n">solver</span> <span class="n">exited</span> <span class="n">normally</span><span class="o">.</span>
+<span class="n">A</span> <span class="n">feasible</span> <span class="ow">and</span> <span class="n">provably</span> <span class="n">optimal</span> <span class="n">solution</span> <span class="ow">is</span> <span class="n">available</span><span class="o">.</span>
+<span class="n">The</span> <span class="n">Design</span> <span class="n">has</span> <span class="n">objective</span><span class="p">:</span> <span class="mf">1.6754118151174977</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="processing-solutions">
 <h2>Processing Solutions<a class="headerlink" href="#processing-solutions" title="Permalink to this headline">¶</a></h2>
-<p>If a design was identified (optimal or otherwise), then a <strong>Design</strong>
+<p>If a design was identified (optimal or otherwise), then a <strong>*Design*</strong>
 object is returned from the optimization method. The optimal design can
 be plotted via any of the supported parsers.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">D</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -715,11 +539,20 @@ be plotted via any of the supported parsers.</p>
 
   <div role="contentinfo">
     <p>
+        
+        
         &copy; <a href="../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -730,7 +563,6 @@ be plotted via any of the supported parsers.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

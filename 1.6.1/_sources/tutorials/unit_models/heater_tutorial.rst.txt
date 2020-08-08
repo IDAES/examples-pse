@@ -78,13 +78,13 @@ Setting up the problem in IDAES
     DOF_initial = degrees_of_freedom(m)
     print("The initial DOF is {0}".format(DOF_initial))
     
-    
+
 
 
 .. parsed-literal::
 
     The initial DOF is 6
-    
+
 
 .. code:: ipython3
 
@@ -109,7 +109,7 @@ Case 1: Fix Outlet Temperature
 .. parsed-literal::
 
     The final DOF is 0
-    
+
 
 Flowsheet Initialization
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,23 +137,23 @@ documentation: https://idaes-pse.readthedocs.io/en/latest/logging.html
 
 .. parsed-literal::
 
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 1 skipped.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 1 skipped.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_out: State Released.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume: Initialization Complete
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater: Initialization Step 1 Complete.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater.control_volume.properties_in: State Released.
-    2020-07-15 22:27:34 [INFO] idaes.init.fs.heater: Initialization Complete: optimal - Optimal Solution Found
-    
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 1 skipped.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 1 skipped.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_out: State Released.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume: Initialization Complete
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater: Initialization Step 1 Complete.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater.control_volume.properties_in: State Released.
+    2020-08-07 15:19:22 [INFO] idaes.init.fs.heater: Initialization Complete: optimal - Optimal Solution Found
+
 
 Obtaining Simulation Results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,7 +164,7 @@ Obtaining Simulation Results
     # Note: If the degrees of freedom = 0, we have a square problem
     opt = SolverFactory('ipopt')
     solve_status = opt.solve(m, tee=True)
-    
+
 
 
 .. parsed-literal::
@@ -245,7 +245,7 @@ View Results
     heat_duty : Size=1, Index=fs.time
         Key : Lower : Value              : Upper : Fixed : Stale : Domain
         0.0 :  None : 459.10147722222354 :  None : False : False :  Reals
-    
+
 
 .. code:: ipython3
 
@@ -275,7 +275,7 @@ View Results
         temperature                353.00     363.00
         pressure               1.0132e+05 1.0132e+05
     ====================================================================================
-    
+
 
 Case 2: Fix Heat Duty
 ---------------------
@@ -346,7 +346,7 @@ Case 2: Fix Heat Duty
     Number of equality constraint Jacobian evaluations   = 1
     Number of inequality constraint Jacobian evaluations = 0
     Number of Lagrangian Hessian evaluations             = 0
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
     Total CPU secs in NLP function evaluations           =      0.000
     
     EXIT: Optimal Solution Found.
@@ -363,7 +363,7 @@ Case 2: Fix Heat Duty
     _outlet_temperature_ref : Size=1, Index=fs.time
         Key : Lower : Value : Upper : Fixed : Stale : Domain
         0.0 :     0 : 363.0 :  None : False : False : NonNegativeReals
-    
+
 
 .. code:: ipython3
 
@@ -393,7 +393,7 @@ Case 2: Fix Heat Duty
         temperature                353.00     363.00
         pressure               1.0132e+05 1.0132e+05
     ====================================================================================
-    
+
 
 Plotting Q vs. Outlet Temperature
 ---------------------------------
@@ -428,7 +428,7 @@ Plotting Q vs. Outlet Temperature
             heat_duty.append(m.fs.heater.heat_duty[0].value) 
     
     
-    
+
 
 .. code:: ipython3
 

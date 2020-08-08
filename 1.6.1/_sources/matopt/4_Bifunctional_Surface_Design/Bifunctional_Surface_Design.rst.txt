@@ -131,7 +131,7 @@ we also output conformations to file for plotting.
             Conf[i] = Atom('Ni')
         for i in iToSetPt[iConf]:
             Conf[i] = Atom('Pt')
-    
+
 
 Building the Model
 ------------------
@@ -155,15 +155,15 @@ creating the model.
     CatWeight = 1.0
     Atoms = [Atom('Ni'),Atom('Pt')]
 
-Next, we create a **MatOptModel** object.
+Next, we create a ***MatOptModel*** object.
 
 .. code:: ipython3
 
     m = MatOptModel(Canv,Atoms,Confs)
 
 By default, several basic variables are pre-defined. See the first
-example, **Monometallic_Nanocluster_Design.ipynb** for a description of
-basic variables, expressions, and constraint rules.
+example, ***Monometallic_Nanocluster_Design.ipynb*** for a description
+of basic variables, expressions, and constraint rules.
 
 First, we fix the composition of atoms in the appropriate layers.
 Effectively, we are designing the defects in a single layer of Ni on top
@@ -242,60 +242,60 @@ maximize method to optimize the balance of activity and stability
 
     WARNING: DEPRECATED: SetProduct.set_tuple is deprecated.  Use
         SetProduct.subsets() to get the operator arguments.  (deprecated in TBD)
-        (called from c:\users\dkgun\src\idaes\dangunter\idaes-
-        dev\idaes\apps\matopt/..\matopt\opt\pyomo_modeling.py:284)
-    
-    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-      with Simplex, Mixed Integer & Barrier Optimizers
-    5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-    Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
-    
-    Type 'help' for a list of available commands.
-    Type 'help' followed by a command name for more
-    information on commands.
-    
-    CPLEX> Logfile 'cplex.log' closed.
-    Logfile 'C:\Users\dkgun\AppData\Local\Temp\tmpqkjahs0q.cplex.log' open.
-    CPLEX> New value for absolute mixed integer optimality gap tolerance: 0
-    CPLEX> New value for mixed integer optimality gap tolerance: 0
-    CPLEX> New value for time limit in seconds: 360
-    CPLEX> Problem 'C:\Users\dkgun\AppData\Local\Temp\tmpqpn1cyqv.pyomo.lp' read.
-    Read time = 0.08 sec. (3.48 ticks)
-    CPLEX> Problem name         : C:\Users\dkgun\AppData\Local\Temp\tmpqpn1cyqv.pyomo.lp
-    Objective sense      : Maximize
-    Variables            :    8194  [Nneg: 1,  Free: 644,  Binary: 7165,
-                                     General Integer: 384]
-    Objective nonzeros   :       1
-    Linear constraints   :   36613  [Less: 35200,  Greater: 128,  Equal: 1285]
-      Nonzeros           :   92491
-      RHS nonzeros       :   12680
-    
-    Variables            : Min LB: 0.0000000        Max UB: 12.00000       
-    Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
-    Linear constraints   :
-      Nonzeros           : Min   : 0.002604167      Max   : 12.00000       
-      RHS nonzeros       : Min   : 0.1012080        Max   : 9.000000       
-    CPLEX> CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
-    
-    Error termination, CPLEX Error  1016.
-    Solution time =    0.00 sec.
-    Deterministic time = 0.00 ticks  (0.00 ticks/sec)
-    
-    CPLEX> CPLEX Error  1217: No solution exists.
-    No file written.
+        (called from /home/ksb/anaconda3/envs/idaes-pse/lib/python3.7/site-
+        packages/idaes/apps/matopt/../matopt/opt/pyomo_modeling.py:284)
+    
+    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
+      with Simplex, Mixed Integer & Barrier Optimizers
+    5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
+    Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+    
+    Type 'help' for a list of available commands.
+    Type 'help' followed by a command name for more
+    information on commands.
+    
+    CPLEX> Logfile 'cplex.log' closed.
+    Logfile '/tmp/tmpmp38nwpe.cplex.log' open.
+    CPLEX> New value for absolute mixed integer optimality gap tolerance: 0
+    CPLEX> New value for mixed integer optimality gap tolerance: 0
+    CPLEX> New value for time limit in seconds: 360
+    CPLEX> Problem '/tmp/tmpn99ocl40.pyomo.lp' read.
+    Read time = 0.06 sec. (3.48 ticks)
+    CPLEX> Problem name         : /tmp/tmpn99ocl40.pyomo.lp
+    Objective sense      : Maximize
+    Variables            :    8194  [Nneg: 1,  Free: 644,  Binary: 7165,
+                                     General Integer: 384]
+    Objective nonzeros   :       1
+    Linear constraints   :   36613  [Less: 35200,  Greater: 128,  Equal: 1285]
+      Nonzeros           :   92491
+      RHS nonzeros       :   12680
+    
+    Variables            : Min LB: 0.000000         Max UB: 12.00000       
+    Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
+    Linear constraints   :
+      Nonzeros           : Min   : 0.002604167      Max   : 12.00000       
+      RHS nonzeros       : Min   : 0.1012080        Max   : 9.000000       
+    CPLEX> CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
+    
+    Error termination, CPLEX Error  1016.
+    Solution time =    0.00 sec.
+    Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+    
+    CPLEX> CPLEX Error  1217: No solution exists.
+    No file written.
     CPLEX> ERROR: evaluating object as numeric value: obj
             (object: <class 'pyomo.core.base.objective.SimpleObjective'>)
         No value for uninitialized NumericValue object obj
     MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
-    
+
 
 Processing Solutions
 --------------------
 
 Once the model is solved, we can interpret the solutions as labelings of
-a Design object. To accompolish this, we use the **setDesignFromModel**
-function. Then, we can write the Design object to PDB or CFG files for
-plotting.
+a Design object. To accompolish this, we use the
+***setDesignFromModel*** function. Then, we can write the Design object
+to PDB or CFG files for plotting.
 
 .. code:: ipython3
 

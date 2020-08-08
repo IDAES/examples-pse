@@ -23,9 +23,9 @@ We start by importing MatOpt.
 Representing Materials
 ----------------------
 
-First, we construct a **Lattice** object to hold information about the
+First, we construct a ***Lattice*** object to hold information about the
 sites in our material. For this application, we use the
-**PerovskiteLattice** class with lattice constants *A*, *B*, and *C*.
+***PerovskiteLattice*** class with lattice constants *A*, *B*, and *C*.
 
 .. code:: ipython3
 
@@ -34,9 +34,9 @@ sites in our material. For this application, we use the
     C = 4.0
     Lat = PerovskiteLattice(A,B,C)
 
-Next, we construct **Shape** and **Tiling** objects to help define the
-material locations of interest. In this case, we use **RectPrism** and
-**CubicTiling**, respectively.
+Next, we construct ***Shape*** and ***Tiling*** objects to help define
+the material locations of interest. In this case, we use ***RectPrism***
+and ***CubicTiling***, respectively.
 
 Note that we shift the shape slightly to avoid ambiguity about which
 sites on the border of the cell should be included.
@@ -50,9 +50,9 @@ sites on the border of the cell should be included.
     S.shift(np.array([-0.01,-0.01,-0.01]))
     T = CubicTiling(S)
 
-Next, we construct the **Canvas** object which will hold all the
+Next, we construct the ***Canvas*** object which will hold all the
 information about the sites and information about neighbors. We also
-define a list of **Atom** objects that serve as the building blocks of
+define a list of ***Atom*** objects that serve as the building blocks of
 our material.
 
 .. code:: ipython3
@@ -93,7 +93,7 @@ information that will help specify the design problem.
     GlobalLB = round(pctGlobalLB*len(BSites))
     GlobalUB = round(pctGlobalUB*len(BSites))
 
-Next, we initialize a **MatOptModel** object that will hold all the
+Next, we initialize a ***MatOptModel*** object that will hold all the
 information about material descriptors and desired functionalities.
 
 .. code:: ipython3
@@ -101,8 +101,8 @@ information about material descriptors and desired functionalities.
     m = MatOptModel(Canv,Atoms,Confs)
 
 By default, several basic variables are pre-defined. See the first
-example, **Monometallic_Nanocluster_Design.ipynb** for a description of
-basic variables, expressions, and constraint rules.
+example, ***Monometallic_Nanocluster_Design.ipynb*** for a description
+of basic variables, expressions, and constraint rules.
 
 For this system, we introduce several rules about the allowed placement
 of atoms in the design. First, we require that all A-sites in the
@@ -161,51 +161,51 @@ one of the global descriptors.
 
     WARNING: DEPRECATED: SetProduct.set_tuple is deprecated.  Use
         SetProduct.subsets() to get the operator arguments.  (deprecated in TBD)
-        (called from c:\users\dkgun\src\idaes\dangunter\idaes-
-        dev\idaes\apps\matopt/..\matopt\opt\pyomo_modeling.py:284)
-    
-    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-      with Simplex, Mixed Integer & Barrier Optimizers
-    5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-    Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
-    
-    Type 'help' for a list of available commands.
-    Type 'help' followed by a command name for more
-    information on commands.
-    
-    CPLEX> Logfile 'cplex.log' closed.
-    Logfile 'C:\Users\dkgun\AppData\Local\Temp\tmpcyv2zjp2.cplex.log' open.
-    CPLEX> New value for absolute mixed integer optimality gap tolerance: 0
-    CPLEX> New value for mixed integer optimality gap tolerance: 0
-    CPLEX> New value for time limit in seconds: 360
-    CPLEX> Problem 'C:\Users\dkgun\AppData\Local\Temp\tmp5uxfiykr.pyomo.lp' read.
-    Read time = 0.01 sec. (0.31 ticks)
-    CPLEX> Problem name         : C:\Users\dkgun\AppData\Local\Temp\tmp5uxfiykr.pyomo.lp
-    Objective sense      : Maximize
-    Variables            :     843  [Nneg: 1,  Box: 25,  Free: 1,  Binary: 816]
-    Objective nonzeros   :       1
-    Linear constraints   :    1459  [Less: 1424,  Equal: 35]
-      Nonzeros           :   17523
-      RHS nonzeros       :    1113
-    
-    Variables            : Min LB: 0.0000000        Max UB: 10.00000       
-    Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
-    Linear constraints   :
-      Nonzeros           : Min   : 0.04166667       Max   : 2.000000       
-      RHS nonzeros       : Min   : 1.000000         Max   : 9.000000       
-    CPLEX> CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
-    
-    Error termination, CPLEX Error  1016.
-    Solution time =    0.00 sec.
-    Deterministic time = 0.00 ticks  (0.00 ticks/sec)
-    
-    CPLEX> CPLEX Error  1217: No solution exists.
-    No file written.
+        (called from /home/ksb/anaconda3/envs/idaes-pse/lib/python3.7/site-
+        packages/idaes/apps/matopt/../matopt/opt/pyomo_modeling.py:284)
+    
+    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
+      with Simplex, Mixed Integer & Barrier Optimizers
+    5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
+    Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+    
+    Type 'help' for a list of available commands.
+    Type 'help' followed by a command name for more
+    information on commands.
+    
+    CPLEX> Logfile 'cplex.log' closed.
+    Logfile '/tmp/tmp_bm2xffw.cplex.log' open.
+    CPLEX> New value for absolute mixed integer optimality gap tolerance: 0
+    CPLEX> New value for mixed integer optimality gap tolerance: 0
+    CPLEX> New value for time limit in seconds: 360
+    CPLEX> Problem '/tmp/tmp8g6187b3.pyomo.lp' read.
+    Read time = 0.01 sec. (0.31 ticks)
+    CPLEX> Problem name         : /tmp/tmp8g6187b3.pyomo.lp
+    Objective sense      : Maximize
+    Variables            :     843  [Nneg: 1,  Box: 25,  Free: 1,  Binary: 816]
+    Objective nonzeros   :       1
+    Linear constraints   :    1459  [Less: 1424,  Equal: 35]
+      Nonzeros           :   17523
+      RHS nonzeros       :    1113
+    
+    Variables            : Min LB: 0.000000         Max UB: 10.00000       
+    Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
+    Linear constraints   :
+      Nonzeros           : Min   : 0.04166667       Max   : 2.000000       
+      RHS nonzeros       : Min   : 1.000000         Max   : 9.000000       
+    CPLEX> CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
+    
+    Error termination, CPLEX Error  1016.
+    Solution time =    0.00 sec.
+    Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+    
+    CPLEX> CPLEX Error  1217: No solution exists.
+    No file written.
     CPLEX> ERROR: evaluating object as numeric value: obj
             (object: <class 'pyomo.core.base.objective.SimpleObjective'>)
         No value for uninitialized NumericValue object obj
     MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
-    
+
 
 Processing Solutions
 --------------------

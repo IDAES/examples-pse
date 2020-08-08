@@ -1,15 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Six Hump Camel &mdash; IDAES v1.7.0dev0 Examples</title>
+  <title>Six Hump Camel &mdash; IDAES v1.6.1 Examples</title>
   
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
 
   
   
@@ -17,7 +20,9 @@
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -30,10 +35,6 @@
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="copyright" title="Copyright" href="../../copyright.html" />
@@ -56,7 +57,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
           
 
           
@@ -79,6 +80,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -102,6 +104,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -140,7 +143,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../index.html">Surrogate Modeling Examples</a> &raquo;</li>
         
@@ -13270,6 +13273,7 @@ div#notebook {
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.surrogate</span> <span class="kn">import</span> <span class="n">alamopy</span>
 <span class="kn">import</span> <span class="nn">examples</span>
 <span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+<span class="kn">from</span> <span class="nn">pyutilib.common</span> <span class="kn">import</span> <span class="n">ApplicationError</span>
 <span class="kn">import</span> <span class="nn">camel6</span>
 </pre></div>
 
@@ -13290,20 +13294,47 @@ div#notebook {
 </div>
 </div>
 
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Updating number of training points from 10 to 10
+Model: {&#39;z1&#39;: &#39;  z1 = 3.9999999999999986677324 * x1^2 - 3.9999999999999946709295 * x2^2 - 2.1000000000000009769963 * x1^4 + 3.9999999999999946709295 * x2^4 + 0.33333333333333370340767 * x1^6 + 0.99999999999999877875467 * x1*x2&#39;}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">if</span> <span class="n">alamo_ran</span><span class="p">:</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">hasBaron</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">solver_opt</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;baron&#39;</span><span class="p">)</span>
+    <span class="n">hasBaron</span> <span class="o">=</span> <span class="n">solver_opt</span><span class="o">.</span><span class="n">available</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">ApplicationError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Partial test completed. </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="k">err</span>)
+
+
+<span class="k">if</span> <span class="n">alamo_ran</span> <span class="ow">and</span> <span class="n">hasBaron</span><span class="p">:</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
     <span class="n">opt</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;baron&#39;</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">x1</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">()</span>
     <span class="n">model</span><span class="o">.</span><span class="n">x2</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">pyomo_model</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">cam6alm</span>
-        <span class="k">return</span> <span class="n">cam6alm</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x1</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">x2</span><span class="p">)</span>
+        <span class="kn">import</span> <span class="nn">z1</span>
+        <span class="k">return</span> <span class="n">z1</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x1</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">x2</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span><span class="n">rule</span> <span class="o">=</span> <span class="n">pyomo_model</span><span class="p">)</span>
     <span class="n">results</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">solutions</span><span class="o">.</span><span class="n">store_to</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
@@ -13311,6 +13342,53 @@ div#notebook {
 </pre></div>
 
     </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+Problem: 
+- Name: problem
+  Lower bound: -1e+51
+  Upper bound: -1.03162845349
+  Number of objectives: 1
+  Number of constraints: 1
+  Number of variables: 3
+  Sense: unknown
+Solver: 
+- Status: ok
+  Termination condition: unknown
+  Error rc: 0
+  Time: 0.26471662521362305
+Solution: 
+- number of solutions: 1
+  number of solutions displayed: 1
+- Gap: 1e+51
+  Status: feasible
+  Message: None
+  Objective:
+    obj:
+      Value: -1.031628453489876
+  Variable:
+    x1:
+      Value: -0.08984201313734179
+    x2:
+      Value: 0.712656403314412
+  Constraint: No values
+
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -13358,11 +13436,20 @@ div#notebook {
 
   <div role="contentinfo">
     <p>
+        
+        
         &copy; <a href="../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -13373,7 +13460,6 @@ div#notebook {
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

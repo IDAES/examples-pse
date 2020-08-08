@@ -123,7 +123,7 @@ lowest surface energy design.
     maxSurfE = 999
     CatWeight = 1.0
 
-To begin, we start by creating a **MatOptModel** object to hold
+To begin, we start by creating a ***MatOptModel*** object to hold
 information about the model.
 
 .. code:: ipython3
@@ -131,8 +131,8 @@ information about the model.
     m = MatOptModel(Canv,Atoms)
 
 By default, several basic variables are pre-defined. See the first
-example, **Monometallic_Nanocluster_Design.ipynb** for a description of
-basic variables, expressions, and constraint rules.
+example, ***Monometallic_Nanocluster_Design.ipynb*** for a description
+of basic variables, expressions, and constraint rules.
 
 First, we introduce two rules to fix special sites in the design. We fix
 the bottom two layers of atoms to exist, creating underlying bulk layers
@@ -230,50 +230,50 @@ maximize method to optimize the balance of activity and stability
 
 .. parsed-literal::
 
-    
-    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-      with Simplex, Mixed Integer & Barrier Optimizers
-    5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-    Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
-    
-    Type 'help' for a list of available commands.
-    Type 'help' followed by a command name for more
-    information on commands.
-    
-    CPLEX> Logfile 'cplex.log' closed.
-    Logfile 'C:\Users\dkgun\AppData\Local\Temp\tmpjk5e1t87.cplex.log' open.
-    CPLEX> New value for absolute mixed integer optimality gap tolerance: 0
-    CPLEX> New value for mixed integer optimality gap tolerance: 0
-    CPLEX> New value for time limit in seconds: 360
-    CPLEX> Problem 'C:\Users\dkgun\AppData\Local\Temp\tmp49o_pjst.pyomo.lp' read.
-    Read time = 0.01 sec. (0.34 ticks)
-    CPLEX> Problem name         : C:\Users\dkgun\AppData\Local\Temp\tmp49o_pjst.pyomo.lp
-    Objective sense      : Maximize
-    Variables            :    1620  [Nneg: 1,  Box: 65,  Free: 322,  Binary: 1151,
-                                     General Integer: 80,  Other: 1]
-    Objective nonzeros   :       1
-    Linear constraints   :    4085  [Less: 3680,  Greater: 64,  Equal: 341]
-      Nonzeros           :    9808
-      RHS nonzeros       :    1029
-    
-    Variables            : Min LB: 0.0000000        Max UB: 999.0000       
-    Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
-    Linear constraints   :
-      Nonzeros           : Min   : 0.03741000       Max   : 12.00000       
-      RHS nonzeros       : Min   : 0.1012080        Max   : 12.00000       
-    CPLEX> CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
-    
-    Error termination, CPLEX Error  1016.
-    Solution time =    0.00 sec.
-    Deterministic time = 0.00 ticks  (0.00 ticks/sec)
-    
-    CPLEX> CPLEX Error  1217: No solution exists.
-    No file written.
+    
+    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
+      with Simplex, Mixed Integer & Barrier Optimizers
+    5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
+    Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+    
+    Type 'help' for a list of available commands.
+    Type 'help' followed by a command name for more
+    information on commands.
+    
+    CPLEX> Logfile 'cplex.log' closed.
+    Logfile '/tmp/tmpuw664lh6.cplex.log' open.
+    CPLEX> New value for absolute mixed integer optimality gap tolerance: 0
+    CPLEX> New value for mixed integer optimality gap tolerance: 0
+    CPLEX> New value for time limit in seconds: 360
+    CPLEX> Problem '/tmp/tmpsuc50oaz.pyomo.lp' read.
+    Read time = 0.01 sec. (0.34 ticks)
+    CPLEX> Problem name         : /tmp/tmpsuc50oaz.pyomo.lp
+    Objective sense      : Maximize
+    Variables            :    1620  [Nneg: 1,  Box: 65,  Free: 322,  Binary: 1151,
+                                     General Integer: 80,  Other: 1]
+    Objective nonzeros   :       1
+    Linear constraints   :    4085  [Less: 3680,  Greater: 64,  Equal: 341]
+      Nonzeros           :    9808
+      RHS nonzeros       :    1029
+    
+    Variables            : Min LB: 0.000000         Max UB: 999.0000       
+    Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
+    Linear constraints   :
+      Nonzeros           : Min   : 0.03741000       Max   : 12.00000       
+      RHS nonzeros       : Min   : 0.1012080        Max   : 12.00000       
+    CPLEX> CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
+    
+    Error termination, CPLEX Error  1016.
+    Solution time =    0.00 sec.
+    Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+    
+    CPLEX> CPLEX Error  1217: No solution exists.
+    No file written.
     CPLEX> ERROR: evaluating object as numeric value: obj
             (object: <class 'pyomo.core.base.objective.SimpleObjective'>)
         No value for uninitialized NumericValue object obj
     MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
-    
+
 
 Processing Solutions
 --------------------

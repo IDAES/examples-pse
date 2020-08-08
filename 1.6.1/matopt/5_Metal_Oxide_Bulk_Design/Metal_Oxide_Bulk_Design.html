@@ -1,15 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Perovskite Design &mdash; IDAES v1.7.0dev0 Examples</title>
+  <title>Perovskite Design &mdash; IDAES v1.6.1 Examples</title>
   
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
 
   
   
@@ -17,7 +20,9 @@
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -30,10 +35,6 @@
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="copyright" title="Copyright" href="../../copyright.html" />
@@ -54,7 +55,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
           
 
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -96,6 +98,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -134,7 +137,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Perovskite Design</li>
     
@@ -174,18 +177,18 @@ framework for optimizing oxygen vacancy formation in doped perovskites.”
 </div>
 <div class="section" id="representing-materials">
 <h2>Representing Materials<a class="headerlink" href="#representing-materials" title="Permalink to this headline">¶</a></h2>
-<p>First, we construct a <strong>Lattice</strong> object to hold information about the
+<p>First, we construct a <strong>*Lattice*</strong> object to hold information about the
 sites in our material. For this application, we use the
-<strong>PerovskiteLattice</strong> class with lattice constants <em>A</em>, <em>B</em>, and <em>C</em>.</p>
+<strong>*PerovskiteLattice*</strong> class with lattice constants <em>A</em>, <em>B</em>, and <em>C</em>.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">A</span> <span class="o">=</span> <span class="mf">4.0</span>
 <span class="n">B</span> <span class="o">=</span> <span class="mf">4.0</span>
 <span class="n">C</span> <span class="o">=</span> <span class="mf">4.0</span>
 <span class="n">Lat</span> <span class="o">=</span> <span class="n">PerovskiteLattice</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Next, we construct <strong>Shape</strong> and <strong>Tiling</strong> objects to help define the
-material locations of interest. In this case, we use <strong>RectPrism</strong> and
-<strong>CubicTiling</strong>, respectively.</p>
+<p>Next, we construct <strong>*Shape*</strong> and <strong>*Tiling*</strong> objects to help define
+the material locations of interest. In this case, we use <strong>*RectPrism*</strong>
+and <strong>*CubicTiling*</strong>, respectively.</p>
 <p>Note that we shift the shape slightly to avoid ambiguity about which
 sites on the border of the cell should be included.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nUnitCellsOnEdge</span> <span class="o">=</span> <span class="mi">2</span>
@@ -196,9 +199,9 @@ sites on the border of the cell should be included.</p>
 <span class="n">T</span> <span class="o">=</span> <span class="n">CubicTiling</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Next, we construct the <strong>Canvas</strong> object which will hold all the
+<p>Next, we construct the <strong>*Canvas*</strong> object which will hold all the
 information about the sites and information about neighbors. We also
-define a list of <strong>Atom</strong> objects that serve as the building blocks of
+define a list of <strong>*Atom*</strong> objects that serve as the building blocks of
 our material.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Canv</span> <span class="o">=</span> <span class="n">Canvas</span><span class="o">.</span><span class="n">fromLatticeAndTilingScan</span><span class="p">(</span><span class="n">Lat</span><span class="p">,</span><span class="n">T</span><span class="p">)</span>
 <span class="n">Atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Ba&#39;</span><span class="p">),</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Fe&#39;</span><span class="p">),</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;In&#39;</span><span class="p">),</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;O&#39;</span><span class="p">)]</span>
@@ -233,14 +236,14 @@ information that will help specify the design problem.</p>
 <span class="n">GlobalUB</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">pctGlobalUB</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">BSites</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>Next, we initialize a <strong>MatOptModel</strong> object that will hold all the
+<p>Next, we initialize a <strong>*MatOptModel*</strong> object that will hold all the
 information about material descriptors and desired functionalities.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">MatOptModel</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atoms</span><span class="p">,</span><span class="n">Confs</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>By default, several basic variables are pre-defined. See the first
-example, <strong>Monometallic_Nanocluster_Design.ipynb</strong> for a description of
-basic variables, expressions, and constraint rules.</p>
+example, <strong>*Monometallic_Nanocluster_Design.ipynb*</strong> for a description
+of basic variables, expressions, and constraint rules.</p>
 <p>For this system, we introduce several rules about the allowed placement
 of atoms in the design. First, we require that all A-sites in the
 material are occupied by Ba. Next, we require that all O-sites are
@@ -286,90 +289,54 @@ one of the global descriptors.</p>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<pre class="literal-block">WARNING: DEPRECATED: SetProduct.set_tuple is deprecated.  Use
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>WARNING: DEPRECATED: SetProduct.set_tuple is deprecated.  Use
     SetProduct.subsets() to get the operator arguments.  (deprecated in TBD)
-    (called from c:usersdkgunsrcidaesdangunteridaes-
-    devidaesappsmatopt/..matoptoptpyomo_modeling.py:284)
-
+    (called from /home/ksb/anaconda3/envs/idaes-pse/lib/python3.7/site-
+    packages/idaes/apps/matopt/../matopt/opt/pyomo_modeling.py:284)
 
 Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
-
   with Simplex, Mixed Integer &amp; Barrier Optimizers
-
 5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
-
 Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
 
-
-
-Type 'help' for a list of available commands.
-
-Type 'help' followed by a command name for more
-
+Type &#39;help&#39; for a list of available commands.
+Type &#39;help&#39; followed by a command name for more
 information on commands.
 
-
-
-CPLEX&gt; Logfile 'cplex.log' closed.
-
-Logfile 'C:UsersdkgunAppDataLocalTemptmpcyv2zjp2.cplex.log' open.
-
+CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
+Logfile &#39;/tmp/tmp_bm2xffw.cplex.log&#39; open.
 CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
-
 CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
-
 CPLEX&gt; New value for time limit in seconds: 360
-
-CPLEX&gt; Problem 'C:UsersdkgunAppDataLocalTemptmp5uxfiykr.pyomo.lp' read.
-
+CPLEX&gt; Problem &#39;/tmp/tmp8g6187b3.pyomo.lp&#39; read.
 Read time = 0.01 sec. (0.31 ticks)
-
-CPLEX&gt; Problem name         : C:UsersdkgunAppDataLocalTemptmp5uxfiykr.pyomo.lp
-
+CPLEX&gt; Problem name         : /tmp/tmp8g6187b3.pyomo.lp
 Objective sense      : Maximize
-
 Variables            :     843  [Nneg: 1,  Box: 25,  Free: 1,  Binary: 816]
-
 Objective nonzeros   :       1
-
 Linear constraints   :    1459  [Less: 1424,  Equal: 35]
-
   Nonzeros           :   17523
-
   RHS nonzeros       :    1113
 
-
-
-Variables            : Min LB: 0.0000000        Max UB: 10.00000
-
+Variables            : Min LB: 0.000000         Max UB: 10.00000
 Objective nonzeros   : Min   : 1.000000         Max   : 1.000000
-
 Linear constraints   :
-
   Nonzeros           : Min   : 0.04166667       Max   : 2.000000
-
   RHS nonzeros       : Min   : 1.000000         Max   : 9.000000
-
 CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
 
-
-
 Error termination, CPLEX Error  1016.
-
 Solution time =    0.00 sec.
-
 Deterministic time = 0.00 ticks  (0.00 ticks/sec)
 
-
-
 CPLEX&gt; CPLEX Error  1217: No solution exists.
-
 No file written.
-
 CPLEX&gt; ERROR: evaluating object as numeric value: obj
-        (object: &lt;class 'pyomo.core.base.objective.SimpleObjective'&gt;)
+        (object: &lt;class &#39;pyomo.core.base.objective.SimpleObjective&#39;&gt;)
     No value for uninitialized NumericValue object obj
-MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)</pre>
+MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+</pre></div>
+</div>
 </div>
 <div class="section" id="processing-solutions">
 <h2>Processing Solutions<a class="headerlink" href="#processing-solutions" title="Permalink to this headline">¶</a></h2>
@@ -399,11 +366,20 @@ of the desired conformations by replacing the atom with an S.</p>
 
   <div role="contentinfo">
     <p>
+        
+        
         &copy; <a href="../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -414,7 +390,6 @@ of the desired conformations by replacing the atom with an S.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

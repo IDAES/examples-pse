@@ -106,7 +106,7 @@ see what is currently contained in the model.
             1 Declarations: time
     
     1 Declarations: fs
-    
+
 
 Define Properties
 -----------------
@@ -255,7 +255,7 @@ help for the function by calling the Python help function.
         Returns:
             Number of degrees of freedom in block.
     
-    
+
 
 .. raw:: html
 
@@ -277,7 +277,7 @@ result should be 7.
 .. parsed-literal::
 
     Degrees of Freedom = 7
-    
+
 
 To satisfy our degrees of freedom, we will first specify the inlet
 conditions. We can specify these values through the ``inlet`` port of
@@ -292,14 +292,14 @@ the following notation:
 
 .. code:: python
 
-   m.fs.flash.inlet.flow_mol.fix(1.0)
+    m.fs.flash.inlet.flow_mol.fix(1.0)
 
 To specify variables that are indexed by components, you can use the
 following notation:
 
 .. code:: python
 
-   m.fs.flash.inlet.mole_frac_comp[0, "benzene"].fix(0.5)
+    m.fs.flash.inlet.mole_frac_comp[0, "benzene"].fix(0.5)
 
 .. raw:: html
 
@@ -326,7 +326,7 @@ notation.
 
 .. code:: python
 
-   m.fs.flash.heat_duty.fix(0)
+    m.fs.flash.heat_duty.fix(0)
 
 For this module, we will use the following specifications: \* inlet
 overall molar flow = 1.0 (``flow_mol``) \* inlet temperature = 368 K
@@ -381,7 +381,7 @@ system is now square. You should see that the degrees of freedom is now
 .. parsed-literal::
 
     Degrees of Freedom = 0
-    
+
 
 Initializing the Model
 ----------------------
@@ -410,20 +410,20 @@ initialize the model.
 
 .. parsed-literal::
 
-    2020-07-15 22:08:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
-    2020-07-15 22:08:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-07-15 22:08:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-07-15 22:08:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-07-15 22:08:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-07-15 22:08:40 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
-    2020-07-15 22:08:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
-    2020-07-15 22:08:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
-    2020-07-15 22:08:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
-    2020-07-15 22:08:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
-    2020-07-15 22:08:41 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
-    2020-07-15 22:08:41 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
-    2020-07-15 22:08:41 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
-    
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
+    2020-08-07 15:07:08 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
+
 
 Now that the model has been defined and intialized, we can solve the
 model.
@@ -522,15 +522,15 @@ the model with the ``value`` function. For example:
 
 .. code:: python
 
-   print('Vap. Outlet Temperature = ', value(m.fs.flash.vap_outlet.temperature[0]))
+    print('Vap. Outlet Temperature = ', value(m.fs.flash.vap_outlet.temperature[0]))
 
 You can also find more information about a variable or an entire port
 using the ``display`` method from Pyomo:
 
 .. code:: python
 
-   m.fs.flash.vap_outlet.temperature.display()
-   m.fs.flash.vap_outlet.display()
+    m.fs.flash.vap_outlet.temperature.display()
+    m.fs.flash.vap_outlet.display()
 
 .. raw:: html
 
@@ -574,7 +574,7 @@ liq_outlet.
              : mole_frac_comp : {(0.0, 'benzene'): 0.41211759772293016, (0.0, 'toluene'): 0.5878824022770697}
              :       pressure : {0.0: 101325.0}
              :    temperature : {0.0: 368.0}
-    
+
 
 The output from ``display`` is quite exhaustive and not really intended
 to provide quick summary information. Because Pyomo is built on Python,
@@ -622,7 +622,7 @@ inlet, the vapor, and the liquid ports.
         temperature                368.00       368.00        368.00  
         pressure               1.0132e+05   1.0132e+05    1.0132e+05  
     ====================================================================================
-    
+
 
 Studying Purity as a Function of Heat Duty
 ------------------------------------------
@@ -680,8 +680,8 @@ and use the linspace function from the previous module)
     Q = []
     V = []
     
-    # create the solver
-    solver = SolverFactory('ipopt')
+    # re-initialize model
+    m.fs.flash.initialize(outlvl=idaeslog.WARNING)
     
     # Todo: Write the for loop specification using numpy's linspace
     for duty in np.linspace(-17000, 25000, 50):
@@ -816,7 +816,7 @@ and use the linspace function from the previous module)
     ... solve successful.
     Simulating with Q =  25000.0
     ... solve successful.
-    
+
 
 
 .. image:: output_32_1.png
@@ -871,7 +871,7 @@ Remove any unnecessary printing to create cleaner results.
     plt.xlabel("Heat Duty [J]")
     plt.ylabel("Vapor Benzene Mole Fraction [-]")
     plt.show()
-    
+
 
 
 .. parsed-literal::
@@ -976,7 +976,7 @@ Remove any unnecessary printing to create cleaner results.
     ... solve successful.
     Simulating with Q =  25000.0
     ... solve successful.
-    
+
 
 
 .. image:: output_34_1.png
@@ -1073,16 +1073,16 @@ heat duty.
        0  0.0000000e+00 3.40e-02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
        1  0.0000000e+00 2.12e+02 7.01e-02  -1.0 5.15e+03    -  9.87e-01 1.00e+00h  1
        2  0.0000000e+00 5.65e-02 2.03e-03  -1.0 7.07e+01    -  9.90e-01 1.00e+00h  1
-       3  0.0000000e+00 9.53e-10 2.50e-06  -1.0 4.13e-01    -  9.98e-01 1.00e+00h  1
+       3  0.0000000e+00 3.73e-09 2.50e-06  -1.0 4.13e-01    -  9.98e-01 1.00e+00h  1
     
     Number of Iterations....: 3
     
                                        (scaled)                 (unscaled)
     Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
     Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
-    Constraint violation....:   1.4104644499482428e-11    9.5315044745802879e-10
+    Constraint violation....:   5.6292494973376915e-12    3.7252902984619141e-09
     Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-    Overall NLP error.......:   1.4104644499482428e-11    9.5315044745802879e-10
+    Overall NLP error.......:   5.6292494973376915e-12    3.7252902984619141e-09
     
     
     Number of objective function evaluations             = 4
@@ -1092,7 +1092,7 @@ heat duty.
     Number of equality constraint Jacobian evaluations   = 4
     Number of inequality constraint Jacobian evaluations = 0
     Number of Lagrangian Hessian evaluations             = 3
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
     Total CPU secs in NLP function evaluations           =      0.000
     
     EXIT: Optimal Solution Found.
@@ -1117,4 +1117,4 @@ heat duty.
         temperature                368.00       369.07        369.07  
         pressure               1.0132e+05   1.0132e+05    1.0132e+05  
     ====================================================================================
-    
+

@@ -1,15 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>&lt;no title&gt; &mdash; IDAES v1.7.0dev0 Examples</title>
+  <title>&lt;no title&gt; &mdash; IDAES v1.6.1 Examples</title>
   
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
 
   
   
@@ -17,7 +20,9 @@
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -30,10 +35,6 @@
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="copyright" title="Copyright" href="../../copyright.html" />
@@ -54,7 +55,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
           
 
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -96,6 +98,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -134,7 +137,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>&lt;no title&gt;</li>
     
@@ -158,24 +161,67 @@
   <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.surrogate</span> <span class="kn">import</span> <span class="n">alamopy</span>
 <span class="kn">import</span> <span class="nn">examples</span>
 <span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+<span class="kn">from</span> <span class="nn">pyutilib.common</span> <span class="kn">import</span> <span class="n">ApplicationError</span>
 <span class="kn">import</span> <span class="nn">camel6</span>
 </pre></div>
 </div>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">alamo_ran</span> <span class="o">=</span> <span class="n">camel6</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">alamo_ran</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Updating</span> <span class="n">number</span> <span class="n">of</span> <span class="n">training</span> <span class="n">points</span> <span class="kn">from</span> <span class="mi">10</span> <span class="n">to</span> <span class="mi">10</span>
+<span class="n">Model</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;z1&#39;</span><span class="p">:</span> <span class="s1">&#39;  z1 = 3.9999999999999986677324 * x1^2 - 3.9999999999999946709295 * x2^2 - 2.1000000000000009769963 * x1^4 + 3.9999999999999946709295 * x2^4 + 0.33333333333333370340767 * x1^6 + 0.99999999999999877875467 * x1*x2&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hasBaron</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">solver_opt</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;baron&#39;</span><span class="p">)</span>
+    <span class="n">hasBaron</span> <span class="o">=</span> <span class="n">solver_opt</span><span class="o">.</span><span class="n">available</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">ApplicationError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Partial test completed. </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="k">err</span>)
+
+
+<span class="k">if</span> <span class="n">alamo_ran</span> <span class="ow">and</span> <span class="n">hasBaron</span><span class="p">:</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
     <span class="n">opt</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;baron&#39;</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">x1</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">()</span>
     <span class="n">model</span><span class="o">.</span><span class="n">x2</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">pyomo_model</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">cam6alm</span>
-        <span class="k">return</span> <span class="n">cam6alm</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x1</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">x2</span><span class="p">)</span>
+        <span class="kn">import</span> <span class="nn">z1</span>
+        <span class="k">return</span> <span class="n">z1</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x1</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">x2</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span><span class="n">rule</span> <span class="o">=</span> <span class="n">pyomo_model</span><span class="p">)</span>
     <span class="n">results</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">solutions</span><span class="o">.</span><span class="n">store_to</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Problem</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">Name</span><span class="p">:</span> <span class="n">problem</span>
+  <span class="n">Lower</span> <span class="n">bound</span><span class="p">:</span> <span class="o">-</span><span class="mf">1e+51</span>
+  <span class="n">Upper</span> <span class="n">bound</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.03162845349</span>
+  <span class="n">Number</span> <span class="n">of</span> <span class="n">objectives</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="n">Number</span> <span class="n">of</span> <span class="n">constraints</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="n">Number</span> <span class="n">of</span> <span class="n">variables</span><span class="p">:</span> <span class="mi">3</span>
+  <span class="n">Sense</span><span class="p">:</span> <span class="n">unknown</span>
+<span class="n">Solver</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">Status</span><span class="p">:</span> <span class="n">ok</span>
+  <span class="n">Termination</span> <span class="n">condition</span><span class="p">:</span> <span class="n">unknown</span>
+  <span class="n">Error</span> <span class="n">rc</span><span class="p">:</span> <span class="mi">0</span>
+  <span class="n">Time</span><span class="p">:</span> <span class="mf">0.26471662521362305</span>
+<span class="n">Solution</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">number</span> <span class="n">of</span> <span class="n">solutions</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="n">number</span> <span class="n">of</span> <span class="n">solutions</span> <span class="n">displayed</span><span class="p">:</span> <span class="mi">1</span>
+<span class="o">-</span> <span class="n">Gap</span><span class="p">:</span> <span class="mf">1e+51</span>
+  <span class="n">Status</span><span class="p">:</span> <span class="n">feasible</span>
+  <span class="n">Message</span><span class="p">:</span> <span class="kc">None</span>
+  <span class="n">Objective</span><span class="p">:</span>
+    <span class="n">obj</span><span class="p">:</span>
+      <span class="n">Value</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.031628453489876</span>
+  <span class="n">Variable</span><span class="p">:</span>
+    <span class="n">x1</span><span class="p">:</span>
+      <span class="n">Value</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.08984201313734179</span>
+    <span class="n">x2</span><span class="p">:</span>
+      <span class="n">Value</span><span class="p">:</span> <span class="mf">0.712656403314412</span>
+  <span class="n">Constraint</span><span class="p">:</span> <span class="n">No</span> <span class="n">values</span>
 </pre></div>
 </div>
 
@@ -190,11 +236,20 @@
 
   <div role="contentinfo">
     <p>
+        
+        
         &copy; <a href="../../copyright.html">Copyright</a> DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -205,7 +260,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

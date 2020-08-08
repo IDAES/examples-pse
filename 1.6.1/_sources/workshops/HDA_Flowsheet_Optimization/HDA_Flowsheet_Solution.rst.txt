@@ -87,7 +87,7 @@ documentation: https://pyomo.readthedocs.io/en/latest/
     from pyomo.network import Arc, SequentialDecomposition
 
 From idaes, we will be needing the FlowsheetBlock and the following unit
-models: - Mixer - Heater - StoichiometricReactor - Flash - Separator
+models: - Mixer - Heater - StoichiometricReactor - **Flash** - Separator
 (splitter) - PressureChanger
 
 .. code:: ipython3
@@ -207,9 +207,9 @@ will also need to add a reaction property package.
 
 .. parsed-literal::
 
-    2020-07-15 22:08:50 [WARNING] idaes.core.property_base: DEPRECATED: state_block_class should not be set directly. Property package developers should set the _state_block_class attribute instead.
-    2020-07-15 22:08:50 [WARNING] idaes.core.reaction_base: DEPRECATED: reaction_block_class should not be set directly. Property package developers should set the _reaction_block_class attribute instead.
-    
+    2020-08-07 15:07:16 [WARNING] idaes.core.property_base: DEPRECATED: state_block_class should not be set directly. Property package developers should set the _state_block_class attribute instead.
+    2020-08-07 15:07:16 [WARNING] idaes.core.reaction_base: DEPRECATED: reaction_block_class should not be set directly. Property package developers should set the _reaction_block_class attribute instead.
+
 
 Adding Unit Models
 ------------------
@@ -236,9 +236,9 @@ names to the three inlets.
 
 .. parsed-literal::
 
-    2020-07-15 22:08:50 [WARNING] idaes.core.property_base: DEPRECATED: fs.thermo_params appears to be an old-style property package. It will be automatically converted to a new-style package, however users are strongly encouraged to convert their property packages to use phase and component objects.
-    2020-07-15 22:08:50 [WARNING] idaes.core.property_base: DEPRECATED: fs.thermo_params appears to be an old-style property package. It will be automatically converted to a new-style package, however users are strongly encouraged to convert their property packages to use phase and component objects.
-    
+    2020-08-07 15:07:16 [WARNING] idaes.core.property_base: DEPRECATED: fs.thermo_params appears to be an old-style property package. It will be automatically converted to a new-style package, however users are strongly encouraged to convert their property packages to use phase and component objects.
+    2020-08-07 15:07:16 [WARNING] idaes.core.property_base: DEPRECATED: fs.thermo_params appears to be an old-style property package. It will be automatically converted to a new-style package, however users are strongly encouraged to convert their property packages to use phase and component objects.
+
 
 .. raw:: html
 
@@ -540,7 +540,7 @@ using the ``degrees_of_freedom`` tool we imported earlier.
 .. parsed-literal::
 
     29
-    
+
 
 We will now be fixing the toluene feed stream to the conditions shown in
 the flowsheet above. Please note that though this is a pure toluene
@@ -749,7 +749,7 @@ Use Shift+Enter to run the cell once you have typed in your code.
 .. parsed-literal::
 
     0
-    
+
 
 Initialization
 --------------
@@ -787,7 +787,7 @@ Which is the tear stream? Display tear set and order
 .. parsed-literal::
 
     fs.s03
-    
+
 
 What sequence did the SD tool determine to solve this flowsheet with the
 least number of tears?
@@ -806,7 +806,7 @@ least number of tears?
     fs.S101
     fs.C101
     fs.M101
-    
+
 
 |image3|
 
@@ -854,103 +854,103 @@ can then take over and solve this flowsheet for us.
 
 .. parsed-literal::
 
-    2020-07-15 22:08:51 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-07-15 22:08:52 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
-    2020-07-15 22:08:53 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-07-15 22:08:54 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:17 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2020-08-07 15:07:18 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
     WARNING: Wegstein failed to converge in 5 iterations
-    2020-07-15 22:08:55 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
-    2020-07-15 22:08:56 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
-    
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
+    2020-08-07 15:07:19 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
+
 
 .. raw:: html
 
@@ -990,8 +990,8 @@ What is the total operating cost?
 
 .. parsed-literal::
 
-    operating cost = $ 419122.3387677944
-    
+    operating cost = $ 419122.33876779454
+
 
 For this operating cost, what is the amount of benzene we are able to
 produce and what purity we are able to achieve?
@@ -1002,7 +1002,7 @@ produce and what purity we are able to achieve?
     
     print()
     print('benzene purity = ', value(m.fs.purity))
-    
+
 
 
 .. parsed-literal::
@@ -1034,8 +1034,8 @@ produce and what purity we are able to achieve?
         pressure                                3.5000e+05   1.5000e+05    1.5000e+05  
     ====================================================================================
     
-    benzene purity =  0.8242962943918913
-    
+    benzene purity =  0.8242962943918914
+
 
 Next, let’s look at how much benzene we are loosing with the light gases
 out of F101. IDAES has tools for creating stream tables based on the
@@ -1075,7 +1075,7 @@ outlet stream?
     flow_mol_phase_comp ('Vap', 'methane')      1.2721      1.2721 
     temperature                                 771.85      325.00 
     pressure                                3.5000e+05  3.5000e+05 
-    
+
 
 .. raw:: html
 
@@ -1300,18 +1300,18 @@ solve this problem.
       18  3.1278674e+05 1.91e-06 3.15e+05  -1.0 5.18e-03    -  1.00e+00 1.00e+00h  1
       19  3.1278634e+05 3.47e-05 1.62e+06  -3.8 2.02e+02    -  1.00e+00 1.00e+00f  1
     iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-      20  3.1278634e+05 7.45e-09 1.34e-03  -3.8 1.71e-01    -  1.00e+00 1.00e+00h  1
-      21  3.1278634e+05 3.73e-08 4.25e+00  -7.0 3.04e-01    -  1.00e+00 1.00e+00f  1
-      22  3.1278634e+05 2.24e-08 2.78e-05  -7.0 3.99e-07    -  1.00e+00 1.00e+00h  1
+      20  3.1278634e+05 7.45e-09 1.37e-03  -3.8 1.71e-01    -  1.00e+00 1.00e+00h  1
+      21  3.1278634e+05 7.45e-09 4.34e+00  -7.0 3.04e-01    -  1.00e+00 1.00e+00f  1
+      22  3.1278634e+05 7.45e-09 5.07e-05  -7.0 3.97e-07    -  1.00e+00 1.00e+00h  1
     
     Number of Iterations....: 22
     
                                        (scaled)                 (unscaled)
-    Objective...............:   3.1278633834102692e+05    3.1278633834102692e+05
-    Dual infeasibility......:   2.7788664334380207e-05    2.7788664334380207e-05
-    Constraint violation....:   2.9103830456733704e-11    2.2351741790771481e-08
+    Objective...............:   3.1278633834102680e+05    3.1278633834102680e+05
+    Dual infeasibility......:   5.0668394072986072e-05    5.0668394072986072e-05
+    Constraint violation....:   2.9103830456733704e-11    7.4505805969238281e-09
     Complementarity.........:   9.0926527280252916e-08    9.0926527280252916e-08
-    Overall NLP error.......:   2.0798568648956506e-09    2.7788664334380207e-05
+    Overall NLP error.......:   2.0798568652746933e-09    5.0668394072986072e-05
     
     
     Number of objective function evaluations             = 26
@@ -1321,11 +1321,11 @@ solve this problem.
     Number of equality constraint Jacobian evaluations   = 23
     Number of inequality constraint Jacobian evaluations = 23
     Number of Lagrangian Hessian evaluations             = 22
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.014
-    Total CPU secs in NLP function evaluations           =      0.004
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.011
+    Total CPU secs in NLP function evaluations           =      0.001
     
     EXIT: Optimal Solution Found.
-    
+
 
 Optimization Results
 --------------------
@@ -1351,7 +1351,7 @@ Display the results and product specifications
 
 .. parsed-literal::
 
-    operating cost = $ 312786.33834102703
+    operating cost = $ 312786.33834102686
     
     Product flow rate and purity in F102
     
@@ -1381,7 +1381,7 @@ Display the results and product specifications
         pressure                                3.5000e+05   1.0500e+05    1.0500e+05  
     ====================================================================================
     
-    benzene purity =  0.8188276578112286
+    benzene purity =  0.8188276578112282
     
     Overhead loss in F101
     
@@ -1410,7 +1410,7 @@ Display the results and product specifications
         temperature                                 696.12       301.88        301.88  
         pressure                                3.5000e+05   3.5000e+05    3.5000e+05  
     ====================================================================================
-    
+
 
 Display optimal values for the decision variables
 
@@ -1440,8 +1440,8 @@ Display optimal values for the decision variables
     
     R101 outlet temperature =  696.1161004637527 K
     
-    F101 outlet temperature =  301.87847605692815 K
+    F101 outlet temperature =  301.8784760569282 K
     
     F102 outlet temperature =  362.9347683054898 K
     F102 outlet pressure =  105000.0 Pa
-    
+

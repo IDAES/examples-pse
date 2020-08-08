@@ -45,7 +45,7 @@ You can execute a cell by pressing ``Shift+Enter``.
     Simple Model Check:         Passed
     
     All Good!
-    
+
 
 If everything worked properly, you should see a message saying
 ``All good!`` and a summary of all the checks that were run. If you
@@ -137,7 +137,7 @@ hit Shift+Enter to execute the cell.
 .. parsed-literal::
 
     5
-    
+
 
 .. raw:: html
 
@@ -276,7 +276,7 @@ as expected.
 .. parsed-literal::
 
     8
-    
+
 
 Python ``if`` statements
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -285,14 +285,14 @@ In the code below, we show an example of an ``if`` statement in Python.
 
 .. code:: python
 
-   temp = 325
-   # some other code
-   if temp > 320:
-       print('temperature is too high')
-   elif x < 290:
-       print('temperature is too low')
-   else:
-       print('temperature is just right')
+    temp = 325
+    # some other code
+    if temp > 320:
+        print('temperature is too high')
+    elif x < 290:
+        print('temperature is too low')
+    else:
+        print('temperature is just right')
 
 .. raw:: html
 
@@ -379,7 +379,7 @@ Fahrenheit are below 70
 .. parsed-literal::
 
     The room is too cold.
-    
+
 
 Python list containers
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -424,7 +424,7 @@ list and print the result.
 .. parsed-literal::
 
     [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
-    
+
 
 You can easily check the length of a list using the python ``len(l)``
 function.
@@ -447,7 +447,7 @@ Inline Exercise: Print the length of ``xlist``. It should be 11.
 .. parsed-literal::
 
     11
-    
+
 
 If you have a list of values or objects, it is easy to iterate through
 that list in a for loop. In the next inline exercise, we will create
@@ -479,7 +479,7 @@ above. Print the values in ylist to check the result.
 .. parsed-literal::
 
     [0, 25, 100, 225, 400, 625, 900, 1225, 1600, 2025, 2500]
-    
+
 
 Python dictionary containers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -511,7 +511,7 @@ Inline Exercise: Execute the lines below to see the areas dictionary.
 .. parsed-literal::
 
     {'South Dakota': 199742, 'Oklahoma': 181035}
-    
+
 
 Dictionaries can contain mixed types (i.e., it is valid to add
 ``areas['Texas'] = 'Really big!'``) but this may lead to unpredictable
@@ -522,20 +522,20 @@ You can loop through dictionaries in different ways. For example,
 
 .. code:: python
 
-   d = {'A': 2, 'B': 4, 'D': 16}
-   for k in d.keys():
-       # loop through the keys in the dictionary
-       # access the value with d[k]
-       print('key=', k, 'value=', d[k])
-       
-   for v in d.values():
-       # loop through the values in the dictionary, ignoring the keys
-       print('value=', v)
-       
-   for k,v in d.items():
-       # loop through the entries in the dictionary, retrieving both
-       # the key and the value
-       print('key=', k, 'value=', v)
+    d = {'A': 2, 'B': 4, 'D': 16}
+    for k in d.keys():
+        # loop through the keys in the dictionary
+        # access the value with d[k]
+        print('key=', k, 'value=', d[k])
+        
+    for v in d.values():
+        # loop through the values in the dictionary, ignoring the keys
+        print('value=', v)
+        
+    for k,v in d.items():
+        # loop through the entries in the dictionary, retrieving both
+        # the key and the value
+        print('key=', k, 'value=', v)
 
 .. raw:: html
 
@@ -562,7 +562,7 @@ the correct behavior. Note that 1 kilometer is equal to 0.62137 miles.
 .. parsed-literal::
 
     {'South Dakota': 77120.5214053598, 'Oklahoma': 69897.7360425915}
-    
+
 
 Matplotlib for generating figures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -606,7 +606,7 @@ Inline Exercise: Execute the next two cells to see the output.
 
     [0.0, 3.3333333333333335, 6.666666666666667, 10.0, 13.333333333333334, 16.666666666666668, 20.0, 23.333333333333336, 26.666666666666668, 30.0, 33.333333333333336, 36.66666666666667, 40.0, 43.333333333333336, 46.66666666666667, 50.0]
     [0.0, 11.111111111111112, 44.44444444444445, 100.0, 177.7777777777778, 277.7777777777778, 400.0, 544.4444444444446, 711.1111111111112, 900.0, 1111.1111111111113, 1344.4444444444448, 1600.0, 1877.777777777778, 2177.7777777777783, 2500.0]
-    
+
 
 This printed output is not a very effective way to communicate these
 results. Let’s use matplotlib to create a figure of x versus y. A full
@@ -748,14 +748,14 @@ models (and IDAES models) seek to *minimize* the objective function.
 
 .. code:: python
 
-   model.obj = Objective(expr=model.x**2)
+    model.obj = Objective(expr=model.x**2)
 
 To maximize a quantity, include the keyword argument ``sense=maximize``
 as in the following:
 
 .. code:: python
 
-   model.obj = Objective(expr=model.y, sense=maximize)
+    model.obj = Objective(expr=model.y, sense=maximize)
 
 Note that ``Objective`` and ``maximize`` would need to be imported from
 ``pyomo.environ``.
@@ -765,14 +765,14 @@ defines the equality constraint :math:`x^2 + y^2 = 1`.
 
 .. code:: python
 
-   model.on_unit_circle_con = Constraint(expr=model.x**2 + model.y**2 == 1)
+    model.on_unit_circle_con = Constraint(expr=model.x**2 + model.y**2 == 1)
 
 Pyomo also supports inequalities. For example, the code for the
 inequality constraint :math:`x^2 + y^2 \le 1` is given as the following.
 
 .. code:: python
 
-   model.inside_unit_circle_con = Constraint(expr=model.x**2 + model.y**2 <= 1)
+    model.inside_unit_circle_con = Constraint(expr=model.x**2 + model.y**2 <= 1)
 
 Note that, as before, we would need to include the appropriate imports.
 In this case ``Constraint`` would need to be imported from
@@ -880,7 +880,7 @@ objective value are all equal to 0.5.
     x = 0.5
     y = 0.5
     obj = 0.5
-    
+
 
 Notice that the code above also imported the ``value`` function. This is
 a Pyomo function that should be used to retrieve the value of variables
@@ -963,5 +963,5 @@ pprint and display for a Pyomo model.
         con : Size=1
             Key  : Lower : Body : Upper
             None :   1.0 :  1.0 :   1.0
-    
+
 
