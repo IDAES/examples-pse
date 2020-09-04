@@ -38,9 +38,9 @@ def main():
     training_data = tr_data.sample_points()
 
     # Fit a Kriging model with regularization to 49 Branin points generated uniformly
-    f1 = krg.KrigingModel(training_data, numerical_gradients=False, regularization=True)
-    results_pyomo = f1.kriging_training()
-    ypred = f1.kriging_predict_output(results_pyomo, test_data.values[:, :-1])
+    f1 = krg.KrigingModel(training_data, numerical_gradients=False, regularization=True, overwrite=True)
+    results_pyomo = f1.training()
+    ypred = f1.predict_output(test_data.values[:, :-1])
     r2_pred = f1.r2_calculation(test_data.values[:, -1], ypred)
 
     # Minimize Kriging surrogate
@@ -60,8 +60,8 @@ def main():
         return init_x[i]
 
     m.x = pyo.Var(i, bounds=f_bounds, initialize=x_init)
-    print('\nThe Kriging expression is: \n', results_pyomo.kriging_generate_expression([m.x[1], m.x[2]]))
-    m.obj = pyo.Objective(expr=results_pyomo.kriging_generate_expression([m.x[1], m.x[2]]))
+    print('\nThe Kriging expression is: \n', f1.generate_expression([m.x[1], m.x[2]]))
+    m.obj = pyo.Objective(expr=f1.generate_expression([m.x[1], m.x[2]]))
     instance = m
     opt = pyo.SolverFactory("ipopt")
     result = opt.solve(instance, tee=True)

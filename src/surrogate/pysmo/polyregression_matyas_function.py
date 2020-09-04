@@ -29,13 +29,13 @@ def main():
     # Carry out polynomial regression
     d = PolynomialRegression(tr_data, tr_data, maximum_polynomial_order=8, multinomials=1)
     p = d.get_feature_vector()
-    results = d.poly_training()
+    results = d.training()
 
     # Print pyomo expression
     m = pyo.ConcreteModel()
     m.x = pyo.Var([1, 2])
     print("")
-    print(results.generate_expression([m.x[1], m.x[2]]))
+    print(d.generate_expression([m.x[1], m.x[2]]))
 
 
 if __name__ == "__main__":

@@ -36,24 +36,24 @@ def main():
     sd = sp.FeatureScaling()
     data_scaled, data_min, data_max = sd.data_scaling_minmax(data)
     no_training_samples = 310
-    b = sp.HammersleySampling(data_scaled, no_training_samples)
+    b = sp.HammersleySampling(data_scaled, no_training_samples, sampling_type='selection')
     training_data = b.sample_points()
 
     # Fit an RBF model to 310 selected points
-    f1 = RadialBasisFunctions(training_data, basis_function='gaussian', solution_method='pyomo', regularization=True)
+    f1 = RadialBasisFunctions(training_data, basis_function='gaussian', solution_method='pyomo', regularization=True, overwrite=True)
     p = f1.get_feature_vector()
-    results_pyomo = f1.rbf_training()
+    f1.training()
 
     # Predict values for other points in loaded data not used in training, evaluate R^2
-    y_predicted_pyomo = f1.rbf_predict_output(results_pyomo, data_scaled.values[:, :-1])
-    r2_pyomo = f1.r2_calculation(data_scaled.values[:, -1], y_predicted_pyomo)
+    y_predicted_pyomo = f1.predict_output(data_scaled[:, :-1])
+    r2_pyomo = f1.r2_calculation(data_scaled[:, -1], y_predicted_pyomo)
     print(r2_pyomo)
 
     # Print RBF expression based on headers of input data
     list_vars = []
     for i in p.keys():
         list_vars.append(p[i])
-    print('\nThe RBF expression is: \n', results_pyomo.rbf_generate_expression(list_vars))
+    print('\nThe RBF expression is: \n', f1.generate_expression(list_vars))
 
     # 3-D plot of errors between prediction and actual values over 10,200 points
     yy = sp.FeatureScaling.data_unscaling_minmax(y_predicted_pyomo, data_min[0, 2], data_max[0, 2])
@@ -68,9 +68,8 @@ def main():
     ax.set_zlabel('y')
     plt.show()
 
-    plt.plot(data_scaled.values[:, 2], data_scaled.values[:, 2], '-', data_scaled.values[:, 2], y_predicted_pyomo, 'o')
+    plt.plot(data_scaled[:, 2], data_scaled[:, 2], '-', data_scaled[:, 2], y_predicted_pyomo, 'o')
     plt.show()
-
 
 if __name__ == "__main__":
     main()
