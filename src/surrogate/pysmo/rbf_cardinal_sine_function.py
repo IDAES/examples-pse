@@ -36,12 +36,12 @@ def main():
     # Fit a multiquadric RBF model to 100 points generated from the cardinal sine function
     data_scaled = data.values
     f1 = RadialBasisFunctions(data_scaled, basis_function='mq', solution_method='pyomo', regularization=True)
-    results_pyomo = f1.rbf_training()
+    f1.training()
 
     # Predict values for other 2500 off-design in loaded data, evaluate R^2
     data2 = pd.read_csv(os.path.join(current_path, 'data_files', 'cardinal_sine_2500.txt'), sep='\s+', header=None, index_col=None)
     data2_scaled = data2.values
-    y_predicted = f1.rbf_predict_output(results_pyomo, data2_scaled[:, :-1])
+    y_predicted = f1.predict_output(data2_scaled[:, :-1])
     r2_pyomo = f1.r2_calculation(data2_scaled[:, -1], y_predicted)
 
     # Plots
