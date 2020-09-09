@@ -37,20 +37,20 @@ def main():
     xy_data = np.concatenate((x, y.reshape(y.size, 1)), axis=1)
 
     # Train polynomial model with basis functions similar to ALAMO example: 4th order mononomials, exponents, and first and second degree interaction terms
-    train_obj = PolynomialRegression(xy_data, xy_data, maximum_polynomial_order=4, multinomials=1, training_split=0.8, number_of_crossvalidations=5)
+    train_obj = PolynomialRegression(xy_data, xy_data, maximum_polynomial_order=4, multinomials=1, training_split=0.8, number_of_crossvalidations=5, overwrite=True)
     p = train_obj.get_feature_vector()
     train_obj.set_additional_terms([p[0] * p[0] * p[1],  p[0] * p[1] * p[1], p[0] * p[0] * p[1] * p[1], pyo.exp(p[0]), pyo.exp(p[1])])
-    train_results = train_obj.poly_training()
+    train_obj.training()
 
     # Evaluate model performance as R2
-    y_predict = train_obj.poly_predict_output(train_results, xval)
+    y_predict = train_obj.predict_output(xval)
     r2 = kriging.KrigingModel.r2_calculation(yval, y_predict)
     print('\nThe R^2 value for the polynomial over the 100 off-design points is', r2)
 
     # Print Pyomo expression
     m = pyo.ConcreteModel()
     m.x = pyo.Var([1, 2])
-    print(train_results.generate_expression([m.x[1], m.x[2]]))
+    print(train_obj.generate_expression([m.x[1], m.x[2]]))
 
 
 if __name__ == "__main__":

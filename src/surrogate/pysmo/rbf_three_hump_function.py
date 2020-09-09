@@ -32,12 +32,12 @@ def main():
     training_data = b.sample_points()
 
     # Fit an RBF model
-    f1 = RadialBasisFunctions(training_data, basis_function='gaussian', solution_method='pyomo', regularization=True)
+    f1 = RadialBasisFunctions(training_data, basis_function='gaussian', solution_method='pyomo', regularization=True, overwrite=True)
     p = f1.get_feature_vector()
-    results_pyomo = f1.rbf_training()
+    f1.training()
 
     # Predict values for other points in loaded data not used in training, evaluate R^2
-    y_predicted_pyomo = f1.rbf_predict_output(results_pyomo, data_scaled[:, :-1])
+    y_predicted_pyomo = f1.predict_output(data_scaled[:, :-1])
     r2_pyomo = f1.r2_calculation(data_scaled[:, -1], y_predicted_pyomo)
     print('The R2 value over 10201 off-design points is:', r2_pyomo)
 
@@ -45,7 +45,7 @@ def main():
     list_vars = []
     for i in p.keys():
         list_vars.append(p[i])
-    print('\nThe RBF expression is: \n', results_pyomo.rbf_generate_expression(list_vars))
+    print('\nThe RBF expression is: \n', f1.generate_expression(list_vars))
 
     # Contour plots for surrogate and actual function
     fig, (ax1, ax2) = plt.subplots(ncols=2)

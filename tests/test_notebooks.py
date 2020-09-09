@@ -51,7 +51,7 @@ def test_run_all_notebooks():
     proc.wait()
     assert proc.returncode == 0
     # now run
-    cmd = ["python", "build.py", "--test"]
+    cmd = ["python", "build.py",  "--config", "build-circleci.yml", "--test"]
     proc = subprocess.Popen(cmd)
     proc.wait()
     assert proc.returncode == 0
