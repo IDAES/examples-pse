@@ -56,9 +56,11 @@ properly and also makes it easy to see the "source" of the notebook.
 
 For example command lines see the README.md in this directory.
 """
+# stdlib
 from abc import ABC, abstractmethod
 import argparse
 import logging
+from multiprocessing import Queue
 import os
 from pathlib import Path
 import shutil
@@ -68,16 +70,19 @@ from string import Template
 import sys
 import tempfile
 import time
-from typing import TextIO, List
+from typing import TextIO, Tuple, Optional
 import yaml
 
-#
+# third-party
 import nbconvert
 from nbconvert.exporters import HTMLExporter, RSTExporter, NotebookExporter
 from nbconvert.writers import FilesWriter
 from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
 import nbformat
 from traitlets.config import Config
+
+# curdir
+from .build_util import bossy
 
 _log = logging.getLogger("build_notebooks")
 _hnd = logging.StreamHandler()
@@ -434,12 +439,12 @@ class NotebookBuilder(Builder):
 
     def _build_subtree(self, srcdir: Path, outdir: Path, depth: int):
         """Build all notebooks in a given directory, exporting into the given output
-        format.
+        format. This is the workhorse method of the class.
         """
         _log.debug(f"build.begin subtree={srcdir}")
-        success, failed = 0, 0
-        notebooks_to_convert = []
-        data_files = []
+
+        # Iterate through directory and get list of notebooks to convert (and data files)
+        notebooks_to_convert, data_files = [], []
         for entry in srcdir.iterdir():
             filename = entry.parts[-1]
             if filename.startswith(".") or filename.startswith("__"):
@@ -461,10 +466,14 @@ class NotebookBuilder(Builder):
                     shutil.copy(str(entry), str(self._imgdir))
                     _log.debug(f"copied image {entry} to {self._imgdir}/")
                 # notebooks might try to open any of these files, sneaky as they are
-                if entry.suffix in DATA_SUFFIXES or entry.suffix in CODE_SUFFIXES or entry.suffix in IMAGE_SUFFIXES:
+                if (
+                    entry.suffix in DATA_SUFFIXES
+                    or entry.suffix in CODE_SUFFIXES
+                    or entry.suffix in IMAGE_SUFFIXES
+                ):
                     data_files.append(entry)
 
-        # convert notebooks last, allowing for discovery of all the data files
+        # Convert notebooks
         if notebooks_to_convert:
             tmpdir = Path(tempfile.mkdtemp())
             if data_files:
@@ -474,56 +483,89 @@ class NotebookBuilder(Builder):
                 for fp in data_files:
                     # print(f"@@ copy {fp} -> {tmpdir}")
                     shutil.copy(fp, tmpdir)
-            for entry in notebooks_to_convert:
-                if not self._test_mode:
-                    os.makedirs(outdir, exist_ok=True)
-                # build, if the output file is missing/stale
-                verb = "Running" if self._test_mode else "Converting"
-                notify(f"{verb}: {entry.name}", level=2)
-                continue_on_err = self.s.get("continue_on_error", None)
-                try:
-                    self._convert(tmpdir, entry, outdir, depth)
-                    success += 1
-                except NotebookExecError as err:
-                    failed += 1
-                    self._write_notebook_error(entry, err)
-                    self._write_failed_marker(entry, outdir)
-                    if continue_on_err:
-                        _log.warning(
-                            f"Execution failed: generating partial output for '{entry}'"
-                        )
-                        continue
-                    raise
-                except NotebookError as err:
-                    failed += 1
-                    if continue_on_err:
-                        _log.warning(f"failed to convert {entry}: {err}")
-                        continue
-                    raise  # abort all processing
-                # remove failed marker, if there was one from a previous execution
-                failed_marker = self._get_failed_marker(entry, outdir)
-                if failed_marker:
-                    _log.info(f"Remove stale marker of failed execution: {failed_marker}")
-                    failed_marker.unlink()
-                # quick cleanup of contents of temporary dir
-                for f in tmpdir.iterdir():
-                    if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
-                        try:  # may fail for things like __pycache__
-                            f.unlink()
-                        except Exception as err:
-                            _log.debug(
-                                f"Could not unlink file in temp execution dir: {err}"
-                            )
-
-            _log.debug(f"build.end subtree={srcdir} {success}/{success + failed}")
-            self._results.n_fail += failed
-            self._results.n_success += success
-            # clean up any temporary directories
+            # Run conversion in parallel
+            b = bossy.Bossy(
+                notebooks_to_convert,
+                num_workers=2,
+                target=self._convert_notebook_worker,
+                output_log=_log,
+                tmpdir=tmpdir,
+                outdir=outdir,
+                depth=depth,
+            )
+            results = b.run()
+            # Report results, which returns summary
+            successes, failures = self._report_results(results)
+            # Clean up any temporary directories
             _log.debug(f"remove temporary directory at '{tmpdir.name}'")
             try:
                 shutil.rmtree(str(tmpdir))
             except Exception as err:
                 _log.error(f"could not remove temporary directory '{tmpdir}': {err}")
+        else:
+            successes, failures = 0, 0
+
+        # Record summary of success/fail and return
+        _log.debug(f"build.end subtree={srcdir} {successes}/{successes + failures}")
+        self._results.n_fail += failures
+        self._results.n_success += successes
+
+    def _convert_notebook_worker(
+        self, id_, entry, log_q, outdir=None, tmpdir=None, depth=None
+    ):
+        """Parallel 'worker' called by the Bossy instance to convert a single notebook.
+        """
+        ok, why = True, ""
+        if not self._test_mode:
+            os.makedirs(outdir, exist_ok=True)
+        # build, if the output file is missing/stale
+        verb = "Running" if self._test_mode else "Converting"
+        log_q.put((logging.INFO, f"{verb}: {entry.name}"))
+        # continue_on_err = self.s.get("continue_on_error", None)
+
+        try:
+            self._convert(tmpdir, entry, outdir, depth, log_q)
+        except NotebookExecError as err:
+            ok, why = False, err
+            self._write_failed_marker(entry, outdir)
+            log_q.put(
+                (
+                    logging.ERROR,
+                    f"Execution failed: generating partial output for '{entry}'",
+                )
+            )
+        except NotebookError as err:
+            ok, why = False, f"NotebookError: {err}"
+            log_q.put((logging.ERROR, f"failed to convert {entry}: {err}"))
+
+        if ok:
+            # remove failed marker, if there was one from a previous execution
+            failed_marker = self._get_failed_marker(entry, outdir)
+            if failed_marker:
+                _log.info(f"Remove stale marker of failed execution: {failed_marker}")
+                failed_marker.unlink()
+
+        # quick cleanup of contents of temporary dir
+        for f in tmpdir.iterdir():
+            if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
+                try:  # may fail for things like __pycache__
+                    f.unlink()
+                except Exception as err:
+                    _log.debug(f"Could not unlink file in temp execution dir: {err}")
+
+        return id_, (ok, why, entry)
+
+    def _report_results(self, result_list) -> Tuple[int, int]:
+        s, f = 0, 0
+        for i, result in enumerate(result_list):
+            worker_num = i + 1
+            ok, why, entry = result
+            if ok:
+                s += 1
+            else:
+                f += 1
+                self._write_notebook_error(entry, why)
+        return s, f
 
     def _write_notebook_error(self, entry, error):
         filename = str(entry)
@@ -539,16 +581,20 @@ class NotebookBuilder(Builder):
         """
         marker = outdir / (entry.stem + ".failed")
         _log.debug(f"write failed marker '{marker}' for entry={entry} outdir={outdir}")
-        marker.open("w").write("This file is a marker for avoiding re-runs of failed notebooks that haven't changed")
+        marker.open("w").write(
+            "This file is a marker for avoiding re-runs of failed notebooks that haven't changed"
+        )
 
     @staticmethod
-    def _get_failed_marker(entry, outdir) -> Path:
+    def _get_failed_marker(entry, outdir) -> Optional[Path]:
         marker = outdir / (entry.stem + ".failed")
         if marker.exists():
             return marker
         return None
 
-    def _convert(self, tmpdir: Path, entry: Path, outdir: Path, depth: int):
+    def _convert(
+        self, tmpdir: Path, entry: Path, outdir: Path, depth: int, log_q: Queue
+    ):
         """Convert a notebook.
 
         Args:
@@ -557,13 +603,18 @@ class NotebookBuilder(Builder):
             outdir: output directory for .html and .rst files
             depth: depth below root, for fixing image paths
         """
+        info, dbg = logging.INFO, logging.DEBUG  # aliases
         test_mode = self.s.get("test_mode")
         # strip special cells.
         if self._has_tagged_cells(entry, set(self._cell_tags.values())):
-            _log.debug(f"notebook '{entry.name}' has test cell(s)")
-            orig_entry, entry = entry, self._strip_tagged_cells(
-                tmpdir, entry, ("remove", "exercise"), "testing")
-            notify(f"Stripped tags from: {orig_entry.name}", 3)
+            log_q.put((dbg, f"notebook '{entry.name}' has test cell(s)"))
+            orig_entry, entry = (
+                entry,
+                self._strip_tagged_cells(
+                    tmpdir, entry, ("remove", "exercise"), "testing"
+                ),
+            )
+            log_q.put((info, f"Stripped tags from: {orig_entry.name}"))
         else:
             # copy to temporary directory just to protect from output cruft
             tmp_entry = tmpdir / entry.name
@@ -572,15 +623,17 @@ class NotebookBuilder(Builder):
 
         # convert all tag-stripped versions of the notebook.
         # before running, check if converted result is newer than source file
-        if self._already_converted(orig_entry, entry, outdir):
-            notify(f"Skip notebook conversion, output is newer, for: {entry.name}", 3)
+        if self._already_converted(orig_entry, entry, outdir, log_q):
+            log_q.put(
+                (info, f"Skip notebook conversion, output is newer, for: {entry.name}")
+            )
             self._results.cached.append(entry)
             return
-        notify(f"Running notebook: {entry.name}", 3)
+        log_q.put((info, f"Running notebook: {entry.name}"))
         nb = self._parse_and_execute(entry)
         if test_mode:  # don't do conversion in test mode
             return
-        notify(f"Exporting notebook '{entry.name}' to directory {outdir}", 3)
+        log_q.put((info, f"Exporting notebook '{entry.name}' to directory {outdir}"))
         wrt = FilesWriter()
         # export each notebook into multiple target formats
         created_wrapper = False
@@ -588,18 +641,18 @@ class NotebookBuilder(Builder):
             (RSTExporter(), self._postprocess_rst, ()),
             (HTMLExporter(), self._postprocess_html, (depth,)),
         ):
-            _log.debug(f"export '{orig_entry}' with {exp} to notebook '{entry}'")
+            log_q.put((dbg, f"export '{orig_entry}' with {exp} to notebook '{entry}'"))
             (body, resources) = exp.from_notebook_node(nb)
             body = postprocess_func(body, *pp_args)
             wrt.build_directory = str(outdir)
             wrt.write(body, resources, notebook_name=entry.stem)
             # create a 'wrapper' page
             if not created_wrapper:
-                _log.debug(f"create wrapper page for '{entry.name}' in '{outdir}'")
+                log_q.put((dbg, f"create wrapper page for '{entry.name}' in '{outdir}'"))
                 self._create_notebook_wrapper_page(entry.stem, outdir)
                 created_wrapper = True
             # move notebooks into docs directory
-            _log.debug(f"move notebook '{entry} to output directory: {outdir}")
+            log_q.put((dbg, f"move notebook '{entry} to output directory: {outdir}"))
             shutil.copy(entry, outdir / entry.name)
 
     def _has_tagged_cells(self, entry: Path, tags: set) -> bool:
@@ -657,7 +710,9 @@ class NotebookBuilder(Builder):
         # Determine output notebook name:
         # remove suffixes, either "Capitalized" or "lowercase" version
         nmc, nml = remove_name.capitalize(), remove_name.lower()
-        nb_name = re.sub(f'(_{nmc}|_{nml}|_{nmc}_|_{nml}_|{nmc}_|{nml}_)', '', entry.stem)
+        nb_name = re.sub(
+            f"(_{nmc}|_{nml}|_{nmc}_|_{nml}_|{nmc}_|{nml}_)", "", entry.stem
+        )
         # Create the new notebook
         wrt = nbconvert.writers.FilesWriter()
         wrt.build_directory = str(tmpdir)
@@ -702,7 +757,7 @@ class NotebookBuilder(Builder):
             _log.info(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
             f.write(doc)
 
-    def _already_converted(self, orig: Path, dest: Path, outdir: Path) -> bool:
+    def _already_converted(self, orig: Path, dest: Path, outdir: Path, log_q: Queue) -> bool:
         """Check if a any of the output files are either missing or older than
         the input file ('entry').
 
@@ -718,14 +773,14 @@ class NotebookBuilder(Builder):
             failed_time = failed_file.stat().st_ctime
             ac = failed_time > source_time
             if ac:
-                notify(f"Notebook '{orig.stem}.ipynb' unchanged since previous failed conversion", 3)
+                log_q.put((logging.INFO, f"Notebook '{orig.stem}.ipynb' unchanged since previous failed conversion"))
             return ac
 
         # Otherwise look at all the output files and see if any one of them is
         # older than the source file (in which case it's NOT converted)
         for fmt, ext in self.FORMATS.items():
             output_file = outdir / f"{dest.stem}{ext}"
-            _log.debug(f"checking if cached: {output_file} src={orig}")
+            log_q.put((logging.DEBUG, f"checking if cached: {output_file} src={orig}"))
             if not output_file.exists():
                 return False
             if source_time >= output_file.stat().st_mtime:
@@ -778,7 +833,7 @@ class NotebookBuilder(Builder):
         splits = re.split(r'<img src="(.*\.png"[^>]*)>', body)
         # replace grouping in odd-numbered splits with modified <img>
         for i in range(1, len(splits), 2):
-            orig = splits[i]
+            # orig = splits[i]
             splits[i] = f'<img src="{prefix}/{splits[i]}>'
             # print(f"@@ depth={depth}; rewrote image link '{orig}' as '{splits[i]}'")
         # rejoin splits, to make the modified body text
@@ -863,7 +918,9 @@ class SphinxBuilder(Builder):
                 pattern = f"**/*{ext}"
                 for nb_path in Path(nb_source_dir).glob(pattern):
                     nb_dest = html_dir / nb_path.relative_to(src_dir)
-                    notify(f"Copy supporting file {nb_path.name} -> {nb_dest.parent}", 3)
+                    notify(
+                        f"Copy supporting file {nb_path.name} -> {nb_dest.parent}", 3
+                    )
                     shutil.copy(nb_path, nb_dest)
 
     @staticmethod
@@ -1025,7 +1082,9 @@ def main():
     ap.add_argument(
         "--usage", "-U", action="store_true", help="Print a more detailed usage message"
     )
-    ap.add_argument("--remove", "-r", action="store_true", help="Remove generated files")
+    ap.add_argument(
+        "--remove", "-r", action="store_true", help="Remove generated files"
+    )
     ap.add_argument("--docs", "-d", action="store_true", help="Build documentation")
     ap.add_argument(
         "--convert", "-c", action="store_true", help="Convert Jupyter notebooks",
@@ -1054,9 +1113,7 @@ def main():
 
     # Check for confusing option combinations
     if args.convert and args.test_mode:
-        ap.error(
-            "-t/--test conflicts with notebook conversion -c/--convert; pick one"
-        )
+        ap.error("-t/--test conflicts with notebook conversion -c/--convert; pick one")
     if args.docs and args.test_mode:
         ap.error(
             "-t/--test should not be used with -d/--docs, as it does not convert any notebooks"
@@ -1110,9 +1167,7 @@ def main():
         notify(f"{verb} Jupyter notebooks")
         nbb = NotebookBuilder(settings)
         try:
-            nbb.build(
-                {"test_mode": test_mode}
-            )
+            nbb.build({"test_mode": test_mode})
         except NotebookError as err:
             _log.fatal(f"Could not build notebooks: {err}")
             return -1
