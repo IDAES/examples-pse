@@ -81,8 +81,12 @@ from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
 import nbformat
 from traitlets.config import Config
 
-# curdir
-from .build_util import bossy
+# from build.py dir
+_script_dir = os.path.abspath(os.path.dirname(__file__))
+if _script_dir not in sys.path:
+    print("Add script's directory to sys.path")
+    sys.path.insert(0, _script_dir)
+from build_util import bossy
 
 _log = logging.getLogger("build_notebooks")
 _hnd = logging.StreamHandler()
@@ -144,6 +148,7 @@ class Settings:
             "directories": [],
             "kernel": None,
             "test_mode": False,
+            "num_workers": 1,
         },
     }
 
@@ -314,6 +319,7 @@ class NotebookBuilder(Builder):
 
     def build(self, options):
         self.s.set_default_section("notebook")
+        self._num_workers = self.s.get("num_workers")
         self._merge_options(options)
         self._test_mode = self.s.get("test_mode")
         self._open_error_file()
@@ -484,9 +490,10 @@ class NotebookBuilder(Builder):
                     # print(f"@@ copy {fp} -> {tmpdir}")
                     shutil.copy(fp, tmpdir)
             # Run conversion in parallel
+            _log.info("Convert notebooks with {self._num_workers} worker(s)")
             b = bossy.Bossy(
                 notebooks_to_convert,
-                num_workers=2,
+                num_workers=self._num_workers,
                 target=self._convert_notebook_worker,
                 output_log=_log,
                 tmpdir=tmpdir,
@@ -648,7 +655,9 @@ class NotebookBuilder(Builder):
             wrt.write(body, resources, notebook_name=entry.stem)
             # create a 'wrapper' page
             if not created_wrapper:
-                log_q.put((dbg, f"create wrapper page for '{entry.name}' in '{outdir}'"))
+                log_q.put(
+                    (dbg, f"create wrapper page for '{entry.name}' in '{outdir}'")
+                )
                 self._create_notebook_wrapper_page(entry.stem, outdir)
                 created_wrapper = True
             # move notebooks into docs directory
@@ -757,7 +766,9 @@ class NotebookBuilder(Builder):
             _log.info(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
             f.write(doc)
 
-    def _already_converted(self, orig: Path, dest: Path, outdir: Path, log_q: Queue) -> bool:
+    def _already_converted(
+        self, orig: Path, dest: Path, outdir: Path, log_q: Queue
+    ) -> bool:
         """Check if a any of the output files are either missing or older than
         the input file ('entry').
 
@@ -773,7 +784,12 @@ class NotebookBuilder(Builder):
             failed_time = failed_file.stat().st_ctime
             ac = failed_time > source_time
             if ac:
-                log_q.put((logging.INFO, f"Notebook '{orig.stem}.ipynb' unchanged since previous failed conversion"))
+                log_q.put(
+                    (
+                        logging.INFO,
+                        f"Notebook '{orig.stem}.ipynb' unchanged since previous failed conversion",
+                    )
+                )
             return ac
 
         # Otherwise look at all the output files and see if any one of them is
@@ -1104,6 +1120,14 @@ def main():
         help="Increase verbosity",
         default=0,
     )
+    ap.add_argument(
+        "--workers",
+        "-w",
+        dest="np",
+        default=None,
+        type=int,
+        help="Number of parallel processes to run. Overrides `notebook.num_workers` in settings",
+    )
     args = ap.parse_args()
 
     # Check for usage message flag
@@ -1146,6 +1170,10 @@ def main():
     except Settings.ConfigError as err:
         _log.fatal(f"Cannot read settings from '{args.config}': {err}")
         return 1
+
+    # Update settings from command-line arguments
+    if args.np:
+        settings.set("notebook.num_workers", args.np)
 
     # set local variables from command-line arguments
     run_notebooks = args.convert
