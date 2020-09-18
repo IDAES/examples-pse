@@ -36,19 +36,19 @@ def main():
     training_data = b.sample_points()
 
     # Kriging training
-    aa = krg.KrigingModel(training_data, numerical_gradients=False)
+    aa = krg.KrigingModel(training_data, numerical_gradients=False, overwrite=True)
     fv = aa.get_feature_vector()
-    ab = aa.kriging_training()
+    ab = aa.training()
 
     # Print Pyomo expression from input variables
     list_vars = []
     for i in fv.keys():
         list_vars.append(fv[i])
-    print('The Kriging expression is: \n eq = ', ab.kriging_generate_expression(list_vars))
+    print('The Kriging expression is: \n eq = ', aa.generate_expression(list_vars))
 
     # Evaluate Kriging model at points not in the training dataset and calculate R^2
     x_pred = data_scaled[:, :-1]
-    y_pred = aa.kriging_predict_output(ab, x_pred)
+    y_pred = aa.predict_output(x_pred)
     r2 = aa.r2_calculation(data_scaled[:, -1], y_pred)
     print('The R^2 value is: ', r2)
 

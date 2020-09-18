@@ -22,7 +22,7 @@ copyright = 'DOE Institute for the Design of Advanced Energy Systems (IDAES), 20
 author = 'Dan Gunter'
 
 # The full version, including alpha/beta/rc tags
-release = '1.6.0dev'
+release = '1.7.0dev0'
 
 
 # For Read the Docs theme
@@ -63,6 +63,6 @@ html_title = u'IDAES v{} Examples'.format(release)
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-html_css_files = ['css/custom.css']
+html_css_files = []  # ['css/custom.css']
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
