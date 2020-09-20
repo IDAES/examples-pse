@@ -62,10 +62,13 @@ class Bossy:
             self.work_q.put(item)
 
     def _create_worker_processes(self, kwargs):
+        self.log.debug(f"Create worker processes. kwargs={kwargs}")
         processes = []
         for i in range(self.n):
             p = Process(target=self.worker, args=(i + 1, self.work_q, self.log_q, self.result_q, self.worker_fn,
-                                                  kwargs))
+                                                  {}))  # kwargs
+            for k, v in p.__dict__.items():
+                print(f"@@ Process '{k}'=({type(v)}) {v}")
             p.start()
             processes.append(p)
         return processes

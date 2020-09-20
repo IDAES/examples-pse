@@ -494,7 +494,7 @@ class NotebookBuilder(Builder):
             b = bossy.Bossy(
                 notebooks_to_convert,
                 num_workers=self._num_workers,
-                target=self._convert_notebook_worker,
+                worker_function=ParallelNotebookWorker.convert,
                 output_log=_log,
                 tmpdir=tmpdir,
                 outdir=outdir,
@@ -517,50 +517,6 @@ class NotebookBuilder(Builder):
         self._results.n_fail += failures
         self._results.n_success += successes
 
-    def _convert_notebook_worker(
-        self, id_, entry, log_q, outdir=None, tmpdir=None, depth=None
-    ):
-        """Parallel 'worker' called by the Bossy instance to convert a single notebook.
-        """
-        ok, why = True, ""
-        if not self._test_mode:
-            os.makedirs(outdir, exist_ok=True)
-        # build, if the output file is missing/stale
-        verb = "Running" if self._test_mode else "Converting"
-        log_q.put((logging.INFO, f"{verb}: {entry.name}"))
-        # continue_on_err = self.s.get("continue_on_error", None)
-
-        try:
-            self._convert(tmpdir, entry, outdir, depth, log_q)
-        except NotebookExecError as err:
-            ok, why = False, err
-            self._write_failed_marker(entry, outdir)
-            log_q.put(
-                (
-                    logging.ERROR,
-                    f"Execution failed: generating partial output for '{entry}'",
-                )
-            )
-        except NotebookError as err:
-            ok, why = False, f"NotebookError: {err}"
-            log_q.put((logging.ERROR, f"failed to convert {entry}: {err}"))
-
-        if ok:
-            # remove failed marker, if there was one from a previous execution
-            failed_marker = self._get_failed_marker(entry, outdir)
-            if failed_marker:
-                _log.info(f"Remove stale marker of failed execution: {failed_marker}")
-                failed_marker.unlink()
-
-        # quick cleanup of contents of temporary dir
-        for f in tmpdir.iterdir():
-            if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
-                try:  # may fail for things like __pycache__
-                    f.unlink()
-                except Exception as err:
-                    _log.debug(f"Could not unlink file in temp execution dir: {err}")
-
-        return id_, (ok, why, entry)
 
     def _report_results(self, result_list) -> Tuple[int, int]:
         s, f = 0, 0
@@ -599,70 +555,6 @@ class NotebookBuilder(Builder):
             return marker
         return None
 
-    def _convert(
-        self, tmpdir: Path, entry: Path, outdir: Path, depth: int, log_q: Queue
-    ):
-        """Convert a notebook.
-
-        Args:
-            tmpdir: Temporary working directory
-            entry: notebook to convert
-            outdir: output directory for .html and .rst files
-            depth: depth below root, for fixing image paths
-        """
-        info, dbg = logging.INFO, logging.DEBUG  # aliases
-        test_mode = self.s.get("test_mode")
-        # strip special cells.
-        if self._has_tagged_cells(entry, set(self._cell_tags.values())):
-            log_q.put((dbg, f"notebook '{entry.name}' has test cell(s)"))
-            orig_entry, entry = (
-                entry,
-                self._strip_tagged_cells(
-                    tmpdir, entry, ("remove", "exercise"), "testing"
-                ),
-            )
-            log_q.put((info, f"Stripped tags from: {orig_entry.name}"))
-        else:
-            # copy to temporary directory just to protect from output cruft
-            tmp_entry = tmpdir / entry.name
-            shutil.copy(entry, tmp_entry)
-            orig_entry, entry = entry, tmp_entry
-
-        # convert all tag-stripped versions of the notebook.
-        # before running, check if converted result is newer than source file
-        if self._already_converted(orig_entry, entry, outdir, log_q):
-            log_q.put(
-                (info, f"Skip notebook conversion, output is newer, for: {entry.name}")
-            )
-            self._results.cached.append(entry)
-            return
-        log_q.put((info, f"Running notebook: {entry.name}"))
-        nb = self._parse_and_execute(entry)
-        if test_mode:  # don't do conversion in test mode
-            return
-        log_q.put((info, f"Exporting notebook '{entry.name}' to directory {outdir}"))
-        wrt = FilesWriter()
-        # export each notebook into multiple target formats
-        created_wrapper = False
-        for (exp, postprocess_func, pp_args) in (
-            (RSTExporter(), self._postprocess_rst, ()),
-            (HTMLExporter(), self._postprocess_html, (depth,)),
-        ):
-            log_q.put((dbg, f"export '{orig_entry}' with {exp} to notebook '{entry}'"))
-            (body, resources) = exp.from_notebook_node(nb)
-            body = postprocess_func(body, *pp_args)
-            wrt.build_directory = str(outdir)
-            wrt.write(body, resources, notebook_name=entry.stem)
-            # create a 'wrapper' page
-            if not created_wrapper:
-                log_q.put(
-                    (dbg, f"create wrapper page for '{entry.name}' in '{outdir}'")
-                )
-                self._create_notebook_wrapper_page(entry.stem, outdir)
-                created_wrapper = True
-            # move notebooks into docs directory
-            log_q.put((dbg, f"move notebook '{entry} to output directory: {outdir}"))
-            shutil.copy(entry, outdir / entry.name)
 
     def _has_tagged_cells(self, entry: Path, tags: set) -> bool:
         """Quickly check whether this notebook has any cells with the given tag(s).
@@ -871,6 +763,121 @@ class NotebookBuilder(Builder):
             _log.warning("Could not insert stylesheet in HTML")
         # done
         return body
+
+
+class ParallelNotebookWorker:
+    @classmethod
+    def convert(
+        cls, id_, entry, log_q, outdir = None, tmpdir = None, depth = None, test_mode = False
+    ):
+        """Parallel 'worker' called by the Bossy instance to convert a single notebook.
+        """
+        ok, why = True, ""
+        if not test_mode:
+            os.makedirs(outdir, exist_ok=True)
+        # build, if the output file is missing/stale
+        verb = "Running" if test_mode else "Converting"
+        log_q.put((logging.INFO, f"{verb}: {entry.name}"))
+        # continue_on_err = self.s.get("continue_on_error", None)
+
+        try:
+            cls._convert(tmpdir, entry, outdir, depth, log_q)
+        except NotebookExecError as err:
+            ok, why = False, err
+            self._write_failed_marker(entry, outdir)
+            log_q.put(
+                (
+                    logging.ERROR,
+                    f"Execution failed: generating partial output for '{entry}'",
+                )
+            )
+        except NotebookError as err:
+            ok, why = False, f"NotebookError: {err}"
+            log_q.put((logging.ERROR, f"failed to convert {entry}: {err}"))
+
+        if ok:
+            # remove failed marker, if there was one from a previous execution
+            failed_marker = self._get_failed_marker(entry, outdir)
+            if failed_marker:
+                _log.info(f"Remove stale marker of failed execution: {failed_marker}")
+                failed_marker.unlink()
+
+            # quick cleanup of contents of temporary dir
+        for f in tmpdir.iterdir():
+            if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
+                try:  # may fail for things like __pycache__
+                    f.unlink()
+                except Exception as err:
+                    _log.debug(f"Could not unlink file in temp execution dir: {err}")
+
+        return id_, (ok, why, entry)
+
+
+    @classmethod
+    def _convert(
+        cls, tmpdir: Path, entry: Path, outdir: Path, depth: int, log_q: Queue
+    ):
+        """Convert a notebook.
+
+        Args:
+            tmpdir: Temporary working directory
+            entry: notebook to convert
+            outdir: output directory for .html and .rst files
+            depth: depth below root, for fixing image paths
+        """
+        info, dbg = logging.INFO, logging.DEBUG  # aliases
+        test_mode = self.s.get("test_mode")
+        # strip special cells.
+        if self._has_tagged_cells(entry, set(self._cell_tags.values())):
+            log_q.put((dbg, f"notebook '{entry.name}' has test cell(s)"))
+            orig_entry, entry = (
+                entry,
+                self._strip_tagged_cells(
+                    tmpdir, entry, ("remove", "exercise"), "testing"
+                ),
+            )
+            log_q.put((info, f"Stripped tags from: {orig_entry.name}"))
+        else:
+            # copy to temporary directory just to protect from output cruft
+            tmp_entry = tmpdir / entry.name
+            shutil.copy(entry, tmp_entry)
+            orig_entry, entry = entry, tmp_entry
+
+        # convert all tag-stripped versions of the notebook.
+        # before running, check if converted result is newer than source file
+        if self._already_converted(orig_entry, entry, outdir, log_q):
+            log_q.put(
+                (info, f"Skip notebook conversion, output is newer, for: {entry.name}")
+            )
+            self._results.cached.append(entry)
+            return
+        log_q.put((info, f"Running notebook: {entry.name}"))
+        nb = self._parse_and_execute(entry)
+        if test_mode:  # don't do conversion in test mode
+            return
+        log_q.put((info, f"Exporting notebook '{entry.name}' to directory {outdir}"))
+        wrt = FilesWriter()
+        # export each notebook into multiple target formats
+        created_wrapper = False
+        for (exp, postprocess_func, pp_args) in (
+            (RSTExporter(), self._postprocess_rst, ()),
+            (HTMLExporter(), self._postprocess_html, (depth,)),
+        ):
+            log_q.put((dbg, f"export '{orig_entry}' with {exp} to notebook '{entry}'"))
+            (body, resources) = exp.from_notebook_node(nb)
+            body = postprocess_func(body, *pp_args)
+            wrt.build_directory = str(outdir)
+            wrt.write(body, resources, notebook_name=entry.stem)
+            # create a 'wrapper' page
+            if not created_wrapper:
+                log_q.put(
+                    (dbg, f"create wrapper page for '{entry.name}' in '{outdir}'")
+                )
+                self._create_notebook_wrapper_page(entry.stem, outdir)
+                created_wrapper = True
+            # move notebooks into docs directory
+            log_q.put((dbg, f"move notebook '{entry} to output directory: {outdir}"))
+            shutil.copy(entry, outdir / entry.name)
 
 
 #
