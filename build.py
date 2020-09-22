@@ -294,7 +294,7 @@ class NotebookBuilder(Builder):
 
     def build(self, options):
         self.s.set_default_section("notebook")
-        self._num_workers = self.s.get("num_workers")
+        self._num_workers = self.s.get("num_workers", default=4)
         self._merge_options(options)
         self._test_mode = self.s.get("test_mode")
         self._open_error_file()
@@ -1004,6 +1004,8 @@ class SphinxBuilder(Builder):
             _log.debug(f"find notebooks in path: {nb_output_dir}")
             for nb_path in Path(nb_output_dir).glob("**/*.ipynb"):
                 nb_dest = html_dir / nb_path.relative_to(doc_dir)
+                if not nb_dest.parent.exists():
+                    nb_dest.parent.mkdir(parents=True)
                 notify(f"Copy notebook {nb_path.name} -> {nb_dest.parent}", 2)
                 shutil.copy(nb_path, nb_dest)
             _log.info(f"find supporting files in path: {nb_output_dir}")
