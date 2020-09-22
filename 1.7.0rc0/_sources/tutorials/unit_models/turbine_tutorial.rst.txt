@@ -1,0 +1,499 @@
+Tutorial: Turbine Unit Model with IAPWS Property Package
+========================================================
+
+|image0|
+
+Learning Outcomes
+-----------------
+
+-  Demonstrate use of the turbine unit model in IDAES
+-  Demonstrate different simulation options available
+
+Problem Statement
+-----------------
+
+In this example, we will expand steam in a turbine using the turbine
+unit model and the IAPWS property package for water/steam. It is assumed
+that the turbine operates at steady state.
+
+The inlet specifications are as follows:
+
+-  Flow Rate = 100 mol/s
+-  Mole fraction (H2O) = 1
+-  Pressure = 150000 Pa
+-  Temperature = 390 K
+
+We will simulate 2 different cases, depending on the operating
+specifications by the user:
+
+**Case 1**: In this case, we will specify the turbine isentropic
+efficiency and the pressure decrease variable. \* Pressure Decrease =
+25000 Pa \* Isentropic Efficiency = 0.9
+
+**Case 2**: In this case, we will specify the turbine isentropic
+efficiency and the pressure ratio variable. \* Pressure Ratio = 0.90131
+\* Isentropic Efficiency = 0.9
+
+IDAES documentation reference for turbine
+model:https://idaes-pse.readthedocs.io/en/stable/
+
+.. |image0| image:: expander_2.svg
+
+Setting up the problem in IDAES
+-------------------------------
+
+In the following cell, we will be importing the necessary components
+from Pyomo and IDAES.
+
+.. code:: ipython3
+
+    # Import objects from pyomo package 
+    from pyomo.environ import ConcreteModel, SolverFactory, value
+    
+    # Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model
+    from idaes.core import FlowsheetBlock
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+    
+    # Create the ConcreteModel and the FlowsheetBlock, and attach the flowsheet block to it.
+    m = ConcreteModel()
+    
+    m.fs = FlowsheetBlock(default={"dynamic": False}) # dynamic or ss flowsheet needs to be specified here
+    
+    
+    # Import the IAPWS property package to create a properties block for the flowsheet
+    from idaes.generic_models.properties import iapws95
+    from idaes.generic_models.properties.helmholtz.helmholtz import PhaseType
+    
+    # Add properties parameter block to the flowsheet with specifications
+    m.fs.properties = iapws95.Iapws95ParameterBlock()
+
+
+.. parsed-literal::
+
+    2020-09-21 17:43:55 [WARNING] idaes.core.property_meta: DEPRECATED: IDAES is moving to using Pyomo Units when defining default units, which are used to automatically determine units of measurement for quantities and convert where necessary. Users are strongly encouraged to convert their property packages to use Pyomo Units objects.
+
+
+Case 1: Fix pressure change and turbine efficiency
+--------------------------------------------------
+
+Add Turbine Unit
+~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Import turbine unit model from the model library
+    from idaes.generic_models.unit_models.pressure_changer import Turbine
+    
+    # Create an instance of the turbine unit, attaching it to the flowsheet
+    # Specify that the property package to be used with the turbine is the one we created earlier.
+    m.fs.turbine_case_1 = Turbine(default={"property_package": m.fs.properties})
+
+.. code:: ipython3
+
+    # Import the degrees_of_freedom function from the idaes.core.util.model_statistics package
+    # DOF = Number of Model Variables - Number of Model Constraints
+    from idaes.core.util.model_statistics import degrees_of_freedom
+    
+    # Call the degrees_of_freedom function, get intitial DOF
+    DOF_initial = degrees_of_freedom(m)
+    print("The initial DOF is {0}".format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial DOF is 5
+
+
+Fix Inlet Stream Conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Fix the stream inlet conditions
+    m.fs.turbine_case_1.inlet.flow_mol[0].fix(100) # converting to mol/s as unit basis is mol/s
+    
+    # Use htpx method to obtain the molar enthalpy of inlet stream at the given temperature and pressure conditions 
+    m.fs.turbine_case_1.inlet.enth_mol[0].fix(iapws95.htpx(T=390, P=150000))
+    m.fs.turbine_case_1.inlet.pressure[0].fix(150000)
+
+
+.. parsed-literal::
+
+    2020-09-21 17:43:55 [WARNING] idaes.core.property_meta: DEPRECATED: IDAES is moving to using Pyomo Units when defining default units, which are used to automatically determine units of measurement for quantities and convert where necessary. Users are strongly encouraged to convert their property packages to use Pyomo Units objects.
+
+
+Fix Pressure Change and Turbine Efficiency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Fix turbine conditions
+    m.fs.turbine_case_1.deltaP.fix(-10000)
+    m.fs.turbine_case_1.efficiency_isentropic.fix(0.9)
+    
+    # Call the degrees_of_freedom function, get final DOF
+    DOF_final = degrees_of_freedom(m)
+    print("The final DOF is {0}".format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final DOF is 0
+
+
+Initialization
+~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Initialize the flowsheet, and set the logger level to INFO
+    m.fs.turbine_case_1.initialize(outlvl=idaeslog.INFO)
+
+
+.. parsed-literal::
+
+    2020-09-21 17:43:55 [INFO] idaes.init.fs.turbine_case_1.control_volume: Initialization Complete
+    2020-09-21 17:43:55 [INFO] idaes.init.fs.turbine_case_1: Initialization Complete: optimal - Optimal Solution Found
+
+
+Solve Model
+~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Solve the simulation using ipopt
+    # Note: If the degrees of freedom = 0, we have a square problem
+    opt = SolverFactory('ipopt')
+    solve_status = opt.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:       18
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:        5
+    
+    Total number of variables............................:        9
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        4
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        9
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 2.36e-07 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 9.31e-10 7.14e-09  -1.0 9.07e-03    -  9.90e-01 1.00e+00h  1
+    
+    Number of Iterations....: 1
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   3.6379788070917130e-12    9.3132257461547852e-10
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   3.6379788070917130e-12    9.3132257461547852e-10
+    
+    
+    Number of objective function evaluations             = 2
+    Number of objective gradient evaluations             = 2
+    Number of equality constraint evaluations            = 2
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 2
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 1
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
+    Total CPU secs in NLP function evaluations           =      0.002
+    
+    EXIT: Optimal Solution Found.
+    
+
+.. code:: ipython3
+
+    from pyomo.opt import TerminationCondition, SolverStatus
+    
+    # Check if termination condition is optimal
+    assert solve_status.solver.termination_condition == TerminationCondition.optimal
+    assert solve_status.solver.status == SolverStatus.ok
+
+View Results
+~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Display Outlet pressure
+    m.fs.turbine_case_1.outlet.pressure.display()
+
+
+.. parsed-literal::
+
+    IndexedVar : Size=1, Index=fs.time
+        Key : Lower : Value    : Upper        : Fixed : Stale : Domain
+        0.0 :   0.1 : 140000.0 : 1000000000.0 : False : False : PositiveReals
+
+
+.. code:: ipython3
+
+    # Display a readable report
+    m.fs.turbine_case_1.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.turbine_case_1                                                   Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key                   : Value   : Fixed : Bounds
+        Isentropic Efficiency : 0.90000 :  True : (None, None)
+              Mechanical Work : -19597. : False : (None, None)
+              Pressure Change : -10000. :  True : (None, None)
+               Pressure Ratio : 0.93333 : False : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                      Inlet     Outlet  
+        Molar Flow (mol/s)             100.00     100.00
+        Mass Flow (kg/s)               1.8015     1.8015
+        T (K)                          390.00     384.28
+        P (Pa)                     1.5000e+05 1.4000e+05
+        Vapor Fraction                 1.0000     1.0000
+        Molar Enthalpy (J/mol) Vap     48727.     48531.
+        Molar Enthalpy (J/mol) Liq     8835.0     8398.4
+    ====================================================================================
+
+
+Case 2: Fix Pressure Ratio and Turbine Efficiency
+-------------------------------------------------
+
+Add Turbine Unit
+~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Create an instance of another turbine unit, attaching it to the flowsheet
+    # Specify that the property package to be used with the turbine is the one we created earlier.
+    m.fs.turbine_case_2 = Turbine(default={"property_package": m.fs.properties})
+    
+    # Call the degrees_of_freedom function, get intitial DOF
+    DOF_initial = degrees_of_freedom(m.fs.turbine_case_2)
+    print("The initial DOF is {0}".format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial DOF is 5
+
+
+Fix Inlet Stream Conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Fix the stream inlet conditions
+    m.fs.turbine_case_2.inlet.flow_mol[0].fix(100) # converting to mol/s as unit basis is mol/s
+    
+    # Use htpx method to obtain the molar enthalpy of inlet stream at the given temperature and pressure conditions 
+    m.fs.turbine_case_2.inlet.enth_mol[0].fix(iapws95.htpx(T=390, P=150000))
+    m.fs.turbine_case_2.inlet.pressure[0].fix(150000)
+
+
+.. parsed-literal::
+
+    2020-09-21 17:43:55 [WARNING] idaes.core.property_meta: DEPRECATED: IDAES is moving to using Pyomo Units when defining default units, which are used to automatically determine units of measurement for quantities and convert where necessary. Users are strongly encouraged to convert their property packages to use Pyomo Units objects.
+
+
+Fix Pressure Ratio & Turbine Efficiency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Fix turbine pressure ratio
+    m.fs.turbine_case_2.ratioP.fix(14/15)
+    
+    # Fix turbine efficiency
+    m.fs.turbine_case_2.efficiency_isentropic.fix(0.9)
+    
+    # Call the degrees_of_freedom function, get final DOF
+    DOF_final = degrees_of_freedom(m.fs.turbine_case_2)
+    print("The final DOF is {0}".format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final DOF is 0
+
+
+Initialization
+~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Initialize the flowsheet, and set the output at INFO
+    m.fs.turbine_case_2.initialize(outlvl=idaeslog.INFO)
+
+
+
+.. parsed-literal::
+
+    2020-09-21 17:43:55 [INFO] idaes.init.fs.turbine_case_2.control_volume: Initialization Complete
+    2020-09-21 17:43:56 [INFO] idaes.init.fs.turbine_case_2: Initialization Complete: optimal - Optimal Solution Found
+
+
+Solve Model
+~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Solve the simulation using ipopt
+    # Note: If the degrees of freedom = 0, we have a square problem
+    opt = SolverFactory('ipopt')
+    solve_status = opt.solve(m.fs.turbine_case_2, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:       18
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:        5
+    
+    Total number of variables............................:        9
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        4
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        9
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 2.36e-07 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 9.31e-10 7.14e-09  -1.0 9.07e-03    -  9.90e-01 1.00e+00h  1
+    
+    Number of Iterations....: 1
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   3.6379788070917130e-12    9.3132257461547852e-10
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   3.6379788070917130e-12    9.3132257461547852e-10
+    
+    
+    Number of objective function evaluations             = 2
+    Number of objective gradient evaluations             = 2
+    Number of equality constraint evaluations            = 2
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 2
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 1
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
+    Total CPU secs in NLP function evaluations           =      0.002
+    
+    EXIT: Optimal Solution Found.
+    
+
+View Results
+~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Display turbine pressure decrease 
+    m.fs.turbine_case_2.outlet.pressure[0].display()
+
+
+.. parsed-literal::
+
+    pressure : Pressure [Pa]
+        Size=1, Index=None
+        Key  : Lower : Value    : Upper        : Fixed : Stale : Domain
+        None :   0.1 : 140000.0 : 1000000000.0 : False : False : PositiveReals
+
+
+.. code:: ipython3
+
+    # Display a readable report
+    m.fs.turbine_case_2.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.turbine_case_2                                                   Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key                   : Value   : Fixed : Bounds
+        Isentropic Efficiency : 0.90000 :  True : (None, None)
+              Mechanical Work : -19597. : False : (None, None)
+              Pressure Change : -10000. : False : (None, None)
+               Pressure Ratio : 0.93333 :  True : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                      Inlet     Outlet  
+        Molar Flow (mol/s)             100.00     100.00
+        Mass Flow (kg/s)               1.8015     1.8015
+        T (K)                          390.00     384.28
+        P (Pa)                     1.5000e+05 1.4000e+05
+        Vapor Fraction                 1.0000     1.0000
+        Molar Enthalpy (J/mol) Vap     48727.     48531.
+        Molar Enthalpy (J/mol) Liq     8835.0     8398.4
+    ====================================================================================
+
