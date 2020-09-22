@@ -290,7 +290,12 @@ class NotebookBuilder(Builder):
         self._test_mode, self._num_workers = None, 1
         self._match_expr = None
         # Lists of entries (or just one, for outdir) for each subdirectory
-        self.notebooks_to_convert, self.data_files, self.outdir, self.depth = {}, {}, {}, {}
+        self.notebooks_to_convert, self.data_files, self.outdir, self.depth = (
+            {},
+            {},
+            {},
+            {},
+        )
 
     def build(self, options):
         self.s.set_default_section("notebook")
@@ -320,6 +325,7 @@ class NotebookBuilder(Builder):
         self._results.start()
         for item in nb_dirs:
             self.discover_tree(item)
+        self.convert_discovered_notebooks()
         self._results.stop()
         return self._results
 
@@ -413,18 +419,16 @@ class NotebookBuilder(Builder):
             self.root_path() / self.s.get("paths.output"),
         )
         srcdir, outdir = sroot / source, oroot / output
-        verb = "Running" if self._test_mode else "Converting"
-        notify(f"{verb} notebooks in '{srcdir}'", level=1)
+        notify(f"Looking for notebooks in '{srcdir}'", level=1)
         self._match_expr = re.compile(match) if match else None
         # build, starting at this directory
         self.discover_subtree(srcdir, outdir, depth=1)
-        self.convert_discovered_notebooks()
         self._results.dirs_processed.append(srcdir)
 
     def discover_subtree(self, srcdir: Path, outdir: Path, depth: int):
         """Discover all notebooks in a given directory.
         """
-        _log.debug(f"build.begin subtree={srcdir}")
+        _log.debug(f"Discover.begin subtree={srcdir}")
 
         # Iterate through directory and get list of notebooks to convert (and data files)
         notebooks_to_convert, data_files = [], []
@@ -461,7 +465,9 @@ class NotebookBuilder(Builder):
 
     def convert_discovered_notebooks(self):
         # create temporary directories
-        temporary_dirs = {srcdir: Path(tempfile.mkdtemp()) for srcdir in self.notebooks_to_convert}
+        temporary_dirs = {
+            srcdir: Path(tempfile.mkdtemp()) for srcdir in self.notebooks_to_convert
+        }
         # copy datafiles (into temporary directories)
         for srcdir, dfs in self.data_files.items():
             tmpdir = temporary_dirs[srcdir]
@@ -473,7 +479,9 @@ class NotebookBuilder(Builder):
         jobs = []
         for srcdir, nb_list in self.notebooks_to_convert.items():
             # template job
-            tj = Job(None, temporary_dirs[srcdir], self.outdir[srcdir], self.depth[srcdir])
+            tj = Job(
+                None, temporary_dirs[srcdir], self.outdir[srcdir], self.depth[srcdir]
+            )
             # per-notebook real jobs
             for nb in nb_list:
                 jobs.append(Job(nb, tj.tmpdir, tj.outdir, tj.depth))
@@ -505,7 +513,7 @@ class NotebookBuilder(Builder):
             except Exception as err:
                 _log.error(f"could not remove temporary directory '{tmpdir}': {err}")
         # Record summary of success/fail and return
-        _log.debug(f"build.end {successes}/{successes + failures}")
+        _log.debug(f"Convert.end {successes}/{successes + failures}")
         self._results.n_fail += failures
         self._results.n_success += successes
 
@@ -639,7 +647,7 @@ class ParallelNotebookWorker:
                 job.outdir.mkdir(parents=True)
         # build, if the output file is missing/stale
         verb = "Running" if self.test_mode else "Converting"
-        log_q.put((logging.INFO, f"{verb}: {job.nb.name}"))
+        self.log_info(f"{verb}: {job.nb.name}")
         # continue_on_err = self.s.get("continue_on_error", None)
         converted = False
         try:
@@ -647,7 +655,9 @@ class ParallelNotebookWorker:
         except NotebookExecError as err:
             ok, why = False, err
             self._write_failed_marker(job)
-            self.log_error(f"Execution failed: generating partial output for '{job.nb}'")
+            self.log_error(
+                f"Execution failed: generating partial output for '{job.nb}'"
+            )
         except NotebookError as err:
             ok, why = False, f"NotebookError: {err}"
             self.log_error(f"Failed to convert {job.nb}: {err}")
@@ -659,7 +669,9 @@ class ParallelNotebookWorker:
             # remove failed marker, if there was one from a previous execution
             failed_marker = self._get_failed_marker(job)
             if failed_marker:
-                self.log_info(f"Remove stale marker of failed execution: {failed_marker}")
+                self.log_info(
+                    f"Remove stale marker of failed execution: {failed_marker}"
+                )
                 failed_marker.unlink()
 
         # quick cleanup of contents of temporary dir
@@ -668,7 +680,9 @@ class ParallelNotebookWorker:
                 try:  # may fail for things like __pycache__
                     f.unlink()
                 except Exception as err:
-                    self.log_debug(f"Could not unlink file in temp execution dir: {err}")
+                    self.log_debug(
+                        f"Could not unlink file in temp execution dir: {err}"
+                    )
 
         self.log_info(f"Convert notebook name={job.nb}: end, ok={ok}")
 
@@ -683,7 +697,7 @@ class ParallelNotebookWorker:
         info, dbg = logging.INFO, logging.DEBUG  # aliases
         # strip special cells.
         if self._has_tagged_cells(job.nb, set(self.CELL_TAGS.values())):
-            self.log_q.put((dbg, f"notebook '{job.nb.name}' has test cell(s)"))
+            self.log_debug(f"notebook '{job.nb.name}' has test cell(s)")
             entry = self._strip_tagged_cells(job, ("remove", "exercise"), "testing")
             self.log_info(f"Stripped tags from: {job.nb.name}")
         else:
@@ -694,7 +708,9 @@ class ParallelNotebookWorker:
         # convert all tag-stripped versions of the notebook.
         # before running, check if converted result is newer than source file
         if self._already_converted(job, entry):
-            self.log_info(f"Skip notebook conversion, output is newer, for: {entry.name}")
+            self.log_info(
+                f"Skip notebook conversion, output is newer, for: {entry.name}"
+            )
             return False
         self.log_info(f"Running notebook: {entry.name}")
         try:
@@ -720,7 +736,9 @@ class ParallelNotebookWorker:
             wrt.write(body, resources, notebook_name=entry.stem)
             # create a 'wrapper' page
             if not created_wrapper:
-                self.log_debug(f"create wrapper page for '{entry.name}' in '{job.outdir}'")
+                self.log_debug(
+                    f"create wrapper page for '{entry.name}' in '{job.outdir}'"
+                )
                 self._create_notebook_wrapper_page(job, entry.stem)
                 created_wrapper = True
             # move notebooks into docs directory
@@ -768,7 +786,9 @@ class ParallelNotebookWorker:
             failed_time = failed_file.stat().st_ctime
             ac = failed_time > source_time
             if ac:
-                self.log_info(f"Notebook '{orig.stem}.ipynb' unchanged since previous failed conversion")
+                self.log_info(
+                    f"Notebook '{orig.stem}.ipynb' unchanged since previous failed conversion"
+                )
             return ac
 
         # Otherwise look at all the output files and see if any one of them is
@@ -800,7 +820,9 @@ class ParallelNotebookWorker:
         if marker.exists():
             self.log_debug(f"Found 'failed' marker: {marker}")
             return marker
-        self.log_debug(f"No 'failed' marker for notebook '{job.nb}' in directory '{job.outdir}'")
+        self.log_debug(
+            f"No 'failed' marker for notebook '{job.nb}' in directory '{job.outdir}'"
+        )
         return None
 
     def _strip_tagged_cells(self, job: Job, tags, remove_name: str):
