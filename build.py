@@ -70,7 +70,7 @@ from string import Template
 import sys
 import tempfile
 import time
-from typing import TextIO, Tuple, Optional
+from typing import List, TextIO, Tuple, Optional
 import yaml
 
 # third-party
@@ -253,41 +253,8 @@ class NotebookBuilder(Builder):
     """Run Jupyter notebooks and render them for viewing.
     """
 
-    # Map format to file extension
-    FORMATS = {"html": ".html", "rst": ".rst"}
-
-    HTML_IMAGE_DIR = "_images"
     TEST_SUFFIXES = ("_test", "_testing")  # test notebook suffixes
-    # Mapping from {meaning: tag_name}
-    _cell_tags = {
-        "remove": "remove_cell",
-        "exercise": "exercise",
-        "testing": "testing",
-        "solution": "solution",
-    }
-    JUPYTER_NB_VERSION = 4  # for parsing
-
-    #: CSS stylesheet for notebooks
-    STYLESHEET = """
-    #notebook-container {
-      box-shadow: none;  /* get rid of cheesy shadow */
-      -webkit-box-shadow: none;
-      padding 5px;
-      width: auto !important; /* expand to container */
-      min-width: 400px !important;
-    }
-    .wy-nav-content {
-      max-width: 90%; /* top container for notebook */
-    }
-    .run_this_cell {
-        padding-left: 0px;
-        padding-right: 0px;
-    }
-    /* Hide section name (at top) */
-    div.section > h1 {
-        display: none;
-    }
-    """
+    HTML_IMAGE_DIR = "_images"
 
     class Results:
         """Stores results from build().
@@ -495,10 +462,12 @@ class NotebookBuilder(Builder):
                 notebooks_to_convert,
                 num_workers=self._num_workers,
                 worker_function=ParallelNotebookWorker.convert,
+                processor=self._ep,
                 output_log=_log,
                 tmpdir=tmpdir,
                 outdir=outdir,
                 depth=depth,
+                wrapper_template=self.s.get("Template"),
             )
             results = b.run()
             # Report results, which returns summary
@@ -517,46 +486,227 @@ class NotebookBuilder(Builder):
         self._results.n_fail += failures
         self._results.n_success += successes
 
-
-    def _report_results(self, result_list) -> Tuple[int, int]:
+    def _report_results(self, result_list: List['ParallelNotebookWorker.ConversionResult']) -> Tuple[int, int]:
         s, f = 0, 0
-        for i, result in enumerate(result_list):
-            worker_num = i + 1
-            ok, why, entry = result
-            if ok:
+        for result in result_list:
+            if result.ok:
                 s += 1
             else:
                 f += 1
-                self._write_notebook_error(entry, why)
+                filename = str(result.entry)
+                self._write_notebook_error(self._nb_error_file, filename, result.why)
+                self._results.failed.append(filename)
         return s, f
 
-    def _write_notebook_error(self, entry, error):
-        filename = str(entry)
-        self._nb_error_file.write(f"\n====> File: {filename}\n")
-        self._nb_error_file.write(str(error))
-        self._nb_error_file.flush()  # in case someone is tailing the file
-        self._results.failed.append(filename)
-
     @staticmethod
-    def _write_failed_marker(entry, outdir):
-        """Put a marker into the output directory for the failed notebook, so we
-        can tell whether we need to bother trying to re-run it later.
+    def _write_notebook_error(error_file, nb_filename, error):
+        error_file.write(f"\n====> File: {nb_filename}\n")
+        error_file.write(str(error))
+        error_file.flush()  # in case someone is tailing the file
+
+
+class ParallelNotebookWorker:
+    """For converting notebooks. State is avoided by marking all the methods
+     as `@classmethod`s, to ensure that the ForkingPickler succeeds.
+
+     Main method is `convert`.
+     """
+
+    #: CSS stylesheet for notebooks
+    STYLESHEET = """
+    #notebook-container {
+      box-shadow: none;  /* get rid of cheesy shadow */
+      -webkit-box-shadow: none;
+      padding 5px;
+      width: auto !important; /* expand to container */
+      min-width: 400px !important;
+    }
+    .wy-nav-content {
+      max-width: 90%; /* top container for notebook */
+    }
+    .run_this_cell {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+    /* Hide section name (at top) */
+    div.section > h1 {
+        display: none;
+    }
+    """
+
+    # Map format to file extension
+    FORMATS = {"html": ".html", "rst": ".rst"}
+
+    # Mapping from {meaning: tag_name}
+    CELL_TAGS = {
+        "remove": "remove_cell",
+        "exercise": "exercise",
+        "testing": "testing",
+        "solution": "solution",
+    }
+    JUPYTER_NB_VERSION = 4  # for parsing
+
+    class ConversionResult:
+        def __init__(self, id_, ok, converted, why, entry):
+            self.id_, self.ok, self.converted, self.why, self.entry = (
+                id_,
+                ok,
+                converted,
+                why,
+                entry,
+            )
+
+    @classmethod
+    def convert(
+        cls,
+        id_,
+        entry,
+        log_q,
+        processor: ExecutePreprocessor = None,
+        outdir: Path = None,
+        tmpdir: Path = None,
+        depth: int = None,
+        wrapper_template: Optional[Template] = None,
+        remove_config: Optional[Config] = None,
+        test_mode: bool = False,
+    ) -> ConversionResult:
+        """Parallel 'worker' to convert a single notebook.
         """
-        marker = outdir / (entry.stem + ".failed")
-        _log.debug(f"write failed marker '{marker}' for entry={entry} outdir={outdir}")
-        marker.open("w").write(
-            "This file is a marker for avoiding re-runs of failed notebooks that haven't changed"
-        )
+        ok, why = True, ""
+        if not test_mode:
+            if not outdir.exists():
+                outdir.mkdir(parents=True)
+        # build, if the output file is missing/stale
+        verb = "Running" if test_mode else "Converting"
+        log_q.put((logging.INFO, f"{verb}: {entry.name}"))
+        # continue_on_err = self.s.get("continue_on_error", None)
+        converted = False
+        try:
+            converted = cls._convert(
+                processor,
+                tmpdir,
+                entry,
+                outdir,
+                depth,
+                log_q,
+                wrapper_template,
+                remove_config,
+                test_mode=test_mode,
+            )
+        except NotebookExecError as err:
+            ok, why = False, err
+            cls._write_failed_marker(entry, outdir)
+            log_q.put(
+                (
+                    logging.ERROR,
+                    f"Execution failed: generating partial output for '{entry}'",
+                )
+            )
+        except NotebookError as err:
+            ok, why = False, f"NotebookError: {err}"
+            log_q.put((logging.ERROR, f"failed to convert {entry}: {err}"))
 
-    @staticmethod
-    def _get_failed_marker(entry, outdir) -> Optional[Path]:
-        marker = outdir / (entry.stem + ".failed")
-        if marker.exists():
-            return marker
-        return None
+        if converted:
+            # remove failed marker, if there was one from a previous execution
+            failed_marker = cls._get_failed_marker(entry, outdir)
+            if failed_marker:
+                _log.info(f"Remove stale marker of failed execution: {failed_marker}")
+                failed_marker.unlink()
 
+        # quick cleanup of contents of temporary dir
+        for f in tmpdir.iterdir():
+            if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
+                try:  # may fail for things like __pycache__
+                    f.unlink()
+                except Exception as err:
+                    _log.debug(f"Could not unlink file in temp execution dir: {err}")
 
-    def _has_tagged_cells(self, entry: Path, tags: set) -> bool:
+        return cls.ConversionResult(id_, ok, converted, why, entry)
+
+    @classmethod
+    def _convert(
+        cls,
+        processor: ExecutePreprocessor,
+        tmpdir: Path,
+        entry: Path,
+        outdir: Path,
+        depth: int,
+        log_q: Queue,
+        wrapper_template: Template,
+        remove_config: Config,
+        test_mode: Optional[bool] = None,
+    ) -> bool:
+        """Convert a notebook.
+
+        Args:
+            tmpdir: Temporary working directory
+            entry: notebook to convert
+            outdir: output directory for .html and .rst files
+            depth: depth below root, for fixing image paths
+
+        Returns:
+            True if conversion was performed, False if no conversion was needed
+        """
+        info, dbg = logging.INFO, logging.DEBUG  # aliases
+        # strip special cells.
+        if cls._has_tagged_cells(entry, set(cls.CELL_TAGS.values())):
+            log_q.put((dbg, f"notebook '{entry.name}' has test cell(s)"))
+            orig_entry, entry = (
+                entry,
+                cls._strip_tagged_cells(
+                    tmpdir, entry, ("remove", "exercise"), "testing", remove_config
+                ),
+            )
+            log_q.put((info, f"Stripped tags from: {orig_entry.name}"))
+        else:
+            # copy to temporary directory just to protect from output cruft
+            tmp_entry = tmpdir / entry.name
+            shutil.copy(entry, tmp_entry)
+            orig_entry, entry = entry, tmp_entry
+
+        # convert all tag-stripped versions of the notebook.
+        # before running, check if converted result is newer than source file
+        if cls._already_converted(orig_entry, entry, outdir, log_q):
+            log_q.put(
+                (info, f"Skip notebook conversion, output is newer, for: {entry.name}")
+            )
+            return False
+        log_q.put((info, f"Running notebook: {entry.name}"))
+        try:
+            nb = cls._parse_and_execute(processor, entry, log_q)
+        except NotebookExecError as err:
+            log_q.put((logging.ERROR, f"Notebook execution failed: {err}"))
+            return False
+        if test_mode:  # don't do export in test mode
+            return True
+
+        log_q.put((info, f"Exporting notebook '{entry.name}' to directory {outdir}"))
+        wrt = FilesWriter()
+        # export each notebook into multiple target formats
+        created_wrapper = False
+        for (exp, post_process_func, pp_args) in (
+            (RSTExporter(), cls._postprocess_rst, ()),
+            (HTMLExporter(), cls._postprocess_html, (depth,)),
+        ):
+            log_q.put((dbg, f"export '{orig_entry}' with {exp} to notebook '{entry}'"))
+            (body, resources) = exp.from_notebook_node(nb)
+            body = post_process_func(body, *pp_args)
+            wrt.build_directory = str(outdir)
+            wrt.write(body, resources, notebook_name=entry.stem)
+            # create a 'wrapper' page
+            if not created_wrapper:
+                log_q.put(
+                    (dbg, f"create wrapper page for '{entry.name}' in '{outdir}'")
+                )
+                cls._create_notebook_wrapper_page(entry.stem, outdir, wrapper_template)
+                created_wrapper = True
+            # move notebooks into docs directory
+            log_q.put((dbg, f"move notebook '{entry} to output directory: {outdir}"))
+            shutil.copy(entry, outdir / entry.name)
+        return True
+
+    @classmethod
+    def _has_tagged_cells(cls, entry: Path, tags: set) -> bool:
         """Quickly check whether this notebook has any cells with the given tag(s).
 
         Returns:
@@ -566,7 +716,7 @@ class NotebookBuilder(Builder):
         """
         # parse the notebook (assuming this is fast; otherwise should cache it)
         try:
-            nb = nbformat.read(str(entry), as_version=self.JUPYTER_NB_VERSION)
+            nb = nbformat.read(str(entry), as_version=cls.JUPYTER_NB_VERSION)
         except nbformat.reader.NotJSONError:
             raise NotebookFormatError(f"'{entry}' is not JSON")
         # look for tagged cells; return immediately if one is found
@@ -579,87 +729,9 @@ class NotebookBuilder(Builder):
         # no tagged cells
         return False
 
-    def _strip_tagged_cells(self, tmpdir, entry, tags, remove_name: str):
-        """Strip specially tagged cells from a notebook.
-
-        Copy notebook to a temporary location, and generate a stripped
-        version there. No files are modified in the original directory.
-
-        Args:
-            tmpdir: directory to copy notebook into
-            entry: original notebook
-            tags: List of tags (strings) to strip
-            remove_name: Remove this component from the name
-
-        Returns:
-            stripped-entry, original-entry - both in the temporary directory
-        """
-        _log.debug(f"run notebook in temporary directory: {tmpdir}")
-        # Copy notebook to temporary directory
-        tmp_entry = tmpdir / entry.name
-        shutil.copy(entry, tmp_entry)
-        # Remove the given tags
-        # Configure tag removal
-        tag_names = [self._cell_tags[t] for t in tags]
-        self._nb_remove_config.TagRemovePreprocessor.remove_cell_tags = tag_names
-        _log.debug(
-            f"removing tag(s) <{', '.join(tag_names)}'> from notebook: {entry.name}"
-        )
-        (body, resources) = NotebookExporter(
-            config=self._nb_remove_config
-        ).from_filename(str(tmp_entry))
-        # Determine output notebook name:
-        # remove suffixes, either "Capitalized" or "lowercase" version
-        nmc, nml = remove_name.capitalize(), remove_name.lower()
-        nb_name = re.sub(
-            f"(_{nmc}|_{nml}|_{nmc}_|_{nml}_|{nmc}_|{nml}_)", "", entry.stem
-        )
-        # Create the new notebook
-        wrt = nbconvert.writers.FilesWriter()
-        wrt.build_directory = str(tmpdir)
-        _log.debug(f"writing stripped notebook: {nb_name}")
-        wrt.write(body, resources, notebook_name=nb_name)
-        # Return both notebook names, and temporary directory (for cleanup)
-        stripped_entry = tmpdir / f"{nb_name}.ipynb"
-        return stripped_entry
-
-    def _parse_and_execute(self, entry):
-
-        # parse
-        _log.debug(f"parsing '{entry}'")
-        try:
-            nb = nbformat.read(str(entry), as_version=self.JUPYTER_NB_VERSION)
-        except nbformat.reader.NotJSONError:
-            raise NotebookFormatError(f"'{entry}' is not JSON")
-        except AttributeError:
-            raise NotebookFormatError(f"'{entry}' has invalid format")
-
-        # execute
-        _log.debug(f"executing '{entry}'")
-        try:
-            self._ep.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
-        except (CellExecutionError, NameError) as err:
-            raise NotebookExecError(f"execution error for '{entry}': {err}")
-        return nb
-
-    def _create_notebook_wrapper_page(self, nb_file: str, output_dir: Path):
-        """Generate a Sphinx documentation page for the Module.
-        """
-        # interpret some characters in filename differently for title
-        title = nb_file.replace("_", " ").title()
-        title_under = "=" * len(title)
-        # create document from template
-        doc = self.s.get("Template").substitute(
-            title=title, notebook_name=nb_file, title_underline=title_under
-        )
-        # write out the new doc
-        doc_rst = output_dir / (nb_file + "_doc.rst")
-        with doc_rst.open("w") as f:
-            _log.info(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
-            f.write(doc)
-
+    @classmethod
     def _already_converted(
-        self, orig: Path, dest: Path, outdir: Path, log_q: Queue
+        cls, orig: Path, dest: Path, outdir: Path, log_q: Queue
     ) -> bool:
         """Check if a any of the output files are either missing or older than
         the input file ('entry').
@@ -686,7 +758,7 @@ class NotebookBuilder(Builder):
 
         # Otherwise look at all the output files and see if any one of them is
         # older than the source file (in which case it's NOT converted)
-        for fmt, ext in self.FORMATS.items():
+        for fmt, ext in cls.FORMATS.items():
             output_file = outdir / f"{dest.stem}{ext}"
             log_q.put((logging.DEBUG, f"checking if cached: {output_file} src={orig}"))
             if not output_file.exists():
@@ -696,14 +768,118 @@ class NotebookBuilder(Builder):
 
         return True
 
-    def _postprocess_rst(self, body):
-        body = self._replace_image_refs(body)
-        return body
+    @staticmethod
+    def _write_failed_marker(entry, outdir):
+        """Put a marker into the output directory for the failed notebook, so we
+        can tell whether we need to bother trying to re-run it later.
+        """
+        marker = outdir / (entry.stem + ".failed")
+        _log.debug(f"write failed marker '{marker}' for entry={entry} outdir={outdir}")
+        marker.open("w").write(
+            "This file is a marker for avoiding re-runs of failed notebooks that haven't changed"
+        )
+
+    @staticmethod
+    def _get_failed_marker(entry, outdir) -> Optional[Path]:
+        marker = outdir / (entry.stem + ".failed")
+        if marker.exists():
+            return marker
+        return None
+
+    @classmethod
+    def _strip_tagged_cells(
+        cls, tmpdir, entry, tags, remove_name: str, remove_config: Config
+    ):
+        """Strip specially tagged cells from a notebook.
+
+        Copy notebook to a temporary location, and generate a stripped
+        version there. No files are modified in the original directory.
+
+        Args:
+            tmpdir: directory to copy notebook into
+            entry: original notebook
+            tags: List of tags (strings) to strip
+            remove_name: Remove this component from the name
+
+        Returns:
+            stripped-entry, original-entry - both in the temporary directory
+        """
+        _log.debug(f"run notebook in temporary directory: {tmpdir}")
+        # Copy notebook to temporary directory
+        tmp_entry = tmpdir / entry.name
+        shutil.copy(entry, tmp_entry)
+        # Remove the given tags
+        # Configure tag removal
+        tag_names = [cls.CELL_TAGS[t] for t in tags]
+        remove_config.TagRemovePreprocessor.remove_cell_tags = tag_names
+        _log.debug(
+            f"removing tag(s) <{', '.join(tag_names)}'> from notebook: {entry.name}"
+        )
+        (body, resources) = NotebookExporter(config=remove_config).from_filename(
+            str(tmp_entry)
+        )
+        # Determine output notebook name:
+        # remove suffixes, either "Capitalized" or "lowercase" version
+        nmc, nml = remove_name.capitalize(), remove_name.lower()
+        nb_name = re.sub(
+            f"(_{nmc}|_{nml}|_{nmc}_|_{nml}_|{nmc}_|{nml}_)", "", entry.stem
+        )
+        # Create the new notebook
+        wrt = nbconvert.writers.FilesWriter()
+        wrt.build_directory = str(tmpdir)
+        _log.debug(f"writing stripped notebook: {nb_name}")
+        wrt.write(body, resources, notebook_name=nb_name)
+        # Return both notebook names, and temporary directory (for cleanup)
+        stripped_entry = tmpdir / f"{nb_name}.ipynb"
+        return stripped_entry
+
+    @classmethod
+    def _parse_and_execute(cls, processor, entry, log_q):
+        # parse
+        log_q.put((logging.DEBUG, f"parsing '{entry}'"))
+        try:
+            nb = nbformat.read(str(entry), as_version=cls.JUPYTER_NB_VERSION)
+        except nbformat.reader.NotJSONError:
+            raise NotebookFormatError(f"'{entry}' is not JSON")
+        except AttributeError:
+            raise NotebookFormatError(f"'{entry}' has invalid format")
+
+        # execute
+        _log.debug(f"executing '{entry}'")
+        try:
+            processor.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
+        except (CellExecutionError, NameError) as err:
+            raise NotebookExecError(f"execution error for '{entry}': {err}")
+        return nb
+
+    @classmethod
+    def _create_notebook_wrapper_page(
+        cls, nb_file: str, output_dir: Path, template: Template
+    ):
+        """Generate a Sphinx documentation page for the Module.
+        """
+        # interpret some characters in filename differently for title
+        title = nb_file.replace("_", " ").title()
+        title_under = "=" * len(title)
+        # create document from template
+        doc = template.substitute(
+            title=title, notebook_name=nb_file, title_underline=title_under
+        )
+        # write out the new doc
+        doc_rst = output_dir / (nb_file + "_doc.rst")
+        with doc_rst.open("w") as f:
+            _log.info(f"generate Sphinx doc wrapper for {nb_file} => {doc_rst}")
+            f.write(doc)
+
+    @classmethod
+    def _postprocess_rst(cls, body):
+        return cls._replace_image_refs(body)
 
     # support up to 35 different images
     IMAGE_NUMBERS = " 123456789abcdefghijklmnopqrstuvwxyz"
 
-    def _replace_image_refs(self, body):
+    @classmethod
+    def _replace_image_refs(cls, body):
         """Replace |image0| references with successive numbers, instead of
             having them all be "image0". The order is "|image0|" then
             ".. |image0|".
@@ -719,7 +895,7 @@ class NotebookBuilder(Builder):
             if pos2 == -1:
                 raise ValueError(f"Couldn't find image matching ref at {pos}")
             if n > 0:  # don't do anything for the first one
-                c = self.IMAGE_NUMBERS[n]
+                c = cls.IMAGE_NUMBERS[n]
                 # replace '0' with another thing in ref
                 chars[pos + 6] = c
                 # replace '0' with same other thing in image
@@ -728,7 +904,8 @@ class NotebookBuilder(Builder):
             n += 1  # increment image number
         return "".join(chars)
 
-    def _postprocess_html(self, body, depth):
+    @classmethod
+    def _postprocess_html(cls, body, depth):
         """Change path on image refs to point into HTML build dir.
         """
         # create prefix for <img src='..'> attribute values, which is a relative path
@@ -736,7 +913,7 @@ class NotebookBuilder(Builder):
         prefix = Path("")
         for i in range(depth):
             prefix = prefix / ".."
-        prefix = prefix / self.HTML_IMAGE_DIR
+        prefix = prefix / NotebookBuilder.HTML_IMAGE_DIR
         # split up content around <img> tags
         splits = re.split(r'<img src="(.*\.png"[^>]*)>', body)
         # replace grouping in odd-numbered splits with modified <img>
@@ -754,7 +931,7 @@ class NotebookBuilder(Builder):
                 (
                     body[:p1],
                     '<style type="text/css">',
-                    self.STYLESHEET,
+                    cls.STYLESHEET,
                     "</style>",
                     body[p2:],
                 )
@@ -763,121 +940,6 @@ class NotebookBuilder(Builder):
             _log.warning("Could not insert stylesheet in HTML")
         # done
         return body
-
-
-class ParallelNotebookWorker:
-    @classmethod
-    def convert(
-        cls, id_, entry, log_q, outdir = None, tmpdir = None, depth = None, test_mode = False
-    ):
-        """Parallel 'worker' called by the Bossy instance to convert a single notebook.
-        """
-        ok, why = True, ""
-        if not test_mode:
-            os.makedirs(outdir, exist_ok=True)
-        # build, if the output file is missing/stale
-        verb = "Running" if test_mode else "Converting"
-        log_q.put((logging.INFO, f"{verb}: {entry.name}"))
-        # continue_on_err = self.s.get("continue_on_error", None)
-
-        try:
-            cls._convert(tmpdir, entry, outdir, depth, log_q)
-        except NotebookExecError as err:
-            ok, why = False, err
-            self._write_failed_marker(entry, outdir)
-            log_q.put(
-                (
-                    logging.ERROR,
-                    f"Execution failed: generating partial output for '{entry}'",
-                )
-            )
-        except NotebookError as err:
-            ok, why = False, f"NotebookError: {err}"
-            log_q.put((logging.ERROR, f"failed to convert {entry}: {err}"))
-
-        if ok:
-            # remove failed marker, if there was one from a previous execution
-            failed_marker = self._get_failed_marker(entry, outdir)
-            if failed_marker:
-                _log.info(f"Remove stale marker of failed execution: {failed_marker}")
-                failed_marker.unlink()
-
-            # quick cleanup of contents of temporary dir
-        for f in tmpdir.iterdir():
-            if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
-                try:  # may fail for things like __pycache__
-                    f.unlink()
-                except Exception as err:
-                    _log.debug(f"Could not unlink file in temp execution dir: {err}")
-
-        return id_, (ok, why, entry)
-
-
-    @classmethod
-    def _convert(
-        cls, tmpdir: Path, entry: Path, outdir: Path, depth: int, log_q: Queue
-    ):
-        """Convert a notebook.
-
-        Args:
-            tmpdir: Temporary working directory
-            entry: notebook to convert
-            outdir: output directory for .html and .rst files
-            depth: depth below root, for fixing image paths
-        """
-        info, dbg = logging.INFO, logging.DEBUG  # aliases
-        test_mode = self.s.get("test_mode")
-        # strip special cells.
-        if self._has_tagged_cells(entry, set(self._cell_tags.values())):
-            log_q.put((dbg, f"notebook '{entry.name}' has test cell(s)"))
-            orig_entry, entry = (
-                entry,
-                self._strip_tagged_cells(
-                    tmpdir, entry, ("remove", "exercise"), "testing"
-                ),
-            )
-            log_q.put((info, f"Stripped tags from: {orig_entry.name}"))
-        else:
-            # copy to temporary directory just to protect from output cruft
-            tmp_entry = tmpdir / entry.name
-            shutil.copy(entry, tmp_entry)
-            orig_entry, entry = entry, tmp_entry
-
-        # convert all tag-stripped versions of the notebook.
-        # before running, check if converted result is newer than source file
-        if self._already_converted(orig_entry, entry, outdir, log_q):
-            log_q.put(
-                (info, f"Skip notebook conversion, output is newer, for: {entry.name}")
-            )
-            self._results.cached.append(entry)
-            return
-        log_q.put((info, f"Running notebook: {entry.name}"))
-        nb = self._parse_and_execute(entry)
-        if test_mode:  # don't do conversion in test mode
-            return
-        log_q.put((info, f"Exporting notebook '{entry.name}' to directory {outdir}"))
-        wrt = FilesWriter()
-        # export each notebook into multiple target formats
-        created_wrapper = False
-        for (exp, postprocess_func, pp_args) in (
-            (RSTExporter(), self._postprocess_rst, ()),
-            (HTMLExporter(), self._postprocess_html, (depth,)),
-        ):
-            log_q.put((dbg, f"export '{orig_entry}' with {exp} to notebook '{entry}'"))
-            (body, resources) = exp.from_notebook_node(nb)
-            body = postprocess_func(body, *pp_args)
-            wrt.build_directory = str(outdir)
-            wrt.write(body, resources, notebook_name=entry.stem)
-            # create a 'wrapper' page
-            if not created_wrapper:
-                log_q.put(
-                    (dbg, f"create wrapper page for '{entry.name}' in '{outdir}'")
-                )
-                self._create_notebook_wrapper_page(entry.stem, outdir)
-                created_wrapper = True
-            # move notebooks into docs directory
-            log_q.put((dbg, f"move notebook '{entry} to output directory: {outdir}"))
-            shutil.copy(entry, outdir / entry.name)
 
 
 #
