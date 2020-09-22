@@ -53,6 +53,7 @@ class Bossy:
         # return results as a vector
         for i in range(self.n):
             id_, result = self.result_q.get_nowait()
+            self.log.info(f"Worker [{id_}]: Done. result={result}")
             index = id_ - 1
             results[index] = result
         return results
@@ -64,17 +65,24 @@ class Bossy:
     def _create_worker_processes(self, kwargs):
         self.log.debug(f"Create worker processes. kwargs={kwargs}")
         processes = []
+        g_log = self.log
         for i in range(self.n):
             p = Process(target=self.worker, args=(i + 1, self.work_q, self.log_q, self.result_q, self.worker_fn,
                                                   {}))  # kwargs
-            for k, v in p.__dict__.items():
-                print(f"@@ Process '{k}'=({type(v)}) {v}")
+            # for k, v in p.__dict__.items():
+            #     print(f"@@ Process '{k}'=({type(v)}) {v}")
+            self.log.info(f"Worker [{i + 1}]: Starting")
             p.start()
             processes.append(p)
         return processes
 
     @staticmethod
     def worker(id_, q, log_q, result_q, func, kwargs):
+        log = logging.getLogger("worker")
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(f"Worker [{id_}]: %(message)s"))
+        log.addHandler(handler)
+
         result = None
         try:
             while True:
@@ -82,7 +90,8 @@ class Bossy:
                 if item is None:  # sentinel
                     break
                 result = func(id_, item, log_q, **kwargs)
-        except:
+        except Exception as err:
+            log.error(f"Worker [{id_}] error: {err}")
             pass
         result_q.put((id_, result))
 
