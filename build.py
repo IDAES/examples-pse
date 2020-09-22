@@ -252,6 +252,7 @@ class Builder(ABC):
 
 Job = namedtuple("Job", ["nb", "tmpdir", "outdir", "depth"])
 
+
 class NotebookBuilder(Builder):
     """Run Jupyter notebooks and render them for viewing.
     """
@@ -396,7 +397,9 @@ class NotebookBuilder(Builder):
         self.s.set("Template", nb_template)
 
     def discover_tree(self, info: dict):
-        """"""
+        """Discover all the notebooks, recursively, in directories below `info['source']`
+        and convert and build their output into `info['output']`.
+        """
         try:
             source, output = info["source"], info["output"]
             match = info.get("match", None)
@@ -579,6 +582,16 @@ class ParallelNotebookWorker:
                 entry,
             )
 
+        def __str__(self):
+            success = "SUCCESS" if self.ok else "FAILURE"
+            cached = " (cached)" if not self.converted else ""
+            common_prefix = f"{success} for '{self.entry}'{cached}"
+            if not self.ok:
+                summary = f"{common_prefix}: {self.why}"
+            else:
+                summary = common_prefix
+            return summary
+
     def __init__(
         self,
         processor: ExecutePreprocessor = None,
@@ -637,7 +650,10 @@ class ParallelNotebookWorker:
             self.log_error(f"Execution failed: generating partial output for '{job.nb}'")
         except NotebookError as err:
             ok, why = False, f"NotebookError: {err}"
-            log_q.put((logging.ERROR, f"failed to convert {job.nb}: {err}"))
+            self.log_error(f"Failed to convert {job.nb}: {err}")
+        except Exception as err:
+            ok, why = False, f"Unknown error: {err}"
+            self.log_error(f"Failed due to unknown error: {err}")
 
         if converted:
             # remove failed marker, if there was one from a previous execution
