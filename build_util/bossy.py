@@ -69,8 +69,6 @@ class Bossy:
         for i in range(self.n):
             p = Process(target=self.worker, args=(i + 1, self.work_q, self.log_q, self.result_q, self.worker_fn,
                                                   {}))  # kwargs
-            # for k, v in p.__dict__.items():
-            #     print(f"@@ Process '{k}'=({type(v)}) {v}")
             self.log.info(f"Worker [{i + 1}]: Starting")
             p.start()
             processes.append(p)
