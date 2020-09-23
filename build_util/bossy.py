@@ -39,7 +39,7 @@ class Bossy:
         self._add_work(sentinels)
 
     def run(self) -> List:
-        results = [None] * self.n
+        results = []
         if self.processes or self.logging_thread:
             return results
         # start workers and thread to tail the log messages
@@ -50,12 +50,12 @@ class Bossy:
         self.is_done = True
         self._join_logging_thread()
         self.processes, self.logging_thread = None, None
-        # return results as a vector
+        # return results as a list of tuples (worker, result)
         for i in range(self.n):
-            id_, result = self.result_q.get_nowait()
-            self.log.info(f"Worker [{id_}]: Done. result={result}")
-            index = id_ - 1
-            results[index] = result
+            id_, result_list = self.result_q.get_nowait()
+            self.log.info(f"Worker [{id_}]: done")
+            for r in result_list:
+                results.append((id_, r))
         return results
 
     def _add_work(self, items):
@@ -83,17 +83,18 @@ class Bossy:
         handler.setFormatter(logging.Formatter(f"Worker [{id_}]: %(message)s"))
         log.addHandler(handler)
 
-        result = None
+        result_list = []
         try:
             while True:
                 item = q.get()
                 if item is None:  # sentinel
                     break
                 result = func(id_, item, log_q, **kwargs)
+                result_list.append(result)
         except Exception as err:
             log.error(f"Worker [{id_}] error: {err}")
             pass
-        result_q.put((id_, result))
+        result_q.put((id_, result_list))
 
     def _create_logging_thread(self):
         t = threading.Thread(target=self._tail_messages, args=(), daemon=True)

@@ -60,8 +60,8 @@ For example command lines see the README.md in this directory.
 from abc import ABC, abstractmethod
 import argparse
 from collections import namedtuple
+from datetime import datetime
 import logging
-from multiprocessing import Queue
 import os
 from pathlib import Path
 import shutil
@@ -109,6 +109,8 @@ class NotebookExecError(NotebookError):
 class NotebookFormatError(NotebookError):
     pass
 
+class NotebookPreviouslyFailedError(NotebookError):
+    pass
 
 class SphinxError(Exception):
     pass
@@ -164,6 +166,11 @@ class Settings:
         missing = [k for k in self.DEFAULTS.keys() if k not in self.d]
         if missing:
             raise Settings.ConfigError(f, f"missing sections: {', '.join(missing)}.")
+        self._path = Path(f.name)
+
+    @property
+    def directory(self):
+        return self._path.parent.absolute()
 
     def __str__(self):
         return str(self.d)
@@ -230,10 +237,9 @@ class Builder(ABC):
     """Abstract base class for notebook and sphinx builders.
     """
 
-    _rpath = None
-
     def __init__(self, settings):
         self.s = settings
+        self.root_path = settings.directory
 
     @abstractmethod
     def build(self, options):
@@ -242,12 +248,6 @@ class Builder(ABC):
     def _merge_options(self, options):
         for key, value in options.items():
             self.s.set(key, value)
-
-    @classmethod
-    def root_path(cls):
-        if cls._rpath is None:
-            cls._rpath = Path(__file__).parent.absolute()
-        return cls._rpath
 
 
 Job = namedtuple("Job", ["nb", "tmpdir", "outdir", "depth"])
@@ -305,7 +305,7 @@ class NotebookBuilder(Builder):
         self._open_error_file()
         self._ep = self._create_preprocessor()
         self._imgdir = (
-            self.root_path()
+            self.root_path
             / self.s.get("paths.output")
             / self.s.get("paths.html")
             / self.HTML_IMAGE_DIR
@@ -394,7 +394,7 @@ class NotebookBuilder(Builder):
         return ExecutePreprocessor(timeout=600, **kwargs)
 
     def _read_template(self):
-        nb_template_path = self.root_path() / self.s.get("template")
+        nb_template_path = self.root_path / self.s.get("template")
         try:
             with nb_template_path.open("r") as f:
                 nb_template = Template(f.read())
@@ -415,8 +415,8 @@ class NotebookBuilder(Builder):
                 f"'output', but got: {info}"
             )
         sroot, oroot = (
-            self.root_path() / self.s.get("paths.source"),
-            self.root_path() / self.s.get("paths.output"),
+            self.root_path / self.s.get("paths.source"),
+            self.root_path / self.s.get("paths.output"),
         )
         srcdir, outdir = sroot / source, oroot / output
         notify(f"Looking for notebooks in '{srcdir}'", level=1)
@@ -521,8 +521,8 @@ class NotebookBuilder(Builder):
         self, result_list: List["ParallelNotebookWorker.ConversionResult"]
     ) -> Tuple[int, int]:
         s, f = 0, 0
-        for result in result_list:
-            if result and result.ok:
+        for worker_id, result in result_list:
+            if result.ok:
                 s += 1
             else:
                 f += 1
@@ -652,6 +652,8 @@ class ParallelNotebookWorker:
         converted = False
         try:
             converted = self._convert(job)
+        except NotebookPreviouslyFailedError as err:
+            ok, why = False, f"Previously failed {err}"
         except NotebookExecError as err:
             ok, why = False, err
             self._write_failed_marker(job)
@@ -674,16 +676,6 @@ class ParallelNotebookWorker:
                 )
                 failed_marker.unlink()
 
-        # quick cleanup of contents of temporary dir
-        for f in job.tmpdir.iterdir():
-            if f.suffix not in DATA_SUFFIXES and f.suffix not in CODE_SUFFIXES:
-                try:  # may fail for things like __pycache__
-                    f.unlink()
-                except Exception as err:
-                    self.log_debug(
-                        f"Could not unlink file in temp execution dir: {err}"
-                    )
-
         self.log_info(f"Convert notebook name={job.nb}: end, ok={ok}")
 
         return self.ConversionResult(id_, ok, converted, why, job.nb)
@@ -705,9 +697,17 @@ class ParallelNotebookWorker:
             entry = job.tmpdir / job.nb.name
             shutil.copy(job.nb, entry)
 
-        # convert all tag-stripped versions of the notebook.
-        # before running, check if converted result is newer than source file
-        if self._already_converted(job, entry):
+        # Convert all tag-stripped versions of the notebook.
+        # Stop if failure marker is newer than source file.
+        failed_time = self._previously_failed(job)
+        if failed_time is not None:
+            self.log_info(
+                f"Skip notebook conversion, failure marker is newer, for: {entry.name}"
+            )
+            failed_datetime = datetime.fromtimestamp(failed_time)
+            raise NotebookPreviouslyFailedError(f"at {failed_datetime}")
+        # Stop if converted result is newer than source file.
+        if self._previously_converted(job, entry):
             self.log_info(
                 f"Skip notebook conversion, output is newer, for: {entry.name}"
             )
@@ -717,7 +717,7 @@ class ParallelNotebookWorker:
             nb = self._parse_and_execute(entry)
         except NotebookExecError as err:
             self.log_error(f"Notebook execution failed: {err}")
-            return False
+            raise
         if self.test_mode:  # don't do export in test mode
             return True
 
@@ -769,8 +769,26 @@ class ParallelNotebookWorker:
         # no tagged cells
         return False
 
-    def _already_converted(self, job: Job, dest: Path) -> bool:
-        """Check if a any of the output files are either missing or older than
+    def _previously_failed(self, job: Job) -> Optional[float]:
+        orig = job.nb
+
+        source_time = orig.stat().st_mtime
+
+        # First see if there is a 'failed' marker. If so,
+        # compare timestamps: if marker is newer than file, it's converted
+        failed_file = job.outdir / (orig.stem + ".failed")
+        if failed_file.exists():
+            failed_time = failed_file.stat().st_mtime
+            ac = failed_time > source_time
+            if ac:
+                self.log_info(
+                    f"Notebook '{orig.stem}.ipynb' unchanged since previous failed conversion"
+                )
+            return failed_time
+        return None
+
+    def _previously_converted(self, job: Job, dest: Path) -> bool:
+        """Check if any of the output files are either missing or older than
         the input file ('entry').
 
         Returns:
@@ -807,6 +825,15 @@ class ParallelNotebookWorker:
         """Put a marker into the output directory for the failed notebook, so we
         can tell whether we need to bother trying to re-run it later.
         """
+        if not job.outdir.exists():
+            try:
+                job.outdir.mkdir(parents=True)
+            except Exception as err:
+                self.log_error(
+                    f"Could not write failed marker '{marker}' for entry={job.nb} "
+                    f"outdir={job.outdir}: {err}"
+                )
+                return  # oh, well
         marker = job.outdir / (job.nb.stem + ".failed")
         self.log_debug(
             f"write failed marker '{marker}' for entry={job.nb} outdir={job.outdir}"
@@ -970,8 +997,6 @@ class ParallelNotebookWorker:
             self.log_warning("Could not insert stylesheet in HTML")
         # done
         return body
-
-
 #
 
 
@@ -986,13 +1011,13 @@ class SphinxBuilder(Builder):
         _log.debug(f"Sphinx args from settings: {raw_args}")
         args = raw_args.split()
         # prepend root path to last source and output directories
-        args[-2] = str(self.root_path() / args[-2])
-        args[-1] = str(self.root_path() / args[-1])
+        args[-2] = str(self.root_path / args[-2])
+        args[-1] = str(self.root_path / args[-1])
         html_dir = (
-            self.root_path() / self.s.get("paths.output") / self.s.get("paths.html")
+            self.root_path / self.s.get("paths.output") / self.s.get("paths.html")
         )
-        doc_dir = self.root_path() / self.s.get("paths.output")
-        src_dir = self.root_path() / self.s.get("paths.source")
+        doc_dir = self.root_path / self.s.get("paths.output")
+        src_dir = self.root_path / self.s.get("paths.source")
 
         # Catch some problems that may cause an ugly stack trace from Sphinx
         if not doc_dir.exists():
@@ -1060,7 +1085,7 @@ class Cleaner(Builder):
     """
 
     def build(self, options):
-        root = self.root_path()
+        root = self.root_path
         docs_path = root / self.s.get("paths.output")
         # clean in each path
         did_remove = False
