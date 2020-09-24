@@ -39,7 +39,7 @@ def test_parse_notebook(notebook):
     """The parameter 'notebook' is parameterized in `conftest.py`, so that
     this test is called for every Jupyter notebook found under the "src/" dir.
     """
-    nbformat.read(notebook, as_version=build.NotebookBuilder.JUPYTER_NB_VERSION)
+    nbformat.read(notebook, as_version=build.ParallelNotebookWorker.JUPYTER_NB_VERSION)
 
 
 @pytest.mark.integration
@@ -55,4 +55,3 @@ def test_run_all_notebooks():
     proc = subprocess.Popen(cmd)
     proc.wait()
     assert proc.returncode == 0
-
