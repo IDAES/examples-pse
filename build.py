@@ -399,7 +399,8 @@ class NotebookBuilder(Builder):
         kwargs, kernel = {}, self.s.get("kernel", None)
         if kernel:
             kwargs["kernel_name"] = kernel
-        return ExecutePreprocessor(timeout=600, **kwargs)
+        timeout = self.s.get("timeout", default=600)
+        return ExecutePreprocessor(timeout=timeout, **kwargs)
 
     def _read_template(self):
         nb_template_path = self.root_path() / self.s.get("template")
@@ -680,10 +681,14 @@ class NotebookBuilder(Builder):
 
         # execute
         _log.debug(f"executing '{entry}'")
+        t0 = time.time()
         try:
             self._ep.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
         except (CellExecutionError, NameError) as err:
             raise NotebookExecError(f"execution error for '{entry}': {err}")
+        except TimeoutError as err:
+            dur, timeout = time.time() - t0, self.s.get("timeout")
+            raise NotebookError(f"timeout for '{entry}': {dur}s > {timeout}s")
         return nb
 
     def _create_notebook_wrapper_page(self, nb_file: str, output_dir: Path):
@@ -863,6 +868,10 @@ class SphinxBuilder(Builder):
                 pattern = f"**/*{ext}"
                 for nb_path in Path(nb_source_dir).glob(pattern):
                     nb_dest = html_dir / nb_path.relative_to(src_dir)
+                    # skip copy, if the directory doesn't exist -- if notebooks all failed
+                    if not nb_dest.parent.exists():
+                        continue
+                    # copy files into destination directory
                     notify(f"Copy supporting file {nb_path.name} -> {nb_dest.parent}", 3)
                     shutil.copy(nb_path, nb_dest)
 
