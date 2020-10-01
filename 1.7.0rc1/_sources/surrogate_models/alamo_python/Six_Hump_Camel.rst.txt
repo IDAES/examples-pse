@@ -1,0 +1,77 @@
+.. code:: ipython3
+
+    from idaes.surrogate import alamopy
+    import examples
+    import pyomo.environ as pyo
+    from pyutilib.common import ApplicationError
+    import camel6
+
+.. code:: ipython3
+
+    alamo_ran = camel6.main()
+
+
+.. parsed-literal::
+
+    Updating number of training points from 10 to 10
+    Model: {'z1': '  z1 = 3.9999999999999982236432 * x1^2 - 4.0000000000000053290705 * x2^2 - 2.0999999999999947597473 * x1^4 + 4.0000000000000044408921 * x2^4 + 0.33333333333333092785011 * x1^6 + 1.0000000000000006661338 * x1*x2'}
+
+
+.. code:: ipython3
+
+    hasBaron = False
+    try:
+        solver_opt = pyo.SolverFactory('baron')
+        hasBaron = solver_opt.available()
+    except ApplicationError as err:
+        print("Partial test completed. %s"%err)
+    
+    
+    if alamo_ran and hasBaron:
+        model = pyo.ConcreteModel()
+        opt = pyo.SolverFactory('baron')
+        model.x1 = pyo.Var()
+        model.x2 = pyo.Var()
+        def pyomo_model(model):
+            import z1
+            return z1.f(model.x1,model.x2)
+        model.obj = pyo.Objective(rule = pyomo_model)
+        results = opt.solve(model)
+        model.solutions.store_to(results)
+        print(results)
+
+
+.. parsed-literal::
+
+    
+    Problem: 
+    - Name: problem
+      Lower bound: -1e+51
+      Upper bound: -1.03162845349
+      Number of objectives: 1
+      Number of constraints: 1
+      Number of variables: 3
+      Sense: unknown
+    Solver: 
+    - Status: ok
+      Termination condition: unknown
+      Error rc: 0
+      Time: 0.2606325149536133
+    Solution: 
+    - number of solutions: 1
+      number of solutions displayed: 1
+    - Gap: 1e+51
+      Status: feasible
+      Message: None
+      Objective:
+        obj:
+          Value: -1.031628453489879
+      Variable:
+        x1:
+          Value: -0.089842013137342
+        x2:
+          Value: 0.7126564033144122
+      Constraint: No values
+    
+
+
