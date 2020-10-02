@@ -5,9 +5,15 @@ import logging
 from multiprocessing import Process, Queue
 from queue import Empty
 from random import randint
+import signal
 import threading
 import time
 from typing import List
+
+
+class WorkerInterrupted(Exception):
+    def __init__(self, why):
+        super().__init__(f"Worker interrupted: {why}")
 
 
 def sleepy(id_, item, logq, **kwargs):
@@ -37,6 +43,20 @@ class Bossy:
         self._add_work(work)
         sentinels = [None for i in range(self.n)]
         self._add_work(sentinels)
+        self._handle_signals()
+
+    def _handle_signals(self):
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGBREAK, self.signal_handler)
+
+    def signal_handler(self, sig, frame):
+        """User interrupted the program with a Control-C or by sending it a signal (UNIX).
+        """
+        self.log.warning("Interrupted. Killing child processes.")
+        if self.processes:
+            self.log.warning(f"Killing {len(self.processes)} processes")
+            for p in self.processes:
+                p.kill()
 
     def run(self) -> List:
         results = []
@@ -46,13 +66,18 @@ class Bossy:
         self.processes = self._create_worker_processes(self._worker_kwargs)
         self.logging_thread = self._create_logging_thread()
         self._join_worker_processes()
+        self.processes = None
         # stop logging thread
         self.is_done = True
         self._join_logging_thread()
-        self.processes, self.logging_thread = None, None
+        self.logging_thread = None
         # return results as a list of tuples (worker, result)
         for i in range(self.n):
-            id_, result_list = self.result_q.get_nowait()
+            try:
+                id_, result_list = self.result_q.get_nowait()
+            except Empty:
+                self.log.error("Worker result queue is empty: stop.")
+                break
             self.log.info(f"Worker [{id_}]: done")
             for r in result_list:
                 results.append((id_, r))
@@ -81,18 +106,22 @@ class Bossy:
         handler.setFormatter(logging.Formatter(f"Worker [{id_}]: %(message)s"))
         log.addHandler(handler)
 
-        result_list = []
+        result_list, abort = [], False
         try:
             while True:
                 item = q.get()
                 if item is None:  # sentinel
                     break
-                result = func(id_, item, log_q, **kwargs)
+                try:
+                    result = func(id_, item, log_q, **kwargs)
+                except KeyboardInterrupt:
+                    raise WorkerInterrupted("Keyboard interrupt")
                 result_list.append(result)
         except Exception as err:
             log.error(f"Worker [{id_}] error: {err}")
-            pass
-        result_q.put((id_, result_list))
+            abort = True
+        if not abort:
+            result_q.put((id_, result_list))
 
     def _create_logging_thread(self):
         t = threading.Thread(target=self._tail_messages, args=(), daemon=True)
