@@ -54,7 +54,7 @@ from pyomo.util.calc_var_value import calculate_variable_from_constraint
 from idaes.generic_models.properties import iapws95
 from idaes.core.util import model_serializer as ms
 from idaes.core.util.model_statistics import degrees_of_freedom
-
+import idaes.core.util.scaling as iscale
 
 def deactivate_performance_constraints(m):
     for blk in m.fs.component_objects(pyo.Block, descend_into=False):
@@ -168,12 +168,12 @@ def boiler_flowsheet():
         mass_flow = 0.87757407893140026988732 * m.fs.coal_flow \
             - 0.68240933480416252066014E-001 * m.fs.SR + 8.6386912890637752582\
             * m.fs.coal_flow*m.fs.SR - 0.11737247790640543564002E-003 \
-            * (m.fs.coal_flow/m.fs.SR)**2  # 28.3876e3
-        # m.fs.FSH.side_2.properties_in[0].flow_component[i] == \
-        # m.fs.FG_flow[i]
-        return m.fs.FSH.side_2.properties_in[0].flow_component[i] == \
-            (mass_flow / sum(m.fs.fg_frac[c]*m.fs.prop_fluegas.mw[c]
-                             for c in m.fs.prop_fluegas.component_list)*1000)\
+            * (m.fs.coal_flow/m.fs.SR)**2  # ~ 28.3876e3 kg/s
+
+        # flow mol component in mol/s = kg/s/kg/mol
+        return m.fs.FSH.side_2.properties_in[0].flow_mol_comp[i] == \
+            (mass_flow / sum(m.fs.fg_frac[c]*m.fs.prop_fluegas.mw_comp[c]
+                             for c in m.fs.prop_fluegas.component_list))\
             * m.fs.fg_frac[i]
     m.fs.fg_flow_cn = pyo.Constraint(m.fs.prop_fluegas.component_list,
                                      rule=fg_flow_rule)
@@ -214,7 +214,7 @@ def boiler_flowsheet():
     # unfix variables to build flowsheet connections
     m.fs.PlSH.heat_duty.unfix()
     m.fs.Water_wall.heat_duty.unfix()
-    m.fs.FSH.side_2.properties_in[:].flow_component.unfix()
+    m.fs.FSH.side_2.properties_in[:].flow_mol_comp.unfix()
     m.fs.FSH.side_2.properties_in[:].temperature.unfix()
     m.fs.coal_flow.fix(50.15)
     print('degrees of freedom = ' + str(degrees_of_freedom(m)))
@@ -225,8 +225,10 @@ def boiler_flowsheet():
     calculate_variable_from_constraint(
         m.fs.Water_wall.heat_duty[0],
         m.fs.heat_2_ww_cn)
+    # set scaling parameters
+    iscale.calculate_scaling_factors(m)
     # final solve
-    results = solver.solve(m)
+    results = solver.solve(m, tee=False)
     return m
 
 

@@ -8,6 +8,7 @@ bottom of this text to see some sample command-lines.
 
 This program uses a configuration file, by default "build.yml" in the same
 directory, to set some options and to tell it which directories to process.
+directory, to set some options and to tell it which directories to process.
 
 The code is structured into "Builder"s, which take the Settings object in
 their constructor and actually do something when you call "build()". The
@@ -56,6 +57,8 @@ properly and also makes it easy to see the "source" of the notebook.
 
 For example command lines see the README.md in this directory.
 """
+import time
+_import_timings = [(None, time.time())]
 # stdlib
 from abc import ABC, abstractmethod
 import argparse
@@ -70,17 +73,20 @@ import re
 from string import Template
 import sys
 import tempfile
-import time
 from typing import List, TextIO, Tuple, Optional
 import yaml
+
+_import_timings.append(('stdlib', time.time()))
 
 # third-party
 import nbconvert
 from nbconvert.exporters import HTMLExporter, RSTExporter, NotebookExporter
 from nbconvert.writers import FilesWriter
 from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
+_import_timings.append(('nbconvert', time.time()))
 import nbformat
 from traitlets.config import Config
+_import_timings.append(('other-third-party', time.time()))
 
 # from build.py dir
 _script_dir = os.path.abspath(os.path.dirname(__file__))
@@ -88,6 +94,9 @@ if _script_dir not in sys.path:
     print("Add script's directory to sys.path")
     sys.path.insert(0, _script_dir)
 from build_util import bossy
+
+_import_timings.append(('local-directory', time.time()))
+
 
 _log = logging.getLogger("build_notebooks")
 _hnd = logging.StreamHandler()
@@ -269,6 +278,7 @@ class NotebookBuilder(Builder):
             self.dirs_processed = []
             self.duration = -1.0
             self.n_fail, self.n_success = 0, 0
+            self.worker_time, self.num_workers = -1, -1
             self._t = None
 
         def start(self):
@@ -339,7 +349,7 @@ class NotebookBuilder(Builder):
         total = r.n_fail + r.n_success
         _dirs = "y" if len(r.dirs_processed) == 1 else "ies"
         notify(
-            f"Processed {len(r.dirs_processed)} director{_dirs} in {r.duration:.3f}s",
+            f"Processed {len(r.dirs_processed)} director{_dirs} in {r.duration:.1f}s",
             level=1,
         )
         if total == 0:
@@ -365,6 +375,17 @@ class NotebookBuilder(Builder):
                     notify(
                         f"Notebook errors are in '{self._nb_error_file.name}'", level=2
                     )
+            # Report parallel speedup
+            if r.num_workers == 1:
+                notify(f"No parallel processing (number of workers = 1)", level=1)
+            else:
+                notify(f"Parallel speedup for {r.num_workers} workers:", level=1)
+                notify(f"Wallclock time     : {r.duration:.1f}s", level=2)
+                notify(f"Total worker time  : {r.worker_time:.1f}s", level=2)
+                speedup_pct = (r.worker_time - r.duration) / r.duration * 100.0
+                notify(f"Parallel speedup   : {speedup_pct:.1f}% (perfect={r.num_workers * 100}%)", level=2)
+
+
         return total, r.n_fail
 
     def _open_error_file(self):
@@ -391,7 +412,8 @@ class NotebookBuilder(Builder):
         kwargs, kernel = {}, self.s.get("kernel", None)
         if kernel:
             kwargs["kernel_name"] = kernel
-        return ExecutePreprocessor(timeout=600, **kwargs)
+        timeout = self.s.get("timeout", default=600)
+        return ExecutePreprocessor(timeout=timeout, **kwargs)
 
     def _read_template(self):
         nb_template_path = self.root_path / self.s.get("template")
@@ -516,9 +538,12 @@ class NotebookBuilder(Builder):
         _log.debug(f"Convert.end {successes}/{successes + failures}")
         self._results.n_fail += failures
         self._results.n_success += successes
+        # Record total work time so we can calculate speedup
+        self._results.worker_time = sum((r[1].dur for r in results))
+        self._results.num_workers = num_workers
 
     def _report_results(
-        self, result_list: List["ParallelNotebookWorker.ConversionResult"]
+        self, result_list: List[Tuple[int, "ParallelNotebookWorker.ConversionResult"]]
     ) -> Tuple[int, int]:
         s, f = 0, 0
         for worker_id, result in result_list:
@@ -581,13 +606,14 @@ class ParallelNotebookWorker:
     JUPYTER_NB_VERSION = 4  # for parsing
 
     class ConversionResult:
-        def __init__(self, id_, ok, converted, why, entry):
-            self.id_, self.ok, self.converted, self.why, self.entry = (
+        def __init__(self, id_, ok, converted, why, entry, duration):
+            self.id_, self.ok, self.converted, self.why, self.entry, self.dur = (
                 id_,
                 ok,
                 converted,
                 why,
                 entry,
+                duration
             )
 
         def __str__(self):
@@ -640,6 +666,7 @@ class ParallelNotebookWorker:
         self.log_q, self.id_ = log_q, id_
 
         self.log_info(f"Convert notebook name={job.nb}: begin")
+        time_start = time.time()
 
         ok, why = True, ""
         if not self.test_mode:
@@ -667,6 +694,8 @@ class ParallelNotebookWorker:
             ok, why = False, f"Unknown error: {err}"
             self.log_error(f"Failed due to unknown error: {err}")
 
+        time_end = time.time()
+
         if converted:
             # remove failed marker, if there was one from a previous execution
             failed_marker = self._get_failed_marker(job)
@@ -676,9 +705,10 @@ class ParallelNotebookWorker:
                 )
                 failed_marker.unlink()
 
-        self.log_info(f"Convert notebook name={job.nb}: end, ok={ok}")
+        duration = time_end - time_start
+        self.log_info(f"Convert notebook name={job.nb}: end, ok={ok} duration={duration:.1f}s")
 
-        return self.ConversionResult(id_, ok, converted, why, job.nb)
+        return self.ConversionResult(id_, ok, converted, why, job.nb, duration)
 
     def _convert(self, job) -> bool:
         """Convert a notebook.
@@ -909,10 +939,14 @@ class ParallelNotebookWorker:
 
         # execute
         self.log_debug(f"executing '{entry}'")
+        t0 = time.time()
         try:
             self.processor.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
         except (CellExecutionError, NameError) as err:
             raise NotebookExecError(f"execution error for '{entry}': {err}")
+        except TimeoutError as err:
+            dur, timeout = time.time() - t0, self.s.get("timeout")
+            raise NotebookError(f"timeout for '{entry}': {dur}s > {timeout}s")
         return nb
 
     def _create_notebook_wrapper_page(self, job: Job, nb_file: str):
@@ -1060,9 +1094,11 @@ class SphinxBuilder(Builder):
                 pattern = f"**/*{ext}"
                 for nb_path in Path(nb_source_dir).glob(pattern):
                     nb_dest = html_dir / nb_path.relative_to(src_dir)
-                    notify(
-                        f"Copy supporting file {nb_path.name} -> {nb_dest.parent}", 3
-                    )
+                    # skip copy, if the directory doesn't exist -- if notebooks all failed
+                    if not nb_dest.parent.exists():
+                        continue
+                    # copy files into destination directory
+                    notify(f"Copy supporting file {nb_path.name} -> {nb_dest.parent}", 3)
                     shutil.copy(nb_path, nb_dest)
 
     @staticmethod
@@ -1256,11 +1292,6 @@ def main():
     )
     args = ap.parse_args()
 
-    # Check for usage message flag
-    if args.usage:
-        print_usage()
-        return 0
-
     # Check for confusing option combinations
     if args.convert and args.test_mode:
         ap.error("-t/--test conflicts with notebook conversion -c/--convert; pick one")
@@ -1284,6 +1315,19 @@ def main():
         _log.setLevel(logging.INFO)
     else:
         _log.setLevel(logging.WARNING)
+
+    # Print out import timings, if we are in debug mode
+    if _log.isEnabledFor(logging.DEBUG):
+        for i in range(1, len(_import_timings)):
+            name = _import_timings[i][0]
+            delta_t = _import_timings[i][1] - _import_timings[i - 1][1]
+            msg = f"name={name} dur={delta_t:.1f}s"
+            _log.debug(f"import-timing {msg}")
+
+    # Check for usage message flag
+    if args.usage:
+        print_usage()
+        return 0
 
     # Read and parse configuration file
     _log.debug(f"reading settings file '{args.config}'")
