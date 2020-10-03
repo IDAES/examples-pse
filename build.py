@@ -382,7 +382,7 @@ class NotebookBuilder(Builder):
                 notify(f"Parallel speedup for {r.num_workers} workers:", level=1)
                 notify(f"Wallclock time     : {r.duration:.1f}s", level=2)
                 notify(f"Total worker time  : {r.worker_time:.1f}s", level=2)
-                speedup_pct = (r.worker_time - r.duration) / r.duration * 100.0
+                speedup_pct = r.worker_time / r.duration * 100.0
                 notify(f"Parallel speedup   : {speedup_pct:.1f}% (perfect={r.num_workers * 100}%)", level=2)
 
 
