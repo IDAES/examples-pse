@@ -14657,9 +14657,9 @@ a.anchor-link {
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>New Point [0.12810389092677232, 0.1335846051460421, 0, 0, 0]
-Error [0.02317132 0.01852099 0.01627415 0.00329582 0.00033289]
-New Result [0.09952578891192977, 0.11388161615362558, 0.01187987136686822, 0.0035165689623586063, 0.00026979484935184836]
+<pre>New Point [0.1210044378197439, 8.493137312894218, 0, 0, 0]
+Error [0.07330054 0.40303908 0.00342167 0.09326641 0.00920652]
+New Result [0.009825424488262973, 8.106899913146474, 0.005679995225770262, 0.08203076769248263, 0.000814427073297477]
 </pre>
 </div>
 </div>
@@ -14742,60 +14742,151 @@ New Result [0.09952578891192977, 0.11388161615362558, 0.01187987136686822, 0.003
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Which concentrations violate error (True=violation) :  [ True  True  True  True  True]
+<pre>Which concentrations violate error (True=violation) :  [ True False  True  True  True]
    ---- Calculating null values for model selection ----    
- - Null model BIC = 7679.748868273238
+ - Null model BIC = 7852.505926585663
  - Solving RIPE model with cardinality constraint = 1 - 
- - 1-term model BIC = 221.58586620828189
+ - 1-term model BIC = 394.33590086967916
  - Solving RIPE model with cardinality constraint = 2 - 
- - 2-term model BIC = 120.51979788343488
+ - 2-term model BIC = 192.8266855066259
   ----  RIPE selected 2 models in the optimal reaction network  ----  
- -+-  Overall R2 of selected model : 0.9964623444239088
+ -+-  Overall R2 of selected model : 0.9798204946470818
  - Stochiometry selected for reaction 1
-         [-2, -2, 0, 0, 1]
+         [-1, -2, 0, 1, 0]
    Mechanism selected for reaction 1
          massact
    Kinetic rate constant &amp; 95% confidence interval
-         0.17346708029644392 +/- 0.041877030643616385
+         0.25027178633435715 +/- 0.3226366367553803
 
  - Stochiometry selected for reaction 2
-         [-2, -3, 1, 1, 0]
+         [-3, -3, 1, 0, 1]
    Mechanism selected for reaction 2
          massact
    Kinetic rate constant &amp; 95% confidence interval
-         0.05326504759969585 +/- 0.027851231586620784
+         0.03365708108448949 +/- 0.028202548251262054
 
-Which concentrations violate error (True=violation) :  [ True False  True  True  True]
+Which concentrations violate error (True=violation) :  [ True  True  True False  True]
    ---- Calculating null values for model selection ----    
- - Null model BIC = 7828.207113284496
+ - Null model BIC = 8092.322976176563
  - Solving RIPE model with cardinality constraint = 1 - 
- - 1-term model BIC = 370.31846921074015
+ - 1-term model BIC = 634.1824626646737
  - Solving RIPE model with cardinality constraint = 2 - 
- - 2-term model BIC = 198.0343372935226
+ - 2-term model BIC = 366.7225675562089
  - Solving RIPE model with cardinality constraint = 3 - 
- - 3-term model BIC = 42.466302308936754
+ - 3-term model BIC = 54.81340171968461
   ----  RIPE selected 3 models in the optimal reaction network  ----  
- -+-  Overall R2 of selected model : 0.996586322935427
+ -+-  Overall R2 of selected model : 0.9910763876617544
  - Stochiometry selected for reaction 1
          [-1, -1, 1, 0, 0]
    Mechanism selected for reaction 1
          massact
    Kinetic rate constant &amp; 95% confidence interval
-         1.2848091671146225 +/- 0.3895735253166265
+         1.2880585341055448 +/- 0.38315444847742086
 
  - Stochiometry selected for reaction 2
          [0, -1, -1, 1, 0]
    Mechanism selected for reaction 2
          massact
    Kinetic rate constant &amp; 95% confidence interval
-         2.077470631994776 +/- 0.8075852435350884
+         2.098172503302784 +/- 0.7954866297064689
 
  - Stochiometry selected for reaction 3
          [-1, 0, 0, -1, 1]
    Mechanism selected for reaction 3
          massact
    Kinetic rate constant &amp; 95% confidence interval
-         0.7912781484266439 +/- 0.29333241938021504
+         0.8007999714779602 +/- 0.2927610662940082
+
+Which concentrations violate error (True=violation) :  [ True False False  True  True]
+   ---- Calculating null values for model selection ----    
+ - Null model BIC = 8664.739596500396
+ - Solving RIPE model with cardinality constraint = 1 - 
+ - 1-term model BIC = 1197.1316194887013
+ - Solving RIPE model with cardinality constraint = 2 - 
+ - 2-term model BIC = 476.91131736942594
+ - Solving RIPE model with cardinality constraint = 3 - 
+ - 3-term model BIC = 75.97136731411274
+ - Solving RIPE model with cardinality constraint = 4 - 
+ - 4-term model BIC = 57.46538879486241
+  ----  RIPE selected 4 models in the optimal reaction network  ----  
+ -+-  Overall R2 of selected model : 0.9871142878626313
+ - Stochiometry selected for reaction 1
+         [-1, -1, 1, 0, 0]
+   Mechanism selected for reaction 1
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         1.2688357401994914 +/- 0.3729620463366348
+
+ - Stochiometry selected for reaction 2
+         [0, -1, -1, 1, 0]
+   Mechanism selected for reaction 2
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         1.7826937502777407 +/- 28.38790549172072
+
+ - Stochiometry selected for reaction 3
+         [-1, 0, 0, -1, 1]
+   Mechanism selected for reaction 3
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         0.6193598117701142 +/- 16.89439908362267
+
+ - Stochiometry selected for reaction 4
+         [-1, -1, -1, 0, 1]
+   Mechanism selected for reaction 4
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         0.13681285367925855 +/- 15.438984406082263
+
+Which concentrations violate error (True=violation) :  [False  True  True  True  True]
+   ---- Calculating null values for model selection ----    
+ - Null model BIC = 12142.088967298932
+ - Solving RIPE model with cardinality constraint = 1 - 
+ - 1-term model BIC = 2190.5003459307422
+ - Solving RIPE model with cardinality constraint = 2 - 
+ - 2-term model BIC = 1078.2244900635974
+ - Solving RIPE model with cardinality constraint = 3 - 
+ - 3-term model BIC = 91.30827883877404
+ - Solving RIPE model with cardinality constraint = 4 - 
+ - 4-term model BIC = 89.69992775217918
+ - Solving RIPE model with cardinality constraint = 5 - 
+ - 5-term model BIC = 87.22808384330993
+  ----  RIPE selected 5 models in the optimal reaction network  ----  
+ -+-  Overall R2 of selected model : 0.9856073242070885
+ - Stochiometry selected for reaction 1
+         [-1, -1, 1, 0, 0]
+   Mechanism selected for reaction 1
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         1.2713266881310492 +/- 1.5861679746112138
+
+ - Stochiometry selected for reaction 2
+         [0, -1, -1, 1, 0]
+   Mechanism selected for reaction 2
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         1.8900516221673038 +/- 4.358639538773217
+
+ - Stochiometry selected for reaction 3
+         [-1, 0, 0, -1, 1]
+   Mechanism selected for reaction 3
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         0.7168627372561096 +/- 2.077445949006548
+
+ - Stochiometry selected for reaction 4
+         [1, 0, -1, -1, 1]
+   Mechanism selected for reaction 4
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         0.15773972058793848 +/- 2.3605426481783947
+
+ - Stochiometry selected for reaction 5
+         [-3, -4, 0, 1, 1]
+   Mechanism selected for reaction 5
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         0.0015480951691419773 +/- 0.05667219580996613
 
 </pre>
 </div>
@@ -14848,37 +14939,55 @@ Which concentrations violate error (True=violation) :  [ True False  True  True 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre>   ---- Calculating null values for model selection ----    
- - Null model BIC = 7828.207113284496
+ - Null model BIC = 12142.088967298932
  - Solving RIPE model with cardinality constraint = 1 - 
- - 1-term model BIC = 370.31846921074015
+ - 1-term model BIC = 2190.5003459307422
  - Solving RIPE model with cardinality constraint = 2 - 
- - 2-term model BIC = 198.0343372935226
+ - 2-term model BIC = 1078.2244900635974
  - Solving RIPE model with cardinality constraint = 3 - 
- - 3-term model BIC = 42.466302308936754
-  ----  RIPE selected 3 models in the optimal reaction network  ----  
- -+-  Overall R2 of selected model : 0.996586322935427
+ - 3-term model BIC = 91.30827883877404
+ - Solving RIPE model with cardinality constraint = 4 - 
+ - 4-term model BIC = 89.69992775217918
+ - Solving RIPE model with cardinality constraint = 5 - 
+ - 5-term model BIC = 87.22808384330993
+  ----  RIPE selected 5 models in the optimal reaction network  ----  
+ -+-  Overall R2 of selected model : 0.9856073242070885
  - Stochiometry selected for reaction 1
          [-1, -1, 1, 0, 0]
    Mechanism selected for reaction 1
          massact
    Kinetic rate constant &amp; 95% confidence interval
-         1.2848091671146225 +/- 0.3895735253166265
+         1.2713266881310492 +/- 1.5861679746112138
 
  - Stochiometry selected for reaction 2
          [0, -1, -1, 1, 0]
    Mechanism selected for reaction 2
          massact
    Kinetic rate constant &amp; 95% confidence interval
-         2.077470631994776 +/- 0.8075852435350884
+         1.8900516221673038 +/- 4.358639538773217
 
  - Stochiometry selected for reaction 3
          [-1, 0, 0, -1, 1]
    Mechanism selected for reaction 3
          massact
    Kinetic rate constant &amp; 95% confidence interval
-         0.7912781484266439 +/- 0.29333241938021504
+         0.7168627372561096 +/- 2.077445949006548
 
-{&#39;k&#39;: [1.2848091671146225, 2.077470631994776, 0.7912781484266439], &#39;conf_inv&#39;: [0.3895735253166265, 0.8075852435350884, 0.29333241938021504], &#39;stoichiometry&#39;: [[-1, -1, 1, 0, 0], [0, -1, -1, 1, 0], [-1, 0, 0, -1, 1]], &#39;mechanisms&#39;: [&#39;massact&#39;, &#39;massact&#39;, &#39;massact&#39;]}
+ - Stochiometry selected for reaction 4
+         [1, 0, -1, -1, 1]
+   Mechanism selected for reaction 4
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         0.15773972058793848 +/- 2.3605426481783947
+
+ - Stochiometry selected for reaction 5
+         [-3, -4, 0, 1, 1]
+   Mechanism selected for reaction 5
+         massact
+   Kinetic rate constant &amp; 95% confidence interval
+         0.0015480951691419773 +/- 0.05667219580996613
+
+{&#39;k&#39;: [1.2713266881310492, 1.8900516221673038, 0.7168627372561096, 0.15773972058793848, 0.0015480951691419773], &#39;conf_inv&#39;: [1.5861679746112138, 4.358639538773217, 2.077445949006548, 2.3605426481783947, 0.05667219580996613], &#39;stoichiometry&#39;: [[-1, -1, 1, 0, 0], [0, -1, -1, 1, 0], [-1, 0, 0, -1, 1], [1, 0, -1, -1, 1], [-3, -4, 0, 1, 1]], &#39;mechanisms&#39;: [&#39;massact&#39;, &#39;massact&#39;, &#39;massact&#39;, &#39;massact&#39;, &#39;massact&#39;]}
 </pre>
 </div>
 </div>
