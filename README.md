@@ -5,7 +5,7 @@ the IDAES-PSE code. Some examples are Jupyter Notebooks, and
 some are Python scripts.
 
 The examples can be viewed online at 
-[this page](https://examples-pse.readthedocs.io/).
+[this page](https://IDAES.github.io/examples-pse).
 
 *If you are a developer who wants to add a new example to this repository,
 please refer to the [README-developer.md](README-developer.md)
