@@ -142,13 +142,13 @@ class Bossy:
             try:
                 log_debug(f"Run worker function: begin")
                 result = func(id_, item, log_q, **kwargs)
-                log_debug(f"Run worker function: end (ok)")
+                log_debug(f"Run worker function: end")
                 result_list.append(result)
             except KeyboardInterrupt:
                 log_debug(f"Run worker function: end (keyboard interrupt)")
                 raise WorkerInterrupted("Keyboard interrupt")
             except Exception as err:
-                log_error(f"Run worker function: end (failure): {err}")
+                log_error(f"Run worker function: end (exception): {err}")
         # Put results on the queue
         if result_list:
             result_q.put((id_, result_list))
