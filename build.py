@@ -545,6 +545,7 @@ class NotebookBuilder(Builder):
     def _report_results(
         self, result_list: List[Tuple[int, "ParallelNotebookWorker.ConversionResult"]]
     ) -> Tuple[int, int]:
+        # print(f"@@ result list: {result_list}")
         s, f = 0, 0
         for worker_id, result in result_list:
             if result.ok:
@@ -1067,7 +1068,7 @@ class SphinxBuilder(Builder):
 
         # Run Sphinx command
         errfile = self.s.get("error_file")
-        cmdargs = ["sphinx-build", "-a", "-w", errfile] + args
+        cmdargs = ["sphinx-build", "-a", "-N", "-w", errfile] + args
         cmdline = " ".join(cmdargs)
         notify(f"Running Sphinx command: {cmdline}", level=1)
         proc = subprocess.Popen(cmdargs)
@@ -1076,9 +1077,30 @@ class SphinxBuilder(Builder):
         if status != 0:
             log_error = self._extract_sphinx_error(errfile)
             raise SphinxCommandError(cmdline, f"return code = {status}", log_error)
+        # Make sure user sees the warnings
+        warnings = self._extract_sphinx_warnings(errfile)
+        if warnings:
+            notify(f"There were {len(warnings):d} warnings from the Sphinx build process", level=0)
+            cwd = Path(os.curdir).absolute()
+            grouped_warnings = {}  # context_path: [(line_num, message), ..]
+            for context_path, line_num, message in warnings:
+                if context_path in grouped_warnings:
+                    grouped_warnings[context_path].append((line_num, message))
+                else:
+                    grouped_warnings[context_path] = [(line_num, message)]
+            for context_path, items in grouped_warnings.items():
+                context_str = context_path.relative_to(cwd)
+                notify(f"File {context_str}", level=1)
+                for line_num, message in items:
+                    if line_num > 0:
+                        notify(f"Line {line_num}: {message}", level=2)
+                    else:
+                        notify(f"{message}", level=2)
 
         # copy notebooks from doc & src directories into html directory
-        notify(f"Copying notebooks from '{doc_dir}' -> '{html_dir}'", 1)
+        notify(f"Copying notebooks", 0)
+        notify(f"from: {doc_dir}", 1)
+        notify(f"to  : {html_dir}", 1)
         for nb_dir in self.s.get("notebook.directories"):
             nb_output_dir = doc_dir / nb_dir["output"]
             nb_source_dir = src_dir / nb_dir["source"]
@@ -1087,7 +1109,7 @@ class SphinxBuilder(Builder):
                 nb_dest = html_dir / nb_path.relative_to(doc_dir)
                 if not nb_dest.parent.exists():
                     nb_dest.parent.mkdir(parents=True)
-                notify(f"Copy notebook {nb_path.name} -> {nb_dest.parent}", 2)
+                _log.debug(f"Copy notebook {nb_path.name} to {nb_dest.parent}")
                 shutil.copy(nb_path, nb_dest)
             _log.info(f"find supporting files in path: {nb_output_dir}")
             for ext in IMAGE_SUFFIXES:
@@ -1098,7 +1120,7 @@ class SphinxBuilder(Builder):
                     if not nb_dest.parent.exists():
                         continue
                     # copy files into destination directory
-                    notify(f"Copy supporting file {nb_path.name} -> {nb_dest.parent}", 3)
+                    _log.debug(f"Copy supporting file {nb_path.name} to {nb_dest.parent}")
                     shutil.copy(nb_path, nb_dest)
 
     @staticmethod
@@ -1114,6 +1136,34 @@ class SphinxBuilder(Builder):
                 elif s.startswith("Sphinx error:"):
                     collect_errors = True
         return "\n".join(lines)
+
+    @staticmethod
+    def _extract_sphinx_warnings(errfile):
+        result = []
+        path = Path(errfile)
+        seen_messages = {}  # message: context
+        with path.open("r") as f:
+            for line in f:
+                m = re.match(r"(?P<context>.*?):(?P<line>\d+)?:\s*WARNING:\s*(?P<message>.*)", line)
+                if m is not None:
+                    d = m.groupdict()
+                    if d['line']:
+                        line_num = int(d['line'])
+                    else:
+                        line_num = -1
+                    message = d['message'].strip()
+                    context = d['context'].strip()
+                    context_path = Path(context)
+                    duplicate = False
+                    if message in seen_messages:
+                        prev_context_path = seen_messages[message]
+                        context_file = context_path.name
+                        prev_context_file = prev_context_path.name
+                        duplicate = context_file == prev_context_file
+                    if not duplicate:
+                        result.append((context_path, line_num, message))
+                        seen_messages[message] = context_path
+        return result
 
 
 class Cleaner(Builder):
@@ -1169,7 +1219,7 @@ class Color:
 def notify(message, level=0):
     """Multicolored, indented, messages to the user.
     """
-    c = [Color.MAGENTA, Color.GREEN, Color.CYAN][min(level, 2)]
+    c = [Color.MAGENTA, Color.GREEN, Color.CYAN, Color.WHITE][min(level, 3)]
     indent = "  " * level
     if level == 0:
         print()
