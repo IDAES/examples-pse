@@ -20,7 +20,7 @@ import logging
 
 # Import Pyomo libraries
 from pyomo.environ import Constraint, Expression, log, NonNegativeReals,\
-    Var, Set, Param, sqrt, log10
+    Var, Set, Param, sqrt, log10, units as pyunits
 from pyomo.opt import SolverFactory, TerminationCondition
 from pyomo.util.calc_var_value import calculate_variable_from_constraint
 
@@ -31,7 +31,10 @@ from idaes.core import (declare_process_block_class,
                         StateBlockData,
                         StateBlock,
                         MaterialBalanceType,
-                        EnergyBalanceType)
+                        EnergyBalanceType,
+                        Component,
+                        LiquidPhase,
+                        VaporPhase)
 from idaes.core.util.initialization import (fix_state_vars,
                                             revert_state_vars,
                                             solve_indexed_blocks)
@@ -55,15 +58,15 @@ class HDAParameterData(PhysicalParameterBlock):
         '''
         super(HDAParameterData, self).build()
 
-        self.state_block_class = IdealStateBlock
+        self._state_block_class = IdealStateBlock
 
-        self.component_list = Set(initialize=['benzene',
-                                              'toluene',
-                                              'hydrogen',
-                                              'methane'])
+        self.benzene = Component()
+        self.toluene = Component()
+        self.methane = Component()
+        self.hydrogen = Component()
 
-        self.phase_list = Set(initialize=['Liq', 'Vap'],
-                              ordered=True)
+        self.Liq = LiquidPhase()
+        self.Vap = VaporPhase()
 
         # List of components in each phase (optional)
         self.phase_comp = {"Liq": self.component_list,
@@ -325,13 +328,11 @@ class HDAParameterData(PhysicalParameterBlock):
              'dh_vap': {'method': '_dh_vap', 'units': 'J/mol'},
              'ds_vap': {'method': '_ds_vap', 'units': 'J/mol.K'}})
 
-        obj.add_default_units({'time': 's',
-                               'length': 'm',
-                               'mass': 'g',
-                               'amount': 'mol',
-                               'temperature': 'K',
-                               'energy': 'J',
-                               'holdup': 'mol'})
+        obj.add_default_units({'time': pyunits.s,
+                               'length': pyunits.m,
+                               'mass': pyunits.g,
+                               'amount': pyunits.mol,
+                               'temperature': pyunits.K})
 
 
 class _IdealStateBlock(StateBlock):
