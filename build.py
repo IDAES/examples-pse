@@ -58,6 +58,7 @@ properly and also makes it easy to see the "source" of the notebook.
 For example command lines see the README.md in this directory.
 """
 import time
+
 _import_timings = [(None, time.time())]
 # stdlib
 from abc import ABC, abstractmethod
@@ -76,17 +77,19 @@ import tempfile
 from typing import List, TextIO, Tuple, Optional
 import yaml
 
-_import_timings.append(('stdlib', time.time()))
+_import_timings.append(("stdlib", time.time()))
 
 # third-party
 import nbconvert
 from nbconvert.exporters import HTMLExporter, RSTExporter, NotebookExporter
 from nbconvert.writers import FilesWriter
 from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
-_import_timings.append(('nbconvert', time.time()))
+
+_import_timings.append(("nbconvert", time.time()))
 import nbformat
 from traitlets.config import Config
-_import_timings.append(('other-third-party', time.time()))
+
+_import_timings.append(("other-third-party", time.time()))
 
 # from build.py dir
 _script_dir = os.path.abspath(os.path.dirname(__file__))
@@ -95,7 +98,7 @@ if _script_dir not in sys.path:
     sys.path.insert(0, _script_dir)
 from build_util import bossy
 
-_import_timings.append(('local-directory', time.time()))
+_import_timings.append(("local-directory", time.time()))
 
 
 _log = logging.getLogger("build_notebooks")
@@ -118,8 +121,10 @@ class NotebookExecError(NotebookError):
 class NotebookFormatError(NotebookError):
     pass
 
+
 class NotebookPreviouslyFailedError(NotebookError):
     pass
+
 
 class SphinxError(Exception):
     pass
@@ -383,8 +388,10 @@ class NotebookBuilder(Builder):
                 notify(f"Wallclock time     : {r.duration:.1f}s", level=2)
                 notify(f"Total worker time  : {r.worker_time:.1f}s", level=2)
                 speedup_pct = r.worker_time / r.duration * 100.0
-                notify(f"Parallel speedup   : {speedup_pct:.1f}% (perfect={r.num_workers * 100}%)", level=2)
-
+                notify(
+                    f"Parallel speedup   : {speedup_pct:.1f}% (perfect={r.num_workers * 100}%)",
+                    level=2,
+                )
 
         return total, r.n_fail
 
@@ -614,7 +621,7 @@ class ParallelNotebookWorker:
                 converted,
                 why,
                 entry,
-                duration
+                duration,
             )
 
         def __str__(self):
@@ -707,7 +714,9 @@ class ParallelNotebookWorker:
                 failed_marker.unlink()
 
         duration = time_end - time_start
-        self.log_info(f"Convert notebook name={job.nb}: end, ok={ok} duration={duration:.1f}s")
+        self.log_info(
+            f"Convert notebook name={job.nb}: end, ok={ok} duration={duration:.1f}s"
+        )
 
         return self.ConversionResult(id_, ok, converted, why, job.nb, duration)
 
@@ -1032,6 +1041,8 @@ class ParallelNotebookWorker:
             self.log_warning("Could not insert stylesheet in HTML")
         # done
         return body
+
+
 #
 
 
@@ -1082,7 +1093,10 @@ class SphinxBuilder(Builder):
         # Make sure user sees the warnings
         warnings = self._extract_sphinx_warnings(errfile)
         if warnings:
-            notify(f"There were {len(warnings):d} warnings from the Sphinx build process", level=0)
+            notify(
+                f"There were {len(warnings):d} warnings from the Sphinx build process",
+                level=0,
+            )
             cwd = Path(os.curdir).absolute()
             grouped_warnings = {}  # context_path: [(line_num, message), ..]
             for context_path, line_num, message in warnings:
@@ -1122,7 +1136,9 @@ class SphinxBuilder(Builder):
                     if not nb_dest.parent.exists():
                         continue
                     # copy files into destination directory
-                    _log.debug(f"Copy supporting file {nb_path.name} to {nb_dest.parent}")
+                    _log.debug(
+                        f"Copy supporting file {nb_path.name} to {nb_dest.parent}"
+                    )
                     shutil.copy(nb_path, nb_dest)
 
     @staticmethod
@@ -1146,15 +1162,18 @@ class SphinxBuilder(Builder):
         seen_messages = {}  # message: context
         with path.open("r") as f:
             for line in f:
-                m = re.match(r"(?P<context>.*?):(?P<line>\d+)?:\s*WARNING:\s*(?P<message>.*)", line)
+                m = re.match(
+                    r"(?P<context>.*?):(?P<line>\d+)?:\s*WARNING:\s*(?P<message>.*)",
+                    line,
+                )
                 if m is not None:
                     d = m.groupdict()
-                    if d['line']:
-                        line_num = int(d['line'])
+                    if d["line"]:
+                        line_num = int(d["line"])
                     else:
                         line_num = -1
-                    message = d['message'].strip()
-                    context = d['context'].strip()
+                    message = d["message"].strip()
+                    context = d["context"].strip()
                     context_path = Path(context)
                     duplicate = False
                     if message in seen_messages:
