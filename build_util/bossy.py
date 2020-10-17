@@ -54,8 +54,10 @@ class Bossy:
         self._handle_signals()
 
     def _handle_signals(self):
-        signal.signal(signal.SIGINT, self.signal_handler)
-        signal.signal(signal.SIGBREAK, self.signal_handler)
+        if hasattr(signal, 'SIGINT'):
+            signal.signal(signal.SIGINT, self.signal_handler)
+        if hasattr(signal, 'SIGBREAK'):
+            signal.signal(signal.SIGBREAK, self.signal_handler)
 
     def signal_handler(self, sig, frame):
         """User interrupted the program with a Control-C or by sending it a signal (UNIX).
