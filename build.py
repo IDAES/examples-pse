@@ -309,7 +309,7 @@ class NotebookBuilder(Builder):
 
     def build(self, options):
         self.s.set_default_section("notebook")
-        self._num_workers = self.s.get("num_workers", default=4)
+        self._num_workers = self.s.get("num_workers", default=2)
         self._merge_options(options)
         self._test_mode = self.s.get("test_mode")
         self._open_error_file()
@@ -1040,6 +1040,7 @@ class SphinxBuilder(Builder):
     """
 
     def build(self, options):
+        num_workers = self.s.get("notebook.num_workers", default=1)
         self.s.set_default_section("sphinx")
         self._merge_options(options)
         raw_args = self.s.get("args")
@@ -1068,7 +1069,8 @@ class SphinxBuilder(Builder):
 
         # Run Sphinx command
         errfile = self.s.get("error_file")
-        cmdargs = ["sphinx-build", "-a", "-N", "-w", errfile] + args
+        parallel_args = [f"-j{num_workers}"] if num_workers > 1 else []
+        cmdargs = ["sphinx-build", "-a", "-N", "-w", errfile] + parallel_args + args
         cmdline = " ".join(cmdargs)
         notify(f"Running Sphinx command: {cmdline}", level=1)
         proc = subprocess.Popen(cmdargs)
