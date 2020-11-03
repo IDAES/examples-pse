@@ -12,6 +12,7 @@ paths:
   html: _build/html
 # Settings for running and converting Jupyter Notebooks
 notebook:
+    num_workers: 2
     # continue on errors (otherwise stop)
     continue_on_error: true
     test_mode: true
@@ -22,7 +23,8 @@ notebook:
     directories:
         - source: workshops
           output: tutorials
-          match: "Flash_Unit_Solution"
+          match: "Introduction"
+
 # Settings for running Sphinx build
 sphinx:
     args: "-b html -T docs_test docs_test/_build/html"
