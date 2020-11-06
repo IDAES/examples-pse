@@ -155,7 +155,7 @@ class HDAParameterData(PhysicalParameterBlock):
              'temperature': {'method': None},
              'pressure': {'method': None},
              'mw_comp': {'method': None},
-             'dens_mol': {'method': '_dens_mol'},
+             'dens_mol': {'method': None},
              'enth_mol': {'method': '_enth_mol'}})
 
         obj.add_default_units({'time': pyunits.s,

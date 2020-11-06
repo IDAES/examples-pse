@@ -21,10 +21,9 @@ toluene to benzene and an equilibrium side-reaction of benzene to diphenyl.
 # Import Pyomo libraries
 from pyomo.environ import (Constraint,
                            exp,
-                           log,
                            Param,
                            Set,
-                           units,
+                           units as pyunits,
                            Var)
 
 # Import IDAES cores
@@ -76,14 +75,15 @@ class HDAReactionParameterData(ReactionParameterBlock):
             ("E1", "Vap", "diphenyl"): 1}
 
         # Arrhenius Constant
-        self.arrhenius = Param(default=1.25e-9,
-                               doc="Arrhenius constant",
-                               units=units.mol/units.m**3/units.s/units.Pa**2)
+        self.arrhenius = Param(
+            default=1.25e-9,
+            doc="Arrhenius constant",
+            units=pyunits.mol/pyunits.m**3/pyunits.s/pyunits.Pa**2)
 
         # Activation Energy
         self.energy_activation = Param(default=3800,
-                                       doc="Activation energy [J/mol]",
-                                       units=units.J/units.mol)
+                                       doc="Activation energy",
+                                       units=pyunits.J/pyunits.mol)
 
     @classmethod
     def define_metadata(cls, obj):
@@ -91,11 +91,11 @@ class HDAReactionParameterData(ReactionParameterBlock):
                 'k_rxn': {'method': None},
                 'reaction_rate': {'method': None}
                 })
-        obj.add_default_units({'time': units.s,
-                               'length': units.m,
-                               'mass': units.kg,
-                               'amount': units.mol,
-                               'temperature': units.K})
+        obj.add_default_units({'time': pyunits.s,
+                               'length': pyunits.m,
+                               'mass': pyunits.kg,
+                               'amount': pyunits.mol,
+                               'temperature': pyunits.K})
 
 
 class _HDAReactionBlock(ReactionBlockBase):
@@ -130,18 +130,19 @@ class HDAReactionBlockData(ReactionBlockDataBase):
         """
         super(HDAReactionBlockData, self).build()
 
-        self.k_rxn = Var(initialize=7e-10,
-                         doc="Rate constant",
-                         units=units.mol/units.m**3/units.s/units.Pa**2)
+        self.k_rxn = Var(
+            initialize=7e-10,
+            doc="Rate constant",
+            units=pyunits.mol/pyunits.m**3/pyunits.s/pyunits.Pa**2)
 
         self.k_eq = Param(initialize=10000,
                           doc="Equlibrium constant",
-                          units=units.Pa)
+                          units=pyunits.Pa)
 
         self.reaction_rate = Var(self.params.rate_reaction_idx,
                                  initialize=0,
                                  doc="Rate of reaction",
-                                 units=units.mol/units.m**3/units.s)
+                                 units=pyunits.mol/pyunits.m**3/pyunits.s)
 
         self.arrhenius_equation = Constraint(
             expr=self.k_rxn == self.params.arrhenius * exp(
