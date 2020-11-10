@@ -27,7 +27,7 @@ jobs:
         $CONDA/bin/idaes get-extensions --platform ubuntu1804
     - name: Run non-integration tests
       run: |
-        $CONDA/bin/pytest -m "not integration" tests/
+        $CONDA/bin/pytest --verbose -m "not integration" tests/
     - name: Save Sphinx build artifacts
       uses: actions/upload-artifact@v2
       with:
