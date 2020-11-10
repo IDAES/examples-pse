@@ -1,0 +1,27 @@
+name: Run examples
+
+on: [push]
+jobs:
+  examples:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create Conda env
+      run: |
+        $CONDA/bin/conda install --name base --yes python=3.7 pip
+    - name: Install dependencies
+      run: |
+        echo $PWD
+        ls -lh .
+        $CONDA/bin/pip install --progress-bar=off -r requirements.txt
+        # $CONDA/bin/pip install --progress-bar=off git+https://github.com/idaes/idaes-pse
+        git clone https://github.com/idaes/idaes-pse
+        cd idaes-pse/
+        $CONDA/bin/pip install --progress-bar=off .
+        idaes get-extensions --platform ubuntu1804
+    - name: Run integration tests
+      run: |
+        # check if the working directory is preserved between steps
+        echo $PWD
+        ls -lh .
+        $CONDA/bin/pytest -m "not integration" tests/
