@@ -6,7 +6,11 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - name: Create Conda env
+    - name: Setup Conda env
+      # `conda activate` does not work properly because env vars are not persisted between steps
+      # to circumvent this, instead of creating and activating a new Conda env,
+      # we install the packages in the Conda base environment, which is active by default
+      # caveat: specify full path to executables in the $CONDA/bin directory
       run: |
         $CONDA/bin/conda install --name base --yes python=3.7 pip
     - name: Install own dependencies
@@ -24,3 +28,13 @@ jobs:
     - name: Run non-integration tests
       run: |
         $CONDA/bin/pytest -m "not integration" tests/
+    - name: Save Sphinx build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: sphinx-errors
+        file: sphinx-errors.txt
+    - name: Save test build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-errors
+        file: ci-test-errors.txt
