@@ -12,7 +12,7 @@ jobs:
       # we install the packages in the Conda base environment, which is active by default
       # caveat: specify full path to executables in the $CONDA/bin directory
       run: |
-        $CONDA/bin/conda install --name base --yes python=3.7 pip
+        $CONDA/bin/conda install --quiet --yes --name base python=3.7 pip
     - name: Install own dependencies
       run: |
         echo $PWD
