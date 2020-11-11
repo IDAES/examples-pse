@@ -20,12 +20,12 @@ import build
 @pytest.fixture(scope="module")
 def settings_ci():
     os.chdir(_root)
-    return build.Settings(open("build-circleci.yml", "r"))
+    return build.Settings(open("build-ci.yml", "r"))
 
 
 @pytest.mark.component
 def test_convert_some_notebooks(settings_ci):
-    build._log.setLevel(logging.INFO)  # otherwise DEBUG for some reason
+    build._log.setLevel(logging.DEBUG)  # otherwise DEBUG for some reason
     os.chdir(_root)
     nb = build.NotebookBuilder(settings_ci)
     nb.build({"rebuild": True})
@@ -51,7 +51,7 @@ def test_run_all_notebooks():
     proc.wait()
     assert proc.returncode == 0
     # now run
-    cmd = ["python", "build.py",  "--config", "build-circleci.yml", "--test"]
+    cmd = ["python", "build.py",  "--config", "build-ci.yml", "--test"]
     proc = subprocess.Popen(cmd)
     proc.wait()
     assert proc.returncode == 0

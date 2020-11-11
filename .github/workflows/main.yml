@@ -1,0 +1,40 @@
+name: Run examples
+
+on: [push]
+jobs:
+  examples:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Conda env
+      # `conda activate` does not work properly because env vars are not persisted between steps
+      # to circumvent this, instead of creating and activating a new Conda env,
+      # we install the packages in the Conda base environment, which is active by default
+      # caveat: specify full path to executables in the $CONDA/bin directory
+      run: |
+        $CONDA/bin/conda install --name base --yes python=3.7 pip
+    - name: Install own dependencies
+      run: |
+        echo $PWD
+        ls -lh .
+        $CONDA/bin/pip install --progress-bar=off -r requirements.txt
+    - name: Install IDAES
+      run: |
+        $CONDA/bin/pip install --progress-bar=off git+https://github.com/idaes/idaes-pse
+        $CONDA/bin/idaes --version
+    - name: Install IDAES extensions
+      run: |
+        $CONDA/bin/idaes get-extensions --platform ubuntu1804
+    - name: Run non-integration tests
+      run: |
+        $CONDA/bin/pytest --verbose -m "not integration" tests/
+    - name: Save Sphinx build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: sphinx-errors
+        path: sphinx-errors.txt
+    - name: Save test build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-errors
+        path: ci-test-errors.txt
