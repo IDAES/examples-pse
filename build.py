@@ -65,6 +65,7 @@ from abc import ABC, abstractmethod
 import argparse
 from collections import namedtuple
 from datetime import datetime
+from io import StringIO
 import logging
 import os
 from pathlib import Path
@@ -75,6 +76,7 @@ from string import Template
 import sys
 import tempfile
 from typing import List, TextIO, Tuple, Optional
+import urllib.parse
 import yaml
 
 _import_timings.append(("stdlib", time.time()))
@@ -136,6 +138,22 @@ class SphinxCommandError(Exception):
             f"Sphinx error while running '{cmdline}': {errmsg}. " f"Details: {details}"
         )
         super().__init__(msg)
+
+
+class IndexPageError(Exception):
+    pass
+
+
+class IndexPageUnknownSuffix(IndexPageError):
+    pass
+
+
+class IndexPageOutputFile(IndexPageError):
+    pass
+
+
+class IndexPageInputFile(IndexPageError):
+    pass
 
 
 # Images to copy to the build directory
@@ -1224,6 +1242,97 @@ class Cleaner(Builder):
         return removed_any
 
 
+class IndexPage:
+    """Create various versions of the index page.
+    """
+
+    def __init__(self, input_path):
+        """Create with data from the YAML in `input_path`.
+        """
+        try:
+            self._ix = yaml.safe_load(open(input_path))
+        except FileNotFoundError as err:
+            raise IndexPageInputFile(str(err))
+        self._of = None
+
+    def convert(self, output_path):
+        path = Path(output_path)
+        suffix = path.suffix.lower()[1:]
+        fmt = ""
+        if suffix in ("md", "markdown"):
+            self.write_markdown(output_path)
+            fmt = "markdown"
+        elif suffix == "ipynb":
+            _log.debug(f"Creating Jupyter notebook at '{output_path}'")
+            self.write_notebook(output_path)
+        else:
+            raise IndexPageUnknownSuffix(path.suffix)
+        _log.info(f"Created index page in {fmt} format: {output_path}")
+
+    def write_markdown(self, output_path):
+        """Write a markdown version of the page to `output_path`.
+        """
+        try:
+            self._of = open(output_path, "w")
+        except Exception as err:
+            raise IndexPageOutputFile(str(err))
+        self._write_markdown_front_matter()
+        self._write_markdown_contents(self._ix["contents"], 2, "")
+
+    def _write_markdown_front_matter(self):
+        front_matter = self._ix["front_matter"]
+        self._write("# IDAES Examples\n")
+        for section in front_matter:
+            self._write(f"## {section['title']}\n")
+            self._write(section["text"])
+            self._write("\n")
+
+    def write_notebook(self, output_path):
+        self._of = StringIO()
+        self._write_markdown_front_matter()
+        self._write_markdown_contents(self._ix["contents"], 2, "")
+        cell_contents = [s + "\n" for s in self._of.getvalue().split("\n")]
+        nb = nbformat.NotebookNode(
+            metadata={"kernel_info": {}},
+            nbformat=4,
+            nbformat_minor=0,
+            cells=[nbformat.NotebookNode(cell_type="markdown", metadata={}, source=cell_contents)],
+        )
+        # print(nb.cells)
+        notebook_file = open(output_path, "w")
+        nbformat.write(nb, notebook_file)
+
+    def _write_markdown_contents(self, contents, depth, path):
+        base_path = path
+        for section in contents:
+            name = section.get("name")
+            path = name if base_path == "" else base_path + "/" + name
+            title = section.get("title", name)
+            id_ = path.replace("/", ".").lower()
+            self._write(f"\n<a id='{id_}'></a>\n")
+            markers = "#" * depth
+            self._write(f"\n{markers} {title}\n")
+            desc = section.get("description", None)
+            if desc is not None:
+                self._write(desc)
+                self._write("\n")
+            if "subfolders" in section:
+                self._write_markdown_contents(section["subfolders"], depth + 1, path)
+            elif "notebooks" in section:
+                for nb in section["notebooks"]:
+                    self._write("\n")
+                    key = list(nb.keys())[0]
+                    value = nb[key]
+                    self._write(f"  * `{key}` - {value} ")
+                    for suffix in "exercise", "solution":
+                        url = urllib.parse.quote(str(path) + f"/{value}_{suffix}.ipynb")
+                        self._write(f"[[{suffix}]({url})] ")
+                    self._write("\n")
+
+    def _write(self, text):
+        self._of.write(text)
+
+
 class Color:
     BLACK = "\033[30m"
     RED = "\033[31m"
@@ -1308,6 +1417,9 @@ def print_usage():
         "{command} --test\n"
         "{command} -t  # <-- short option\n"
         "\n"
+        "# Generate various versions of the notebook index page from the YAML input file\n"
+        "{command} --index-input nb_index.yaml --index-output nb_index.md"
+        "\n"
         "# Run with <options> at different levels of verbosity\n"
         "{command} <options>      # Show warning, error, fatal messages\n"
         "{command} -v <options>   # Add informational (info) messages\n"
@@ -1352,6 +1464,18 @@ def main():
         dest="vb",
         help="Increase verbosity",
         default=0,
+    )
+    ap.add_argument(
+        "--index-input",
+        default=None,
+        metavar="FILE",
+        help="Build the notebook index from the given input file",
+    )
+    ap.add_argument(
+        "--index-output",
+        default=None,
+        metavar="FILE",
+        help="Create the notebook index in the given output file",
     )
     ap.add_argument(
         "--workers",
@@ -1452,6 +1576,24 @@ def main():
             _log.fatal(f"Could not build Sphinx docs: {err}")
             return -1
 
+    if args.index_input:
+        notify("Build index page")
+        input_path = Path(args.index_input)
+        if not args.index_output:
+            if input_path.suffix:
+                output_base = str(input_path)[: -len(input_path.suffix)]
+            else:
+                output_base = str(input_path)
+            output_path = Path(output_base + ".md")
+        else:
+            output_path = Path(args.index_output)
+        try:
+            ix_page = IndexPage(input_path)
+            ix_page.convert(output_path)
+        except IndexPageInputFile as err:
+            _log.fatal(f"Error reading from intput file: {err}")
+        except IndexPageOutputFile as err:
+            _log.fatal(f"Error writing to output file: {err}")
     return status_code
 
 
