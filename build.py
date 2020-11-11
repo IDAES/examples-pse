@@ -1302,10 +1302,16 @@ class IndexPage:
         notebook_file = open(output_path, "w")
         nbformat.write(nb, notebook_file)
 
-    def _write_markdown_contents(self, contents, depth, path):
+    def _write_markdown_contents(self, contents, depth, path, tutorials=True):
         base_path = path
         for section in contents:
             name = section.get("name")
+            # If we are in either special section Tutorials or Examples,
+            # set the `tutorials` flag appropriately
+            if name.lower() == "tutorials":
+                tutorials = True
+            elif name.lower() == "examples":
+                tutorials = False
             path = name if base_path == "" else base_path + "/" + name
             title = section.get("title", name)
             id_ = path.replace("/", ".").lower()
@@ -1317,16 +1323,23 @@ class IndexPage:
                 self._write(desc)
                 self._write("\n")
             if "subfolders" in section:
-                self._write_markdown_contents(section["subfolders"], depth + 1, path)
-            elif "notebooks" in section:
+                self._write_markdown_contents(section["subfolders"], depth + 1, path,
+                                              tutorials=tutorials)
+            if "notebooks" in section:
                 for nb in section["notebooks"]:
-                    # self._write("\n")
                     key = list(nb.keys())[0]
                     value = nb[key]
-                    self._write(f"  * `{key}` - {value} ")
-                    for suffix in "exercise", "solution":
-                        url = urllib.parse.quote(str(path) + f"/{value}_{suffix}.ipynb")
-                        self._write(f"[[{suffix}]({url})] ")
+                    if tutorials:
+                        # for tutorials, default link is exercise, but provide both in brackets at end
+                        url = urllib.parse.quote(str(path) + f"/{key}_exercise.ipynb")
+                        self._write(f"  * [{key}]({url}) - {value} ")
+                        for suffix in "exercise", "solution":
+                            url = urllib.parse.quote(str(path) + f"/{key}_{suffix}.ipynb")
+                            self._write(f"[[{suffix}]({url})] ")
+                    else:
+                        # for examples, just one link
+                        url = urllib.parse.quote(str(path) + f"/{key}.ipynb")
+                        self._write(f"  * [{key}]({url}) - {value}")
                     self._write("\n")
 
     def _write(self, text):
