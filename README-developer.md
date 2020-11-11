@@ -62,6 +62,6 @@ You can run the `build.py` script in testing mode (see `-h` option for details) 
 to test the notebooks.
 
 A more limited set of notebooks to examine is configured in the
-`build-circleci.yml` file, which you can pass to the `--config` option of the build
+`build-ci.yml` file, which you can pass to the `--config` option of the build
 script. This will emulate how the code is tested on CircleCI during a pull request.
 

@@ -1,6 +1,6 @@
 #
 # Configuration file for build.py,
-# to be used for testing and on CircleCI
+# to be used for testing and for CI
 
 # Paths used for all sections
 paths:
@@ -12,12 +12,13 @@ paths:
   html: _build/html
 # Settings for running and converting Jupyter Notebooks
 notebook:
-    num_workers: 2
+    num_workers: 1
     # continue on errors (otherwise stop)
     continue_on_error: true
     test_mode: true
+    timeout: 300
     # where to put error files. special values: '__stdout__',  '__stderr__'
-    error_file: circleci-test-errors.txt
+    error_file: ci-test-errors.txt
     # template file for the "_doc" wrapper RST file
     template: docs/jupyter_notebook_sphinx.tpl
     directories:
