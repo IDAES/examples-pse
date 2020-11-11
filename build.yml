@@ -44,7 +44,11 @@ notebook:
           output: matopt
         - source: surrogate/pysmo
           output: surrogate_models/pysmo
-
+# Settings for building the notebook index page.
+# These can be overridden with options to the script.
+notebook_index:
+  input_file: notebook_index.yml
+  output_file: src/notebook_index.ipynb
 # Settings for running Sphinx build
 sphinx:
     # Arguments that are given to 'sphinx-build' after arguments fixed in the code

@@ -185,6 +185,10 @@ class Settings:
             "test_mode": False,
             "num_workers": 1,
         },
+        "notebook_index": {
+            "input_file": "notebook_index.yml",
+            "output_file": "src/notebook_index.ipynb"
+        }
     }
 
     _NULL = "__null__"
@@ -1265,6 +1269,7 @@ class IndexPage:
         elif suffix == "ipynb":
             _log.debug(f"Creating Jupyter notebook at '{output_path}'")
             self.write_notebook(output_path)
+            fmt = "Jupyter notebook"
         else:
             raise IndexPageUnknownSuffix(path.suffix)
         _log.info(f"Created index page in {fmt} format: {output_path}")
@@ -1296,7 +1301,11 @@ class IndexPage:
             metadata={"kernel_info": {}},
             nbformat=4,
             nbformat_minor=0,
-            cells=[nbformat.NotebookNode(cell_type="markdown", metadata={}, source=cell_contents)],
+            cells=[
+                nbformat.NotebookNode(
+                    cell_type="markdown", metadata={}, source=cell_contents
+                )
+            ],
         )
         # print(nb.cells)
         notebook_file = open(output_path, "w")
@@ -1323,8 +1332,9 @@ class IndexPage:
                 self._write(desc)
                 self._write("\n")
             if "subfolders" in section:
-                self._write_markdown_contents(section["subfolders"], depth + 1, path,
-                                              tutorials=tutorials)
+                self._write_markdown_contents(
+                    section["subfolders"], depth + 1, path, tutorials=tutorials
+                )
             if "notebooks" in section:
                 for nb in section["notebooks"]:
                     key = list(nb.keys())[0]
@@ -1334,7 +1344,9 @@ class IndexPage:
                         url = urllib.parse.quote(str(path) + f"/{key}_exercise.ipynb")
                         self._write(f"  * [{key}]({url}) - {value} ")
                         for suffix in "exercise", "solution":
-                            url = urllib.parse.quote(str(path) + f"/{key}_{suffix}.ipynb")
+                            url = urllib.parse.quote(
+                                str(path) + f"/{key}_{suffix}.ipynb"
+                            )
                             self._write(f"[[{suffix}]({url})] ")
                     else:
                         # for examples, just one link
@@ -1498,6 +1510,15 @@ def main():
         type=int,
         help="Number of parallel processes to run. Overrides `notebook.num_workers` in settings",
     )
+    ap.add_argument(
+        "-x",
+        "--index",
+        dest="build_index",
+        action="store_true",
+        help="Build the index notebook. " 
+             "Use '--index-output' and '--index-input' to override input and"
+             "output files set in the configuration",
+    )
     args = ap.parse_args()
 
     # Check for confusing option combinations
@@ -1589,18 +1610,20 @@ def main():
             _log.fatal(f"Could not build Sphinx docs: {err}")
             return -1
 
-    if args.index_input:
+    if args.build_index:
         notify("Build index page")
-        input_path = Path(args.index_input)
-        if not args.index_output:
-            if input_path.suffix:
-                output_base = str(input_path)[: -len(input_path.suffix)]
-            else:
-                output_base = str(input_path)
-            output_path = Path(output_base + ".md")
+        if args.index_input is None:
+            index_input = settings.get("notebook_index.input_file")
         else:
-            output_path = Path(args.index_output)
+            index_input = args.index_input
+        input_path = Path(index_input)
+        if not args.index_output:
+            index_output = settings.get("notebook_index.output_file")
+        else:
+            index_output = args.index_output
+        output_path = Path(index_output)
         try:
+            _log.info(f"Generating notebook index page: '{input_path}' -> '{output_path}'")
             ix_page = IndexPage(input_path)
             ix_page.convert(output_path)
         except IndexPageInputFile as err:
