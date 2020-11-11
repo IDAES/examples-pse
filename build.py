@@ -1320,7 +1320,7 @@ class IndexPage:
                 self._write_markdown_contents(section["subfolders"], depth + 1, path)
             elif "notebooks" in section:
                 for nb in section["notebooks"]:
-                    self._write("\n")
+                    # self._write("\n")
                     key = list(nb.keys())[0]
                     value = nb[key]
                     self._write(f"  * `{key}` - {value} ")
