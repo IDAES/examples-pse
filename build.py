@@ -112,6 +112,12 @@ _log.propagate = False
 _log.setLevel(logging.INFO)
 
 
+# This is an UGLY workaround for a bug in some versions of Tornado on Windows for Python 3.8
+if sys.platform == 'win32':
+    import asyncio
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
 class NotebookError(Exception):
     pass
 
@@ -442,6 +448,7 @@ class NotebookBuilder(Builder):
         if kernel:
             kwargs["kernel_name"] = kernel
         timeout = self.s.get("timeout", default=600)
+        _log.debug(f"Create ExecutePreprocessor timeout={timeout} kwargs={kwargs}")
         return ExecutePreprocessor(timeout=timeout, **kwargs)
 
     def _read_template(self):
@@ -722,7 +729,7 @@ class ParallelNotebookWorker:
             self.log_error(f"Failed to convert {job.nb}: {err}")
         except Exception as err:
             ok, why = False, f"Unknown error: {err}"
-            self.log_error(f"Failed due to unknown error: {err}")
+            self.log_error(f"Failed due to error: {err}")
 
         time_end = time.time()
 
@@ -973,7 +980,8 @@ class ParallelNotebookWorker:
         self.log_debug(f"executing '{entry}'")
         t0 = time.time()
         try:
-            self.processor.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
+            metadata = {"metadata": {"path": str(entry.parent)}}
+            self.processor.preprocess(nb, metadata)
         except (CellExecutionError, NameError) as err:
             raise NotebookExecError(f"execution error for '{entry}': {err}")
         except TimeoutError as err:
@@ -1628,8 +1636,11 @@ def main():
             ix_page.convert(output_path)
         except IndexPageInputFile as err:
             _log.fatal(f"Error reading from intput file: {err}")
+            status_code = 2
         except IndexPageOutputFile as err:
             _log.fatal(f"Error writing to output file: {err}")
+            status_code = 2
+
     return status_code
 
 
