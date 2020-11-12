@@ -112,7 +112,7 @@ _log.propagate = False
 _log.setLevel(logging.INFO)
 
 
-# This is an UGLY workaround for a bug in some versions of Tornado on Windows for Python 3.8
+# This is a workaround for a bug in some versions of Tornado on Windows for Python 3.8
 if sys.platform == 'win32':
     import asyncio
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
