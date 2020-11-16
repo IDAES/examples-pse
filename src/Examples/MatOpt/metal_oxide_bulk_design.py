@@ -22,7 +22,7 @@ if __name__ == '__main__':
     iDesiredConfs = [394, 395, 396, 397, 398, 399, 400, 401, 68, 69,
                      70, 71, 162, 163, 164, 165, 166, 167, 168, 169]
     with TemporaryDirectory() as ConfDir:
-        ZipFile('./confs.zip').extractall(ConfDir)
+        ZipFile('confs.zip').extractall(ConfDir)
         ConfDesigns = loadFromPDBs([str(i) + '.pdb' for i in iDesiredConfs], folder=ConfDir + '/confs/')
     Confs = [Conf.Contents for Conf in ConfDesigns]
 

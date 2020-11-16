@@ -21,7 +21,7 @@ import os
 def main():
     # Load XY data from high fidelity model from tab file using Pandas. Y-data must be in the last column.
     current_path = os.path.dirname(os.path.realpath(__file__))
-    data = pd.read_csv(os.path.join(current_path, 'data_files','six_hump_function_data.tab'), sep='\t', header=0, index_col=0)
+    data = pd.read_csv(os.path.join(current_path, 'data_files', 'six_hump_function_data.tab'), sep='\t', header=0, index_col=0)
 
     b = sp.LatinHypercubeSampling(data, 30, 'selection')
     tr_data = b.sample_points()
