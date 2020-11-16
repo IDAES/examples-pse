@@ -1273,16 +1273,17 @@ class IndexPage:
         suffix = path.suffix.lower()[1:]
         fmt = ""
         if suffix in ("md", "markdown"):
-            _log.debug(f"Creating markdown at '{output_path}'")
+            _log.info(f"Creating markdown at '{output_path}'")
             self.write_markdown(output_path)
             fmt = "markdown"
         elif suffix == "ipynb":
-            _log.debug(f"Creating Jupyter notebook at '{output_path}'")
+            _log.info(f"Creating Jupyter notebook at '{output_path}'")
             self.write_notebook(output_path)
             fmt = "Jupyter notebook"
         elif suffix == "txt":
-            _log.debug(f"Creating listing of files at '{output_path}'")
+            _log.info(f"Creating listing of files at '{output_path}'")
             self.write_listing(output_path)
+            fmt = "text listing"
         else:
             raise IndexPageUnknownSuffix(path.suffix)
         _log.info(f"Created index page in {fmt} format: {output_path}")
@@ -1295,11 +1296,13 @@ class IndexPage:
         except Exception as err:
             raise IndexPageOutputFile(str(err))
         listing = self._extract_listing(self._ix["contents"])
+        if _log.isEnabledFor(logging.DEBUG):
+            _log.debug(f"Listing: {listing}")
         self._write_listing(listing, 0)
 
     def _write_listing(self, x, lvl):
         indent = "  " * lvl
-        if len(x) < 2 or not isinstance(x[1], list):
+        if not (isinstance(x[0], list)) or (len(x) > 1 and isinstance(x[1], str)):
             # list of notebooks (leaves)
             for item in x:
                 self._of.write(f"{indent}- {item}\n")
@@ -1317,7 +1320,9 @@ class IndexPage:
                 subfolder = self._extract_listing(section["subfolders"])
                 listing.append([name, subfolder])
             elif "notebooks" in section:
-                listing.append([name, [list(d.keys())[0] for d in section["notebooks"]]])
+                listing.append(
+                    [name, [list(d.keys())[0] for d in section["notebooks"]]]
+                )
         return listing
 
     def write_markdown(self, output_path):
