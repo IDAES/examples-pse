@@ -113,8 +113,9 @@ _log.setLevel(logging.INFO)
 
 
 # This is a workaround for a bug in some versions of Tornado on Windows for Python 3.8
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import asyncio
+
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
@@ -193,8 +194,8 @@ class Settings:
         },
         "notebook_index": {
             "input_file": "notebook_index.yml",
-            "output_file": "src/notebook_index.ipynb"
-        }
+            "output_file": "src/notebook_index.ipynb",
+        },
     }
 
     _NULL = "__null__"
@@ -1272,15 +1273,52 @@ class IndexPage:
         suffix = path.suffix.lower()[1:]
         fmt = ""
         if suffix in ("md", "markdown"):
+            _log.debug(f"Creating markdown at '{output_path}'")
             self.write_markdown(output_path)
             fmt = "markdown"
         elif suffix == "ipynb":
             _log.debug(f"Creating Jupyter notebook at '{output_path}'")
             self.write_notebook(output_path)
             fmt = "Jupyter notebook"
+        elif suffix == "txt":
+            _log.debug(f"Creating listing of files at '{output_path}'")
+            self.write_listing(output_path)
         else:
             raise IndexPageUnknownSuffix(path.suffix)
         _log.info(f"Created index page in {fmt} format: {output_path}")
+
+    def write_listing(self, output_path):
+        """Write a text version of the page just listing the files to `output_path`.
+        """
+        try:
+            self._of = open(output_path, "w")
+        except Exception as err:
+            raise IndexPageOutputFile(str(err))
+        listing = self._extract_listing(self._ix["contents"])
+        self._write_listing(listing, 0)
+
+    def _write_listing(self, x, lvl):
+        indent = "  " * lvl
+        if len(x) < 2 or not isinstance(x[1], list):
+            # list of notebooks (leaves)
+            for item in x:
+                self._of.write(f"{indent}- {item}\n")
+        else:
+            # folder
+            for title, items in x:
+                self._of.write(f"{indent}- {title}\n")
+                self._write_listing(items, lvl + 1)
+
+    def _extract_listing(self, contents):
+        listing = []
+        for section in contents:
+            name = section.get("name")
+            if "subfolders" in section:
+                subfolder = self._extract_listing(section["subfolders"])
+                listing.append([name, subfolder])
+            elif "notebooks" in section:
+                listing.append([name, [list(d.keys())[0] for d in section["notebooks"]]])
+        return listing
 
     def write_markdown(self, output_path):
         """Write a markdown version of the page to `output_path`.
@@ -1523,9 +1561,9 @@ def main():
         "--index",
         dest="build_index",
         action="store_true",
-        help="Build the index notebook. " 
-             "Use '--index-output' and '--index-input' to override input and"
-             "output files set in the configuration",
+        help="Build the index notebook. "
+        "Use '--index-output' and '--index-input' to override input and"
+        "output files set in the configuration",
     )
     args = ap.parse_args()
 
@@ -1631,7 +1669,9 @@ def main():
             index_output = args.index_output
         output_path = Path(index_output)
         try:
-            _log.info(f"Generating notebook index page: '{input_path}' -> '{output_path}'")
+            _log.info(
+                f"Generating notebook index page: '{input_path}' -> '{output_path}'"
+            )
             ix_page = IndexPage(input_path)
             ix_page.convert(output_path)
         except IndexPageInputFile as err:
