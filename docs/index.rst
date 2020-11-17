@@ -25,3 +25,6 @@ Contents
     Tutorials/index
 
 
+.. include:: ../COPYRIGHT.md
+
+.. include:: ../LICENSE.md
