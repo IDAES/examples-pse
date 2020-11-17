@@ -466,7 +466,11 @@ class NotebookBuilder(Builder):
         and convert and build their output into `info['output']`.
         """
         try:
-            source, output = info["source"], info["output"]
+            source = info["source"]
+            if "output" not in info:
+                output = source
+            else:
+                output = info["output"]
             match = info.get("match", None)
         except KeyError:
             raise NotebookError(
@@ -1149,8 +1153,11 @@ class SphinxBuilder(Builder):
         notify(f"from: {doc_dir}", 1)
         notify(f"to  : {html_dir}", 1)
         for nb_dir in self.s.get("notebook.directories"):
-            nb_output_dir = doc_dir / nb_dir["output"]
             nb_source_dir = src_dir / nb_dir["source"]
+            if "output" in nb_dir:
+                nb_output_dir = doc_dir / nb_dir["output"]
+            else:
+                nb_output_dir = doc_dir / nb_dir["source"]
             _log.debug(f"find notebooks in path: {nb_output_dir}")
             for nb_path in Path(nb_output_dir).glob("**/*.ipynb"):
                 nb_dest = html_dir / nb_path.relative_to(doc_dir)
@@ -1245,7 +1252,8 @@ class Cleaner(Builder):
         stop_list = {"index.rst"}
         file_types = ["rst", "html", "ipynb", "failed"] + list(IMAGE_SUFFIXES)
         for notebook_dirs in self.s.get("notebook.directories"):
-            docs_output = docs_path / notebook_dirs["output"]
+            output = notebook_dirs.get("output", notebook_dirs.get("source"))
+            docs_output = docs_path / output
             for file_type in file_types:
                 for f in docs_output.glob(f"**/*.{file_type}"):
                     if f.name not in stop_list:
