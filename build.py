@@ -1296,43 +1296,6 @@ class IndexPage:
             raise IndexPageUnknownSuffix(path.suffix)
         _log.info(f"Created index page in {fmt} format: {output_path}")
 
-    def write_listing(self, output_path):
-        """Write a text version of the page just listing the files to `output_path`.
-        """
-        try:
-            self._of = open(output_path, "w")
-        except Exception as err:
-            raise IndexPageOutputFile(str(err))
-        listing = self._extract_listing(self._ix["contents"])
-        if _log.isEnabledFor(logging.DEBUG):
-            _log.debug(f"Listing: {listing}")
-        self._write_listing(listing, 0)
-
-    def _write_listing(self, x, lvl):
-        indent = "  " * lvl
-        if not (isinstance(x[0], list)) or (len(x) > 1 and isinstance(x[1], str)):
-            # list of notebooks (leaves)
-            for item in x:
-                self._of.write(f"{indent}- {item}\n")
-        else:
-            # folder
-            for title, items in x:
-                self._of.write(f"{indent}- {title}\n")
-                self._write_listing(items, lvl + 1)
-
-    def _extract_listing(self, contents):
-        listing = []
-        for section in contents:
-            name = section.get("name")
-            if "subfolders" in section:
-                subfolder = self._extract_listing(section["subfolders"])
-                listing.append([name, subfolder])
-            elif "notebooks" in section:
-                listing.append(
-                    [name, [list(d.keys())[0] for d in section["notebooks"]]]
-                )
-        return listing
-
     def write_markdown(self, output_path):
         """Write a markdown version of the page to `output_path`.
         """
@@ -1350,25 +1313,6 @@ class IndexPage:
             self._write(f"## {section['title']}\n")
             self._write(section["text"])
             self._write("\n")
-
-    def write_notebook(self, output_path):
-        self._of = StringIO()
-        self._write_markdown_front_matter()
-        self._write_markdown_contents(self._ix["contents"], 2, "")
-        cell_contents = [s + "\n" for s in self._of.getvalue().split("\n")]
-        nb = nbformat.NotebookNode(
-            metadata={"kernel_info": {}},
-            nbformat=4,
-            nbformat_minor=0,
-            cells=[
-                nbformat.NotebookNode(
-                    cell_type="markdown", metadata={}, source=cell_contents
-                )
-            ],
-        )
-        # print(nb.cells)
-        notebook_file = open(output_path, "w")
-        nbformat.write(nb, notebook_file)
 
     def _write_markdown_contents(self, contents, depth, path, tutorials=True):
         base_path = path
@@ -1412,6 +1356,62 @@ class IndexPage:
                         url = urllib.parse.quote(str(path) + f"/{key}.ipynb")
                         self._write(f"  * [{key}]({url}) - {value}")
                     self._write("\n")
+
+    def write_notebook(self, output_path):
+        self._of = StringIO()
+        self._write_markdown_front_matter()
+        self._write_markdown_contents(self._ix["contents"], 2, "")
+        cell_contents = [s + "\n" for s in self._of.getvalue().split("\n")]
+        nb = nbformat.NotebookNode(
+            metadata={"kernel_info": {}},
+            nbformat=4,
+            nbformat_minor=0,
+            cells=[
+                nbformat.NotebookNode(
+                    cell_type="markdown", metadata={}, source=cell_contents
+                )
+            ],
+        )
+        # print(nb.cells)
+        notebook_file = open(output_path, "w")
+        nbformat.write(nb, notebook_file)
+
+    def write_listing(self, output_path):
+        """Write a text version of the page just listing the files to `output_path`.
+        """
+        try:
+            self._of = open(output_path, "w")
+        except Exception as err:
+            raise IndexPageOutputFile(str(err))
+        listing = self._extract_listing(self._ix["contents"])
+        if _log.isEnabledFor(logging.DEBUG):
+            _log.debug(f"Listing: {listing}")
+        self._write_listing(listing, 0)
+
+    def _write_listing(self, x, lvl):
+        indent = "  " * lvl
+        if not (isinstance(x[0], list)) or (len(x) > 1 and isinstance(x[1], str)):
+            # list of notebooks (leaves)
+            for item in x:
+                self._of.write(f"{indent}- {item}\n")
+        else:
+            # folder
+            for title, items in x:
+                self._of.write(f"{indent}- {title}\n")
+                self._write_listing(items, lvl + 1)
+
+    def _extract_listing(self, contents):
+        listing = []
+        for section in contents:
+            name = section.get("name")
+            if "subfolders" in section:
+                subfolder = self._extract_listing(section["subfolders"])
+                listing.append([name, subfolder])
+            elif "notebooks" in section:
+                listing.append(
+                    [name, [list(d.keys())[0] for d in section["notebooks"]]]
+                )
+        return listing
 
     def _write(self, text):
         self._of.write(text)
