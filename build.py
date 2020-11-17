@@ -612,29 +612,6 @@ class ParallelNotebookWorker:
 
      Main method is `convert`.
      """
-
-    #: CSS stylesheet for notebooks
-    STYLESHEET = """
-    #notebook-container {
-      box-shadow: none;  /* get rid of cheesy shadow */
-      -webkit-box-shadow: none;
-      padding 5px;
-      width: auto !important; /* expand to container */
-      min-width: 400px !important;
-    }
-    .wy-nav-content {
-      max-width: 90%; /* top container for notebook */
-    }
-    .run_this_cell {
-        padding-left: 0px;
-        padding-right: 0px;
-    }
-    /* Hide section name (at top) */
-    div.section > h1 {
-        display: none;
-    }
-    """
-
     # Map format to file extension
     FORMATS = {"html": ".html", "rst": ".rst"}
 
@@ -1059,21 +1036,6 @@ class ParallelNotebookWorker:
             # print(f"@@ depth={depth}; rewrote image link '{orig}' as '{splits[i]}'")
         # rejoin splits, to make the modified body text
         body = "".join(splits)
-        # hack in some CSS, replacing useless link
-        custom = re.search(r'<\s*link.*href="custom.css"\s*>', body)
-        if custom:
-            p1, p2 = custom.span()
-            body = "".join(
-                (
-                    body[:p1],
-                    '<style type="text/css">',
-                    self.STYLESHEET,
-                    "</style>",
-                    body[p2:],
-                )
-            )
-        else:
-            self.log_warning("Could not insert stylesheet in HTML")
         # done
         return body
 
