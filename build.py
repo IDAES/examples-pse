@@ -485,7 +485,8 @@ class NotebookBuilder(Builder):
         notify(f"Looking for notebooks in '{srcdir}'", level=1)
         self._match_expr = re.compile(match) if match else None
         # build, starting at this directory
-        self.discover_subtree(srcdir, outdir, depth=1)
+        initial_depth = len(Path(source).parts)
+        self.discover_subtree(srcdir, outdir, depth=initial_depth)
         self._results.dirs_processed.append(srcdir)
 
     def discover_subtree(self, srcdir: Path, outdir: Path, depth: int):
@@ -990,32 +991,48 @@ class ParallelNotebookWorker:
     def _postprocess_rst(self, body):
         return self._replace_image_refs(body)
 
-    # support up to 35 different images
-    IMAGE_NUMBERS = " 123456789abcdefghijklmnopqrstuvwxyz"
+    IMAGE_IDS = '0123456789abcdefghijklmnopqrstuvwxyz'
 
     def _replace_image_refs(self, body):
-        """Replace |image0| references with successive numbers, instead of
-            having them all be "image0". The order is "|image0|" then
-            ".. |image0|".
+        """Replace duplicate |image<n>| references and associated directives with successive numbers.
         """
+        m =  re.search(r"(.*)\n=+\n", body, flags=re.M)
+        title = "unknown" if m is None else m.group(1)
         chars = list(body)  # easy to manipulate this way
-        pos, n = 0, 0
+        body_pos, n = 0, 0
+        image_ids = set()
         while True:
+            # print(f"@@ pos={body_pos}")
+            remainder = body[body_pos:]
             # find next image reference
-            pos = body.find("|image0|\n", pos)
-            if pos == -1:
+            m = re.search(r"\|image(.)\|\n", remainder)
+            if m is None:
                 break  # no more references; stop
-            pos2 = body.find(".. |image0|", pos + 8)
-            if pos2 == -1:
-                raise ValueError(f"Couldn't find image matching ref at {pos}")
-            if n > 0:  # don't do anything for the first one
-                c = self.IMAGE_NUMBERS[n]
-                # replace '0' with another thing in ref
-                chars[pos + 6] = c
-                # replace '0' with same other thing in image
-                chars[pos2 + 9] = c
-            pos = pos2 + 10  # skip past the one we just completed
-            n += 1  # increment image number
+            image_id = m.group(1)
+            if image_id in image_ids:
+                pos = m.span()[1]
+                referent = f".. |image{image_id}|"
+                pos2 = remainder.find(referent, pos + 1)
+                if pos2 == -1:
+                    raise ValueError(f"Could not find image matching ref at {pos}")
+                new_image_id = None
+                for new_image_id in self.IMAGE_IDS:
+                    if new_image_id not in image_ids:
+                        break
+                if new_image_id is None:
+                    _log.error("_replace_image_refs: Ran out of image IDs")
+                    break
+                # replace id-character with another thing in ref
+                chars[body_pos + pos - 3] = new_image_id
+                # replace id-character with same other thing in image
+                chars[body_pos + pos2 + 9] = new_image_id
+                body_pos += pos2 + 10  # skip past the one we just completed
+                n += 1
+                image_ids.add(new_image_id)
+            else:
+                body_pos += m.span()[1] + 1
+                image_ids.add(image_id)
+        _log.debug(f"Replaced {n} image references in RST document '{title}'")
         return "".join(chars)
 
     def _postprocess_html(self, body, depth):
@@ -1031,9 +1048,10 @@ class ParallelNotebookWorker:
         splits = re.split(r'<img src="(.*\.png"[^>]*)>', body)
         # replace grouping in odd-numbered splits with modified <img>
         for i in range(1, len(splits), 2):
-            # orig = splits[i]
-            splits[i] = f'<img src="{prefix}/{splits[i]}>'
-            # print(f"@@ depth={depth}; rewrote image link '{orig}' as '{splits[i]}'")
+            orig = splits[i]
+            prefix_unix = "/".join(prefix.parts)
+            splits[i] = f'<img src="{prefix_unix}/{splits[i]}>'
+            _log.debug(f"_postprocess_html: at depth={depth}; rewrote image link '{orig}' as '{splits[i]}'")
         # rejoin splits, to make the modified body text
         body = "".join(splits)
         # done
