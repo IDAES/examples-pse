@@ -1,6 +1,7 @@
 Custom properties
 ==================
-Customized properties
+Customized properties (coming soon).
 
-.. toctree::
-    Property packages for air separation units <air_separation_case_study_doc>
+.. Currently empty since the air separation case study fails
+.. .. toctree::
+..    Property packages for air separation units <air_separation_case_study_doc>
