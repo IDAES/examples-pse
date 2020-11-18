@@ -1096,10 +1096,16 @@ class SphinxBuilder(Builder):
         # Run Sphinx command
         errfile = self.s.get("error_file")
         parallel_args = [f"-j{num_workers}"] if num_workers > 1 else []
+        if self.s.get("hide_output"):
+            stdout_kw, stderr_kw = subprocess.DEVNULL, subprocess.DEVNULL
+        else:
+            stdout_kw, stderr_kw = sys.stdout, sys.stderr
         cmdargs = ["sphinx-build", "-a", "-N", "-w", errfile] + parallel_args + args
         cmdline = " ".join(cmdargs)
         notify(f"Running Sphinx command: {cmdline}", level=1)
-        proc = subprocess.Popen(cmdargs)
+        suppressed = "Normal Sphinx output suppressed. " if stdout_kw == subprocess.DEVNULL else ""
+        notify(f"{suppressed}Sphinx warnings and errors are in '{errfile}'", level=2)
+        proc = subprocess.Popen(cmdargs, stdout=stdout_kw, stderr=stderr_kw)
         proc.wait()
         status = proc.returncode
         if status != 0:
@@ -1530,6 +1536,14 @@ def main():
         default=0,
     )
     ap.add_argument(
+        "-S",
+        "--hide-sphinx-output",
+        action="store_true",
+        dest="hide_sphinx_output",
+        help="Don't show Sphinx output on stderr",
+        default=False,
+    )
+    ap.add_argument(
         "--index-input",
         default=None,
         metavar="FILE",
@@ -1644,7 +1658,7 @@ def main():
         notify("Build documentation with Sphinx")
         spb = SphinxBuilder(settings)
         try:
-            spb.build({})
+            spb.build({"hide_output": args.hide_sphinx_output})
         except SphinxError as err:
             _log.fatal(f"Could not build Sphinx docs: {err}")
             return -1
