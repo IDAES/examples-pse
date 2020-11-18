@@ -65,6 +65,7 @@ from abc import ABC, abstractmethod
 import argparse
 from collections import namedtuple
 from datetime import datetime
+import glob
 from io import StringIO
 import logging
 import os
@@ -1261,9 +1262,13 @@ class IndexPage:
         except FileNotFoundError as err:
             raise IndexPageInputFile(str(err))
         self._of = None
+        self._dev = False
 
-    def convert(self, output_path):
+    def convert(self, output_path, dev_mode=False):
+        self._dev = dev_mode
         path = Path(output_path)
+        if self._dev:
+            self._dev_path = path.parent
         suffix = path.suffix.lower()[1:]
         fmt = ""
         if suffix in ("md", "markdown"):
@@ -1294,6 +1299,8 @@ class IndexPage:
 
     def _write_markdown_front_matter(self):
         front_matter = self._ix["front_matter"]
+        if self._dev:
+            self._write("** DEVELOPER MODE **\n")
         self._write("# IDAES Examples\n")
         for section in front_matter:
             self._write(f"## {section['title']}\n")
@@ -1328,7 +1335,23 @@ class IndexPage:
                 for nb in section["notebooks"]:
                     key = list(nb.keys())[0]
                     value = nb[key]
-                    if tutorials:
+                    if self._dev:
+                        # dev-mode links are different
+                        glob_expr = f"{self._dev_path}/{path}/{key}*.ipynb"
+                        real_notebook_names = glob.glob(glob_expr)
+                        if len(real_notebook_names) < 1:
+                            _log.fatal(f"In developer mode, no notebooks for '{glob_expr}: "
+                                       f"{real_notebook_names}")
+                            raise ValueError("Developer mode: notebook not found")
+                        if len(real_notebook_names) > 1:
+                            real_notebook_names.sort(key=len)  # shortest first
+                        nb_name = Path(real_notebook_names[0]).name
+                        nb_path = f"{path}/{nb_name}"
+                        url = urllib.parse.quote(nb_path)
+                        self._write(f"  * [{key}]({url}) - {value} ")
+                        for suffix in "exercise", "solution":
+                            self._write(f"[[{suffix}]({url})] ")
+                    elif tutorials:
                         # for tutorials, default link is exercise, but provide both in brackets at end
                         url = urllib.parse.quote(str(path) + f"/{key}_exercise.ipynb")
                         self._write(f"  * [{key}]({url}) - {value} ")
@@ -1347,15 +1370,28 @@ class IndexPage:
         self._of = StringIO()
         self._write_markdown_front_matter()
         self._write_markdown_contents(self._ix["contents"], 2, "")
+        # create N + 1 cells: First section, each subsection + footer
         cell_contents = [s + "\n" for s in self._of.getvalue().split("\n")]
+        sections = [[]]
+        cur = sections[0]
+        for line in cell_contents:
+            if line.startswith("##") and not line.startswith("###"):
+                new_section = []
+                sections.append(new_section)
+                cur = new_section
+            cur.append(line)
+        sections.append([
+            "## Contact info\n"
+            "General, background and overview information is available at the [IDAES main website](https://idaes.org).\n"
+            "Framework development happens at our GitHub repo where you can report issues/bugs or make contributions.\n" 
+            "For further enquiries, send an email to: idaes-support@idaes.org\n"
+        ])
         nb = nbformat.NotebookNode(
             metadata={"kernel_info": {}},
             nbformat=4,
             nbformat_minor=0,
             cells=[
-                nbformat.NotebookNode(
-                    cell_type="markdown", metadata={}, source=cell_contents
-                )
+                nbformat.NotebookNode(cell_type="markdown", metadata={}, source=section) for section in sections
             ],
         )
         # print(nb.cells)
@@ -1556,6 +1592,13 @@ def main():
         help="Create the notebook index in the given output file",
     )
     ap.add_argument(
+        "--index-dev",
+        default=False,
+        action="store_true",
+        dest="index_dev_mode",
+        help="For the Jupyter Notebook index, generate links in 'dev' mode to the un-stripped notebook names"
+    )
+    ap.add_argument(
         "--workers",
         "-w",
         dest="np",
@@ -1675,12 +1718,13 @@ def main():
         else:
             index_output = args.index_output
         output_path = Path(index_output)
+        dev_mode = args.index_dev_mode
         try:
             _log.info(
                 f"Generating notebook index page: '{input_path}' -> '{output_path}'"
             )
             ix_page = IndexPage(input_path)
-            ix_page.convert(output_path)
+            ix_page.convert(output_path, dev_mode=dev_mode)
         except IndexPageInputFile as err:
             _log.fatal(f"Error reading from intput file: {err}")
             status_code = 2
