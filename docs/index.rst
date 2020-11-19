@@ -1,29 +1,30 @@
 .. _idaes_examples:
 
-IDAES Examples
-==============
+IDAES Tutorials and Examples
+============================
 
-These documentation pages contain examples of building and optimizing
-models with the IDAES PSE toolkit, as well as using applications that extend or
-augment the core IDAES functionality.
+The `IDAES <https://www.idaes.org>`_ integrated platform (IDAES-IP) ships with a number of examples
+cotained in Jupyter notebooks which can be run on
+the user's own computer. This page provides links to
+pre-generated forms of these examples. For instructions on downloading and running them on your own computer,
+see the `IDAES-IP main documentation page <https://idaes-pse.readthedocs.io/>`_.
 
-* :ref:`x_workshops` provide examples from workshops for building, optimizing, and analyzing models
-* :ref:`x_tutorials` provide tutorials for building, optimizing, and analyzing models
-* :ref:`x_surrogate_models` demonstrate the surrogate modeling capabilities of PySMO, ALAMO, and RIPE.
-* :ref:`x_matopt` Show how to use the MatOpt application
+Although all the files are examples in the broad sense, the distinction here between "Examples" and "Tutorials"
+is the amount of didactic content. In particular, Jupyter notebooks in the "Tutorials" section contain explicit
+exercise and solution cells (a `cell` is a section of code or text in a Jupyter notebook),
+whereas the "Examples" notebooks do not. When you download these examples to your
+own computer, for the tutorial notebooks you can choose to run the version that has only the exercises and no
+solutions.
 
-.. note:: All the examples here are available for installation as part of the IDAES-PSE software.
-          Please see the `IDAES PSE documentation <https://idaes-pse.readthedocs.io/en/stable/>`_ for instructions on
-          installing and running the examples on your own computer.
+Contents
+--------
 
 .. toctree::
-    :hidden:
-    :maxdepth: 2
 
-    workshops/index
-    tutorials/index
-    surrogate_models/index
-    matopt/index
-    license
-    copyright
+    Examples/index
+    Tutorials/index
 
+
+.. include:: ../COPYRIGHT.md
+
+.. include:: ../LICENSE.md

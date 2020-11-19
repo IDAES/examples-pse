@@ -65,6 +65,8 @@ from abc import ABC, abstractmethod
 import argparse
 from collections import namedtuple
 from datetime import datetime
+import glob
+from io import StringIO
 import logging
 import os
 from pathlib import Path
@@ -75,6 +77,7 @@ from string import Template
 import sys
 import tempfile
 from typing import List, TextIO, Tuple, Optional
+import urllib.parse
 import yaml
 
 _import_timings.append(("stdlib", time.time()))
@@ -110,6 +113,13 @@ _log.propagate = False
 _log.setLevel(logging.INFO)
 
 
+# This is a workaround for a bug in some versions of Tornado on Windows for Python 3.8
+if sys.platform == "win32":
+    import asyncio
+
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
 class NotebookError(Exception):
     pass
 
@@ -136,6 +146,22 @@ class SphinxCommandError(Exception):
             f"Sphinx error while running '{cmdline}': {errmsg}. " f"Details: {details}"
         )
         super().__init__(msg)
+
+
+class IndexPageError(Exception):
+    pass
+
+
+class IndexPageUnknownSuffix(IndexPageError):
+    pass
+
+
+class IndexPageOutputFile(IndexPageError):
+    pass
+
+
+class IndexPageInputFile(IndexPageError):
+    pass
 
 
 # Images to copy to the build directory
@@ -166,6 +192,10 @@ class Settings:
             "kernel": None,
             "test_mode": False,
             "num_workers": 1,
+        },
+        "notebook_index": {
+            "input_file": "notebook_index.yml",
+            "output_file": "src/notebook_index.ipynb",
         },
     }
 
@@ -420,6 +450,7 @@ class NotebookBuilder(Builder):
         if kernel:
             kwargs["kernel_name"] = kernel
         timeout = self.s.get("timeout", default=600)
+        _log.debug(f"Create ExecutePreprocessor timeout={timeout} kwargs={kwargs}")
         return ExecutePreprocessor(timeout=timeout, **kwargs)
 
     def _read_template(self):
@@ -436,7 +467,11 @@ class NotebookBuilder(Builder):
         and convert and build their output into `info['output']`.
         """
         try:
-            source, output = info["source"], info["output"]
+            source = info["source"]
+            if "output" not in info:
+                output = source
+            else:
+                output = info["output"]
             match = info.get("match", None)
         except KeyError:
             raise NotebookError(
@@ -451,7 +486,8 @@ class NotebookBuilder(Builder):
         notify(f"Looking for notebooks in '{srcdir}'", level=1)
         self._match_expr = re.compile(match) if match else None
         # build, starting at this directory
-        self.discover_subtree(srcdir, outdir, depth=1)
+        initial_depth = len(Path(source).parts)
+        self.discover_subtree(srcdir, outdir, depth=initial_depth)
         self._results.dirs_processed.append(srcdir)
 
     def discover_subtree(self, srcdir: Path, outdir: Path, depth: int):
@@ -578,29 +614,6 @@ class ParallelNotebookWorker:
 
      Main method is `convert`.
      """
-
-    #: CSS stylesheet for notebooks
-    STYLESHEET = """
-    #notebook-container {
-      box-shadow: none;  /* get rid of cheesy shadow */
-      -webkit-box-shadow: none;
-      padding 5px;
-      width: auto !important; /* expand to container */
-      min-width: 400px !important;
-    }
-    .wy-nav-content {
-      max-width: 90%; /* top container for notebook */
-    }
-    .run_this_cell {
-        padding-left: 0px;
-        padding-right: 0px;
-    }
-    /* Hide section name (at top) */
-    div.section > h1 {
-        display: none;
-    }
-    """
-
     # Map format to file extension
     FORMATS = {"html": ".html", "rst": ".rst"}
 
@@ -700,7 +713,7 @@ class ParallelNotebookWorker:
             self.log_error(f"Failed to convert {job.nb}: {err}")
         except Exception as err:
             ok, why = False, f"Unknown error: {err}"
-            self.log_error(f"Failed due to unknown error: {err}")
+            self.log_error(f"Failed due to error: {err}")
 
         time_end = time.time()
 
@@ -951,7 +964,8 @@ class ParallelNotebookWorker:
         self.log_debug(f"executing '{entry}'")
         t0 = time.time()
         try:
-            self.processor.preprocess(nb, {"metadata": {"path": str(entry.parent)}})
+            metadata = {"metadata": {"path": str(entry.parent)}}
+            self.processor.preprocess(nb, metadata)
         except (CellExecutionError, NameError) as err:
             raise NotebookExecError(f"execution error for '{entry}': {err}")
         except TimeoutError as err:
@@ -978,32 +992,48 @@ class ParallelNotebookWorker:
     def _postprocess_rst(self, body):
         return self._replace_image_refs(body)
 
-    # support up to 35 different images
-    IMAGE_NUMBERS = " 123456789abcdefghijklmnopqrstuvwxyz"
+    IMAGE_IDS = '0123456789abcdefghijklmnopqrstuvwxyz'
 
     def _replace_image_refs(self, body):
-        """Replace |image0| references with successive numbers, instead of
-            having them all be "image0". The order is "|image0|" then
-            ".. |image0|".
+        """Replace duplicate |image<n>| references and associated directives with successive numbers.
         """
+        m =  re.search(r"(.*)\n=+\n", body, flags=re.M)
+        title = "unknown" if m is None else m.group(1)
         chars = list(body)  # easy to manipulate this way
-        pos, n = 0, 0
+        body_pos, n = 0, 0
+        image_ids = set()
         while True:
+            # print(f"@@ pos={body_pos}")
+            remainder = body[body_pos:]
             # find next image reference
-            pos = body.find("|image0|\n", pos)
-            if pos == -1:
+            m = re.search(r"\|image(.)\|\n", remainder)
+            if m is None:
                 break  # no more references; stop
-            pos2 = body.find(".. |image0|", pos + 8)
-            if pos2 == -1:
-                raise ValueError(f"Couldn't find image matching ref at {pos}")
-            if n > 0:  # don't do anything for the first one
-                c = self.IMAGE_NUMBERS[n]
-                # replace '0' with another thing in ref
-                chars[pos + 6] = c
-                # replace '0' with same other thing in image
-                chars[pos2 + 9] = c
-            pos = pos2 + 10  # skip past the one we just completed
-            n += 1  # increment image number
+            image_id = m.group(1)
+            if image_id in image_ids:
+                pos = m.span()[1]
+                referent = f".. |image{image_id}|"
+                pos2 = remainder.find(referent, pos + 1)
+                if pos2 == -1:
+                    raise ValueError(f"Could not find image matching ref at {pos}")
+                new_image_id = None
+                for new_image_id in self.IMAGE_IDS:
+                    if new_image_id not in image_ids:
+                        break
+                if new_image_id is None:
+                    _log.error("_replace_image_refs: Ran out of image IDs")
+                    break
+                # replace id-character with another thing in ref
+                chars[body_pos + pos - 3] = new_image_id
+                # replace id-character with same other thing in image
+                chars[body_pos + pos2 + 9] = new_image_id
+                body_pos += pos2 + 10  # skip past the one we just completed
+                n += 1
+                image_ids.add(new_image_id)
+            else:
+                body_pos += m.span()[1] + 1
+                image_ids.add(image_id)
+        _log.debug(f"Replaced {n} image references in RST document '{title}'")
         return "".join(chars)
 
     def _postprocess_html(self, body, depth):
@@ -1019,26 +1049,12 @@ class ParallelNotebookWorker:
         splits = re.split(r'<img src="(.*\.png"[^>]*)>', body)
         # replace grouping in odd-numbered splits with modified <img>
         for i in range(1, len(splits), 2):
-            # orig = splits[i]
-            splits[i] = f'<img src="{prefix}/{splits[i]}>'
-            # print(f"@@ depth={depth}; rewrote image link '{orig}' as '{splits[i]}'")
+            orig = splits[i]
+            prefix_unix = "/".join(prefix.parts)
+            splits[i] = f'<img src="{prefix_unix}/{splits[i]}>'
+            _log.debug(f"_postprocess_html: at depth={depth}; rewrote image link '{orig}' as '{splits[i]}'")
         # rejoin splits, to make the modified body text
         body = "".join(splits)
-        # hack in some CSS, replacing useless link
-        custom = re.search(r'<\s*link.*href="custom.css"\s*>', body)
-        if custom:
-            p1, p2 = custom.span()
-            body = "".join(
-                (
-                    body[:p1],
-                    '<style type="text/css">',
-                    self.STYLESHEET,
-                    "</style>",
-                    body[p2:],
-                )
-            )
-        else:
-            self.log_warning("Could not insert stylesheet in HTML")
         # done
         return body
 
@@ -1078,13 +1094,24 @@ class SphinxBuilder(Builder):
             _log.warning(f"Target HTML directory {html_dir} does not exist: creating")
             html_dir.mkdir(parents=True)
 
+        # Copy images into Sphinx dirs (quiets warnings)
+        for nb_dir in self.s.get("notebook.directories"):
+            nb_source_dir = src_dir / nb_dir["source"]
+            self._copy_image_files(nb_source_dir, src_dir, doc_dir, IMAGE_SUFFIXES)
+
         # Run Sphinx command
         errfile = self.s.get("error_file")
         parallel_args = [f"-j{num_workers}"] if num_workers > 1 else []
+        if self.s.get("hide_output"):
+            stdout_kw, stderr_kw = subprocess.DEVNULL, subprocess.DEVNULL
+        else:
+            stdout_kw, stderr_kw = sys.stdout, sys.stderr
         cmdargs = ["sphinx-build", "-a", "-N", "-w", errfile] + parallel_args + args
         cmdline = " ".join(cmdargs)
         notify(f"Running Sphinx command: {cmdline}", level=1)
-        proc = subprocess.Popen(cmdargs)
+        suppressed = "Normal Sphinx output suppressed. " if stdout_kw == subprocess.DEVNULL else ""
+        notify(f"{suppressed}Sphinx warnings and errors are in '{errfile}'", level=2)
+        proc = subprocess.Popen(cmdargs, stdout=stdout_kw, stderr=stderr_kw)
         proc.wait()
         status = proc.returncode
         if status != 0:
@@ -1118,8 +1145,11 @@ class SphinxBuilder(Builder):
         notify(f"from: {doc_dir}", 1)
         notify(f"to  : {html_dir}", 1)
         for nb_dir in self.s.get("notebook.directories"):
-            nb_output_dir = doc_dir / nb_dir["output"]
             nb_source_dir = src_dir / nb_dir["source"]
+            if "output" in nb_dir:
+                nb_output_dir = doc_dir / nb_dir["output"]
+            else:
+                nb_output_dir = doc_dir / nb_dir["source"]
             _log.debug(f"find notebooks in path: {nb_output_dir}")
             for nb_path in Path(nb_output_dir).glob("**/*.ipynb"):
                 nb_dest = html_dir / nb_path.relative_to(doc_dir)
@@ -1128,18 +1158,24 @@ class SphinxBuilder(Builder):
                 _log.debug(f"Copy notebook {nb_path.name} to {nb_dest.parent}")
                 shutil.copy(nb_path, nb_dest)
             _log.info(f"find supporting files in path: {nb_output_dir}")
-            for ext in IMAGE_SUFFIXES:
-                pattern = f"**/*{ext}"
-                for nb_path in Path(nb_source_dir).glob(pattern):
-                    nb_dest = html_dir / nb_path.relative_to(src_dir)
-                    # skip copy, if the directory doesn't exist -- if notebooks all failed
-                    if not nb_dest.parent.exists():
-                        continue
-                    # copy files into destination directory
-                    _log.debug(
-                        f"Copy supporting file {nb_path.name} to {nb_dest.parent}"
-                    )
-                    shutil.copy(nb_path, nb_dest)
+            # Copy images into HTML dirs
+            self._copy_image_files(nb_source_dir, src_dir, html_dir, IMAGE_SUFFIXES)
+
+    @staticmethod
+    def _copy_image_files(nb_source_dir, src_dir, dest_dir, suffixes):
+        """Copy images -- called from two places so refactored here.
+        """
+        for ext in suffixes:
+            pattern = f"**/*{ext}"
+            for nb_path in Path(nb_source_dir).glob(pattern):
+                _log.debug(f"Copying image files with suffix '{ext}' from {nb_path} to {dest_dir}")
+                nb_dest = dest_dir / nb_path.relative_to(src_dir)
+                # skip copy, if the directory doesn't exist
+                if not nb_dest.parent.exists():
+                    continue
+                # copy files into destination directory
+                _log.debug(f"Copy supporting file {nb_path.name} to {nb_dest.parent}")
+                shutil.copy(nb_path, nb_dest)
 
     @staticmethod
     def _extract_sphinx_error(errfile: str):
@@ -1214,7 +1250,8 @@ class Cleaner(Builder):
         stop_list = {"index.rst"}
         file_types = ["rst", "html", "ipynb", "failed"] + list(IMAGE_SUFFIXES)
         for notebook_dirs in self.s.get("notebook.directories"):
-            docs_output = docs_path / notebook_dirs["output"]
+            output = notebook_dirs.get("output", notebook_dirs.get("source"))
+            docs_output = docs_path / output
             for file_type in file_types:
                 for f in docs_output.glob(f"**/*.{file_type}"):
                     if f.name not in stop_list:
@@ -1222,6 +1259,195 @@ class Cleaner(Builder):
                         f.unlink()
                         removed_any = True
         return removed_any
+
+
+class IndexPage:
+    """Create various versions of the index page.
+    """
+
+    def __init__(self, input_path):
+        """Create with data from the YAML in `input_path`.
+        """
+        try:
+            self._ix = yaml.safe_load(open(input_path))
+        except FileNotFoundError as err:
+            raise IndexPageInputFile(str(err))
+        self._of = None
+        self._dev = False
+
+    def convert(self, output_path, dev_mode=False):
+        self._dev = dev_mode
+        path = Path(output_path)
+        if self._dev:
+            self._dev_path = path.parent
+        suffix = path.suffix.lower()[1:]
+        fmt = ""
+        if suffix in ("md", "markdown"):
+            _log.info(f"Creating markdown at '{output_path}'")
+            self.write_markdown(output_path)
+            fmt = "markdown"
+        elif suffix == "ipynb":
+            _log.info(f"Creating Jupyter notebook at '{output_path}'")
+            self.write_notebook(output_path)
+            fmt = "Jupyter notebook"
+        elif suffix == "txt":
+            _log.info(f"Creating listing of files at '{output_path}'")
+            self.write_listing(output_path)
+            fmt = "text listing"
+        else:
+            raise IndexPageUnknownSuffix(path.suffix)
+        _log.info(f"Created index page in {fmt} format: {output_path}")
+
+    def write_markdown(self, output_path):
+        """Write a markdown version of the page to `output_path`.
+        """
+        try:
+            self._of = open(output_path, "w")
+        except Exception as err:
+            raise IndexPageOutputFile(str(err))
+        self._write_markdown_front_matter()
+        self._write_markdown_contents(self._ix["contents"], 2, "")
+
+    def _write_markdown_front_matter(self):
+        front_matter = self._ix["front_matter"]
+        if self._dev:
+            self._write("** DEVELOPER MODE **\n")
+        self._write("# IDAES Examples\n")
+        for section in front_matter:
+            self._write(f"## {section['title']}\n")
+            self._write(section["text"])
+            self._write("\n")
+
+    def _write_markdown_contents(self, contents, depth, path, tutorials=True):
+        base_path = path
+        for section in contents:
+            name = section.get("name")
+            # If we are in either special section Tutorials or Examples,
+            # set the `tutorials` flag appropriately
+            if name.lower() == "tutorials":
+                tutorials = True
+            elif name.lower() == "examples":
+                tutorials = False
+            path = name if base_path == "" else base_path + "/" + name
+            title = section.get("title", name)
+            id_ = path.replace("/", ".").lower()
+            self._write(f"\n<a id='{id_}'></a>\n")
+            markers = "#" * depth
+            self._write(f"\n{markers} {title}\n")
+            desc = section.get("description", None)
+            if desc is not None:
+                self._write(desc)
+                self._write("\n")
+            if "subfolders" in section:
+                self._write_markdown_contents(
+                    section["subfolders"], depth + 1, path, tutorials=tutorials
+                )
+            if "notebooks" in section:
+                for nb in section["notebooks"]:
+                    key = list(nb.keys())[0]
+                    value = nb[key]
+                    if self._dev:
+                        # dev-mode links are different
+                        glob_expr = f"{self._dev_path}/{path}/{key}*.ipynb"
+                        real_notebook_names = glob.glob(glob_expr)
+                        if len(real_notebook_names) < 1:
+                            _log.fatal(f"In developer mode, no notebooks for '{glob_expr}: "
+                                       f"{real_notebook_names}")
+                            raise ValueError("Developer mode: notebook not found")
+                        if len(real_notebook_names) > 1:
+                            real_notebook_names.sort(key=len)  # shortest first
+                        nb_name = Path(real_notebook_names[0]).name
+                        nb_path = f"{path}/{nb_name}"
+                        url = urllib.parse.quote(nb_path)
+                        self._write(f"  * [{key}]({url}) - {value} ")
+                        for suffix in "exercise", "solution":
+                            self._write(f"[[{suffix}]({url})] ")
+                    elif tutorials:
+                        # for tutorials, default link is exercise, but provide both in brackets at end
+                        url = urllib.parse.quote(str(path) + f"/{key}_exercise.ipynb")
+                        self._write(f"  * [{key}]({url}) - {value} ")
+                        for suffix in "exercise", "solution":
+                            url = urllib.parse.quote(
+                                str(path) + f"/{key}_{suffix}.ipynb"
+                            )
+                            self._write(f"[[{suffix}]({url})] ")
+                    else:
+                        # for examples, just one link
+                        url = urllib.parse.quote(str(path) + f"/{key}.ipynb")
+                        self._write(f"  * [{key}]({url}) - {value}")
+                    self._write("\n")
+
+    def write_notebook(self, output_path):
+        self._of = StringIO()
+        self._write_markdown_front_matter()
+        self._write_markdown_contents(self._ix["contents"], 2, "")
+        # create N + 1 cells: First section, each subsection + footer
+        cell_contents = [s + "\n" for s in self._of.getvalue().split("\n")]
+        sections = [[]]
+        cur = sections[0]
+        for line in cell_contents:
+            if line.startswith("##") and not line.startswith("###"):
+                new_section = []
+                sections.append(new_section)
+                cur = new_section
+            cur.append(line)
+        sections.append([
+            "## Contact info\n"
+            "General, background and overview information is available at the [IDAES main website](https://idaes.org).\n"
+            "Framework development happens at our GitHub repo where you can report issues/bugs or make contributions.\n" 
+            "For further enquiries, send an email to: idaes-support@idaes.org\n"
+        ])
+        nb = nbformat.NotebookNode(
+            metadata={"kernel_info": {}},
+            nbformat=4,
+            nbformat_minor=0,
+            cells=[
+                nbformat.NotebookNode(cell_type="markdown", metadata={}, source=section) for section in sections
+            ],
+        )
+        # print(nb.cells)
+        notebook_file = open(output_path, "w")
+        nbformat.write(nb, notebook_file)
+
+    def write_listing(self, output_path):
+        """Write a text version of the page just listing the files to `output_path`.
+        """
+        try:
+            self._of = open(output_path, "w")
+        except Exception as err:
+            raise IndexPageOutputFile(str(err))
+        listing = self._extract_listing(self._ix["contents"])
+        if _log.isEnabledFor(logging.DEBUG):
+            _log.debug(f"Listing: {listing}")
+        self._write_listing(listing, 0)
+
+    def _write_listing(self, x, lvl):
+        indent = "  " * lvl
+        if not (isinstance(x[0], list)) or (len(x) > 1 and isinstance(x[1], str)):
+            # list of notebooks (leaves)
+            for item in x:
+                self._of.write(f"{indent}- {item}\n")
+        else:
+            # folder
+            for title, items in x:
+                self._of.write(f"{indent}- {title}\n")
+                self._write_listing(items, lvl + 1)
+
+    def _extract_listing(self, contents):
+        listing = []
+        for section in contents:
+            name = section.get("name")
+            if "subfolders" in section:
+                subfolder = self._extract_listing(section["subfolders"])
+                listing.append([name, subfolder])
+            elif "notebooks" in section:
+                listing.append(
+                    [name, [list(d.keys())[0] for d in section["notebooks"]]]
+                )
+        return listing
+
+    def _write(self, text):
+        self._of.write(text)
 
 
 class Color:
@@ -1308,6 +1534,9 @@ def print_usage():
         "{command} --test\n"
         "{command} -t  # <-- short option\n"
         "\n"
+        "# Generate various versions of the notebook index page from the YAML input file\n"
+        "{command} --index-input nb_index.yaml --index-output nb_index.md"
+        "\n"
         "# Run with <options> at different levels of verbosity\n"
         "{command} <options>      # Show warning, error, fatal messages\n"
         "{command} -v <options>   # Add informational (info) messages\n"
@@ -1354,12 +1583,48 @@ def main():
         default=0,
     )
     ap.add_argument(
+        "-S",
+        "--hide-sphinx-output",
+        action="store_true",
+        dest="hide_sphinx_output",
+        help="Don't show Sphinx output on stderr",
+        default=False,
+    )
+    ap.add_argument(
+        "--index-input",
+        default=None,
+        metavar="FILE",
+        help="Build the notebook index from the given input file",
+    )
+    ap.add_argument(
+        "--index-output",
+        default=None,
+        metavar="FILE",
+        help="Create the notebook index in the given output file",
+    )
+    ap.add_argument(
+        "--index-dev",
+        default=False,
+        action="store_true",
+        dest="index_dev_mode",
+        help="For the Jupyter Notebook index, generate links in 'dev' mode to the un-stripped notebook names"
+    )
+    ap.add_argument(
         "--workers",
         "-w",
         dest="np",
         default=None,
         type=int,
         help="Number of parallel processes to run. Overrides `notebook.num_workers` in settings",
+    )
+    ap.add_argument(
+        "-x",
+        "--index",
+        dest="build_index",
+        action="store_true",
+        help="Build the index notebook. "
+        "Use '--index-output' and '--index-input' to override input and"
+        "output files set in the configuration",
     )
     args = ap.parse_args()
 
@@ -1447,10 +1712,36 @@ def main():
         notify("Build documentation with Sphinx")
         spb = SphinxBuilder(settings)
         try:
-            spb.build({})
+            spb.build({"hide_output": args.hide_sphinx_output})
         except SphinxError as err:
             _log.fatal(f"Could not build Sphinx docs: {err}")
             return -1
+
+    if args.build_index:
+        notify("Build index page")
+        if args.index_input is None:
+            index_input = settings.get("notebook_index.input_file")
+        else:
+            index_input = args.index_input
+        input_path = Path(index_input)
+        if not args.index_output:
+            index_output = settings.get("notebook_index.output_file")
+        else:
+            index_output = args.index_output
+        output_path = Path(index_output)
+        dev_mode = args.index_dev_mode
+        try:
+            _log.info(
+                f"Generating notebook index page: '{input_path}' -> '{output_path}'"
+            )
+            ix_page = IndexPage(input_path)
+            ix_page.convert(output_path, dev_mode=dev_mode)
+        except IndexPageInputFile as err:
+            _log.fatal(f"Error reading from intput file: {err}")
+            status_code = 2
+        except IndexPageOutputFile as err:
+            _log.fatal(f"Error writing to output file: {err}")
+            status_code = 2
 
     return status_code
 

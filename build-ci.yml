@@ -22,10 +22,21 @@ notebook:
     # template file for the "_doc" wrapper RST file
     template: docs/jupyter_notebook_sphinx.tpl
     directories:
-        - source: workshops
-          output: tutorials
-          match: "Introduction"
-
+      - source: Examples/Advanced/CustomUnitModels
+#      - source: Examples/Advanced/DataRecon
+      - source: Examples/MatOpt
+      - source: Examples/SurrMod/ALAMO
+      - source: Examples/SurrMod/Helmet
+      - source: Examples/SurrMod/PySMO
+      - source: Examples/Tools
+      - source: Examples/UnitModels
+#      - source: Tutorials/Advanced/ParamEst
+      - source: Tutorials/Basics
+# Settings for building the notebook index page.
+# These can be overridden with options to the script.
+notebook_index:
+  input_file: notebook_index.yml
+  output_file: src/notebook_index.ipynb
 # Settings for running Sphinx build
 sphinx:
     args: "-b html -T docs_test docs_test/_build/html"
