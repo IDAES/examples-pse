@@ -1094,6 +1094,11 @@ class SphinxBuilder(Builder):
             _log.warning(f"Target HTML directory {html_dir} does not exist: creating")
             html_dir.mkdir(parents=True)
 
+        # Copy images into Sphinx dirs (quiets warnings)
+        for nb_dir in self.s.get("notebook.directories"):
+            nb_source_dir = src_dir / nb_dir["source"]
+            self._copy_image_files(nb_source_dir, src_dir, doc_dir, IMAGE_SUFFIXES)
+
         # Run Sphinx command
         errfile = self.s.get("error_file")
         parallel_args = [f"-j{num_workers}"] if num_workers > 1 else []
@@ -1153,18 +1158,24 @@ class SphinxBuilder(Builder):
                 _log.debug(f"Copy notebook {nb_path.name} to {nb_dest.parent}")
                 shutil.copy(nb_path, nb_dest)
             _log.info(f"find supporting files in path: {nb_output_dir}")
-            for ext in IMAGE_SUFFIXES:
-                pattern = f"**/*{ext}"
-                for nb_path in Path(nb_source_dir).glob(pattern):
-                    nb_dest = html_dir / nb_path.relative_to(src_dir)
-                    # skip copy, if the directory doesn't exist -- if notebooks all failed
-                    if not nb_dest.parent.exists():
-                        continue
-                    # copy files into destination directory
-                    _log.debug(
-                        f"Copy supporting file {nb_path.name} to {nb_dest.parent}"
-                    )
-                    shutil.copy(nb_path, nb_dest)
+            # Copy images into HTML dirs
+            self._copy_image_files(nb_source_dir, src_dir, html_dir, IMAGE_SUFFIXES)
+
+    @staticmethod
+    def _copy_image_files(nb_source_dir, src_dir, dest_dir, suffixes):
+        """Copy images -- called from two places so refactored here.
+        """
+        for ext in suffixes:
+            pattern = f"**/*{ext}"
+            for nb_path in Path(nb_source_dir).glob(pattern):
+                _log.debug(f"Copying image files with suffix '{ext}' from {nb_path} to {dest_dir}")
+                nb_dest = dest_dir / nb_path.relative_to(src_dir)
+                # skip copy, if the directory doesn't exist
+                if not nb_dest.parent.exists():
+                    continue
+                # copy files into destination directory
+                _log.debug(f"Copy supporting file {nb_path.name} to {nb_dest.parent}")
+                shutil.copy(nb_path, nb_dest)
 
     @staticmethod
     def _extract_sphinx_error(errfile: str):
