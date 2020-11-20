@@ -9,6 +9,10 @@ on:
       - main
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   examples:
     name: Build examples (py${{ matrix.python-version }}/${{ matrix.os }})
