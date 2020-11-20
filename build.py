@@ -114,7 +114,8 @@ _log.setLevel(logging.INFO)
 
 
 # This is a workaround for a bug in some versions of Tornado on Windows for Python 3.8
-if sys.platform == "win32":
+# the sys.version_info check includes the micro version, so e.g. 3.7.1 will also evaluate to True
+if sys.platform == "win32" and sys.version_info > (3, 7):
     import asyncio
 
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
