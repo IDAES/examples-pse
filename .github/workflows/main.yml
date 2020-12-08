@@ -1,0 +1,72 @@
+name: Run examples
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  examples:
+    name: Build examples (py${{ matrix.python-version }}/${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # if fail-fast == true (the default), jobs for the remaining values in the matrix are cancelled
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.6'
+          - '3.7'
+        os:
+          - ubuntu-18.04
+          - windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install own dependencies
+      run: |
+        echo $PWD
+        ls -lh .
+        python -m pip install --progress-bar=off -r requirements.txt
+    - name: Install IDAES
+      run: |
+        python -m pip install --progress-bar=off git+https://github.com/idaes/idaes-pse
+        idaes --version
+    - name: Install IDAES extensions
+      run: |
+        idaes get-extensions --verbose
+        # NOTE: these commands are Unix-shell specific 
+        # and will need to be changed if we want to test on CMD.exe/Powershell
+        find $(idaes data-directory) -ls
+        # add bin directory to $PATH (only valid for subsequent steps)
+        echo "$(idaes bin-directory)" >> $GITHUB_PATH
+    - name: Test access to executables
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+            ipopt.exe -v
+        else
+            ipopt -v
+        fi
+    - name: Run non-integration tests
+      run: |
+        pytest --verbose -m "not integration" tests/
+    - name: Save Sphinx build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: sphinx-errors
+        path: sphinx-errors.txt
+    - name: Save test build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-errors
+        path: ci-test-errors.txt

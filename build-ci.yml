@@ -1,0 +1,43 @@
+#
+# Configuration file for build.py,
+# to be used for testing and for CI
+
+# Paths used for all sections
+paths:
+  # where the Jupyter notebook source files are
+  source: src
+  # where the documentation (generated, hand-written) lives
+  output: docs_test
+  # the HTML output directory
+  html: _build/html
+# Settings for running and converting Jupyter Notebooks
+notebook:
+    num_workers: 1
+    # continue on errors (otherwise stop)
+    continue_on_error: true
+    test_mode: true
+    timeout: 300
+    # where to put error files. special values: '__stdout__',  '__stderr__'
+    error_file: ci-test-errors.txt
+    # template file for the "_doc" wrapper RST file
+    template: docs/jupyter_notebook_sphinx.tpl
+    directories:
+      - source: Examples/Advanced/CustomUnitModels
+#      - source: Examples/Advanced/DataRecon
+      - source: Examples/MatOpt
+      - source: Examples/SurrMod/ALAMO
+      - source: Examples/SurrMod/Helmet
+      - source: Examples/SurrMod/PySMO
+      - source: Examples/Tools
+      - source: Examples/UnitModels
+#      - source: Tutorials/Advanced/ParamEst
+      - source: Tutorials/Basics
+# Settings for building the notebook index page.
+# These can be overridden with options to the script.
+notebook_index:
+  input_file: notebook_index.yml
+  output_file: src/notebook_index.ipynb
+# Settings for running Sphinx build
+sphinx:
+    args: "-b html -T docs_test docs_test/_build/html"
+    error_file: sphinx-errors.txt

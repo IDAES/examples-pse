@@ -1,0 +1,179 @@
+meta:
+  author: Dan Gunter
+front_matter:
+  -
+    title: Introduction
+    text: >-2
+      The [IDAES](https://www.idaes.org) integrated platform ships with a number of examples which can be run on
+      the user's own computer.
+      This page provides links to these examples and provides some guidance in the order in which to try them.
+
+
+      The IDAES examples are contained in Jupyter Notebooks. In order to view and
+      use this content, you need to open the files with the Jupyter notebook executable
+      (which may be configured on your system as the default application for files of this
+      type). To get started with Jupyter, please
+      see the [Jupyter website](https://jupyter.org) or jump directly to the
+      [official Jupyter Notebook documentation pages](https://jupyter-notebook.readthedocs.io/en/stable/).
+
+      In addition to viewing and running the examples interactively on your own computer, you can see fully rendered,
+      static versions of the examples in the online
+      [examples documentation](https://IDAES.github.io/examples-pse/) pages. For reference documentation
+      on the IDAES integrated platform, please see the online
+      [IDAES-PSE documentation](https://idaes-pse.readthedocs.io/en/stable/index.html).
+  -
+    title: Usage
+    text: >-2
+      The example notebooks contained in this folder are divided into two sub-types, each with their own folder:
+        * `Tutorials`: Notebooks that are written as tutorials complete with guided exercises
+        * `Examples`: Notebooks that do not have tutorial content.
+
+      Below is an ordering of both types of examples
+      to help progressively learn how to use the IDAES integrated platform (IDAES-IP). Successive sections give
+      more details on each of these example sections.
+
+      * Beginner
+        * Start with the tutorials under [Tutorials/Basics](#tutorials.basics)
+        * Run the examples under [Examples/Basics](#examples.basics)
+      * Intermediate
+        * Run some selected examples under [Tutorials/UnitModels](#tutorials.unitmodels)
+        * Also run at least one tutorial in [Tutorials/Advanced/Custom unit models](#tutorials.advanced.customunit) and
+          [Tutorials/Advanced/Custom property packages](#tutorials.advanced.customproperties)
+        * `At this point you should stop and try some of your own code`
+      * Advanced
+        * Run tutorials in [Tutorials/Advanced](#tutorials.advanced) for other topics of interest
+          * [Parameter estimation](#tutorials.advanced.paramest)
+          * [Surrogate models](#tutorials.advanced.surrmod)
+          * [Materials optimization](#tutorials.advanced.matopt)
+        * Also run examples in the [Examples/Advanced](#examples.advanced) section
+contents:
+  -
+    name: Tutorials
+    description: >-2
+      All the notebooks in this folder have three different files
+      that represent different variations on the same content. The suffix of the filename indicates
+      something about the variation contained in that file. For example, if the notebook is named "a_notebook", then
+      you would expect the following files:
+        * `a_notebook_exercise.ipynb`: Main notebook. *This is the one most users should run.*
+        * `a_notebook_solution.ipynb`: Notebook with solutions to the exercises included
+        * `a_notebook_solution_testing.ipynb`: Notebook with additional cells to test the correctness of the solution.
+          This file does not normally need to be opened by users.
+
+
+      For ease of reading, we will indicate notebooks by their name before the suffixes. For example, if you see
+      "Introduction" as the notebook name, then you should open the file `Introduction_exercise.ipynb`.
+      Links to the exercise and exercise + solution files will be provided for each notebook.
+    subfolders:
+      -
+        name: Basics
+        description: Basic tutorials to get started with using Python, Pyomo, and the IDAES-CMF
+        notebooks:
+          - introduction_short: Short version of an introduction to Python and Pyomo
+          - introduction: Full version of an introduction to Python and Pyomo
+          - flash_unit: Simulate a flash unit
+          - HDA_flowsheet: Perform optimization of a hydrodealkylation process
+      -
+        name: Advanced
+        description: Advanced tutorials on topics such as parameter estimation and custom property packages.
+        subfolders:
+          -
+            name: ParamEst
+            title: "Parameter Estimation"
+            description: Three variations on doing parameter estimation for NRTL
+            notebooks:
+              - parameter_estimation_NRTL_using_state_block: >
+                  Use Pyomo's `parmest` tool in conjunction with IDAES models for estimating the parameters
+                  associated with the NRTL property model for a benzene-toluene mixture, using the IDAES
+                  state block.
+              - parameter_estimation_NRTL_using_unit_model: >
+                  Use Pyomo's `parmest` tool in conjunction with IDAES models for estimating the parameters
+                  associated with the NRTL property model for a benzene-toluene mixture, using the IDAES
+                  unit model.
+              - DMF_for_parameter_estimation_NRTL_using_unit_model: >
+                  Demonstrate storing provenance for estimated parameters associated with the NRTL property model
+                  in the DMF.
+  -
+    name: Examples
+    description: This section has example notebooks that do not have exercises and solutions.
+    subfolders:
+      -
+        name: UnitModels
+        title: "Unit Models"
+        description: Unit model examples
+        notebooks:
+          - compressor: "Compressor Unit Model with Span-Wagner Property Package for supercritical CO2"
+          - heater: >
+              Heat a liquid mixture of benzene-toluene using a simple heater unit model and
+              an ideal property package
+          - mixer: Mixer unit model with ideal property package
+          - pump: Pump unit model with iapws property package
+      -
+        name: Tools
+        title: Tools for working with IDAES
+        notebooks:
+          - data_management_framework: Introduction to the IDAES Data Management Framework (DMF)
+      -
+        name: Advanced
+        description: Examples of advanced capabilities of the IDAES-Core
+        subfolders:
+          -
+            name: CustomUnitModels
+            title: "Custom Unit Models"
+            description: Customized unit models
+            notebooks:
+              - custom_compressor: Constant-heat-capacity ideal-gas isentropic compressor
+              - custom_heater: Custom heater unit
+          -
+            name: CustomProperties
+            desc: Custom property packages
+            notebooks:
+              - air_separation_case_study: "Property packages for air separation units (N2, O2, Ar mixture)"
+          -
+            name: DataRecon
+            title: "Data reconciliation"
+            description: Data reconciliation and parameter estimation
+            notebooks:
+              - boiler_flowsheet_recon: >
+                  Data reconciliation with a flowsheet heat exchanger network, the boiler subflowsheet consist of an
+                  economizer, water wall, primary superheater, platen superheater, finishing superheater, and reheater.
+                  Data for this example was generated by adding noise to supercritical power plant simulations.
+              - econ_recon: >
+                  Data reconciliation with a single unit model, an economizer.
+                  Data for this example was generated by adding noise to supercritical power plant simulations.
+              - econ_parmest: >
+                  Parameter estimation continuing from the data reconciliation results in `econ_recon`
+      -
+        name: SurrMod
+        title: Surrogate Modeling
+        description: Surrogate modeling examples, broken down into packages
+        subfolders:
+          -
+            name: ALAMO
+            description: "Automated Learning of Algebraic Models, see https://www.minlp.com/alamo"
+            notebooks:
+              - ALAMO_six_hump_camel: Use ALAMO to create a surrogate model for the "six hump camel" function
+          -
+            name: PySMO
+            description: Python Surrogate Modeling Objects
+            notebooks:
+              - PySMO_basics: Examples for the PySMO surrogate modeling package
+          -
+            name: RIPE
+            description:
+            notebooks:
+              - RIPE_isothermal_CSTR: Use RIPE to model an isothermal CSTR unit
+      -
+        name: MatOpt
+        title: Materials optimization
+        description: >-
+          Examples of the MatOpt interface for representing material properties and specifying optimization problems.
+        notebooks:
+          - monometallic_nanocluster_design:  Minimization of cohesive energy in nanoclusters
+          - bimetallic_nanocluster_design: >-
+              Optimize a bimetallic cluster by "labelling" the sites of a pre-defined monometallic cluster
+          - surface_design: >-
+              MatOpt example optimization problem of designing a monometallic nanostructured catalyst surface
+          - bifunctional_surface_design: >-
+              Example optimization problem of designing a nanostructured bifunctional catalyst
+          - metal_oxide_bulk_design: >-
+              How to optimally place dopant in a perovskite lattice
