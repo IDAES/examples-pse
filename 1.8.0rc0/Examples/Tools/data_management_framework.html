@@ -86,6 +86,7 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorials/index.html">IDAES Tutorials</a></li>
 </ul>
 
             
@@ -260,8 +261,8 @@ is a simple directory on the disk. This directory corresponds t
 <span class="n">dmf</span> <span class="o">=</span> <span class="n">DMF</span><span class="p">(</span><span class="n">workspace_dir</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># create means &#39;create the directory&#39;</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2020</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">23</span> <span class="mi">14</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">15</span><span class="p">,</span><span class="mi">289</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">workspace</span><span class="p">:</span> <span class="n">Create</span> <span class="n">new</span> <span class="n">configuration</span> <span class="n">at</span> <span class="s1">&#39;/tmp/tmpwib_gwzx/my_workspace/config.yaml&#39;</span>
-<span class="mi">2020</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">23</span> <span class="mi">14</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">15</span><span class="p">,</span><span class="mi">291</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">dmfbase</span><span class="p">:</span> <span class="n">Saving</span> <span class="n">configuration</span> <span class="n">location</span> <span class="n">to</span><span class="p">:</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ksb</span><span class="o">/.</span><span class="n">dmf</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2020</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">23</span> <span class="mi">15</span><span class="p">:</span><span class="mi">20</span><span class="p">:</span><span class="mi">06</span><span class="p">,</span><span class="mi">020</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">workspace</span><span class="p">:</span> <span class="n">Create</span> <span class="n">new</span> <span class="n">configuration</span> <span class="n">at</span> <span class="s1">&#39;/tmp/tmp6yl2p_dw/my_workspace/config.yaml&#39;</span>
+<span class="mi">2020</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">23</span> <span class="mi">15</span><span class="p">:</span><span class="mi">20</span><span class="p">:</span><span class="mi">06</span><span class="p">,</span><span class="mi">022</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">dmfbase</span><span class="p">:</span> <span class="n">Saving</span> <span class="n">configuration</span> <span class="n">location</span> <span class="n">to</span><span class="p">:</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ksb</span><span class="o">/.</span><span class="n">dmf</span>
 </pre></div>
 </div>
 <div class="section" id="idaes-model-setup">
@@ -319,7 +320,7 @@ resources. First, the Flash code:</p>
 <span class="n">dmf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">flash_code</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;2843c883cc244238aba0c5351e90be29&#39;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;0cf9194de86d4564bea3bd48ee89a9e3&#39;</span>
 </pre></div>
 </div>
 <p>Now we put the values that will be fed to the Flash unit model inlet
@@ -339,7 +340,7 @@ into another resource.</p>
 <span class="n">dmf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">inlet_params</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;07aae4d171b540aeafd8a72e913edacb&#39;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;b12c11dc48814daeb20f31c270a5eae2&#39;</span>
 </pre></div>
 </div>
 <div class="section" id="create-a-relation">
@@ -423,7 +424,7 @@ Solver:
   Termination condition: optimal
   Id: 0
   Error rc: 0
-  Time: 0.00884699821472168
+  Time: 0.008788824081420898
 Solution:
 - number of solutions: 0
   number of solutions displayed: 0</pre>
@@ -500,12 +501,12 @@ it, without worrying about upper and lower case.</p>
 <span class="n">display</span><span class="p">(</span><span class="n">rsrc</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;id_&#39;</span><span class="p">:</span> <span class="s1">&#39;07aae4d171b540aeafd8a72e913edacb&#39;</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;id_&#39;</span><span class="p">:</span> <span class="s1">&#39;b12c11dc48814daeb20f31c270a5eae2&#39;</span><span class="p">,</span>
  <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;data&#39;</span><span class="p">,</span>
  <span class="s1">&#39;aliases&#39;</span><span class="p">:</span> <span class="p">[],</span>
  <span class="s1">&#39;collaborators&#39;</span><span class="p">:</span> <span class="p">[],</span>
- <span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="mf">1608762135.378153</span><span class="p">,</span>
- <span class="s1">&#39;modified&#39;</span><span class="p">:</span> <span class="mf">1608762135.378153</span><span class="p">,</span>
+ <span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="mf">1608765606.113662</span><span class="p">,</span>
+ <span class="s1">&#39;modified&#39;</span><span class="p">:</span> <span class="mf">1608765606.113662</span><span class="p">,</span>
  <span class="s1">&#39;creator&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;ksb&#39;</span><span class="p">},</span>
  <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;Flash&#39;</span><span class="p">,</span>
   <span class="s1">&#39;inlet_values&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;flow_mol&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
@@ -513,13 +514,13 @@ it, without worrying about upper and lower case.</p>
    <span class="s1">&#39;pressure&#39;</span><span class="p">:</span> <span class="mi">101325</span><span class="p">,</span>
    <span class="s1">&#39;mole_frac_comp&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;benzene&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;toluene&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">}}},</span>
  <span class="s1">&#39;datafiles&#39;</span><span class="p">:</span> <span class="p">[],</span>
- <span class="s1">&#39;datafiles_dir&#39;</span><span class="p">:</span> <span class="s1">&#39;/tmp/tmpwib_gwzx/my_workspace/files/cb308f3085694778aefae24cd122f219&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;datafiles_dir&#39;</span><span class="p">:</span> <span class="s1">&#39;/tmp/tmp6yl2p_dw/my_workspace/files/f25d18926c43454fb5f4e55cb652a818&#39;</span><span class="p">,</span>
  <span class="s1">&#39;desc&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
  <span class="s1">&#39;relations&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;predicate&#39;</span><span class="p">:</span> <span class="s1">&#39;uses&#39;</span><span class="p">,</span>
-   <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="s1">&#39;2843c883cc244238aba0c5351e90be29&#39;</span><span class="p">,</span>
+   <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="s1">&#39;0cf9194de86d4564bea3bd48ee89a9e3&#39;</span><span class="p">,</span>
    <span class="s1">&#39;role&#39;</span><span class="p">:</span> <span class="s1">&#39;object&#39;</span><span class="p">}],</span>
  <span class="s1">&#39;tags&#39;</span><span class="p">:</span> <span class="p">[],</span>
- <span class="s1">&#39;version_info&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="mf">1608762135.378153</span><span class="p">,</span>
+ <span class="s1">&#39;version_info&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="mf">1608765606.113662</span><span class="p">,</span>
   <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
   <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">},</span>
  <span class="s1">&#39;doc_id&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
@@ -545,25 +546,25 @@ must match exactly what was placed there.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Result</span> <span class="n">metadata</span><span class="p">:</span>
 </pre></div>
 </div>
-<pre class="literal-block">{'<a href="#id3"><span class="problematic" id="id4">id_</span></a>': '2843c883cc244238aba0c5351e90be29',
+<pre class="literal-block">{'<a href="#id3"><span class="problematic" id="id4">id_</span></a>': '0cf9194de86d4564bea3bd48ee89a9e3',
  'type': 'code',
  'aliases': ['flash_code'],
  'collaborators': [],
- 'created': 1608762135.367666,
- 'modified': 1608762135.367666,
+ 'created': 1608765606.102325,
+ 'modified': 1608765606.102325,
  'creator': {'name': 'ksb'},
  'data': {},
  'datafiles': [],
- 'datafiles_dir': '/tmp/tmpwib_gwzx/my_workspace/files/c17f97f1369d4609a1c01d33bc9ffc37',
+ 'datafiles_dir': '/tmp/tmp6yl2p_dw/my_workspace/files/d68da14ced1942bba491f778304ffb40',
  'desc': '',
  'relations': [{'predicate': 'uses',
-   'identifier': '07aae4d171b540aeafd8a72e913edacb',
+   'identifier': 'b12c11dc48814daeb20f31c270a5eae2',
    'role': 'subject'},
   {'predicate': 'derived',
-   'identifier': '612e16ac25554028a2a1ac67944fee48',
+   'identifier': '116b2ec69526449fbd1990fa3e09c66e',
    'role': 'subject'}],
  'tags': [],
- 'version_info': {'created': 1608762135.367666,
+ 'version_info': {'created': 1608765606.102325,
   'version': [0, 0, 0],
   'name': ''},
  'codes': [{'type': 'block',
@@ -615,7 +616,7 @@ Solver:
   Termination condition: optimal
   Id: 0
   Error rc: 0
-  Time: 0.00884699821472168
+  Time: 0.008788824081420898
 Solution:
 - number of solutions: 0
   number of solutions displayed: 0</pre>
@@ -707,7 +708,7 @@ help on an object or method for IDAES</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">dmf</span> init my_workspace
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2020</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">23</span> <span class="mi">14</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">15</span><span class="p">,</span><span class="mi">739</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">dmfbase</span><span class="p">:</span> <span class="n">Saving</span> <span class="n">configuration</span> <span class="n">location</span> <span class="n">to</span><span class="p">:</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ksb</span><span class="o">/.</span><span class="n">dmf</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2020</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">23</span> <span class="mi">15</span><span class="p">:</span><span class="mi">20</span><span class="p">:</span><span class="mi">06</span><span class="p">,</span><span class="mi">476</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">dmfbase</span><span class="p">:</span> <span class="n">Saving</span> <span class="n">configuration</span> <span class="n">location</span> <span class="n">to</span><span class="p">:</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ksb</span><span class="o">/.</span><span class="n">dmf</span>
 </pre></div>
 </div>
 <p><em>Success!</em> Using workspace at “my_workspace”</p>
@@ -718,9 +719,9 @@ help on an object or method for IDAES</p>
 <div class="section" id="configuration">
 <h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>_id: ba96940d36304c1493c8644e780be6e4</p></li>
-<li><p>created: 2020-12-23T14:22:15.738814</p></li>
-<li><p>modified: 2020-12-23T14:22:15.738814</p></li>
+<li><p>_id: 546b0e0ce81b44f29be3ee13902889fe</p></li>
+<li><p>created: 2020-12-23T15:20:06.475487</p></li>
+<li><p>modified: 2020-12-23T15:20:06.475487</p></li>
 <li><p>name: my_workspace</p></li>
 </ul>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">dmf</span> list
@@ -744,157 +745,157 @@ D</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>2
-8
-4
-3
+<tr class="row-even"><td><p>0
 c
-8
-8
-3
-c
-c
-2
-4
-4
-2
-3
-8
-a
-b
-a
-0
-c
-5
-3
-5
-1
-e
+f
 9
-0
+1
+9
+4
+d
+e
+8
+6
+d
+4
+5
+6
+4
 b
 e
-2
-9</p></td>
+a
+3
+b
+d
+4
+8
+e
+e
+8
+9
+a
+9
+e
+3</p></td>
 <td><p>flash_code</p></td>
 <td><p>code</p></td>
-<td><p>1608762135.3676
-66</p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p>0
-7
-a
-a
-e
-4
-d
-1
-7
-1
-b
-5
-4
-0
-a
-e
-a
-f
-d
-8
-a
-7
-2
-e
-9
-1
-3
-e
-d
-a
-c
-b</p></td>
-<td></td>
-<td><p>data</p></td>
-<td><p>1608762135.3781
-53</p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p>6
-1
-2
-e
-1
-6
-a
-c
-2
-5
-5
-5
-4
-0
-2
-8
-a
-2
-a
-1
-a
-c
-6
-7
-9
-4
-4
-f
-e
-e
-4
-8</p></td>
-<td></td>
-<td><p>data</p></td>
-<td><p>1608762135.6504
-51</p></td>
+<td><p>1608765606.1023
+25</p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>b
+1
+2
+c
+1
+1
+d
+c
+4
+8
+8
+1
+4
+d
+a
+e
+b
+2
+0
 f
+3
+1
 c
-8
-9
-8
-c
+2
+7
+0
+a
+5
+e
+a
+e
+2</p></td>
+<td></td>
+<td><p>data</p></td>
+<td><p>1608765606.1136
+62</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>1
 1
 6
-d
+b
 2
-1
-4
-2
-3
-0
+e
+c
+6
 9
+5
 2
-a
-3
+6
+4
+4
+9
 f
 b
-e
-3
+d
+1
 9
-1
+9
+0
+f
+a
+3
+e
+0
+9
 c
-2
+6
+6
+e</p></td>
+<td></td>
+<td><p>data</p></td>
+<td><p>1608765606.3788
+28</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>f
+b
+6
+f
+e
+6
+d
+a
+d
+6
+3
+0
 4
-1
-2
+a
+9
+0
+9
+9
+3
+c
+b
+9
+d
+8
+e
+f
+4
+0
+7
+4
+d
 6</p></td>
 <td></td>
 <td><p>notebo
 ok</p></td>
-<td><p>1608762135.6792
-98</p></td>
+<td><p>1608765606.4106
+56</p></td>
 <td><p>data_management_frame
 work.ipynb</p></td>
 </tr>
