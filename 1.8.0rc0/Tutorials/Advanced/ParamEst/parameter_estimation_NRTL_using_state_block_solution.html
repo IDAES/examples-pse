@@ -1,0 +1,1190 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Parameter Estimation Using the NRTL State Block &mdash; IDAES v1.8.0rc0 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../Examples/index.html">Examples</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Parameter Estimation Using the NRTL State Block</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/Tutorials/Advanced/ParamEst/parameter_estimation_NRTL_using_state_block_solution.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="parameter-estimation-using-the-nrtl-state-block">
+<h1>Parameter Estimation Using the NRTL State Block<a class="headerlink" href="#parameter-estimation-using-the-nrtl-state-block" title="Permalink to this headline">¶</a></h1>
+<p>In this module, we use Pyomo’s <code class="docutils literal notranslate"><span class="pre">parmest</span></code> tool in conjunction with
+IDAES models for parameter estimation. We demonstrate these tools by
+estimating the parameters associated with the NRTL property model for a
+benzene-toluene mixture. The NRTL model has 2 sets of parameters: the
+non-randomness parameter (<code class="docutils literal notranslate"><span class="pre">alpha_ij</span></code>) and the binary interaction
+parameter (<code class="docutils literal notranslate"><span class="pre">tau_ij</span></code>), where <code class="docutils literal notranslate"><span class="pre">i</span></code> and <code class="docutils literal notranslate"><span class="pre">j</span></code> are the pure component
+species. In this example, we only estimate the binary interaction
+parameter (<code class="docutils literal notranslate"><span class="pre">tau_ij</span></code>) for a given dataset. When estimating parameters
+associated with the property package, IDAES provides the flexibility of
+doing the parameter estimation by just using the state block or by using
+a unit model with a specified property package. This module will
+demonstrate parameter estimation by using only the state block.</p>
+<p>We will complete the following tasks: * Set up a method to return an
+initialized model * Set up the parameter estimation problem using
+<code class="docutils literal notranslate"><span class="pre">parmest</span></code> * Analyze the results * Demonstrate advanced features
+using <code class="docutils literal notranslate"><span class="pre">parmest</span></code></p>
+</div>
+<div class="section" id="key-links-to-documentation">
+<h1>Key links to documentation:<a class="headerlink" href="#key-links-to-documentation" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p>NRTL Model -
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/property_models/activity_coefficient.html">https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/property_models/activity_coefficient.html</a></p></li>
+<li><p>parmest -
+<a class="reference external" href="https://pyomo.readthedocs.io/en/stable/contributed_packages/parmest/index.html">https://pyomo.readthedocs.io/en/stable/contributed_packages/parmest/index.html</a></p></li>
+</ul>
+<div class="alert alert-block alert-info"><p>Inline Exercise: import <code class="docutils literal notranslate"><span class="pre">ConcreteModel</span></code> from Pyomo and
+<code class="docutils literal notranslate"><span class="pre">FlowsheetBlock</span></code> from IDAES.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Todo: import ConcreteModel from pyomo.environ</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">value</span>
+
+<span class="c1"># Todo: import FlowsheetBlock from idaes.core</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+</pre></div>
+</div>
+<p>In the next cell, we import the parameter block used in this module and
+the idaes logger.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.generic_models.properties.activity_coeff_models.</span>\
+    <span class="n">BTX_activity_coeff_VLE</span> <span class="kn">import</span> <span class="nn">BTXParameterBlock</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+</pre></div>
+</div>
+<p>In the next cell, we import <code class="docutils literal notranslate"><span class="pre">parmest</span></code> from Pyomo and the <code class="docutils literal notranslate"><span class="pre">pandas</span></code>
+package. We need <code class="docutils literal notranslate"><span class="pre">pandas</span></code> as <code class="docutils literal notranslate"><span class="pre">parmest</span></code> uses <code class="docutils literal notranslate"><span class="pre">pandas.dataframe</span></code> for
+handling the input data and the results.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyomo.contrib.parmest.parmest</span> <span class="k">as</span> <span class="nn">parmest</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="setting-up-an-initialized-model">
+<h1>Setting up an initialized model<a class="headerlink" href="#setting-up-an-initialized-model" title="Permalink to this headline">¶</a></h1>
+<p>We need to provide a method that returns an initialized model to the
+<code class="docutils literal notranslate"><span class="pre">parmest</span></code> tool in Pyomo.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Using what you have learned from previous modules, fill
+in the missing code below to return an initialized IDAES model.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">NRTL_model</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+
+    <span class="c1">#Todo: Create a ConcreteModel object</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+
+    <span class="c1">#Todo: Create FlowsheetBlock object</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+
+
+    <span class="c1">#Todo: Create a properties parameter object with the following options:</span>
+    <span class="c1"># &quot;valid_phase&quot;: (&#39;Liq&#39;, &#39;Vap&#39;)</span>
+    <span class="c1"># &quot;activity_coeff_model&quot;: &#39;NRTL&#39;</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">BTXParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;valid_phase&quot;</span><span class="p">:</span>
+                                                 <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;Vap&#39;</span><span class="p">),</span>
+                                                 <span class="s2">&quot;activity_coeff_model&quot;</span><span class="p">:</span>
+                                                 <span class="s1">&#39;NRTL&#39;</span><span class="p">})</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">state_block_class</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span>
+                 <span class="s2">&quot;defined_state&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+
+
+    <span class="c1"># Fix the state variables on the state block</span>
+    <span class="c1"># hint: state variables exist on the state block i.e. on m.fs.state_block</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">368</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c1"># Fix NRTL specific parameters.</span>
+
+    <span class="c1"># non-randomness parameter - alpha_ij (set at 0.3, 0 if i=j)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">alpha</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">alpha</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">alpha</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">alpha</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.3</span><span class="p">)</span>
+
+    <span class="c1"># binary interaction parameter - tau_ij (0 if i=j, else to be estimated later but fixing to initialize)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="o">-</span><span class="mf">0.9</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1.4</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the flash unit</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+
+    <span class="c1"># Fix at actual temperature</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">]))</span>
+
+    <span class="c1"># Set bounds on variables to be estimated</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span>\
+        <span class="n">tau</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="c1"># Return initialized flash model</span>
+    <span class="k">return</span> <span class="n">m</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parameter-estimation-using-parmest">
+<h1>Parameter estimation using parmest<a class="headerlink" href="#parameter-estimation-using-parmest" title="Permalink to this headline">¶</a></h1>
+<p>In addition to providing a method to return an initialized model, the
+<code class="docutils literal notranslate"><span class="pre">parmest</span></code> tool needs the following:</p>
+<ul class="simple">
+<li><p>List of variable names to be estimated</p></li>
+<li><p>Dataset</p></li>
+<li><p>Expression to compute the sum of squared errors</p></li>
+</ul>
+<p>In this example, we only estimate the binary interaction parameter
+(<code class="docutils literal notranslate"><span class="pre">tau_ij</span></code>). Given that this variable is usually indexed as
+<code class="docutils literal notranslate"><span class="pre">tau_ij</span> <span class="pre">=</span> <span class="pre">Var(component_list,</span> <span class="pre">component_list)</span></code>, there are 2*2=4
+degrees of freedom. However, when i=j, the binary interaction parameter
+is 0. Therefore, in this problem, we estimate the binary interaction
+parameter for the following variables only:</p>
+<ul class="simple">
+<li><p>fs.properties.tau[‘benzene’, ‘toluene’]</p></li>
+<li><p>fs.properties.tau[‘toluene’, ‘benzene’]</p></li>
+</ul>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Create a list called <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> with the
+above-mentioned variables declared as strings.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Todo: Create a list of vars to estimate</span>
+<span class="n">variable_name</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;fs.properties.tau[&#39;benzene&#39;, &#39;toluene&#39;]&quot;</span><span class="p">,</span>
+                 <span class="s2">&quot;fs.properties.tau[&#39;toluene&#39;, &#39;benzene&#39;]&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Pyomo’s <code class="docutils literal notranslate"><span class="pre">parmest</span></code> tool supports the following data formats: - pandas
+dataframe - list of dictionaries - list of json file names.</p>
+<p>Please see the documentation for more details.</p>
+<p>For this example, we load data from the csv file
+<code class="docutils literal notranslate"><span class="pre">BT_NRTL_dataset.csv</span></code>. The dataset consists of fifty data points which
+provide the mole fraction of benzene in the vapor and liquid phase as a
+function of temperature.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load data from csv</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;BT_NRTL_dataset.csv&#39;</span><span class="p">)</span>
+
+<span class="c1"># Display the dataset</span>
+<span class="n">display</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>temperature</th>
+      <th>liq_benzene</th>
+      <th>vap_benzene</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>365.500000</td>
+      <td>0.480953</td>
+      <td>0.692110</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>365.617647</td>
+      <td>0.462444</td>
+      <td>0.667699</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>365.735294</td>
+      <td>0.477984</td>
+      <td>0.692441</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>365.852941</td>
+      <td>0.440547</td>
+      <td>0.640336</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>365.970588</td>
+      <td>0.427421</td>
+      <td>0.623328</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>366.088235</td>
+      <td>0.442725</td>
+      <td>0.647796</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>366.205882</td>
+      <td>0.434374</td>
+      <td>0.637691</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>366.323529</td>
+      <td>0.444642</td>
+      <td>0.654933</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>366.441177</td>
+      <td>0.427132</td>
+      <td>0.631229</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>366.558823</td>
+      <td>0.446301</td>
+      <td>0.661743</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>366.676471</td>
+      <td>0.438004</td>
+      <td>0.651591</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>366.794118</td>
+      <td>0.425320</td>
+      <td>0.634814</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>366.911765</td>
+      <td>0.439435</td>
+      <td>0.658047</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>367.029412</td>
+      <td>0.435655</td>
+      <td>0.654539</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>367.147059</td>
+      <td>0.401350</td>
+      <td>0.604987</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>367.264706</td>
+      <td>0.397862</td>
+      <td>0.601703</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>367.382353</td>
+      <td>0.415821</td>
+      <td>0.630930</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>367.500000</td>
+      <td>0.420667</td>
+      <td>0.640380</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>367.617647</td>
+      <td>0.391683</td>
+      <td>0.598214</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>367.735294</td>
+      <td>0.404903</td>
+      <td>0.620432</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>367.852941</td>
+      <td>0.409563</td>
+      <td>0.629626</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>367.970588</td>
+      <td>0.389488</td>
+      <td>0.600722</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>368.000000</td>
+      <td>0.396789</td>
+      <td>0.612483</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>368.088235</td>
+      <td>0.398162</td>
+      <td>0.616106</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>368.205882</td>
+      <td>0.362340</td>
+      <td>0.562505</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>368.323529</td>
+      <td>0.386958</td>
+      <td>0.602680</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>368.441177</td>
+      <td>0.363643</td>
+      <td>0.568210</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>368.558823</td>
+      <td>0.368118</td>
+      <td>0.577072</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>368.676471</td>
+      <td>0.384098</td>
+      <td>0.604078</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>368.794118</td>
+      <td>0.353605</td>
+      <td>0.557925</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>368.911765</td>
+      <td>0.346474</td>
+      <td>0.548445</td>
+    </tr>
+    <tr>
+      <th>31</th>
+      <td>369.029412</td>
+      <td>0.350741</td>
+      <td>0.556996</td>
+    </tr>
+    <tr>
+      <th>32</th>
+      <td>369.147059</td>
+      <td>0.362347</td>
+      <td>0.577286</td>
+    </tr>
+    <tr>
+      <th>33</th>
+      <td>369.264706</td>
+      <td>0.362578</td>
+      <td>0.579519</td>
+    </tr>
+    <tr>
+      <th>34</th>
+      <td>369.382353</td>
+      <td>0.340765</td>
+      <td>0.546411</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>369.500000</td>
+      <td>0.337462</td>
+      <td>0.542857</td>
+    </tr>
+    <tr>
+      <th>36</th>
+      <td>369.617647</td>
+      <td>0.355729</td>
+      <td>0.574083</td>
+    </tr>
+    <tr>
+      <th>37</th>
+      <td>369.735294</td>
+      <td>0.348679</td>
+      <td>0.564513</td>
+    </tr>
+    <tr>
+      <th>38</th>
+      <td>369.852941</td>
+      <td>0.338187</td>
+      <td>0.549284</td>
+    </tr>
+    <tr>
+      <th>39</th>
+      <td>369.970588</td>
+      <td>0.324360</td>
+      <td>0.528514</td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>370.088235</td>
+      <td>0.310753</td>
+      <td>0.507964</td>
+    </tr>
+    <tr>
+      <th>41</th>
+      <td>370.205882</td>
+      <td>0.311037</td>
+      <td>0.510055</td>
+    </tr>
+    <tr>
+      <th>42</th>
+      <td>370.323529</td>
+      <td>0.311263</td>
+      <td>0.512055</td>
+    </tr>
+    <tr>
+      <th>43</th>
+      <td>370.441177</td>
+      <td>0.308081</td>
+      <td>0.508437</td>
+    </tr>
+    <tr>
+      <th>44</th>
+      <td>370.558823</td>
+      <td>0.308224</td>
+      <td>0.510293</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>370.676471</td>
+      <td>0.318148</td>
+      <td>0.528399</td>
+    </tr>
+    <tr>
+      <th>46</th>
+      <td>370.794118</td>
+      <td>0.308334</td>
+      <td>0.513728</td>
+    </tr>
+    <tr>
+      <th>47</th>
+      <td>370.911765</td>
+      <td>0.317937</td>
+      <td>0.531410</td>
+    </tr>
+    <tr>
+      <th>48</th>
+      <td>371.029412</td>
+      <td>0.289149</td>
+      <td>0.484824</td>
+    </tr>
+    <tr>
+      <th>49</th>
+      <td>371.147059</td>
+      <td>0.298637</td>
+      <td>0.502318</td>
+    </tr>
+  </tbody>
+</table>
+</div><p>We need to provide a method to return an expression to compute the sum
+of squared errors that will be used as the objective in solving the
+parameter estimation problem. For this problem, the error will be
+computed for the mole fraction of benzene in the vapor and liquid phase
+between the model prediction and data.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Complete the following cell by adding an expression to
+compute the sum of square errors.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create method to return an expression that computes the sum of squared error</span>
+<span class="k">def</span> <span class="nf">SSE</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+     <span class="c1"># Todo: Add expression for computing the sum of squared errors in mole fraction of benzene in the liquid</span>
+    <span class="c1"># and vapor phase. For example, the squared error for the vapor phase is:</span>
+    <span class="c1"># (float(data[&quot;vap_benzene&quot;]) - m.fs.state_block.mole_frac_phase_comp[&quot;Vap&quot;, &quot;benzene&quot;])**2</span>
+    <span class="n">expr</span> <span class="o">=</span> <span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;vap_benzene&quot;</span><span class="p">])</span> <span class="o">-</span>
+             <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span><span class="o">.</span><span class="n">mole_frac_phase_comp</span><span class="p">[</span><span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+            <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;liq_benzene&quot;</span><span class="p">])</span> <span class="o">-</span>
+             <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">state_block</span><span class="o">.</span><span class="n">mole_frac_phase_comp</span><span class="p">[</span><span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">expr</span><span class="o">*</span><span class="mf">1E4</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-warning"><p>Note: Notice that we have scaled the expression up by a factor of 10000
+as the SSE computed here will be an extremely small number given that we
+are using the difference in mole fraction in our expression. This will
+help in using a well-scaled objective to improve solve robustness when
+using IPOPT.</p>
+</div><p>We are now ready to set up the parameter estimation problem. We will
+create a parameter estimation object called <code class="docutils literal notranslate"><span class="pre">pest</span></code>. As shown below, we
+pass the method that returns an initialized model, data, variable_name,
+and the SSE expression to the Estimator method. <code class="docutils literal notranslate"><span class="pre">tee=True</span></code> will print
+the solver output after solving the parameter estimation problem.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span><span class="p">;</span> <span class="n">idaeslog</span><span class="o">.</span><span class="n">getIdaesLogger</span><span class="p">(</span><span class="s2">&quot;core.property_meta&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+<span class="c1"># Initialize a parameter estimation object</span>
+<span class="n">pest</span> <span class="o">=</span> <span class="n">parmest</span><span class="o">.</span><span class="n">Estimator</span><span class="p">(</span><span class="n">NRTL_model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">variable_name</span><span class="p">,</span> <span class="n">SSE</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Run parameter estimation using all data</span>
+<span class="n">obj_value</span><span class="p">,</span> <span class="n">parameters</span> <span class="o">=</span> <span class="n">pest</span><span class="o">.</span><span class="n">theta_est</span><span class="p">()</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     3750
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     2200
+
+Total number of variables............................:     1102
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:      300
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:     1100
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  6.0671019e+01 3.15e+00 4.84e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  5.2961050e+00 1.76e+03 5.05e+00  -1.0 1.37e+04    -  9.74e-01 1.00e+00f  1
+   2  5.2586169e+00 4.01e+02 1.09e+00  -1.0 5.15e+02    -  1.00e+00 1.00e+00h  1
+   3  5.1450958e+00 7.04e+01 2.27e-01  -1.0 4.11e+01    -  1.00e+00 1.00e+00h  1
+   4  5.0748980e+00 1.25e+02 2.08e-01  -1.7 5.74e+02    -  1.00e+00 1.00e+00h  1
+   5  5.0775194e+00 7.87e+00 1.92e-01  -1.7 8.44e+01    -  1.00e+00 1.00e+00h  1
+   6  5.0726692e+00 1.37e+01 1.90e-01  -2.5 1.38e+02    -  1.00e+00 1.00e+00h  1
+   7  5.0750377e+00 2.85e+00 2.60e-02  -2.5 6.99e+01    -  1.00e+00 1.00e+00h  1
+   8  5.0749670e+00 7.36e-02 2.81e-03  -3.8 9.72e+00    -  1.00e+00 1.00e+00h  1
+   9  5.0749687e+00 4.51e-04 4.80e-06  -3.8 1.01e+00    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  5.0749686e+00 2.91e-04 1.36e-06  -5.7 5.81e-01    -  1.00e+00 1.00e+00h  1
+  11  5.0749686e+00 4.77e-08 2.18e-10  -8.6 7.65e-03    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 11
+
+                                   (scaled)                 (unscaled)
+Objective...............:   5.0749685783048237e+00    5.0749685783048237e+00
+Dual infeasibility......:   2.1826562779381220e-10    2.1826562779381220e-10
+Constraint violation....:   1.6595160515086003e-10    4.7744833864271641e-08
+Complementarity.........:   2.5076274461810973e-09    2.5076274461810973e-09
+Overall NLP error.......:   2.5076274461810973e-09    4.7744833864271641e-08
+
+
+Number of objective function evaluations             = 12
+Number of objective gradient evaluations             = 12
+Number of equality constraint evaluations            = 12
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 12
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 11
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.010
+Total CPU secs in NLP function evaluations           =      0.010
+
+EXIT: Optimal Solution Found.
+</pre>
+<p>You will notice that the resulting parameter estimation problem will
+have 1102 variables and 1100 constraints. Let us display the results by
+running the next cell.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The SSE at the optimal solution is </span><span class="si">%0.6f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">obj_value</span><span class="o">*</span><span class="mf">1e-4</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The values for the parameters are as follows:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">SSE</span> <span class="n">at</span> <span class="n">the</span> <span class="n">optimal</span> <span class="n">solution</span> <span class="ow">is</span> <span class="mf">0.000507</span>
+
+<span class="n">The</span> <span class="n">values</span> <span class="k">for</span> <span class="n">the</span> <span class="n">parameters</span> <span class="n">are</span> <span class="k">as</span> <span class="n">follows</span><span class="p">:</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">tau</span><span class="p">[</span><span class="n">benzene</span><span class="p">,</span><span class="n">toluene</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.8987624036283838</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">tau</span><span class="p">[</span><span class="n">toluene</span><span class="p">,</span><span class="n">benzene</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.4104861099366224</span>
+</pre></div>
+</div>
+<p>Using the data that was provided, we have estimated the binary
+interaction parameters in the NRTL model for a benzene-toluene mixture.
+Although the dataset that was provided was temperature dependent, in
+this example we have estimated a single value that fits best for all
+temperatures.</p>
+<div class="section" id="advanced-options-for-parmest-bootstrapping">
+<h2>Advanced options for parmest: bootstrapping<a class="headerlink" href="#advanced-options-for-parmest-bootstrapping" title="Permalink to this headline">¶</a></h2>
+<p>Pyomo’s <code class="docutils literal notranslate"><span class="pre">parmest</span></code> tool allows for bootstrapping where the parameter
+estimation is repeated over <code class="docutils literal notranslate"><span class="pre">n</span></code> samples with resampling from the
+original data set. Parameter estimation with bootstrap resampling can be
+used to identify confidence regions around each parameter estimate. This
+analysis can be slow given the increased number of model instances that
+need to be solved. In the following cell, we run the parameter
+estimation with 10 bootstrap samples from the given dataset. We then
+plot the parameter estimates along with an confidence regions using
+rectangular and multivariate normal distributions.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run parameter estimation using bootstrap resample of the data (10 samples),</span>
+<span class="c1"># plot results along with confidence regions</span>
+<span class="n">bootstrap_theta</span> <span class="o">=</span> <span class="n">pest</span><span class="o">.</span><span class="n">theta_est_bootstrap</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     3750
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     2200
+
+Total number of variables............................:     1102
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:      300
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:     1100
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  6.2525324e+01 3.15e+00 4.84e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  4.9829233e+00 1.83e+03 5.37e+00  -1.0 1.37e+04    -  9.69e-01 1.00e+00f  1
+   2  4.7749752e+00 1.49e+02 7.48e-01  -1.0 4.65e+02    -  1.00e+00 1.00e+00h  1
+   3  4.6398188e+00 5.51e+02 8.35e-01  -1.7 7.33e+02    -  1.00e+00 1.00e+00h  1
+   4  4.5387606e+00 1.27e+01 2.83e-01  -1.7 1.13e+03    -  1.00e+00 1.00e+00h  1
+   5  4.5389114e+00 3.07e-02 1.16e-04  -1.7 1.08e+01    -  1.00e+00 1.00e+00h  1
+   6  4.5368707e+00 2.90e+00 3.13e-03  -3.8 7.73e+01    -  1.00e+00 1.00e+00h  1
+   7  4.5368070e+00 5.84e-04 5.03e-07  -3.8 4.86e-01    -  1.00e+00 1.00e+00h  1
+   8  4.5368069e+00 1.52e-04 1.67e-07  -5.7 5.71e-01    -  1.00e+00 1.00e+00h  1
+   9  4.5368069e+00 2.30e-08 2.54e-11  -8.6 7.06e-03    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 9
+
+                                   (scaled)                 (unscaled)
+Objective...............:   4.5368068575703298e+00    4.5368068575703298e+00
+Dual infeasibility......:   2.5357937971648425e-11    2.5357937971648425e-11
+Constraint violation....:   7.9814578765028084e-11    2.2962922230362895e-08
+Complementarity.........:   2.5072754820958707e-09    2.5072754820958707e-09
+Overall NLP error.......:   2.5072754820958707e-09    2.2962922230362895e-08
+
+
+Number of objective function evaluations             = 10
+Number of objective gradient evaluations             = 10
+Number of equality constraint evaluations            = 10
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 10
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 9
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.008
+Total CPU secs in NLP function evaluations           =      0.008
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     3750
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     2200
+
+Total number of variables............................:     1102
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:      300
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:     1100
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  6.3604927e+01 3.15e+00 4.84e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  4.6464843e+00 1.73e+03 3.99e+00  -1.0 1.37e+04    -  9.76e-01 1.00e+00f  1
+   2  4.3732012e+00 1.68e+01 2.07e-01  -1.0 4.39e+02    -  1.00e+00 1.00e+00h  1
+   3  4.3000385e+00 1.63e+02 1.64e-01  -1.7 4.17e+02    -  1.00e+00 1.00e+00h  1
+   4  4.3140008e+00 1.18e+01 4.72e-02  -1.7 2.04e+02    -  1.00e+00 1.00e+00h  1
+   5  4.3115511e+00 2.89e+00 2.46e-03  -2.5 6.71e+01    -  1.00e+00 1.00e+00h  1
+   6  4.3114854e+00 5.70e-02 5.07e-05  -3.8 9.91e+00    -  1.00e+00 1.00e+00h  1
+   7  4.3114849e+00 2.07e-04 1.80e-07  -5.7 5.71e-01    -  1.00e+00 1.00e+00h  1
+   8  4.3114849e+00 3.38e-08 2.92e-11  -8.6 7.18e-03    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 8
+
+                                   (scaled)                 (unscaled)
+Objective...............:   4.3114849044939438e+00    4.3114849044939438e+00
+Dual infeasibility......:   2.9184987759833803e-11    2.9184987759833803e-11
+Constraint violation....:   1.1739520742308630e-10    3.3774995245039463e-08
+Complementarity.........:   2.5074426202184955e-09    2.5074426202184955e-09
+Overall NLP error.......:   2.5074426202184955e-09    3.3774995245039463e-08
+
+
+Number of objective function evaluations             = 9
+Number of objective gradient evaluations             = 9
+Number of equality constraint evaluations            = 9
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 9
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 8
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.007
+Total CPU secs in NLP function evaluations           =      0.006
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     3750
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     2200
+
+Total number of variables............................:     1102
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:      300
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:     1100
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  5.1097805e+01 3.03e+00 4.84e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  5.4491030e+00 1.62e+03 5.15e+00  -1.0 1.32e+04    -  9.82e-01 1.00e+00f  1
+   2  5.5685146e+00 1.05e+03 2.05e+00  -1.0 4.39e+02    -  1.00e+00 1.00e+00h  1
+   3  5.3464544e+00 1.11e+02 1.02e-01  -1.0 5.54e-01  -2.0 1.00e+00 1.00e+00h  1
+   4  5.2775657e+00 2.37e+02 1.74e-01  -1.7 2.24e-01    -  1.00e+00 1.00e+00h  1
+   5  5.2791317e+00 8.59e+00 5.72e-03  -1.7 4.30e-02    -  1.00e+00 1.00e+00h  1
+   6  5.2764067e+00 5.65e+00 4.56e-03  -2.5 3.55e-02    -  1.00e+00 1.00e+00h  1
+   7  5.2763415e+00 8.09e-02 7.05e-05  -3.8 4.30e-03    -  1.00e+00 1.00e+00h  1
+   8  5.2763415e+00 3.47e-04 2.92e-07  -5.7 2.80e-04    -  1.00e+00 1.00e+00h  1
+   9  5.2763415e+00 5.79e-08 4.81e-11  -8.6 3.60e-06    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 9
+
+                                   (scaled)                 (unscaled)
+Objective...............:   5.2763415154362772e+00    5.2763415154362772e+00
+Dual infeasibility......:   4.8077875014485016e-11    4.8077875014485016e-11
+Constraint violation....:   2.0120557308446242e-10    5.7887518778443336e-08
+Complementarity.........:   2.5077155265867003e-09    2.5077155265867003e-09
+Overall NLP error.......:   2.5077155265867003e-09    5.7887518778443336e-08
+
+
+Number of objective function evaluations             = 10
+Number of objective gradient evaluations             = 10
+Number of equality constraint evaluations            = 10
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 10
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 9
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.008
+Total CPU secs in NLP function evaluations           =      0.008
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     3750
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     2200
+
+Total number of variables............................:     1102
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:      300
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:     1100
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  4.0809334e+01 2.91e+00 3.89e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  5.5254425e+00 1.50e+03 5.12e+00  -1.0 1.27e+04    -  9.88e-01 1.00e+00f  1
+   2  5.6780386e+00 9.41e+02 1.93e+00  -1.0 4.05e+02    -  1.00e+00 1.00e+00h  1
+   3  5.4304563e+00 1.46e+03 1.81e+00  -1.0 1.58e+00    -  1.00e+00 2.50e-01h  3
+   4  5.4955789e+00 2.64e+02 1.50e-01  -1.0 3.65e-01    -  1.00e+00 1.00e+00h  1
+   5  5.4076190e+00 2.80e+02 2.04e-01  -1.7 2.47e-01    -  1.00e+00 1.00e+00h  1
+   6  5.4106578e+00 1.58e+01 1.11e-02  -1.7 5.90e-02    -  1.00e+00 1.00e+00h  1
+   7  5.4079415e+00 5.00e+00 4.14e-03  -2.5 3.36e-02    -  1.00e+00 1.00e+00h  1
+   8  5.4079009e+00 8.19e-02 7.23e-05  -3.8 4.34e-03    -  1.00e+00 1.00e+00h  1
+   9  5.4079011e+00 3.36e-04 2.88e-07  -5.7 2.76e-04    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  5.4079011e+00 5.60e-08 4.74e-11  -8.6 3.56e-06    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 10
+
+                                   (scaled)                 (unscaled)
+Objective...............:   5.4079010948020745e+00    5.4079010948020745e+00
+Dual infeasibility......:   4.7442050288282189e-11    4.7442050288282189e-11
+Constraint violation....:   1.9468080713979283e-10    5.6010321713984013e-08
+Complementarity.........:   2.5077066490959933e-09    2.5077066490959933e-09
+Overall NLP error.......:   2.5077066490959933e-09    5.6010321713984013e-08
+
+
+Number of objective function evaluations             = 14
+Number of objective gradient evaluations             = 11
+Number of equality constraint evaluations            = 14
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 11
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 10
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.010
+Total CPU secs in NLP function evaluations           =      0.010
+
+EXIT: Optimal Solution Found.
+</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">display</span><span class="p">(</span><span class="n">bootstrap_theta</span><span class="p">)</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>fs.properties.tau[benzene,toluene]</th>
+      <th>fs.properties.tau[toluene,benzene]</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-1.009999</td>
+      <td>1.693262</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.956586</td>
+      <td>1.537485</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-0.854799</td>
+      <td>1.314181</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-0.866154</td>
+      <td>1.337942</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>
