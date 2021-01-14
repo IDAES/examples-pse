@@ -63,8 +63,8 @@ from idaes.generic_models.unit_models.mixer import MomentumMixingType
 import logging
 
 # Custom imports
-from SOFC_PR import get_SOFC_properties, rxn_configuration
-from SOFC_ROM_P import make_SOFC_ROM
+from properties.natural_gas_prop import get_SOFC_properties, rxn_configuration
+from ROM.SOFC_ROM import make_SOFC_ROM
 
 # %% SOFC Power Island Section
 
@@ -1406,6 +1406,7 @@ def pfd_result(outfile, m, df):
     tags["efficiency"] = fstr(pyo.value(m.fs.HHV_efficiency)*100, 2)
     tags["emissions"] = fstr(pyo.value(m.fs.CO2_emissions), 1)
 
-    original_svg_file = os.path.join(this_file_dir(), "NGFC_flowsheet.svg")
+    original_svg_file = os.path.join(this_file_dir(),
+                                     "NGFC_results_template.svg")
     with open(original_svg_file, "r") as f:
         svg_tag(tags, f, outfile=outfile)

@@ -22,7 +22,6 @@
 """
 Natural gas property package for the vapor phase using Peng-Robinson equation
 of state.
-
 """
 # Import Python libraries
 import logging
@@ -36,7 +35,7 @@ from idaes.core import VaporPhase, Component
 from idaes.generic_models.properties.core.state_definitions import FTPx
 from idaes.generic_models.properties.core.eos.ceos import Cubic, CubicType
 
-import NIST as NIST
+import idaes.generic_models.properties.core.pure.NIST as NIST
 import idaes.generic_models.properties.core.pure.RPP as RPP
 
 from idaes.generic_models.properties.core.reactions.dh_rxn import \
@@ -61,6 +60,32 @@ _log = logging.getLogger(__name__)
 # 4th edition, Chemical Engineering Series - Robert C. Reid
 # Properties: Critical temperatures and pressures. Omega.
 # Heat capacity coefficients for ethane, propane, and butane.
+
+
+class enth_mol_ig_comp():
+
+    @staticmethod
+    def build_parameters(cobj):
+        if not hasattr(cobj, "cp_mol_ig_comp_coeff_A"):
+            NIST.cp_mol_ig_comp.build_parameters(cobj)
+
+    @staticmethod
+    def return_expression(b, cobj, T):
+        # Specific enthalpy via the Shomate equation
+        t = pyunits.convert(T, to_units=pyunits.kiloK)
+
+        h = (cobj.cp_mol_ig_comp_coeff_A*(t) +
+             (cobj.cp_mol_ig_comp_coeff_B/2)*(t**2) +
+             (cobj.cp_mol_ig_comp_coeff_C/3)*(t**3) +
+             (cobj.cp_mol_ig_comp_coeff_D/4)*(t**4) -
+             cobj.cp_mol_ig_comp_coeff_E*(1/t) +
+             cobj.cp_mol_ig_comp_coeff_F)
+
+        units = b.params.get_metadata().derived_units
+        return pyunits.convert(h, units["energy_mole"])
+
+
+NIST.enth_mol_ig_comp = enth_mol_ig_comp
 
 
 # returns a configuration dictionary for the list of specified components

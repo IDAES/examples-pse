@@ -52,7 +52,7 @@ def build_matrix(index1, index2, values):
 
 def make_SOFC_ROM(self):
     # load kriging coefficients
-    ROM_filename = 'ADVNGFCNOCCS.dat'
+    ROM_filename = 'ROM/kriging_coefficients.dat'
 
     with open(ROM_filename) as file:
         text = file.readlines()
