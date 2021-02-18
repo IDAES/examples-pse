@@ -57,9 +57,9 @@ jobs:
         else
             ipopt -v
         fi
-    - name: Run non-integration tests
+    - name: Run pytest
       run: |
-        pytest --verbose -m "not integration" tests/
+        pytest --verbose tests/
     - name: Save Sphinx build artifacts
       uses: actions/upload-artifact@v2
       with:
