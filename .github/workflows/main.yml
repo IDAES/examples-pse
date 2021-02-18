@@ -24,6 +24,7 @@ jobs:
         python-version:
           - '3.6'
           - '3.7'
+          - '3.8'
         os:
           - ubuntu-18.04
           - windows-latest
@@ -37,6 +38,7 @@ jobs:
       run: |
         echo $PWD
         ls -lh .
+        python -m pip install --progress-bar=off setuptools pip wheel
         python -m pip install --progress-bar=off -r requirements.txt
     - name: Install IDAES
       run: |
@@ -57,24 +59,15 @@ jobs:
         else
             ipopt -v
         fi
-    # - name: Run pytest (not integration)
-    #   run: |
-    #     pytest --verbose -m 'not integration' tests/
-    # - name: Run pytest (integration)
-    #   run: |
-    #     pytest --verbose -m integration tests/
-    # - name: Save Sphinx build artifacts
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: sphinx-errors
-    #     path: sphinx-errors.txt
-    - name: Run build script in test mode
-      shell: bash
+    - name: Run pytest (unit)
       run: |
-        python build.py -v --config build-ci.yml --test
-    - name: Save test build artifacts
+        pytest --verbose -m unit tests/
+    - name: Run pytest (not unit, including running notebooks)
+      run: |
+        pytest --verbose -m 'not unit' tests/
+    - name: Save build error logs
       uses: actions/upload-artifact@v2
       if: failure()
       with:
-        name: test-errors
+        name: build-error-logs
         path: ci-test-errors.txt
