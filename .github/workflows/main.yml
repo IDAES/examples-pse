@@ -57,19 +57,24 @@ jobs:
         else
             ipopt -v
         fi
-    - name: Run pytest (not integration)
+    # - name: Run pytest (not integration)
+    #   run: |
+    #     pytest --verbose -m 'not integration' tests/
+    # - name: Run pytest (integration)
+    #   run: |
+    #     pytest --verbose -m integration tests/
+    # - name: Save Sphinx build artifacts
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: sphinx-errors
+    #     path: sphinx-errors.txt
+    - name: Run build script in test mode
+      shell: bash
       run: |
-        pytest --verbose -m 'not integration' tests/
-    - name: Run pytest (integration)
-      run: |
-        pytest --verbose -m integration tests/
-    - name: Save Sphinx build artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: sphinx-errors
-        path: sphinx-errors.txt
+        python build.py -v --config build-ci.yml --test
     - name: Save test build artifacts
       uses: actions/upload-artifact@v2
+      if: failure()
       with:
         name: test-errors
         path: ci-test-errors.txt
