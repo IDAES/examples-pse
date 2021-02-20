@@ -71,9 +71,34 @@ jobs:
       with:
         name: build-error-logs
         path: ci-test-errors.txt
+  build-examples-docs:
+    name: Build examples docs (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.6'
+          - '3.7'
+          - '3.8'
+    steps:
+    - name: Install dependencies and set up environment
+      run: |
+        python -m pip install --progress-bar=off setuptools pip wheel
+        python -m pip install --progress-bar=off -r requirements.txt
+        python -m pip install --progress-bar=off git+https://github.com/idaes/idaes-pse
+        idaes --version
+        idaes get-extensions --verbose
+        # add bin directory to $PATH (only valid for subsequent steps)
+        echo "$(idaes bin-directory)" >> $GITHUB_PATH
+        ipopt -v
+        sudo apt install pandoc
     - name: Build notebook index
       run: |
         python build.py --config ./build-ci.yml -x
+    - name: Run notebooks
+      run: |
+        python build.py --config ./build-ci.yml -t
     - name: Convert notebooks and build docs
       run: |
         python build.py --config ./build-ci.yml -cd
