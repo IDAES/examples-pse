@@ -96,7 +96,7 @@ jobs:
         idaes get-extensions --verbose
         # add bin directory to $PATH (only valid for subsequent steps)
         echo "$(idaes bin-directory)" >> $GITHUB_PATH
-        sudo apt install pandoc
+        sudo apt-get install --quiet --yes pandoc
     - name: Check installed versions
       run: |
         idaes --version
@@ -104,13 +104,13 @@ jobs:
         pandoc --version
     - name: Build notebook index
       run: |
-        python build.py --config ./build-ci.yml -x
+        python build.py -v -x
     - name: Run notebooks
       run: |
-        python build.py --config ./build-ci.yml -t
+        python build.py -v -t
     - name: Convert notebooks and build docs
       run: |
-        python build.py --config ./build-ci.yml -cd
+        python build.py -v -cd
     - name: Save Sphinx build error logs
       uses: actions/upload-artifact@v2
       if: failure()
