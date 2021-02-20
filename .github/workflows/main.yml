@@ -108,6 +108,7 @@ jobs:
     - name: Convert notebooks and build docs
       run: |
         # copy 'docs/conf.py' to 'docs_test/' to avoid Sphinx errors because it's missing if build.ci.yml is used
+        cp ./docs/conf.py ./docs_test/
         python build.py -v --config ./build-ci.yml -cd
     - name: Save Sphinx build error logs
       uses: actions/upload-artifact@v2
