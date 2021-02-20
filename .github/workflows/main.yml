@@ -71,3 +71,15 @@ jobs:
       with:
         name: build-error-logs
         path: ci-test-errors.txt
+    - name: Build notebook index
+      run: |
+        python build.py --config ./build-ci.yml -x
+    - name: Convert notebooks and build docs
+      run: |
+        python build.py --config ./build-ci.yml -cd
+    - name: Save Sphinx build error logs
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: sphinx-error-logs
+        path: sphinx-errors.txt
