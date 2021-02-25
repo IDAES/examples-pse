@@ -117,3 +117,6 @@ jobs:
       with:
         name: sphinx-error-logs
         path: sphinx-errors.txt
+    - name: Check for broken links in HTML docs
+      run: |
+        linkchecker --verbose ./docs_test/_build/html/
