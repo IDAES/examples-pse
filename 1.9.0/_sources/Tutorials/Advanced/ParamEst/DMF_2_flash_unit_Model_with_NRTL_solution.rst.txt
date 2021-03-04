@@ -1,0 +1,573 @@
+Using stored parameters in DMF to simulate Flash with NRTL
+==========================================================
+
+Note
+~~~~
+
+    This notebook requires the estimated NRTL parameters from the
+    `Parameter Estimation with
+    DMF <../ParamEst/parameter_estimation_NRTL_using_state_block_solution.ipynb>`__
+    Jupyter notebook. If you have not already, please run that notebook
+    first.
+
+In this notebook, we will revisit the `Flash Unit
+Model <../../Basics/flash_unit_solution.ipynb>`__ example but instead of
+using the ideal property package for the benzene-toluene system, we will
+be using the NRTL property package and we will also use the
+``binary interaction parameters`` that were estimated in `Parameter
+Estimation with
+DMF <DMF_1_for_parameter_estimation_NRTL_using_unit_model_solution.ipynb>`__.
+For the sake of brevity, this notebook will not demonstrate setting up
+the Flash Unit Model step by step. It is encouraged to first complete
+the stand alone Flash Unit Model notebook.
+
+Key links to documentation
+--------------------------
+
+-  Main IDAES online documentation page:
+   https://idaes-pse.readthedocs.io/en/stable/index.html
+
+.. code:: ipython3
+
+    from pyomo.environ import ConcreteModel, SolverFactory, Constraint, value
+    from idaes.core import FlowsheetBlock
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+
+Setup Data Management Framework (DMF)
+-------------------------------------
+
+We next connect to the DMF “workspace” where we stored the estimated
+parameters when we ran the `Parameter Estimation with
+DMF <DMF_1_for_parameter_estimation_NRTL_using_unit_model_solution.ipynb>`__
+Jupyter notebook.
+
+.. code:: ipython3
+
+    from idaes.dmf import DMF, magics
+    from pathlib import Path
+    idaes_home = Path("~/.idaes").expanduser()
+    if not idaes_home.exists():
+        idaes_home.mkdir()
+    wspath = idaes_home / "workshop_workspace"
+    _dmf = DMF(wspath, create=True)
+
+
+.. parsed-literal::
+
+    2021-03-03 18:49:40,506 [INFO] idaes.dmf.workspace: Using existing DMF workspace: /home/lbianchi/.idaes/workshop_workspace/config.yaml
+    2021-03-03 18:49:40,506 [INFO] idaes.dmf.workspace: Using existing path for new DMF workspace: /home/lbianchi/.idaes/workshop_workspace
+    2021-03-03 18:49:40,508 [INFO] idaes.dmf.dmfbase: Saving configuration location to: /home/lbianchi/.dmf
+
+
+Setup DMF “magics”
+~~~~~~~~~~~~~~~~~~
+
+Initialize the Jupyter Notebook “magic” commands to enable things like
+``%dmf list``. These commands all start with ``%dmf``
+
+.. code:: ipython3
+
+    %dmf init ~/.idaes/workshop_workspace
+    %dmf list
+
+
+.. parsed-literal::
+
+    2021-03-03 18:49:40,514 [INFO] idaes.dmf.dmfbase: Saving configuration location to: /home/lbianchi/.dmf
+
+
+
+*Success!* Using workspace at “/home/lbianchi/.idaes/workshop_workspace”
+
+
+
++---+--------------+--------+-----------------+-----------------------+
+| I | Name(s)      | Type   | Modified        | Description           |
+| D |              |        |                 |                       |
++===+==============+========+=================+=======================+
+| d | BT NRTL      | data   | 1610587068.0346 | BT_NRTL_dataset.csv   |
+| 1 | dataset      |        | 56              |                       |
+| 2 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 2 | BT NRTL      | data   | 1610587068.0377 | BT_NRTL_dataset_split |
+| f | split1       |        | 04              | 1.csv                 |
+| 0 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 0 | BT NRTL      | data   | 1610587068.0396 | BT_NRTL_dataset_split |
+| 2 | split2       |        | 32              | 2.csv                 |
+| 1 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| f |              |        |                 |                       |
+| d |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| f |              |        |                 |                       |
+| f |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| e |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 4 | BT NRTL est  | json   | 1614290364.4125 | Solution for data     |
+| f | param1       |        | 25              | subset 1              |
+| a |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| b |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 2 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 9 | BT NRTL est  | json   | 1614290364.4172 | Solution for data     |
+| a | param2       |        | 35              | subset 2              |
+| d |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| f |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+
+
+
+
+.. parsed-literal::
+
+    True
+
+
+
+.. code:: ipython3
+
+    m = ConcreteModel()
+    m.fs = FlowsheetBlock(default={"dynamic": False})
+
+Define Properties
+-----------------
+
+We need to define the property package for our flowsheet. In this
+example, we will be using the NRTL property package that is available as
+part of the IDAES framework. This property package supports ideal gas -
+ideal liquid, ideal gas - NRTL, and ideal gas - Wilson models for VLE.
+More details on this property package can be found at:
+https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_library/property_models/activity_coefficient.html
+
+.. code:: ipython3
+
+    from idaes.generic_models.properties.activity_coeff_models.BTX_activity_coeff_VLE \
+        import BTXParameterBlock
+    
+    m.fs.properties = BTXParameterBlock(
+        default={
+            "valid_phase":('Liq', 'Vap'),
+            "activity_coeff_model": 'NRTL'
+        }
+    )
+
+Select estimated NRTL parameter split to use
+--------------------------------------------
+
+.. code:: ipython3
+
+    # Select estimated NRTL parameter split to use
+    from ipywidgets import widgets
+    w = widgets.Dropdown(options=["1", "2"], value="1", description="Choose estimated parameter split",
+                        style={"description_width": "initial"})
+    display(w)
+    use_split = w.value
+
+
+
+.. parsed-literal::
+
+    Dropdown(description='Choose estimated parameter split', options=('1', '2'), style=DescriptionStyle(descriptio…
+
+
+In the following cell, we create a method to fix the binary interaction
+parameters from the DMF.
+
+.. code:: ipython3
+
+    def NRTL_model(model, data):
+        props = model.fs.properties
+        # Fix NRTL specific variables
+        # alpha values (set at 0.3)
+        props.alpha["benzene", "benzene"].fix(0)
+        props.alpha["benzene", "toluene"].fix(0.3)
+        props.alpha["toluene", "toluene"].fix(0)
+        props.alpha["toluene", "benzene"].fix(0.3)
+    
+        # initial tau values
+        tau = data["parameters"]["tau"]
+        props.tau["benzene", "benzene"].fix(0)
+        props.tau["benzene", "toluene"].fix(tau["benzene,toluene"])
+        props.tau["toluene", "toluene"].fix(0)
+        props.tau["toluene", "benzene"].fix(tau["toluene,benzene"])
+    
+        # Set bounds on variables to be estimated
+        props.tau["benzene", "toluene"].setlb(-5)
+        props.tau["benzene", "toluene"].setub(5)
+    
+        props.tau["toluene", "benzene"].setlb(-5)
+        props.tau["toluene", "benzene"].setub(5)
+    
+    # Find & load NRTL parameters for the chosen split in the DMF
+    records = _dmf.find_one(name=f"BT NRTL est param{use_split}")
+    if records:
+        # Create NRTL model with parameters
+        NRTL_model(m, records.data)
+    else:
+        print("No data found in DMF: Abort")
+        exit(0)
+
+Adding Flash Unit
+-----------------
+
+Now that we have the flowsheet and the properties defined, we can create
+the flash unit and add it to the flowsheet.
+
+.. code:: ipython3
+
+    from idaes.generic_models.unit_models import Flash
+    m.fs.flash = Flash(default={"property_package": m.fs.properties})
+
+.. code:: ipython3
+
+    # Display the values fixed for the binary interaction parameters from the DMF
+    m.fs.properties.tau.display()
+
+
+.. parsed-literal::
+
+    tau : Binary interaction parameter for NRTL model
+        Size=4, Index=fs.properties.tau_index
+        Key                    : Lower : Value               : Upper : Fixed : Stale : Domain
+        ('benzene', 'benzene') :  None :                   0 :  None :  True : False :  Reals
+        ('benzene', 'toluene') :    -5 : -0.9065254436087791 :     5 :  True : False :  Reals
+        ('toluene', 'benzene') :    -5 :   1.445496062577273 :     5 :  True : False :  Reals
+        ('toluene', 'toluene') :  None :                   0 :  None :  True : False :  Reals
+
+
+Set Operating Conditions
+------------------------
+
+.. code:: ipython3
+
+    
+    from idaes.core.util.model_statistics import degrees_of_freedom
+    print("Degrees of Freedom =", degrees_of_freedom(m))
+
+
+.. parsed-literal::
+
+    Degrees of Freedom = 7
+
+
+.. code:: ipython3
+
+    # Inlet specifications given above
+    m.fs.flash.inlet.flow_mol.fix(1)
+    m.fs.flash.inlet.temperature.fix(368)
+    m.fs.flash.inlet.pressure.fix(101325)
+    m.fs.flash.inlet.mole_frac_comp[0, "benzene"].fix()
+    m.fs.flash.inlet.mole_frac_comp[0, "toluene"].fix(0.5)
+    
+    
+    m.fs.flash.heat_duty.fix(0)
+    m.fs.flash.deltaP.fix(0)
+
+.. code:: ipython3
+
+    
+    print("Degrees of Freedom =", degrees_of_freedom(m))
+
+
+.. parsed-literal::
+
+    Degrees of Freedom = 0
+
+
+Initializing the Model
+----------------------
+
+.. code:: ipython3
+
+    m.fs.flash.initialize(outlvl=idaeslog.INFO)
+
+
+.. parsed-literal::
+
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 1 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 1 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_out: State Released.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume: Initialization Complete
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash.control_volume.properties_in: State Released.
+    2021-03-03 18:49:40 [INFO] idaes.init.fs.flash: Initialization Complete: optimal - Optimal Solution Found
+
+
+.. code:: ipython3
+
+    solver = SolverFactory('ipopt')
+    status = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:      195
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:       96
+    
+    Total number of variables............................:       57
+                         variables with only lower bounds:        3
+                    variables with lower and upper bounds:       10
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:       57
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 4.37e-11 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    
+    Number of Iterations....: 0
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   1.4571762935529522e-12    4.3655745685100555e-11
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   1.4571762935529522e-12    4.3655745685100555e-11
+    
+    
+    Number of objective function evaluations             = 1
+    Number of objective gradient evaluations             = 1
+    Number of equality constraint evaluations            = 1
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 1
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 0
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+    
+
+Viewing the Results
+-------------------
+
+.. code:: ipython3
+
+    # Print the pressure of the flash vapor outlet
+    print('Pressure =', value(m.fs.flash.vap_outlet.pressure[0]))
+    
+    print()
+    print('Output from display:')
+    # Call display on vap_outlet and liq_outlet of the flash
+    m.fs.flash.vap_outlet.display()
+    m.fs.flash.liq_outlet.display()
+
+
+.. parsed-literal::
+
+    Pressure = 101325.0
+    
+    Output from display:
+    vap_outlet : Size=1
+        Key  : Name           : Value
+        None :       flow_mol : {0.0: 0.5360671367213307}
+             : mole_frac_comp : {(0.0, 'benzene'): 0.6002634221194584, (0.0, 'toluene'): 0.39973657788054157}
+             :       pressure : {0.0: 101325.0}
+             :    temperature : {0.0: 368.0}
+    liq_outlet : Size=1
+        Key  : Name           : Value
+        None :       flow_mol : {0.0: 0.46393286327866934}
+             : mole_frac_comp : {(0.0, 'benzene'): 0.38414719053611096, (0.0, 'toluene'): 0.615852809463889}
+             :       pressure : {0.0: 101325.0}
+             :    temperature : {0.0: 368.0}
+
+
+.. code:: ipython3
+
+    m.fs.flash.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.flash                                                            Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key             : Value  : Fixed : Bounds
+              Heat Duty : 0.0000 :  True : (None, None)
+        Pressure Change : 0.0000 :  True : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                  Inlet    Vapor Outlet  Liquid Outlet
+        flow_mol                   1.0000      0.53607       0.46393  
+        mole_frac_comp benzene    0.50000      0.60026       0.38415  
+        mole_frac_comp toluene    0.50000      0.39974       0.61585  
+        temperature                368.00       368.00        368.00  
+        pressure               1.0132e+05   1.0132e+05    1.0132e+05  
+    ====================================================================================
+
