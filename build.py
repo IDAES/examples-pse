@@ -502,7 +502,6 @@ class NotebookBuilder(Builder):
         notebooks_to_convert, data_files = [], []
         # the return value of Path.iterdir() should be sorted to ensure consistency across different OSes
         for entry in sorted(srcdir.iterdir()):
-            print(f'entry: {entry}')
             filename = entry.parts[-1]
             if filename.startswith(".") or filename.startswith("__"):
                 _log.debug(f"skip special file '{entry}'")
