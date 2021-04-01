@@ -19,7 +19,8 @@ _root = os.path.join(os.path.dirname(__file__), "..")
 def _find_notebooks(p: Path, file_list):
     """Find all notebooks under path `p`, and add them to the file_list.
     """
-    for entry in p.iterdir():
+    # the return value of Path.iterdir() should be sorted to ensure consistency across different OSes
+    for entry in sorted(p.iterdir()):
         if entry.is_dir():
             _find_notebooks(entry, file_list)
         elif entry.name.endswith(".ipynb"):
