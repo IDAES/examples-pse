@@ -1154,7 +1154,7 @@ class SphinxBuilder(Builder):
             else:
                 nb_output_dir = doc_dir / nb_dir["source"]
             _log.debug(f"find notebooks in path: {nb_output_dir}")
-            for nb_path in Path(nb_output_dir).glob("**/*.ipynb"):
+            for nb_path in sorted(Path(nb_output_dir).glob("**/*.ipynb")):
                 nb_dest = html_dir / nb_path.relative_to(doc_dir)
                 if not nb_dest.parent.exists():
                     nb_dest.parent.mkdir(parents=True)
