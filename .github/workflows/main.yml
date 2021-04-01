@@ -47,18 +47,6 @@ jobs:
     - name: Install IDAES extensions
       run: |
         idaes get-extensions --verbose
-        # NOTE: these commands are Unix-shell specific 
-        # and will need to be changed if we want to test on CMD.exe/Powershell
-        find $(idaes data-directory) -ls
-        # add bin directory to $PATH (only valid for subsequent steps)
-        echo "$(idaes bin-directory)" >> $GITHUB_PATH
-    - name: Test access to executables
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-            ipopt.exe -v
-        else
-            ipopt -v
-        fi
     - name: Run pytest (unit)
       run: |
         pytest --verbose -m unit tests/
@@ -94,8 +82,6 @@ jobs:
         python -m pip install --progress-bar=off git+https://github.com/idaes/idaes-pse
         idaes --version
         idaes get-extensions --verbose
-        # add bin directory to $PATH (only valid for subsequent steps)
-        echo "$(idaes bin-directory)" >> $GITHUB_PATH
         sudo apt-get install --quiet --yes pandoc
     - name: Check installed versions
       run: |
