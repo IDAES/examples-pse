@@ -8,6 +8,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    # run daily at 5:00 am UTC (12 am ET/9 pm PT)
+    - cron: '0 5 * * *'
 
 defaults:
   run:
@@ -47,18 +50,6 @@ jobs:
     - name: Install IDAES extensions
       run: |
         idaes get-extensions --verbose
-        # NOTE: these commands are Unix-shell specific 
-        # and will need to be changed if we want to test on CMD.exe/Powershell
-        find $(idaes data-directory) -ls
-        # add bin directory to $PATH (only valid for subsequent steps)
-        echo "$(idaes bin-directory)" >> $GITHUB_PATH
-    - name: Test access to executables
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-            ipopt.exe -v
-        else
-            ipopt -v
-        fi
     - name: Run pytest (unit)
       run: |
         pytest --verbose -m unit tests/
@@ -94,13 +85,10 @@ jobs:
         python -m pip install --progress-bar=off git+https://github.com/idaes/idaes-pse
         idaes --version
         idaes get-extensions --verbose
-        # add bin directory to $PATH (only valid for subsequent steps)
-        echo "$(idaes bin-directory)" >> $GITHUB_PATH
         sudo apt-get install --quiet --yes pandoc
     - name: Check installed versions
       run: |
         idaes --version
-        ipopt -v
         pandoc --version
     - name: Build notebook index
       run: |

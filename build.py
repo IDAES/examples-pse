@@ -500,7 +500,8 @@ class NotebookBuilder(Builder):
 
         # Iterate through directory and get list of notebooks to convert (and data files)
         notebooks_to_convert, data_files = [], []
-        for entry in srcdir.iterdir():
+        # the return value of Path.iterdir() should be sorted to ensure consistency across different OSes
+        for entry in sorted(srcdir.iterdir()):
             filename = entry.parts[-1]
             if filename.startswith(".") or filename.startswith("__"):
                 _log.debug(f"skip special file '{entry}'")
