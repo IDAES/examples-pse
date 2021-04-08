@@ -8,3 +8,4 @@ This section has example notebooks that (unlike the Tutorials) do not have exerc
     SurrMod/index
     Tools/index
     UnitModels/index
+    Pecos/index
