@@ -54,6 +54,7 @@ class Bossy:
         self._handle_signals()
 
     def _handle_signals(self):
+        # pylint: disable=no-member
         if hasattr(signal, 'SIGINT'):
             signal.signal(signal.SIGINT, self.signal_handler)
         if hasattr(signal, 'SIGBREAK'):
