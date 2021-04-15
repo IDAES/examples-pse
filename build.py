@@ -886,6 +886,7 @@ class ParallelNotebookWorker:
         """Put a marker into the output directory for the failed notebook, so we
         can tell whether we need to bother trying to re-run it later.
         """
+        marker = job.outdir / (job.nb.stem + ".failed")
         if not job.outdir.exists():
             try:
                 job.outdir.mkdir(parents=True)
@@ -895,7 +896,6 @@ class ParallelNotebookWorker:
                     f"outdir={job.outdir}: {err}"
                 )
                 return  # oh, well
-        marker = job.outdir / (job.nb.stem + ".failed")
         self.log_debug(
             f"write failed marker '{marker}' for entry={job.nb} outdir={job.outdir}"
         )
