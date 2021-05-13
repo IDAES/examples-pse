@@ -45,7 +45,7 @@ jobs:
         python -m pip install --progress-bar=off -r requirements.txt
     - name: Install IDAES
       run: |
-        python -m pip install --progress-bar=off git+https://github.com/idaes/idaes-pse
+        python -m pip install --progress-bar=off 'idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/main.zip'
         idaes --version
     - name: Install IDAES extensions
       run: |
@@ -82,7 +82,7 @@ jobs:
       run: |
         python -m pip install --progress-bar=off setuptools pip wheel
         python -m pip install --progress-bar=off -r requirements.txt
-        python -m pip install --progress-bar=off git+https://github.com/idaes/idaes-pse
+        python -m pip install --progress-bar=off 'idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/main.zip'
         idaes --version
         idaes get-extensions --verbose
         sudo apt-get install --quiet --yes pandoc
