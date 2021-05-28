@@ -112,3 +112,21 @@ jobs:
         linkchecker_pkg_dir=$(python -c 'import linkcheck as l, pathlib as p; print(p.Path(l.__file__).parent.resolve())')
         chmod -R o-w "$linkchecker_pkg_dir"
         linkchecker --no-warnings ./docs_test/_build/html/
+  pylint:
+    name: Check for errors using pylint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - name: Install pylint and dependencies
+      run: |
+        python -m pip install --progress-bar=off -r requirements.txt pylint
+    - name: Run pylint
+      env:
+        PYLINT_OPTIONS: --errors-only
+        PYLINT_TARGETS: build.py build_util
+      run: |
+        pylint $PYLINT_OPTIONS $PYLINT_TARGETS
