@@ -98,7 +98,7 @@ class HDAReactionParameterData(ReactionParameterBlock):
                 })
         obj.add_default_units({'time': pyunits.s,
                                'length': pyunits.m,
-                               'mass': pyunits.g,
+                               'mass': pyunits.kg,
                                'amount': pyunits.mol,
                                'temperature': pyunits.K})
 
