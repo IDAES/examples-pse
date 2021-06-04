@@ -1,0 +1,682 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Monometallic Nanocluster Design &mdash; IDAES v1.10.0 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Monometallic Nanocluster Design</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/Examples/MatOpt/monometallic_nanocluster_design.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="monometallic-nanocluster-design">
+<h1>Monometallic Nanocluster Design<a class="headerlink" href="#monometallic-nanocluster-design" title="Permalink to this headline">¶</a></h1>
+<p>In this module, we introduce the <strong>MatOpt</strong> interface for representing
+material properties and specifying optimization problems.</p>
+<p>We have designed the interface with severl goals in mind:</p>
+<ol class="arabic simple">
+<li><p>To <strong>simplify the representation of nanostructured materials,</strong>
+streamlining the creation of materials optimization problems.</p></li>
+<li><p>To provide a simple interface so that users <strong>do not need to
+understand the details of building mathematical optmization models</strong>
+or the syntax of the Pyomo package.</p></li>
+<li><p>To <strong>automate many of the common steps of materials optimization,</strong>
+speeding up the development of new models.</p></li>
+</ol>
+<p>As an example system, we will consider the minimization of cohesive
+energy in nanoclusters, recently demonstrated in:</p>
+<p>Isenberg, N. M., et al., “Identification of Optimally Stable Nanocluster
+Geometries via Mathematical Optimization and Density Functional Theory,”
+<em>Molecular Systems Design &amp; Engineering</em>, 2019. DOI:
+<a class="reference external" href="https://doi.org/10.1039/C9ME00108E">10.1039/C9ME00108E</a>.</p>
+<p>We seek to identify the geometry that minimizes the cohesive energy of a
+nanocluster on the face-centered cubic (FCC) lattice. As a model for
+cohesive energy, we use model based on the square-root of coordination
+number, refered to as the Tomanek model
+<a class="reference external" href="https://doi.org/10.1103/PhysRevB.28.665">[1]</a>. In the equation
+below, we define the normalized cohesive energy, as the normalized
+contribution of the square root of the coordination number.</p>
+<div class="math notranslate nohighlight">
+\[\hat{E}^{\text{surf}} = \frac{1}{N \sqrt{12}} \displaystyle \sum_i \sqrt{CN_i}\]</div>
+<p>In the following sections, we demonstrate the basic approach for
+importing the MatOpt package, specifying the design space, formulating
+an optimization model, solving the optimization problem, and then
+outputting results.</p>
+<div class="section" id="importing-packages">
+<h2>Importing Packages<a class="headerlink" href="#importing-packages" title="Permalink to this headline">¶</a></h2>
+<p>We start by importing several standard Python modules for convenience.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sqrt</span>
+</pre></div>
+</div>
+<p>Next, we import MatOpt.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.apps.matopt</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="representing-materials">
+<h2>Representing Materials<a class="headerlink" href="#representing-materials" title="Permalink to this headline">¶</a></h2>
+<p>To begin formulating a material optimization problem, we need several
+pieces of information about the design space. Our goal is to generate a
+data structure for representing the choices in the design space, namely
+the choice of where to place atoms on FCC lattice sites.</p>
+<p>First, we define an <strong>*FCCLattice*</strong> object that holds the information
+about what sites should be included and which sites should be considered
+neighbors. As argument to the lattice object, we are required to provide
+the interatomic distance.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Lat</span> <span class="o">=</span> <span class="n">FCCLattice</span><span class="p">(</span><span class="n">IAD</span><span class="o">=</span><span class="mf">2.770</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, we define a <strong>*Canvas*</strong> object that links Cartesian coordinates
+to more abstract graph consisting of sites and neighbors. We
+incrimentally construct a Canvas by first introducing a site at the
+origin of the coordinate system. Then, we add “two shells” of neighbors,
+meaning that we introduce a shell of sites neighboring to the origin (12
+for the FCC lattice) and then introduce another shell of neighbors to
+that group (42 additional sites, for a total of 55 sites). The lattice
+object provides a <em>getNeighbors</em> method to identify these neighbors.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Canv</span> <span class="o">=</span> <span class="n">Canvas</span><span class="p">()</span>
+<span class="n">Canv</span><span class="o">.</span><span class="n">addLocation</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+<span class="n">Canv</span><span class="o">.</span><span class="n">addShells</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">Lat</span><span class="o">.</span><span class="n">getNeighbors</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, we define a list of <strong>*Atom*</strong> objects to represent the
+building blocks of our materials. We then use a <strong>*Design*</strong> object to
+represent the conjunction of a Canvas with a specific arrangement of
+building blocks. The Design object will be used to represent the
+material decisions made during the solution of material optimization
+models.</p>
+<p>Before applying optimization, we can use the Design object to plot the
+sites of the Canvas and ensure that we constructed the intended design
+space. We include several parsers to basic crystal structure file
+formats such as
+<a class="reference external" href="https://openbabel.org/docs/dev/FileFormats/XYZ_cartesian_coordinates_format.html">XYZ</a>,
+<a class="reference external" href="https://www.rcsb.org/pdb/static.do?p=file_formats/pdb/index.html">PDB</a>,
+<a class="reference external" href="https://cms.mpi.univie.ac.at/vasp/guide/node59.html">POSCAR</a>, and
+<a class="reference external" href="http://li.mit.edu/Archive/Graphics/A/index.html#standard_CFG">CFG</a>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Pt&#39;</span><span class="p">)]</span>
+<span class="n">D</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Pt&#39;</span><span class="p">))</span>
+<span class="n">D</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;canvas_sites.pdb&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-a-model">
+<h2>Building a Model<a class="headerlink" href="#building-a-model" title="Permalink to this headline">¶</a></h2>
+<p>To hold the materials information, we create a <strong>*MatOptModel*</strong> object.
+This will hold information about the relevant Canvas, Atoms, and
+material conformations that may be present in a system. Additionally, we
+define a parameter for the desired size of the cluster which will be
+utilized later by several methods.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">N</span> <span class="o">=</span> <span class="mi">22</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">MatOptModel</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atoms</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The MatOptModel additionally hold lists of <strong>*MaterialDescriptor*</strong>
+objects that define the relevant material desriptors. By default,
+several universal site descriptors are pre-defined in the model. From
+these, all other material descriptors can be defined.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 54%" />
+<col style="width: 46%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Descriptor</p></th>
+<th class="head"><p>Explanation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>*m.Yik*</strong></p></td>
+<td><p>Presence of a building block
+of type k at site i</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*m.Yi*</strong></p></td>
+<td><p>Presence of any type of
+building block at site i</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*m.Xijkl*</strong></p></td>
+<td><p>Presence of a building block
+of type k at site i and a
+building block of type l at
+site j</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*m.Xij*</strong></p></td>
+<td><p>Presence of any building block
+at site i and any building
+block at site j</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*m.Cikl*</strong></p></td>
+<td><p>Count of neighbors of type l
+next to a building block of
+type k at site i</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*m.Ci*</strong></p></td>
+<td><p>Count of any type of neighbors
+next to a building block at
+site i</p></td>
+</tr>
+</tbody>
+</table>
+<p>User-specified descriptors are defined by <strong>*DescriptorRule*</strong> objects
+in conjunction with <strong>*Expr*</strong> expression objects. Available expressions
+include:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 67%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Expression</p></th>
+<th class="head"><p>Explanation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>*LinearExpr*</strong></p></td>
+<td><p>Multiplication and
+addition of
+coefficients to
+distinct
+MaterialDescriptors</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*SiteCombination*</strong></p></td>
+<td><p>Summation of site
+contributions from
+two sites</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*SumNeighborSites*</strong></p></td>
+<td><p>Summation of site
+contributions from
+all neighboring sites</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*SumNeighborBonds*</strong></p></td>
+<td><p>Summation of bond
+contributions to all
+neighboring sites</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*SumSites*</strong></p></td>
+<td><p>Summation across
+sites</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*SumBonds*</strong></p></td>
+<td><p>Summation across
+bonds</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*SumSiteTypes*</strong></p></td>
+<td><p>Summation across site
+types</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*SumBondTypes*</strong></p></td>
+<td><p>Summation across bond
+types</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*SumSitesAndTypes*</strong></p></td>
+<td><p>Summation across
+sites and site types</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*SumBondsAndTypes*</strong></p></td>
+<td><p>Summation across
+bonds and bond types</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*SumConfs*</strong></p></td>
+<td><p>Summation across
+conformation types</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*SumSitesAndConfs*</strong></p></td>
+<td><p>Summation across
+sites and
+conformation types</p></td>
+</tr>
+</tbody>
+</table>
+<p>Several types of DescriptorRules are available.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 71%" />
+<col style="width: 29%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Rule</p></th>
+<th class="head"><p>Explanation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>*LessThan*</strong></p></td>
+<td><p>Descriptor less
+than or equal to
+an expression</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*EqualTo*</strong></p></td>
+<td><p>Descriptor equal
+to an expression</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*GreaterThan*</strong></p></td>
+<td><p>Descriptor greater
+than or equal to
+an expression</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*FixedTo*</strong></p></td>
+<td><p>Descriptor fixed
+to a scalar value</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*PiecewiseLinear*</strong></p></td>
+<td><p>Descriptor equal
+to the evaluation
+of a piecewise
+linear function</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*Implies*</strong></p></td>
+<td><p>Indicator
+descriptor that
+imposes other
+constraints if
+equal to 1</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*NegImplies*</strong></p></td>
+<td><p>Indicator
+descriptor that
+imposes other
+constraints if
+equal to 0</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>*ImpliesSiteCombination*</strong></p></td>
+<td><p>Indicator
+bond-indexed
+descriptor that
+imposes
+constraints on the
+two sites</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>*ImpliesNeighbors*</strong></p></td>
+<td><p>Indicator
+site-indexed
+descriptor that
+imposes
+constraints on
+neighboring sites</p></td>
+</tr>
+</tbody>
+</table>
+<p>From the combination of pre-defined descriptors, expressions, and rules
+we can specify a wide variety of other descriptors.</p>
+<p>In the context of nanocluster cohesive energy minimization, we would
+first like to define the square root of the coordination number. We
+achieve this by calling the <strong>*addSitesDescriptor*</strong> method on
+MatOptModel, passing the information necessary to create a
+<strong>*PiecewiseLinear*</strong> rule to correctly define the square root of
+coordination at the integer coordination number values. Note that we use
+<strong>*m.Ci*</strong>, the pre-defined basic variable for the count of neighboring
+building blocks and equivalent to the coordination number in this
+system, as the argument for the piecewise linear function. We use basic
+Python lists to express the data for the piecewise linear function
+values at integer numbers of coordination.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">sqrt</span><span class="p">(</span><span class="n">CN</span><span class="p">)</span> <span class="k">for</span> <span class="n">CN</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">13</span><span class="p">)]</span>
+<span class="n">BPs</span> <span class="o">=</span> <span class="p">[</span><span class="n">CN</span> <span class="k">for</span> <span class="n">CN</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">13</span><span class="p">)]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;CNRi&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">12</span><span class="p">)),</span><span class="n">integer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">rules</span><span class="o">=</span><span class="n">PiecewiseLinear</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">Vals</span><span class="p">,</span>
+                                           <span class="n">breakpoints</span><span class="o">=</span><span class="n">BPs</span><span class="p">,</span>
+                                           <span class="n">input_desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Next, we define a global (i.e., not indexed by sites or bonds)
+descriptor for the cohesive energy of the nanocluster. We us a simple
+<strong>*EqualTo*</strong> rule to set this descriptor equal to a normalized sum of
+contributions from the square root coordination number descriptor.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Ecoh&#39;</span><span class="p">,</span><span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">CNRi</span><span class="p">,</span>
+                                                    <span class="n">coefs</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="n">N</span><span class="o">*</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">12</span><span class="p">))))))</span>
+</pre></div>
+</div>
+<p>Finally, we create a descriptor for the size of the nanocluster. We set
+bounds on this descriptor to effectively constrain the design space to
+only include clusters of the desired size, <em>N</em>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Size&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span><span class="n">N</span><span class="p">),</span>
+                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="solving-the-model">
+<h2>Solving the Model<a class="headerlink" href="#solving-the-model" title="Permalink to this headline">¶</a></h2>
+<p>Once all the relevant information in the model is provided, we search
+for optimal designs that maximize one of the descriptors. In this
+example, we provide the descriptor for coehisver energy as the target
+functionality. Additionally, we specify a time limit in seconds as a
+keyword argument to the maximize method. For more information, see the
+documentation of the maximize function, available in the source code or
+by using the Python <em>help</em> function.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">help</span><span class="p">(</span><span class="n">MatOptModel</span><span class="o">.</span><span class="n">maximize</span><span class="p">)</span>
+<span class="n">help</span><span class="p">(</span><span class="n">MatOptModel</span><span class="o">.</span><span class="n">optimize</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Help on function maximize in module matopt.opt.mat_modeling:
+
+maximize(self, func, <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs)
+    Method to maximize a target functionality of the material model.
+
+    Args:
+        func (<code class="docutils literal notranslate"><span class="pre">MaterialDescriptor</span></code>/<code class="docutils literal notranslate"><span class="pre">Expr</span></code>): Material functionality to optimize.
+        <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs: Arguments to <code class="docutils literal notranslate"><span class="pre">MatOptModel.optimize</span></code>
+
+    Returns:
+        (<code class="docutils literal notranslate"><span class="pre">Design</span></code>/list&lt;<code class="docutils literal notranslate"><span class="pre">Design</span></code>&gt;) Optimal designs.
+
+    Raises:
+        <code class="docutils literal notranslate"><span class="pre">pyomo.common.errors.ApplicationError</span></code> if MatOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+
+    See <code class="docutils literal notranslate"><span class="pre">MatOptModel.optimize</span></code> method for details.
+
+Help on function optimize in module matopt.opt.mat_modeling:
+
+optimize(self, func, sense, nSolns=1, tee=True, disp=1, keepfiles=False, tilim=3600, trelim=None, solver='cplex')
+    Method to create and optimize the materials design problem.
+
+    This method automatically creates a new optimization model every
+    time it is called. Then, it solves the model via Pyomo with the
+    CPLEX solver.
+
+    If multiple solutions (called a 'solution pool') are desired, then
+    the nSolns argument can be provided and the populate method will
+    be called instead.
+
+    Args:
+        func (<code class="docutils literal notranslate"><span class="pre">MaterialDescriptor</span></code>/<code class="docutils literal notranslate"><span class="pre">Expr</span></code>): Material functionality to optimize.
+        sense (int): flag to indicate the choice to minimize or maximize the functionality of interest.
+            Choices: minimize/maximize (Pyomo constants 1,-1 respectively)
+        nSolns (int): Optional, number of Design objects to return.
+            Default: 1 (See <code class="docutils literal notranslate"><span class="pre">MatOptModel.populate</span></code> for more information)
+        tee (bool): Optional, flag to turn on solver output.
+            Default: True
+        disp (int): Optional, flag to control level of MatOpt output.
+            Choices: 0: No MatOpt output (other than solver tee) 1: MatOpt output for outer level method 2: MatOpt output for solution pool &amp; individual solns.
+            Default: 1
+        keepfiles (bool): Optional, flag to save temporary pyomo files.
+            Default: True
+        tilim (float): Optional, solver time limit (in seconds).
+            Default: 3600
+        trelim (float): Optional, solver tree memeory limit (in MB).
+            Default: None (i.e., Pyomo/CPLEX default)
+        solver (str): Solver choice. Currently only cplex or neos-cplex are supported
+            Default: cplex
+
+    Returns:
+        (<code class="docutils literal notranslate"><span class="pre">Design</span></code>/list&lt;<code class="docutils literal notranslate"><span class="pre">Design</span></code>&gt;) Optimal design or designs, depending on the number of solutions requested by argument <code class="docutils literal notranslate"><span class="pre">nSolns</span></code>.
+
+    Raises:
+        <code class="docutils literal notranslate"><span class="pre">pyomo.common.errors.ApplicationError</span></code> if MatOpt can not find usable solver (CPLEX or NEOS-CPLEX)</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">maximize</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ecoh</span><span class="p">,</span><span class="n">tilim</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
+  with Simplex, Mixed Integer &amp; Barrier Optimizers
+5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
+Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+
+Type &#39;help&#39; for a list of available commands.
+Type &#39;help&#39; followed by a command name for more
+information on commands.
+
+CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
+Logfile &#39;/tmp/tmpe4jwl2x5.cplex.log&#39; open.
+CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
+CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
+CPLEX&gt; New value for time limit in seconds: 100
+CPLEX&gt; Problem &#39;/tmp/tmpe6598jva.pyomo.lp&#39; read.
+Read time = 0.01 sec. (0.28 ticks)
+CPLEX&gt; Problem name         : /tmp/tmpe6598jva.pyomo.lp
+Objective sense      : Maximize
+Variables            :    1920  [Nneg: 1,  Fix: 1,  Box: 55,  Free: 661,
+                                 Binary: 1147,  General Integer: 55]
+Objective nonzeros   :       1
+Linear constraints   :    2839  [Less: 2561,  Greater: 55,  Equal: 223]
+  Nonzeros           :    8904
+  RHS nonzeros       :     488
+
+Variables            : Min LB: 0.000000         Max UB: 22.00000
+Objective nonzeros   : Min   : 1.000000         Max   : 1.000000
+Linear constraints   :
+  Nonzeros           : Min   : 0.01312160       Max   : 12.00000
+  RHS nonzeros       : Min   : 1.000000         Max   : 1.000000
+CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
+
+Error termination, CPLEX Error  1016.
+Solution time =    0.00 sec.
+Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+
+CPLEX&gt; CPLEX Error  1217: No solution exists.
+No file written.
+CPLEX&gt; ERROR: evaluating object as numeric value: obj
+        (object: &lt;class &#39;pyomo.core.base.objective.ScalarObjective&#39;&gt;)
+    No value for uninitialized NumericValue object obj
+MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+</pre></div>
+</div>
+</div>
+<div class="section" id="processing-results">
+<h2>Processing Results<a class="headerlink" href="#processing-results" title="Permalink to this headline">¶</a></h2>
+<p>If a result is found, we can write it to file and plot with
+visualization software. We provide interfaces to several standard
+crystal structure file formats, including
+<a class="reference external" href="https://openbabel.org/docs/dev/FileFormats/XYZ_cartesian_coordinates_format.html">XYZ</a>,
+<a class="reference external" href="https://www.rcsb.org/pdb/static.do?p=file_formats/pdb/index.html">PDB</a>,
+<a class="reference external" href="https://cms.mpi.univie.ac.at/vasp/guide/node59.html">POSCAR</a>, and
+<a class="reference external" href="http://li.mit.edu/Archive/Graphics/A/index.html#standard_CFG">CFG</a>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="p">(</span><span class="n">D</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="n">D</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;result.pdb&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>
