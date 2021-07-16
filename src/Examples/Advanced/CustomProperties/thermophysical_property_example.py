@@ -21,7 +21,6 @@ for molar denisty, heat capacity and specific enthalpy.
 # Import Pyomo libraries
 from pyomo.environ import (
     Constraint, Expression, Reference, Param, units as pyunits, Var)
-from pyomo.opt import SolverFactory
 
 # Import IDAES cores
 from idaes.core import (declare_process_block_class,
@@ -33,6 +32,7 @@ from idaes.core import (declare_process_block_class,
                         EnergyBalanceType,
                         Component,
                         VaporPhase)
+from idaes.core.util import get_solver
 from idaes.core.util.initialization import (fix_state_vars,
                                             revert_state_vars,
                                             solve_indexed_blocks)
@@ -173,7 +173,7 @@ class _HDAStateBlock(StateBlock):
 
     def initialize(blk, state_args={}, state_vars_fixed=False,
                    hold_state=False, outlvl=idaeslog.NOTSET,
-                   solver='ipopt', optarg=None):
+                   solver=None, optarg=None):
         """
         Initialization routine for property package.
         Keyword Arguments:
@@ -197,7 +197,7 @@ class _HDAStateBlock(StateBlock):
                              - False - states have not been fixed. The state
                                        block will deal with fixing/unfixing.
             solver : str indicating whcih solver to use during
-                     initialization (default = 'ipopt')
+                     initialization (default = None, use default solver)
             hold_state : flag indicating whether the initialization routine
                          should unfix any state variables fixed during
                          initialization (default=False).
@@ -239,8 +239,7 @@ class _HDAStateBlock(StateBlock):
         if optarg is None:
             optarg = {"tol": 1e-8}
 
-        opt = SolverFactory('ipopt')
-        opt.options = optarg
+        opt = get_solver(solver, optarg)
 
         # ---------------------------------------------------------------------
         # Initialize property calculations
