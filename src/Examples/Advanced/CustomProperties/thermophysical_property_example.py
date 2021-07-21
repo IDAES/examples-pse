@@ -15,7 +15,7 @@ Example of a thermophysical property package for the hydrodealkylation of
 toluene to form benzene, along with the side reaction to form diphenyl.
 
 This package assumes a single, ideal vapor phase and contains calculations
-for molar denisty, heat capacity and specific enthalpy.
+for molar density, heat capacity and specific enthalpy.
 """
 
 # Import Pyomo libraries
@@ -273,7 +273,7 @@ class _HDAStateBlock(StateBlock):
 
     def release_state(blk, flags, outlvl=idaeslog.NOTSET):
         '''
-        Method to relase state variables fixed during initialization.
+        Method to release state variables fixed during initialization.
         Keyword Arguments:
             flags : dict containing information of which state variables
                     were fixed during initialization, and should now be
@@ -300,7 +300,7 @@ class _HDAStateBlock(StateBlock):
 class HDAStateBlockData(StateBlockData):
     """
     Example property package for an ideal gas containing benzene, toluene
-    hydrogen, mehtane and diphenyl.
+    hydrogen, methane and diphenyl.
     """
 
     def build(self):
@@ -336,7 +336,7 @@ class HDAStateBlockData(StateBlockData):
 
         self.dens_mol = Var(initialize=1,
                             units=pyunits.mol/pyunits.m**3,
-                            doc="Mixture denisty")
+                            doc="Mixture density")
 
         self.ideal_gas_eq = Constraint(
             expr=self.pressure ==
