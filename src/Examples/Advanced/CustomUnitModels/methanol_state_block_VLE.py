@@ -19,7 +19,7 @@ Correlations from Turkay and Grossmann paper. See Latex files for details.
 import logging
 
 # Import Pyomo libraries
-from pyomo.environ import Constraint, log, NonNegativeReals, value, Var
+from pyomo.environ import Constraint, log, NonNegativeReals, value, Var, units as pyunits
 from pyomo.opt import SolverFactory, TerminationCondition
 
 # Import IDAES cores
@@ -241,15 +241,18 @@ class StateBlockData(StateBlockData):
         """List the necessary state variable objects."""
         self.flow_mol = Var(initialize=1.0,
                             domain=NonNegativeReals,
+#                            units=pyunits.kmol/pyunits.s,
                             doc='Component molar flowrate [kgmol/s]')
         self.mole_frac_comp = Var(self._params.component_list,
                              bounds=(0, 1),
                              initialize=1.0 / len(self._params.component_list))
         self.pressure = Var(initialize=0.101325,
                             domain=NonNegativeReals,
+#                            units=pyunits.MPa,
                             doc='State pressure [MPa]')
         self.temperature = Var(initialize=3,
                                domain=NonNegativeReals,
+#                               units=pyunits.K,
                                doc='State temperature [100K]')
 
     def _make_vars(self):
@@ -340,7 +343,9 @@ class StateBlockData(StateBlockData):
         self.eq_P_vap = Constraint(self._params.component_list, rule=rule_P_vap)
 
     def _density_mol(self):
-        self.density_mol = Var(self._params.phase_list, doc="Molar density [kgmol/m^3]")
+        self.density_mol = Var(self._params.phase_list,
+#                                units=pyunits.kmol/pyunits.m**3,
+                               doc="Molar density [kgmol/m^3]")
 
         def density_mol_calculation(self, p):
             if p == "Vap":
