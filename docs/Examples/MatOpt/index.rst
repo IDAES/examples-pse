@@ -16,3 +16,4 @@ In each case, we provide a Jupyter notebook with explanation as well as an equiv
     Surface design <surface_design_doc>
     Bifunctional surface design <bifunctional_surface_design_doc>
     Metal oxide bulk design <metal_oxide_bulk_design_doc>
+    Nanowire design <nanowire_design_doc>
