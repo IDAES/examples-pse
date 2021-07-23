@@ -8,6 +8,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    # run daily at 5:00 am UTC (12 am ET/9 pm PT)
+    - cron: '0 5 * * *'
 
 defaults:
   run:
@@ -24,6 +27,7 @@ jobs:
         python-version:
           - '3.6'
           - '3.7'
+          - '3.8'
         os:
           - ubuntu-18.04
           - windows-latest
@@ -37,36 +41,92 @@ jobs:
       run: |
         echo $PWD
         ls -lh .
+        python -m pip install --progress-bar=off setuptools pip wheel
         python -m pip install --progress-bar=off -r requirements.txt
     - name: Install IDAES
       run: |
-        python -m pip install --progress-bar=off git+https://github.com/idaes/idaes-pse
+        python -m pip install --progress-bar=off 'idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/main.zip'
         idaes --version
     - name: Install IDAES extensions
       run: |
         idaes get-extensions --verbose
-        # NOTE: these commands are Unix-shell specific 
-        # and will need to be changed if we want to test on CMD.exe/Powershell
-        find $(idaes data-directory) -ls
-        # add bin directory to $PATH (only valid for subsequent steps)
-        echo "$(idaes bin-directory)" >> $GITHUB_PATH
-    - name: Test access to executables
+    - name: Run pytest (unit)
       run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-            ipopt.exe -v
-        else
-            ipopt -v
-        fi
-    - name: Run non-integration tests
+        pytest --verbose -m unit tests/
+    - name: Run pytest (not unit, including running notebooks)
       run: |
-        pytest --verbose -m "not integration" tests/
-    - name: Save Sphinx build artifacts
+        pytest --verbose -m 'not unit' tests/
+    - name: Save build error logs
       uses: actions/upload-artifact@v2
+      if: failure()
       with:
-        name: sphinx-errors
-        path: sphinx-errors.txt
-    - name: Save test build artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: test-errors
+        name: build-error-logs
         path: ci-test-errors.txt
+  build-examples-docs:
+    name: Build examples docs (py${{ matrix.python-version }})
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.6'
+          - '3.7'
+          - '3.8'
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies and set up environment
+      run: |
+        python -m pip install --progress-bar=off setuptools pip wheel
+        python -m pip install --progress-bar=off -r requirements.txt
+        python -m pip install --progress-bar=off 'idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/main.zip'
+        idaes --version
+        idaes get-extensions --verbose
+        sudo apt-get install --quiet --yes pandoc
+    - name: Check installed versions
+      run: |
+        idaes --version
+        pandoc --version
+    - name: Build notebook index
+      run: |
+        python build.py -v --config ./build-ci.yml -x
+    - name: Convert notebooks and build docs
+      run: |
+        # copy files and dirs from 'docs/' to 'docs_test/' to avoid Sphinx errors and warnings
+        mkdir ./docs_test && cp -r ./docs/{conf.py,index.rst,_images,_static,_templates} ./docs_test/
+        ls -lah ./docs_test
+        python build.py -v --config ./build-ci.yml -cd
+    - name: Save Sphinx build error logs
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: sphinx-error-logs
+        path: sphinx-errors.txt
+    - name: Check for broken links in HTML docs
+      shell: bash
+      run: |
+        # linkchecker refuses to load files from its own installation directory if they are world-writable
+        linkchecker_pkg_dir=$(python -c 'import linkcheck as l, pathlib as p; print(p.Path(l.__file__).parent.resolve())')
+        chmod -R o-w "$linkchecker_pkg_dir"
+        linkchecker --no-warnings ./docs_test/_build/html/
+  pylint:
+    name: Check for errors using pylint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - name: Install pylint and dependencies
+      run: |
+        python -m pip install --progress-bar=off -r requirements.txt pylint
+    - name: Run pylint
+      env:
+        PYLINT_OPTIONS: --errors-only
+        PYLINT_TARGETS: build.py build_util
+      run: |
+        pylint $PYLINT_OPTIONS $PYLINT_TARGETS

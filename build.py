@@ -500,7 +500,8 @@ class NotebookBuilder(Builder):
 
         # Iterate through directory and get list of notebooks to convert (and data files)
         notebooks_to_convert, data_files = [], []
-        for entry in srcdir.iterdir():
+        # the return value of Path.iterdir() should be sorted to ensure consistency across different OSes
+        for entry in sorted(srcdir.iterdir()):
             filename = entry.parts[-1]
             if filename.startswith(".") or filename.startswith("__"):
                 _log.debug(f"skip special file '{entry}'")
@@ -563,6 +564,8 @@ class NotebookBuilder(Builder):
             wrapper_template=self.s.get("Template"),
             remove_config=self._nb_remove_config,
             test_mode=self._test_mode,
+            # TODO we should DRY timeout to an attr so that the same value is consistently used here and in _create_preprocessor()
+            timeout=self.s.get("timeout")
         )
         b = bossy.Bossy(
             jobs,
@@ -656,6 +659,7 @@ class ParallelNotebookWorker:
         wrapper_template: Optional[Template] = None,
         remove_config: Optional[Config] = None,
         test_mode: bool = False,
+        timeout = None,
     ):
         self.processor = processor
         self.template, self.rm_config = (
@@ -664,6 +668,7 @@ class ParallelNotebookWorker:
         )
         self.test_mode = test_mode
         self.log_q, self.id_ = None, 0
+        self._timeout = timeout
 
     # Logging utility functions
 
@@ -881,6 +886,7 @@ class ParallelNotebookWorker:
         """Put a marker into the output directory for the failed notebook, so we
         can tell whether we need to bother trying to re-run it later.
         """
+        marker = job.outdir / (job.nb.stem + ".failed")
         if not job.outdir.exists():
             try:
                 job.outdir.mkdir(parents=True)
@@ -890,7 +896,6 @@ class ParallelNotebookWorker:
                     f"outdir={job.outdir}: {err}"
                 )
                 return  # oh, well
-        marker = job.outdir / (job.nb.stem + ".failed")
         self.log_debug(
             f"write failed marker '{marker}' for entry={job.nb} outdir={job.outdir}"
         )
@@ -972,7 +977,7 @@ class ParallelNotebookWorker:
         except (CellExecutionError, NameError) as err:
             raise NotebookExecError(f"execution error for '{entry}': {err}")
         except TimeoutError as err:
-            dur, timeout = time.time() - t0, self.s.get("timeout")
+            dur, timeout = time.time() - t0, self._timeout
             raise NotebookError(f"timeout for '{entry}': {dur}s > {timeout}s")
         return nb
 
