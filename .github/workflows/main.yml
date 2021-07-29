@@ -105,6 +105,10 @@ jobs:
       with:
         name: sphinx-error-logs
         path: sphinx-errors.txt
+    - name: Check for undetected errors in HTML output
+      shell: bash
+      run: |
+        grep "size limits exceeded" -r ./docs_test/_build/html/ ; test $? -eq 1
     - name: Check for broken links in HTML docs
       shell: bash
       run: |
