@@ -17,6 +17,7 @@ env:
 
 defaults:
   run:
+    # -l needed to work properly with Conda
     shell: bash -l {0}
 
 jobs:
@@ -102,7 +103,6 @@ jobs:
         name: sphinx-error-logs
         path: sphinx-errors.txt
     - name: Check for broken links in HTML docs
-      shell: bash
       run: |
         # linkchecker refuses to load files from its own installation directory if they are world-writable
         linkchecker_pkg_dir=$(python -c 'import linkcheck as l, pathlib as p; print(p.Path(l.__file__).parent.resolve())')
