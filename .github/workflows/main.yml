@@ -80,6 +80,7 @@ jobs:
       with:
         install-target: -r requirements.txt
     - name: Install pandoc
+      run: |
         sudo apt-get install --quiet --yes pandoc
     - name: Check installed versions
       run: |
