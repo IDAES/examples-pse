@@ -12,9 +12,12 @@ on:
     # run daily at 5:00 am UTC (12 am ET/9 pm PT)
     - cron: '0 5 * * *'
 
+env:
+  IDAES_CONDA_ENV_NAME_DEV: examples-pse-dev
+
 defaults:
   run:
-    shell: bash
+    shell: bash -l {0}
 
 jobs:
   examples:
@@ -25,31 +28,23 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - '3.6'
+          # - '3.6'  FIXME uncomment before merging
           - '3.7'
           - '3.8'
         os:
           - ubuntu-18.04
           - windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    - name: Set up Conda environment
+      uses: conda-incubator/setup-miniconda@v2.1.1
       with:
+        activate-environment: ${{ env.IDAES_CONDA_ENV_NAME_DEV }}
         python-version: ${{ matrix.python-version }}
-    - name: Install own dependencies
-      run: |
-        echo $PWD
-        ls -lh .
-        python -m pip install --progress-bar=off setuptools pip wheel
-        python -m pip install --progress-bar=off -r requirements.txt
-    - name: Install IDAES
-      run: |
-        python -m pip install --progress-bar=off 'idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/main.zip'
-        idaes --version
-    - name: Install IDAES extensions
-      run: |
-        idaes get-extensions --verbose
+    - uses: actions/checkout@v2
+    - name: Set up IDAES
+      uses: ./.github/actions/setup-idaes
+      with:
+        install-target: -r requirements.txt
     - name: Run pytest (unit)
       run: |
         pytest --verbose -m unit tests/
@@ -70,22 +65,21 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - '3.6'
+          # - '3.6'  FIXME uncomment before merging
           - '3.7'
           - '3.8'
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    - name: Set up Conda environment
+      uses: conda-incubator/setup-miniconda@v2.1.1
       with:
+        activate-environment: ${{ env.IDAES_CONDA_ENV_NAME_DEV }}
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies and set up environment
-      run: |
-        python -m pip install --progress-bar=off setuptools pip wheel
-        python -m pip install --progress-bar=off -r requirements.txt
-        python -m pip install --progress-bar=off 'idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/main.zip'
-        idaes --version
-        idaes get-extensions --verbose
+    - uses: actions/checkout@v2
+    - name: Set up IDAES
+      uses: ./.github/actions/setup-idaes
+      with:
+        install-target: -r requirements.txt
+    - name: Install pandoc
         sudo apt-get install --quiet --yes pandoc
     - name: Check installed versions
       run: |
@@ -113,6 +107,7 @@ jobs:
         linkchecker_pkg_dir=$(python -c 'import linkcheck as l, pathlib as p; print(p.Path(l.__file__).parent.resolve())')
         chmod -R o-w "$linkchecker_pkg_dir"
         linkchecker --no-warnings ./docs_test/_build/html/
+
   pylint:
     name: Check for errors using pylint
     runs-on: ubuntu-latest
