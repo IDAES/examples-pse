@@ -16,13 +16,14 @@ notebook:
     # continue on errors (otherwise stop)
     continue_on_error: true
     test_mode: true
-    timeout: 300
+    timeout: 600
     # where to put error files. special values: '__stdout__',  '__stderr__'
     error_file: ci-test-errors.txt
     # template file for the "_doc" wrapper RST file
     template: docs/jupyter_notebook_sphinx.tpl
     directories:
       - source: Examples/Advanced/CustomUnitModels
+      - source: Examples/Advanced/CustomProperties
 #      - source: Examples/Advanced/DataRecon
       - source: Examples/MatOpt
       - source: Examples/SurrMod/ALAMO
