@@ -25,11 +25,12 @@ from pyomo.common.config import ConfigValue, In
 
 # Import IDAES cores
 from idaes.core import declare_process_block_class, PhysicalParameterBlock, LiquidPhase, VaporPhase, Component
+from idaes.core.util.constants import Constants
 
 from methanol_state_block_VLE import IdealStateBlock
 
 # Some more inforation about this module
-__author__ = "Jaffer Ghouse"
+__author__ = "Jaffer Ghouse", "Brandon Paul" # updated units by Brandon Paul
 __version__ = "0.0.1"
 
 
@@ -96,13 +97,6 @@ class PhysicalParameterData(PhysicalParameterBlock):
              3: ["H2", ("Vap", "Liq")],
              4: ["CH3OH", ("Vap", "Liq")]}
 
-        # Gas Constant
-        self.gas_constant = Param(within=NonNegativeReals,
-                                  mutable=False,
-                                  default=0.008314,
-#                                  units=pyunits.MJ/pyunits.kmol/pyunits.K,
-                                  doc='Gas Constant [MJ/(kmol.K)]')
-
         self.vapor_pressure_coeff = {('CH4', 'A'): 15.2243,
                                      ('CH4', 'B'): 897.84,
                                      ('CH4', 'C'): -7.16,
@@ -114,45 +108,37 @@ class PhysicalParameterData(PhysicalParameterBlock):
                                      ('H2', 'C'): 3.19,
                                      ('CH3OH', 'A'): 18.5875,
                                      ('CH3OH', 'B'): 3626.55,
-                                     ('CH3OH', 'C'): -34.29}
+                                     ('CH3OH', 'C'): -34.29} # these Antoined coefficients assume mmHG and K
 
-        Cp = self.config.Cp
-        Cv = Cp - self.gas_constant.value
+        Cp = self.config.Cp*pyunits.joule/pyunits.kmol/pyunits.K
+        Cv = Cp - Constants.gas_constant/1000 # convert gas constant from J/mol-K to MJ/kmol-K
         gamma = Cp / Cv
 
         self.gamma = Param(within=NonNegativeReals, mutable=True, default=gamma, doc='Ratio of Cp to Cv')
 
         self.Cp = Param(within=NonNegativeReals, mutable=True, default=Cp,
-#                        units=pyunits.MJ/pyunits.kmol/pyunits.K,
+                        units=pyunits.joule/pyunits.kmol/pyunits.K,
                         doc='Constant pressure heat capacity [MJ/(kmol K)]')
 
     @classmethod
     def define_metadata(cls, obj):
         """Define properties supported and units."""
         obj.add_properties(
-            {'flow_mol': {'method': None, 'units': 'kmol/s'},
-             'mole_frac': {'method': None, 'units': 'no unit'},
-             'temperature': {'method': None, 'units': '100K'},
-             'pressure': {'method': None, 'units': 'MPa'},
-             'flow_mol_phase': {'method': None, 'units': 'kmol/s'},
-             'density_mol': {'method': '_density_mol',
-                             'units': 'kmol/m^3'},
-             'vapor_pressure': {'method': '_vapor_pressure', 'units': 'MPa'},
-             'mole_frac_phase': {'method': '_mole_frac_phase',
-                                 'units': 'no unit'},
-             'enthalpy_comp_liq': {'method': '_enthalpy_comp_liq',
-                                   'units': 'MJ/kmol'},
-             'enthalpy_comp_vap': {'method': '_enthalpy_comp_vap',
-                                   'units': 'MJ/kmol'},
-             'enthalpy_liq': {'method': '_enthalpy_liq',
-                              'units': 'MJ/kmol'},
-             'enthalpy_vap': {'method': '_enthalpy_vap',
-                              'units': 'MJ/kmol'}})
+            {'flow_mol': {'method': None},
+             'mole_frac': {'method': None},
+             'temperature': {'method': None},
+             'pressure': {'method': None},
+             'flow_mol_phase': {'method': None},
+             'density_mol': {'method': '_density_mol'},
+             'vapor_pressure': {'method': '_vapor_pressure'},
+             'mole_frac_phase': {'method': '_mole_frac_phase'},
+             'enthalpy_comp_liq': {'method': '_enthalpy_comp_liq'},
+             'enthalpy_comp_vap': {'method': '_enthalpy_comp_vap'},
+             'enthalpy_liq': {'method': '_enthalpy_liq'},
+             'enthalpy_vap': {'method': '_enthalpy_vap'}})
 
         obj.add_default_units({'time': pyunits.s,
                                'length': pyunits.m,
                                'mass': pyunits.kg,
                                'amount': pyunits.kmol,
-                               'temperature': pyunits.K,
-                               'energy': pyunits.MJ,
-                               'holdup': pyunits.kmol})
+                               'temperature': pyunits.K})
