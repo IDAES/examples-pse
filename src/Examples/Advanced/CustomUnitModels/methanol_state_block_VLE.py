@@ -82,13 +82,13 @@ class _IdealStateBlock(StateBlock):
             hold_state : flag indicating whether the initialization routine
                          should unfix any state variables fixed during
                          initialization (default=False).
-                         - True - states varaibles are not unfixed, and
+                         - True - state variables are not unfixed, and
                                  a dict of returned containing flags for
                                  which states were fixed during
                                  initialization.
                         - False - state variables are unfixed after
                                  initialization by calling the
-                                 relase_state method
+                                 release_state method
 
         Returns:
             If hold_states is True, returns a dict containing flags for
@@ -250,11 +250,11 @@ class StateBlockData(StateBlockData):
                              initialize=1.0 / len(self._params.component_list))
         self.pressure = Var(initialize=0.101325,
                             domain=NonNegativeReals,
-                            units=pyunits.Pa,
+                            units=pyunits.MPa,
                             doc='State pressure [MPa]')
         self.temperature = Var(initialize=3,
                                domain=NonNegativeReals,
-                               units=pyunits.K,
+                               units=pyunits.hK,
                                doc='State temperature [100K]')
 
     def _make_vars(self):
@@ -307,7 +307,7 @@ class StateBlockData(StateBlockData):
         self.vapor_pressure = Var(self._params.component_list,
                                   initialize=0.101325,
                                   domain=NonNegativeReals,
-                                  units=pyunits.Pa, 
+                                  units=pyunits.MPa, 
                                   doc="vapor pressure [MPa]",
                                   bounds=(0.01, None))
 
@@ -345,7 +345,7 @@ class StateBlockData(StateBlockData):
             return log(7500.6168 * self.vapor_pressure[j]) == \
                 self._params.vapor_pressure_coeff[j, 'A'] - \
                 (self._params.vapor_pressure_coeff[j, 'B'] /
-                (self.temperature*100 - self._params.vapor_pressure_coeff[j, 'C'])) # convert temp to K
+                (self.temperature*100/pyunits.hectokelvin*pyunits.kelvin - self._params.vapor_pressure_coeff[j, 'C'])) # convert T to K
         self.eq_P_vap = Constraint(self._params.component_list, rule=rule_P_vap)
 
     def _density_mol(self):
@@ -356,8 +356,8 @@ class StateBlockData(StateBlockData):
         def density_mol_calculation(self, p):
             if p == "Vap":
                 return self.pressure == (self.density_mol[p] *
-                                         Constants.gas_constant/1000 *
-                                         self.temperature*100) # P ends up as MPA, gas constant as MJ/kmol-K and T as K
+                                         Constants.gas_constant/1000/pyunits.mol*pyunits.kmol *
+                                         self.temperature*100/pyunits.hectokelvin*pyunits.kelvin) # convert gas constant to MJ/kmol-K and T to K
             elif p == "Liq":
                 return self.density_mol[p] == 11.1  # kmol/m3 # dummy value
         try:
@@ -382,9 +382,9 @@ class StateBlockData(StateBlockData):
     def get_enthalpy_flow_terms(self, p):
         """Create enthalpy flow terms [MJ/s]."""
         if p == "Vap":
-            return self.flow_mol_phase['Vap'] * self._params.Cp * self.temperature*100 # convert temp to K
+            return self.flow_mol_phase['Vap'] * self._params.Cp * self.temperature*100/pyunits.hectokelvin*pyunits.kelvin # convert T to K
         elif p == "Liq":
-            return self.flow_mol_phase['Liq'] * self._params.Cp * self.temperature*100 # convert temp to K
+            return self.flow_mol_phase['Liq'] * self._params.Cp * self.temperature*100/pyunits.hectokelvin*pyunits.kelvin # convert T to K
 
     def get_material_density_terms(self, p, j):
         """Create material density terms."""
@@ -402,11 +402,11 @@ class StateBlockData(StateBlockData):
     def get_enthalpy_density_terms(self, p):
         """Create enthalpy density terms."""
         if p == "Liq":
-            return self.density_mol[p] * self._params.Cp * self.temperature*100 # convert temp to K
+            return self.density_mol[p] * self._params.Cp * self.temperature*100/pyunits.hectokelvin*pyunits.kelvin
         elif p == "Vap":
             return (self.density_mol[p] * (
-                    self._params.Cp - Constants.gas_constant/1000) *
-                    self.temperature*100) # convert gas constant from J/mol-K to MJ/kmol-K, temp to K
+                    self._params.Cp - Constants.gas_constant/1000/pyunits.mol*pyunits.kmol) *
+                    self.temperature*100/pyunits.hectokelvin*pyunits.kelvin) # convert gas constant from J/mol-K to MJ/kmol-K, T to K
 
     def default_material_balance_type(self):
         return MaterialBalanceType.componentTotal

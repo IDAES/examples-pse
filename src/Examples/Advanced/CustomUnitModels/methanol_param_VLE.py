@@ -77,8 +77,14 @@ class PhysicalParameterData(PhysicalParameterBlock):
 
         # List of valid phases and components in property package
         
-        self.Liq = LiquidPhase()
-        self.Vap = VaporPhase()
+        if self.config.valid_phase == ('Liq', 'Vap') or \
+                self.config.valid_phase == ('Vap', 'Liq'):
+            self.Liq = LiquidPhase()
+            self.Vap = VaporPhase()
+        elif self.config.valid_phase == 'Liq':
+            self.Liq = LiquidPhase()
+        else:
+            self.Vap = VaporPhase()
         
         self.CH4 = Component()
         self.CO = Component()
@@ -86,8 +92,8 @@ class PhysicalParameterData(PhysicalParameterBlock):
         self.CH3OH = Component()
         
         # List of components in each phase (optional)
-        self.phase_comp = {"Liq": self.component_list,
-                           "Vap": self.component_list}
+#        self.phase_comp = {"Liq": self.component_list,
+#                           "Vap": self.component_list}
 
         self.phase_equilibrium_idx = Set(initialize=[1, 2, 3, 4])
 
@@ -108,16 +114,16 @@ class PhysicalParameterData(PhysicalParameterBlock):
                                      ('H2', 'C'): 3.19,
                                      ('CH3OH', 'A'): 18.5875,
                                      ('CH3OH', 'B'): 3626.55,
-                                     ('CH3OH', 'C'): -34.29} # these Antoined coefficients assume mmHG and K
+                                     ('CH3OH', 'C'): -34.29} # these Antoine coefficients assume mmHG and K
 
-        Cp = self.config.Cp*pyunits.joule/pyunits.kmol/pyunits.K
-        Cv = Cp - Constants.gas_constant/1000 # convert gas constant from J/mol-K to MJ/kmol-K
+        Cp = self.config.Cp
+        Cv = Cp - Constants.gas_constant/1000/pyunits.mol*pyunits.kmol # convert gas constant from J/mol-K to MJ/kmol-K
         gamma = Cp / Cv
 
         self.gamma = Param(within=NonNegativeReals, mutable=True, default=gamma, doc='Ratio of Cp to Cv')
 
         self.Cp = Param(within=NonNegativeReals, mutable=True, default=Cp,
-                        units=pyunits.joule/pyunits.kmol/pyunits.K,
+                        units=pyunits.MJ/pyunits.kmol/pyunits.K,
                         doc='Constant pressure heat capacity [MJ/(kmol K)]')
 
     @classmethod
@@ -139,6 +145,6 @@ class PhysicalParameterData(PhysicalParameterBlock):
 
         obj.add_default_units({'time': pyunits.s,
                                'length': pyunits.m,
-                               'mass': pyunits.kg,
+                               'mass': pyunits.Gg, # to obtain base units of MPa and MJ
                                'amount': pyunits.kmol,
-                               'temperature': pyunits.K})
+                               'temperature': pyunits.hK})
