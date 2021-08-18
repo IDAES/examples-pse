@@ -20,17 +20,24 @@ paper.
 import logging
 
 # Import Pyomo libraries
-from pyomo.environ import Param, NonNegativeReals, Set, units as pyunits
+from pyomo.environ import (Param,
+                           NonNegativeReals,
+                           Set,
+                           units as pyunits)
 from pyomo.common.config import ConfigValue, In
 
 # Import IDAES cores
-from idaes.core import declare_process_block_class, PhysicalParameterBlock, LiquidPhase, VaporPhase, Component
+from idaes.core import (declare_process_block_class,
+                        PhysicalParameterBlock,
+                        LiquidPhase,
+                        VaporPhase,
+                        Component)
 from idaes.core.util.constants import Constants
 
 from methanol_state_block_VLE import IdealStateBlock
 
 # Some more inforation about this module
-__author__ = "Jaffer Ghouse", "Brandon Paul" # updated units by Brandon Paul
+__author__ = "Jaffer Ghouse", "Brandon Paul"
 __version__ = "0.0.1"
 
 
@@ -91,10 +98,6 @@ class PhysicalParameterData(PhysicalParameterBlock):
         self.H2 = Component()
         self.CH3OH = Component()
         
-        # List of components in each phase (optional)
-#        self.phase_comp = {"Liq": self.component_list,
-#                           "Vap": self.component_list}
-
         self.phase_equilibrium_idx = Set(initialize=[1, 2, 3, 4])
 
         self.phase_equilibrium_list = \
@@ -103,6 +106,7 @@ class PhysicalParameterData(PhysicalParameterBlock):
              3: ["H2", ("Vap", "Liq")],
              4: ["CH3OH", ("Vap", "Liq")]}
 
+# Antoine coefficients assume pressure in mmHG and temperature in K
         self.vapor_pressure_coeff = {('CH4', 'A'): 15.2243,
                                      ('CH4', 'B'): 897.84,
                                      ('CH4', 'C'): -7.16,
@@ -114,17 +118,23 @@ class PhysicalParameterData(PhysicalParameterBlock):
                                      ('H2', 'C'): 3.19,
                                      ('CH3OH', 'A'): 18.5875,
                                      ('CH3OH', 'B'): 3626.55,
-                                     ('CH3OH', 'C'): -34.29} # these Antoine coefficients assume mmHG and K
+                                     ('CH3OH', 'C'): -34.29}
 
         Cp = self.config.Cp
-        Cv = Cp - Constants.gas_constant/1000/pyunits.mol*pyunits.kmol # convert gas constant from J/mol-K to MJ/kmol-K
+        Cv = Cp - pyunits.convert(Constants.gas_constant,
+                                  pyunits.MJ/pyunits.kmol/pyunits.K)
         gamma = Cp / Cv
 
-        self.gamma = Param(within=NonNegativeReals, mutable=True, default=gamma, doc='Ratio of Cp to Cv')
+        self.gamma = Param(within=NonNegativeReals,
+                           mutable=True,
+                           default=gamma,
+                           doc='Ratio of Cp to Cv')
 
-        self.Cp = Param(within=NonNegativeReals, mutable=True, default=Cp,
+        self.Cp = Param(within=NonNegativeReals,
+                        mutable=True,
+                        default=Cp,
                         units=pyunits.MJ/pyunits.kmol/pyunits.K,
-                        doc='Constant pressure heat capacity [MJ/(kmol K)]')
+                        doc='Constant pressure heat capacity')
 
     @classmethod
     def define_metadata(cls, obj):
@@ -145,6 +155,6 @@ class PhysicalParameterData(PhysicalParameterBlock):
 
         obj.add_default_units({'time': pyunits.s,
                                'length': pyunits.m,
-                               'mass': pyunits.Gg, # to obtain base units of MPa and MJ
+                               'mass': pyunits.Gg, # yields base units MJ, MPa
                                'amount': pyunits.kmol,
                                'temperature': pyunits.hK})

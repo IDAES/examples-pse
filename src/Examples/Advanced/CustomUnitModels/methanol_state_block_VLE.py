@@ -19,7 +19,12 @@ Correlations from Turkay and Grossmann paper. See Latex files for details.
 import logging
 
 # Import Pyomo libraries
-from pyomo.environ import Constraint, log, NonNegativeReals, value, Var, units as pyunits
+from pyomo.environ import (Constraint,
+                           log,
+                           NonNegativeReals,
+                           value,
+                           Var,
+                           units as pyunits)
 from pyomo.opt import SolverFactory, TerminationCondition
 
 # Import IDAES cores
@@ -36,7 +41,7 @@ from idaes.core.util.initialization import (fix_state_vars,
 from idaes.core.util.exceptions import ConfigurationError
 
 # Some more inforation about this module
-__author__ = "Jaffer Ghouse", "Brandon Paul" # updated units by Brandon Paul
+__author__ = "Jaffer Ghouse", "Brandon Paul"
 __version__ = "0.0.1"
 
 
@@ -243,7 +248,7 @@ class StateBlockData(StateBlockData):
         self.flow_mol = Var(initialize=1.0,
                             domain=NonNegativeReals,
                             units=pyunits.kmol/pyunits.s,
-                            doc='Component molar flowrate [kmol/s]')
+                            doc='Component molar flowrate')
         self.mole_frac_comp = Var(self._params.component_list,
                              bounds=(0, 1),
                              units=pyunits.dimensionless,
@@ -251,11 +256,11 @@ class StateBlockData(StateBlockData):
         self.pressure = Var(initialize=0.101325,
                             domain=NonNegativeReals,
                             units=pyunits.MPa,
-                            doc='State pressure [MPa]')
+                            doc='State pressure')
         self.temperature = Var(initialize=3,
                                domain=NonNegativeReals,
                                units=pyunits.hK,
-                               doc='State temperature [100K]')
+                               doc='State temperature')
 
     def _make_vars(self):
         self.flow_mol_phase = Var(self._params.phase_list,
@@ -308,7 +313,7 @@ class StateBlockData(StateBlockData):
                                   initialize=0.101325,
                                   domain=NonNegativeReals,
                                   units=pyunits.MPa, 
-                                  doc="vapor pressure [MPa]",
+                                  doc="Vapor pressure",
                                   bounds=(0.01, None))
 
         def rule_total_mass_balance(self):
@@ -345,21 +350,23 @@ class StateBlockData(StateBlockData):
             return log(7500.6168 * self.vapor_pressure[j]) == \
                 self._params.vapor_pressure_coeff[j, 'A'] - \
                 (self._params.vapor_pressure_coeff[j, 'B'] /
-                (self.temperature*100/pyunits.hectokelvin*pyunits.kelvin - self._params.vapor_pressure_coeff[j, 'C'])) # convert T to K
+                (pyunits.convert(self.temperature, pyunits.K) - \
+                self._params.vapor_pressure_coeff[j, 'C']))
         self.eq_P_vap = Constraint(self._params.component_list, rule=rule_P_vap)
 
     def _density_mol(self):
         self.density_mol = Var(self._params.phase_list,
                                units=pyunits.kmol/pyunits.m**3,
-                               doc="Molar density [kmol/m^3]")
+                               doc="Molar density")
 
         def density_mol_calculation(self, p):
             if p == "Vap":
                 return self.pressure == (self.density_mol[p] *
-                                         Constants.gas_constant/1000/pyunits.mol*pyunits.kmol *
-                                         self.temperature*100/pyunits.hectokelvin*pyunits.kelvin) # convert gas constant to MJ/kmol-K and T to K
+                                         pyunits.convert(Constants.gas_constant,
+                                           pyunits.MJ/pyunits.kmol/pyunits.K) *
+                                         pyunits.convert(self.temperature, pyunits.K))
             elif p == "Liq":
-                return self.density_mol[p] == 11.1  # kmol/m3 # dummy value
+                return self.density_mol[p] == 11.1  # dummy value
         try:
             # Try to build constraint
             self.density_mol_calculation = Constraint(
@@ -382,9 +389,11 @@ class StateBlockData(StateBlockData):
     def get_enthalpy_flow_terms(self, p):
         """Create enthalpy flow terms [MJ/s]."""
         if p == "Vap":
-            return self.flow_mol_phase['Vap'] * self._params.Cp * self.temperature*100/pyunits.hectokelvin*pyunits.kelvin # convert T to K
+            return self.flow_mol_phase['Vap'] * self._params.Cp * \
+                   pyunits.convert(self.temperature, pyunits.K)
         elif p == "Liq":
-            return self.flow_mol_phase['Liq'] * self._params.Cp * self.temperature*100/pyunits.hectokelvin*pyunits.kelvin # convert T to K
+            return self.flow_mol_phase['Liq'] * self._params.Cp * \
+                   pyunits.convert(self.temperature, pyunits.K)
 
     def get_material_density_terms(self, p, j):
         """Create material density terms."""
@@ -402,11 +411,13 @@ class StateBlockData(StateBlockData):
     def get_enthalpy_density_terms(self, p):
         """Create enthalpy density terms."""
         if p == "Liq":
-            return self.density_mol[p] * self._params.Cp * self.temperature*100/pyunits.hectokelvin*pyunits.kelvin
+            return self.density_mol[p] * self._params.Cp * \
+                   pyunits.convert(self.temperature, pyunits.K)
         elif p == "Vap":
             return (self.density_mol[p] * (
-                    self._params.Cp - Constants.gas_constant/1000/pyunits.mol*pyunits.kmol) *
-                    self.temperature*100/pyunits.hectokelvin*pyunits.kelvin) # convert gas constant from J/mol-K to MJ/kmol-K, T to K
+                    self._params.Cp - pyunits.convert(Constants.gas_constant,
+                                        pyunits.MJ/pyunits.kmol/pyunits.K) * \
+                    pyunits.convert(self.temperature, pyunits.K)))
 
     def default_material_balance_type(self):
         return MaterialBalanceType.componentTotal
