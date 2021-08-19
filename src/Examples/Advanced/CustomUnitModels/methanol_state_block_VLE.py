@@ -366,7 +366,7 @@ class StateBlockData(StateBlockData):
                                            pyunits.MJ/pyunits.kmol/pyunits.K) *
                                          pyunits.convert(self.temperature, pyunits.K))
             elif p == "Liq":
-                return self.density_mol[p] == 11.1  # dummy value
+                return self.density_mol[p] == 11.1*pyunits.kmol/pyunits.m**3  # dummy value
         try:
             # Try to build constraint
             self.density_mol_calculation = Constraint(

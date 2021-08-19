@@ -23,7 +23,8 @@ import logging
 from pyomo.environ import (Param,
                            NonNegativeReals,
                            Set,
-                           units as pyunits)
+                           units as pyunits,
+                           value)
 from pyomo.common.config import ConfigValue, In
 
 # Import IDAES cores
@@ -106,7 +107,7 @@ class PhysicalParameterData(PhysicalParameterBlock):
              3: ["H2", ("Vap", "Liq")],
              4: ["CH3OH", ("Vap", "Liq")]}
 
-# Antoine coefficients assume pressure in mmHG and temperature in K
+        # Antoine coefficients assume pressure in mmHG and temperature in K
         self.vapor_pressure_coeff = {('CH4', 'A'): 15.2243,
                                      ('CH4', 'B'): 897.84,
                                      ('CH4', 'C'): -7.16,
@@ -121,8 +122,8 @@ class PhysicalParameterData(PhysicalParameterBlock):
                                      ('CH3OH', 'C'): -34.29}
 
         Cp = self.config.Cp
-        Cv = Cp - pyunits.convert(Constants.gas_constant,
-                                  pyunits.MJ/pyunits.kmol/pyunits.K)
+        Cv = value(Cp - pyunits.convert(Constants.gas_constant,
+                                  pyunits.MJ/pyunits.kmol/pyunits.K))
         gamma = Cp / Cv
 
         self.gamma = Param(within=NonNegativeReals,
