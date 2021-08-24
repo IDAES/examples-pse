@@ -73,8 +73,8 @@ class _IdealStateBlock(StateBlock):
                                     flows
                          pressure : value at which to initialize pressure
                          temperature : value at which to initialize temperature
-                         mole_frac_comp: value at which to initialize the component
-                                    mixture mole fraction
+                         mole_frac_comp: value at which to initialize the
+                                    component mixture mole fraction
             outlvl : sets output level of initialization routine
 
                      * 0 = no output (default)
@@ -250,9 +250,10 @@ class StateBlockData(StateBlockData):
                             units=pyunits.kmol/pyunits.s,
                             doc='Component molar flowrate')
         self.mole_frac_comp = Var(self._params.component_list,
-                             bounds=(0, 1),
-                             units=pyunits.dimensionless,
-                             initialize=1.0 / len(self._params.component_list))
+                                  bounds=(0, 1),
+                                  units=pyunits.dimensionless,
+                                  initialize=1.0 /
+                                  len(self._params.component_list))
         self.pressure = Var(initialize=0.101325,
                             domain=NonNegativeReals,
                             units=pyunits.MPa,
@@ -269,10 +270,11 @@ class StateBlockData(StateBlockData):
                                   bounds=(0, None))
 
         self.mole_frac_phase_comp = Var(self._params.phase_list,
-                                   self._params.component_list,
-                                   initialize=1 / len(self._params.component_list),
-                                   units=pyunits.dimensionless,
-                                   bounds=(0, 1))
+                                        self._params.component_list,
+                                        initialize=1 /
+                                        len(self._params.component_list),
+                                        units=pyunits.dimensionless,
+                                        bounds=(0, 1))
 
     def _make_liq_phase_eq(self):
         def rule_total_mass_balance(self):
@@ -281,15 +283,16 @@ class StateBlockData(StateBlockData):
 
         def rule_comp_mass_balance(self, i):
             return self.flow_mol * self.mole_frac_comp[i] == \
-                self.flow_mol_phase['Liq'] * self.mole_frac_phase_comp['Liq', i]
+                self.flow_mol_phase['Liq'] * \
+                self.mole_frac_phase_comp['Liq', i]
         self.eq_comp = Constraint(self._params.component_list,
                                   rule=rule_comp_mass_balance)
 
         if self.config.defined_state is False:
             # applied at outlet only
-            self.eq_mol_frac_out = Constraint(expr=sum(self.mole_frac_comp[i]
-                                              for i in self._params.component_list)
-                                              == 1)
+            self.eq_mol_frac_out = Constraint(
+                expr=sum(self.mole_frac_comp[i]
+                         for i in self._params.component_list) == 1)
 
     def _make_vap_phase_eq(self):
         def rule_total_mass_balance(self):
@@ -298,21 +301,22 @@ class StateBlockData(StateBlockData):
 
         def rule_comp_mass_balance(self, i):
             return self.flow_mol * self.mole_frac_comp[i] == \
-                self.flow_mol_phase['Vap'] * self.mole_frac_phase_comp['Vap', i]
+                self.flow_mol_phase['Vap'] * \
+                self.mole_frac_phase_comp['Vap', i]
         self.eq_comp = Constraint(self._params.component_list,
                                   rule=rule_comp_mass_balance)
 
         if self.config.defined_state is False:
             # applied at outlet only
-            self.eq_mol_frac_out = Constraint(expr=sum(self.mole_frac_comp[i]
-                                              for i in self._params.component_list)
-                                              == 1)
+            self.eq_mol_frac_out = Constraint(
+                expr=sum(self.mole_frac_comp[i]
+                         for i in self._params.component_list) == 1)
 
     def _make_flash_eq(self):
         self.vapor_pressure = Var(self._params.component_list,
                                   initialize=0.101325,
                                   domain=NonNegativeReals,
-                                  units=pyunits.MPa, 
+                                  units=pyunits.MPa,
                                   doc="Vapor pressure",
                                   bounds=(0.01, None))
 
@@ -323,8 +327,10 @@ class StateBlockData(StateBlockData):
 
         def rule_comp_mass_balance(self, i):
             return self.flow_mol * self.mole_frac_comp[i] == \
-                self.flow_mol_phase['Liq'] * self.mole_frac_phase_comp['Liq', i] + \
-                self.flow_mol_phase['Vap'] * self.mole_frac_phase_comp['Vap', i]
+                self.flow_mol_phase['Liq'] * \
+                self.mole_frac_phase_comp['Liq', i] + \
+                self.flow_mol_phase['Vap'] * \
+                self.mole_frac_phase_comp['Vap', i]
         self.eq_comp = Constraint(self._params.component_list,
                                   rule=rule_comp_mass_balance)
 
@@ -337,22 +343,23 @@ class StateBlockData(StateBlockData):
 
         if self.config.defined_state is False:
             # applied at outlet only
-            self.eq_mol_frac_out = Constraint(expr=sum(self.mole_frac_comp[i]
-                                              for i in self._params.component_list)
-                                              == 1)
+            self.eq_mol_frac_out = Constraint(
+                expr=sum(self.mole_frac_comp[i]
+                         for i in self._params.component_list) == 1)
 
         def rule_Keq(self, i):
             return self.mole_frac_phase_comp['Vap', i] * self.pressure == \
                 self.vapor_pressure[i] * self.mole_frac_phase_comp['Liq', i]
         self.eq_Keq = Constraint(self._params.component_list, rule=rule_Keq)
 
-        def rule_P_vap(self, j): # coefficient converts MPa to mmHg
+        def rule_P_vap(self, j):  # coefficient converts MPa to mmHg
             return log(7500.6168 * self.vapor_pressure[j]) == \
                 self._params.vapor_pressure_coeff[j, 'A'] - \
                 (self._params.vapor_pressure_coeff[j, 'B'] /
-                (pyunits.convert(self.temperature, pyunits.K) - \
-                self._params.vapor_pressure_coeff[j, 'C']))
-        self.eq_P_vap = Constraint(self._params.component_list, rule=rule_P_vap)
+                 (pyunits.convert(self.temperature, pyunits.K) -
+                 self._params.vapor_pressure_coeff[j, 'C']))
+        self.eq_P_vap = Constraint(self._params.component_list,
+                                   rule=rule_P_vap)
 
     def _density_mol(self):
         self.density_mol = Var(self._params.phase_list,
@@ -361,12 +368,14 @@ class StateBlockData(StateBlockData):
 
         def density_mol_calculation(self, p):
             if p == "Vap":
-                return self.pressure == (self.density_mol[p] *
-                                         pyunits.convert(Constants.gas_constant,
-                                           pyunits.MJ/pyunits.kmol/pyunits.K) *
-                                         pyunits.convert(self.temperature, pyunits.K))
+                return self.pressure == (
+                    self.density_mol[p] *
+                    pyunits.convert(Constants.gas_constant,
+                                    pyunits.MJ/pyunits.kmol/pyunits.K) *
+                    pyunits.convert(self.temperature, pyunits.K))
             elif p == "Liq":
-                return self.density_mol[p] == 11.1*pyunits.kmol/pyunits.m**3  # dummy value
+                # dummy value
+                return self.density_mol[p] == 11.1*pyunits.kmol/pyunits.m**3
         try:
             # Try to build constraint
             self.density_mol_calculation = Constraint(
@@ -380,9 +389,11 @@ class StateBlockData(StateBlockData):
     def get_material_flow_terms(self, p, j):
         """Create material flow terms for control volume."""
         if (p == "Vap") and (j in self._params.component_list):
-            return self.flow_mol_phase['Vap'] * self.mole_frac_phase_comp['Vap', j]
+            return self.flow_mol_phase['Vap'] * \
+                    self.mole_frac_phase_comp['Vap', j]
         elif (p == "Liq") and (j in self._params.component_list):
-            return self.flow_mol_phase['Liq'] * self.mole_frac_phase_comp['Liq', j]
+            return self.flow_mol_phase['Liq'] * \
+                    self.mole_frac_phase_comp['Liq', j]
         else:
             return 0
 
@@ -399,12 +410,14 @@ class StateBlockData(StateBlockData):
         """Create material density terms."""
         if p == "Liq":
             if j in self._params.component_list:
-                return self.density_mol[p] * self.mole_frac_phase_comp['Liq', j]
+                return self.density_mol[p] * \
+                        self.mole_frac_phase_comp['Liq', j]
             else:
                 return 0
         elif p == "Vap":
             if j in self._params.component_list:
-                return self.density_mol[p] * self.mole_frac_phase_comp['Vap', j]
+                return self.density_mol[p] * \
+                        self.mole_frac_phase_comp['Vap', j]
             else:
                 return 0
 
@@ -415,8 +428,9 @@ class StateBlockData(StateBlockData):
                    pyunits.convert(self.temperature, pyunits.K)
         elif p == "Vap":
             return (self.density_mol[p] * (
-                    self._params.Cp - pyunits.convert(Constants.gas_constant,
-                                        pyunits.MJ/pyunits.kmol/pyunits.K) * \
+                    self._params.Cp -
+                    pyunits.convert(Constants.gas_constant,
+                                    pyunits.MJ/pyunits.kmol/pyunits.K) *
                     pyunits.convert(self.temperature, pyunits.K)))
 
     def default_material_balance_type(self):

@@ -84,7 +84,7 @@ class PhysicalParameterData(PhysicalParameterBlock):
         self._state_block_class = IdealStateBlock
 
         # List of valid phases and components in property package
-        
+
         if self.config.valid_phase == ('Liq', 'Vap') or \
                 self.config.valid_phase == ('Vap', 'Liq'):
             self.Liq = LiquidPhase()
@@ -93,12 +93,12 @@ class PhysicalParameterData(PhysicalParameterBlock):
             self.Liq = LiquidPhase()
         else:
             self.Vap = VaporPhase()
-        
+
         self.CH4 = Component()
         self.CO = Component()
         self.H2 = Component()
         self.CH3OH = Component()
-        
+
         self.phase_equilibrium_idx = Set(initialize=[1, 2, 3, 4])
 
         self.phase_equilibrium_list = \
@@ -123,7 +123,7 @@ class PhysicalParameterData(PhysicalParameterBlock):
 
         Cp = self.config.Cp
         Cv = value(Cp - pyunits.convert(Constants.gas_constant,
-                                  pyunits.MJ/pyunits.kmol/pyunits.K))
+                                        pyunits.MJ/pyunits.kmol/pyunits.K))
         gamma = Cp / Cv
 
         self.gamma = Param(within=NonNegativeReals,
@@ -156,6 +156,6 @@ class PhysicalParameterData(PhysicalParameterBlock):
 
         obj.add_default_units({'time': pyunits.s,
                                'length': pyunits.m,
-                               'mass': pyunits.Gg, # yields base units MJ, MPa
+                               'mass': pyunits.Gg,  # yields base units MJ, MPa
                                'amount': pyunits.kmol,
                                'temperature': pyunits.hK})
