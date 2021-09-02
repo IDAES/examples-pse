@@ -52,6 +52,12 @@ jobs:
     - name: Run pytest (not unit, including running notebooks)
       run: |
         pytest --verbose -m 'not unit' tests/
+    - name: Save build log
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: ${{ matrix.os }}-${{ matrix.python-version }}-build-log
+        path: build-log.jsonl
     - name: Save build error logs
       uses: actions/upload-artifact@v2
       if: failure()
