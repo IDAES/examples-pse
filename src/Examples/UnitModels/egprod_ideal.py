@@ -23,13 +23,10 @@ import logging
 from pyomo.environ import units as pyunits
 
 # Import IDAES cores
-from idaes.core import LiquidPhase, VaporPhase, Component
+from idaes.core import LiquidPhase, Component
 
 from idaes.generic_models.properties.core.state_definitions import FpcTP
 from idaes.generic_models.properties.core.eos.ideal import Ideal
-from idaes.generic_models.properties.core.phase_equil import SmoothVLE
-from idaes.generic_models.properties.core.phase_equil.bubble_dew import \
-        IdealBubbleDew
 from idaes.generic_models.properties.core.phase_equil.forms import fugacity
 from idaes.generic_models.properties.core.pure.Perrys import Perrys
 from idaes.generic_models.properties.core.pure.RPP4 import RPP4
@@ -53,6 +50,8 @@ _log = logging.getLogger(__name__)
 #     values based on ver. 1.122r of the Thermochemical Network (2021);
 #     available at ATcT.anl.gov
 # [5] CRC Handbook of Chemistry and Physics, 97th Ed., W.M. Haynes
+# [6] Journal of Physical and Chemical Reference Data 20, 1157
+#     (1991); https:// doi.org/10.1063/1.555899
 
 config_dict = {
     # Specifying components
@@ -70,6 +69,7 @@ config_dict = {
                  "pressure_crit": (71.9e5, pyunits.Pa),  # [1]
                  "temperature_crit": (469, pyunits.K),  # [1]
                  "dens_mol_liq_comp_coeff": {
+                     'eqn_type': 1,
                      '1': (1.1836, pyunits.kmol*pyunits.m**-3),  # [2] pg. 2-98
                      '2': (0.26024, None),
                      '3': (469.15, pyunits.K),
@@ -106,6 +106,7 @@ config_dict = {
                  "pressure_crit": (221.2e5, pyunits.Pa),  # [1]
                  "temperature_crit": (647.3, pyunits.K),  # [1]
                  "dens_mol_liq_comp_coeff": {
+                     'eqn_type': 2,
                      '1': (-13.851, pyunits.kmol/pyunits.m**3),  # [2]pg. 2-98
                      '2': (0.64038, pyunits.kmol/pyunits.m**3/pyunits.K),
                      '3': (-0.00191, pyunits.kmol/pyunits.m**3/pyunits.K**2),
@@ -132,8 +133,8 @@ config_dict = {
         'sulfuric_acid':
             {"type": Component,
              "elemental_composition": {"H": 2, "S": 1, "O": 4},
-             "dens_mol_liq_comp": Perrys,
-             "enth_mol_liq_comp": Perrys,
+             "dens_mol_liq_comp": Perrys,  # fitted to this equation form
+             "enth_mol_liq_comp": Perrys,  # fitted to this equation form
              "enth_mol_ig_comp": NIST,
              "pressure_sat_comp": RPP4,  # fitted to this equation form
              "phase_equilibrium_form": {("Vap", "Liq"): fugacity},
@@ -142,6 +143,7 @@ config_dict = {
                  "pressure_crit": (129.4262e5, pyunits.Pa),  # [4]
                  "temperature_crit": (590.76, pyunits.K),  # [4]
                  "dens_mol_liq_comp_coeff": {
+                     'eqn_type': 2,
                      '1': (23.669, pyunits.kmol/pyunits.m**3),  # [5]
                      '2': (-2.5307E-2, pyunits.kmol/pyunits.m**3/pyunits.K),
                      '3': (3.3523E-4, pyunits.kmol/pyunits.m**3/pyunits.K**2),
@@ -155,12 +157,12 @@ config_dict = {
                      'F': (-758.9525, pyunits.kJ/pyunits.mol),
                      'G': (301.2961, pyunits.J/pyunits.mol/pyunits.K),
                      'H': (-735.1288, pyunits.kJ/pyunits.mol)},
-                 "cp_mol_liq_comp_coeff": {  # water values for testing
-                     '1': (2.7637E2, pyunits.J/pyunits.kmol/pyunits.K),  # [2]
-                     '2': (-2.0901, pyunits.J/pyunits.kmol/pyunits.K**2),
-                     '3': (8.125E-3, pyunits.J/pyunits.kmol/pyunits.K**3),
-                     '4': (-1.4116E-5, pyunits.J/pyunits.kmol/pyunits.K**4),
-                     '5': (9.3701E-9, pyunits.J/pyunits.kmol/pyunits.K**5)},
+                 "cp_mol_liq_comp_coeff": {
+                     '1': (-202.695, pyunits.J/pyunits.kmol/pyunits.K),  # [6]
+                     '2': (2.9994, pyunits.J/pyunits.kmol/pyunits.K**2),
+                     '3': (-9.239e-3, pyunits.J/pyunits.kmol/pyunits.K**3),
+                     '4': (1.0113e-5, pyunits.J/pyunits.kmol/pyunits.K**4),
+                     '5': (0, pyunits.J/pyunits.kmol/pyunits.K**5)},
                  "enth_mol_form_liq_comp_ref": (
                      -868.73e3, pyunits.J/pyunits.mol),  # [4]
                  "enth_mol_form_vap_comp_ref": (
@@ -182,6 +184,7 @@ config_dict = {
                  "pressure_crit": (77e5, pyunits.Pa),  # [1]
                  "temperature_crit": (645, pyunits.K),  # [1]
                  "dens_mol_liq_comp_coeff": {
+                     'eqn_type': 1,
                      '1': (1.315, pyunits.kmol*pyunits.m**-3),  # [2] pg. 2-98
                      '2': (0.25125, None),
                      '3': (720, pyunits.K),
