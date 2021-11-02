@@ -16,7 +16,7 @@
 # The function is corrupted by normally distributed noise of varaince 0.1
 
 
-from idaes.surrogate import alamopy
+from idaes.surrogate import alamopy_depr as alamopy
 
 #Import additional python modules for creating the synthetic data
 import math

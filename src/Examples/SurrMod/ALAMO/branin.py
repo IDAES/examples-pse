@@ -14,7 +14,7 @@
 # More information on the branin function can be found at
 # https://www.sfu.ca/~ssurjano/branin.html
 
-from idaes.surrogate import alamopy
+from idaes.surrogate import alamopy_depr as alamopy
 
 #Import additional python modules for creating the synthetic data
 import math
