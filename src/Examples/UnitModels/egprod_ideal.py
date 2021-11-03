@@ -126,10 +126,10 @@ config_dict = {
                      -285.83e3, pyunits.J/pyunits.mol),  # [3]
                  "enth_mol_form_vap_comp_ref": (
                      -241.836e3, pyunits.J/pyunits.mol),  # [3]
-                 "pressure_sat_comp_coeff": {'A': (36.067, None),  # [1]
-                                             'B': (3132.31, None),
-                                             'C': (-3.985, None),
-                                             'D': (653, None)}}},
+                 "pressure_sat_comp_coeff": {'A': (-7.76451, None),  # [1]
+                                             'B': (1.45838, None),
+                                             'C': (-2.77580, None),
+                                             'D': (-1.23303, None)}}},
         'sulfuric_acid':
             {"type": Component,
              "elemental_composition": {"H": 2, "S": 1, "O": 4},
