@@ -1169,6 +1169,10 @@ class SphinxBuilder(Builder):
             # Copy images into HTML dirs
             self._copy_image_files(nb_source_dir, src_dir, html_dir, IMAGE_SUFFIXES)
 
+        if options.get("linkcheck", False):
+            notify("Checking for broken links", 0)
+
+
     @staticmethod
     def _copy_image_files(nb_source_dir, src_dir, dest_dir, suffixes):
         """Copy images -- called from two places so refactored here.
@@ -1229,6 +1233,28 @@ class SphinxBuilder(Builder):
                         result.append((context_path, line_num, message))
                         seen_messages[message] = context_path
         return result
+
+
+class SphinxLinkcheckBuilder(Builder):
+    """Run the Sphinx 'linkcheck' builder to find broken links in the
+       documentation, including converted Jupyter notebooks.
+    """
+    def build(self, options):
+        self.s.set_default_section("sphinx")
+        self._merge_options(options)
+        doc_dir = self.root_path / self.s.get("paths.output")
+        lc_dir = self.root_path / self.s.get("sphinx.linkcheck_dir")
+        if not lc_dir.exists():
+            lc_dir.mkdir()
+        cmd = ["sphinx-build", "-b", "linkcheck", str(doc_dir), str(lc_dir)]
+        if self.s.get("hide_output"):
+            stdout_kw, stderr_kw = subprocess.DEVNULL, subprocess.DEVNULL
+        else:
+            stdout_kw, stderr_kw = sys.stdout, sys.stderr
+        notify(f"Running Sphinx command: {' '.join(cmd)}", level=1)
+        proc = subprocess.Popen(cmd, stdout=stdout_kw, stderr=stderr_kw)
+        proc.wait()
+        notify(f"Done, output in {lc_dir}", level=1)
 
 
 class Cleaner(Builder):
@@ -1497,6 +1523,7 @@ def get_git_branch():
     return branch
 
 
+
 def print_usage():
     """Print a detailed usage message.
     """
@@ -1623,7 +1650,8 @@ def main():
         dest="np",
         default=None,
         type=int,
-        help="Number of parallel processes to run. Overrides `notebook.num_workers` in settings",
+        help="Number of parallel processes to run. Overrides "
+             "`notebook.num_workers` in settings",
     )
     ap.add_argument(
         "-x",
@@ -1633,6 +1661,13 @@ def main():
         help="Build the index notebook. "
         "Use '--index-output' and '--index-input' to override input and"
         "output files set in the configuration",
+    )
+    ap.add_argument(
+        "-l",
+        "--linkcheck",
+        dest="build_linkcheck",
+        action="store_true",
+        help="Run Sphinx 'linkcheck' builder on the docs",
     )
     args = ap.parse_args()
 
@@ -1750,6 +1785,11 @@ def main():
         except IndexPageOutputFile as err:
             _log.fatal(f"Error writing to output file: {err}")
             status_code = 2
+
+    if args.build_linkcheck:
+        notify("Run Sphinx linkchecker")
+        builder = SphinxLinkcheckBuilder(settings)
+        builder.build({"hide_output": args.hide_sphinx_output})
 
     return status_code
 
