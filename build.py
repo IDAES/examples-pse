@@ -458,6 +458,7 @@ class NotebookBuilder(Builder):
 
     def _read_template(self):
         nb_template_path = self.root_path / self.s.get("template")
+        notify(f"reading notebook template from path: {nb_template_path}")
         try:
             with nb_template_path.open("r") as f:
                 nb_template = Template(f.read())
