@@ -110,9 +110,9 @@ def find_broken_links(permissive=True):
             f"Notebooks are missing in some directories:\n"
             f"{newline.join(empty_dir_paths)}"
         )
-    # run linkchecker, -S means suppress normal Sphinx output.
+    # Build docs (-d) and run linkchecker (-l). -S suppresses Sphinx output.
     # output will be in dir configured in sphinx.linkcheck_dir (see below)
-    proc = subprocess.Popen(["python", "build.py", "--config", config, "-Sl"])
+    proc = subprocess.Popen(["python", "build.py", "--config", config, "-Sdl"])
     rc = proc.wait()
     assert rc == 0, "Linkchecker process failed"
     # find links marked [broken], report them
