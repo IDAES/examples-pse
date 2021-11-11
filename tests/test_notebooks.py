@@ -56,7 +56,7 @@ def test_run_all_notebooks():
     proc.wait()
     assert proc.returncode == 0
     # now run
-    cmd = ["python", "build.py",  "--config", get_build_config(), "--test"]
+    cmd = ["python", "build.py", "--config", get_build_config(), "--test"]
     proc = subprocess.Popen(cmd)
     proc.wait()
     assert proc.returncode == 0
@@ -94,18 +94,22 @@ def find_broken_links(permissive=True):
     if empty_dirs > 0:
         lvl = "WARNING" if empty_dirs < num_subdirs else "ERROR"
         print(f"{lvl}: {empty_dirs}/{num_subdirs} directories did not have notebooks")
-        print("Perhaps you need to run (in the repo root):\n\n"
-              "    python build.py -cd\n\n"
-              "This executes the Jupyter Notebooks in 'src'\n"
-              "and copies them into the 'docs' directory tree.")
+        print(
+            "Perhaps you need to run (in the repo root):\n\n"
+            "    python build.py -cd\n\n"
+            "This executes the Jupyter Notebooks in 'src'\n"
+            "and copies them into the 'docs' directory tree."
+        )
     if permissive:
         # continue if there are some non-empty dirs, skip if there are
         # no non-empty dirs
         if empty_dirs == num_subdirs:
             pytest.skip("No notebooks in any directories")
     else:
-        assert empty_dirs == 0, f"Notebooks are missing in some directories:\n" \
-                                f"{newline.join(empty_dir_paths)}"
+        assert empty_dirs == 0, (
+            f"Notebooks are missing in some directories:\n"
+            f"{newline.join(empty_dir_paths)}"
+        )
     # run linkchecker, -S means suppress normal Sphinx output.
     # output will be in dir configured in sphinx.linkcheck_dir (see below)
     proc = subprocess.Popen(["python", "build.py", "--config", config, "-Sl"])
@@ -121,8 +125,7 @@ def find_broken_links(permissive=True):
             num = len(links) + 1
             links.append(f"{num}) {m.group(1)}:{m.group(2)} -> {m.group(3)}")
     # fail if there were any broken links
-    assert len(links) == 0, f"{len(links)} broken links:\n" \
-                            f"{newline.join(links)}"
+    assert len(links) == 0, f"{len(links)} broken links:\n" f"{newline.join(links)}"
 
 
 def get_build_config():
