@@ -60,15 +60,15 @@ def test_run_all_notebooks():
     proc = subprocess.Popen(cmd)
     proc.wait()
     assert proc.returncode == 0
-    find_broken_links()
+    find_broken_links(permissive=False)
 
 
 @pytest.mark.component
 def test_broken_links():
-    find_broken_links()
+    find_broken_links(permissive=True)
 
 
-def find_broken_links():
+def find_broken_links(permissive=True):
     """Run the Sphinx link checker.
 
     This was created in response to a number of broken links in Jupyter notebook
@@ -82,13 +82,14 @@ def find_broken_links():
     config_dict = yaml.safe_load(open(config, "r"))
     docs_root = Path(_root) / config_dict["paths"]["output"]
     # verify that notebooks are copied into the docs tree
-    empty_dirs, num_subdirs = 0, 0
+    empty_dirs, num_subdirs, empty_dir_paths = 0, 0, []
     for subdir in config_dict["notebook"]["directories"]:
         num_subdirs += 1
         subdir_name = subdir["source"]
         #  debug print(f"Look in {str(docs_root / subdir_name)}")
         if len(list((docs_root / subdir_name).glob("*.rst"))) <= 1:
             empty_dirs += 1
+            empty_dir_paths.append(str(docs_root / subdir_name))
     # print warnings, but only fail if there are NO notebooks at all
     if empty_dirs > 0:
         lvl = "WARNING" if empty_dirs < num_subdirs else "ERROR"
@@ -97,7 +98,14 @@ def find_broken_links():
               "    python build.py -cd\n\n"
               "This executes the Jupyter Notebooks in 'src'\n"
               "and copies them into the 'docs' directory tree.")
-        assert empty_dirs < num_subdirs, f"No notebooks in any directories"
+    if permissive:
+        # continue if there are some non-empty dirs, skip if there are
+        # no non-empty dirs
+        if empty_dirs == num_subdirs:
+            pytest.skip("No notebooks in any directories")
+    else:
+        assert empty_dirs == 0, f"Notebooks are missing in some directories:\n" \
+                                f"{newline.join(empty_dir_paths)}"
     # run linkchecker, -S means suppress normal Sphinx output.
     # output will be in dir configured in sphinx.linkcheck_dir (see below)
     proc = subprocess.Popen(["python", "build.py", "--config", config, "-Sl"])
