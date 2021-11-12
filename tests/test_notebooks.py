@@ -2,6 +2,7 @@
 Test notebooks
 """
 # stdlib
+import json
 import logging
 import os
 from pathlib import Path
@@ -81,6 +82,10 @@ def find_broken_links(permissive=True):
     config = get_build_config()
     config_dict = yaml.safe_load(open(config, "r"))
     docs_root = Path(_root) / config_dict["paths"]["output"]
+    # Build docs (this is fast). -S suppresses Sphinx output.
+    proc = subprocess.Popen(["python", "build.py", "--config", config, "-Sd"])
+    rc = proc.wait()
+    assert rc == 0, "Building docs failed"
     # verify that notebooks are copied into the docs tree
     empty_dirs, num_subdirs, empty_dir_paths = 0, 0, []
     for subdir in config_dict["notebook"]["directories"]:
@@ -110,20 +115,20 @@ def find_broken_links(permissive=True):
             f"Notebooks are missing in some directories:\n"
             f"{newline.join(empty_dir_paths)}"
         )
-    # Build docs (-d) and run linkchecker (-l). -S suppresses Sphinx output.
+    # Run linkchecker (-l). -S suppresses Sphinx output.
     # output will be in dir configured in sphinx.linkcheck_dir (see below)
-    proc = subprocess.Popen(["python", "build.py", "--config", config, "-Sdl"])
+    proc = subprocess.Popen(["python", "build.py", "--config", config, "-Sl"])
     rc = proc.wait()
     assert rc == 0, "Linkchecker process failed"
     # find links marked [broken], report them
-    link_file = Path(".") / config_dict["sphinx"]["linkcheck_dir"] / "output.txt"
+    link_file = Path(".") / config_dict["sphinx"]["linkcheck_dir"] / "output.json"
     assert link_file.exists()
     links = []
     for line in link_file.open(mode="r", encoding="utf-8"):
-        m = re.search(r"^([^:]*):(\d+):.*\[broken]\s*(https?://[^:]*)", line)
-        if m:
+        obj = json.loads(line)
+        if obj["status"] == "broken":
             num = len(links) + 1
-            links.append(f"{num}) {m.group(1)}:{m.group(2)} -> {m.group(3)}")
+            links.append(f"{num}) {obj['filename']}:{obj['lineno']} -> {obj['uri']}")
     # fail if there were any broken links
     assert len(links) == 0, f"{len(links)} broken links:\n" f"{newline.join(links)}"
 
