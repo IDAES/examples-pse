@@ -7,7 +7,7 @@ paths:
   # where the Jupyter notebook source files are
   source: src
   # where the documentation (generated, hand-written) lives
-  output: docs_test
+  output: docs
   # the HTML output directory
   html: _build/html
 # Settings for running and converting Jupyter Notebooks
@@ -42,7 +42,7 @@ notebook_index:
   output_file: src/notebook_index.ipynb
 # Settings for running Sphinx build
 sphinx:
-    args: "-b html -T docs_test docs_test/_build/html"
+    args: "-b html -T {output} {output}/{html}"
     error_file: sphinx-errors.txt
     # Directory to create and use for linkchecker output
     linkcheck_dir: lc
