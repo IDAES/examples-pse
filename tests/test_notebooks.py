@@ -57,7 +57,7 @@ def test_run_all_notebooks():
     proc.wait()
     assert proc.returncode == 0
     # now run
-    cmd = ["python", "build.py", "--config", get_build_config(), "--test"]
+    cmd = ["python", "build.py", "--config", get_build_config(), "--exec"]
     proc = subprocess.Popen(cmd)
     proc.wait()
     assert proc.returncode == 0
@@ -69,27 +69,23 @@ def test_broken_links():
     find_broken_links()
 
 
-def find_broken_links(permissive=True):
+def find_broken_links(rebuild=True):
     """Run the Sphinx link checker.
 
     This was created in response to a number of broken links in Jupyter notebook
     cells, but would also find broken links in any documentation pages.
-
-    For it to be useful, you need to have run/converted all the notebooks.
-    This function is called at the end of the main notebook integration test.
     """
     os.chdir(_root)
     config = get_build_config()
     config_dict = yaml.safe_load(open(config, "r"))
     docs_root = Path(_root) / config_dict["paths"]["output"]
-    # Build docs (this is fast). -S suppresses Sphinx output.
-    print("Building docs with Sphinx")
-    proc = subprocess.Popen(["python", "build.py", "--config", config, "-Sd"])
+    # Copy notebooks to docs. -S suppresses Sphinx output.
+    args = ["python", "build.py", "--config", config, "-Sy"]
+    proc = subprocess.Popen(args)
     rc = proc.wait()
-    assert rc == 0, "Building docs failed"
+    assert rc == 0, "Copying notebooks to docs failed"
     # Run linkchecker (-l). -S suppresses Sphinx output.
     # output will be in dir configured in sphinx.linkcheck_dir (see below)
-    print("Running Sphinx linkchecker")
     proc = subprocess.Popen(["python", "build.py", "--config", config, "-Sl"])
     rc = proc.wait()
     assert rc == 0, "Linkchecker process failed"
