@@ -29,17 +29,6 @@ def settings_ci():
     return build.Settings(open("build-ci.yml", "r"))
 
 
-@pytest.mark.component
-def test_convert_some_notebooks(settings_ci):
-    build._log.setLevel(logging.DEBUG)  # otherwise DEBUG for some reason
-    os.chdir(_root)
-    nb = build.NotebookBuilder(settings_ci)
-    nb.build({"rebuild": True})
-    total, num_failed = nb.report()
-    assert total > 0
-    assert num_failed == 0
-
-
 @pytest.mark.unit
 def test_parse_notebook(notebook):
     """The parameter 'notebook' is parameterized in `conftest.py`, so that
@@ -77,8 +66,7 @@ def find_broken_links(rebuild=True):
     """
     os.chdir(_root)
     config = get_build_config()
-    config_dict = yaml.safe_load(open(config, "r"))
-    docs_root = Path(_root) / config_dict["paths"]["output"]
+    config_dict = load_build_config(config)
     # Copy notebooks to docs. -S suppresses Sphinx output.
     args = ["python", "build.py", "--config", config, "-Sy"]
     proc = subprocess.Popen(args)
@@ -102,7 +90,23 @@ def find_broken_links(rebuild=True):
     assert len(links) == 0, f"{len(links)} broken links:\n" f"{newline.join(links)}"
 
 
+def test_index_page():
+    config = get_build_config()
+    config_dict = load_build_config(config)
+    args = ["python", "build.py", "--config", config, "--index", "--index-dev"]
+    print(f"Build index page (in 'dev' mode) with command: {' '.join(args)}")
+    proc = subprocess.Popen(args)
+    rc = proc.wait()
+    assert rc == 0, "Failed to build Jupyter notebook index page"
+
+# Utility
+
+
 def get_build_config():
     if os.environ.get("GITHUB_ACTIONS", False):
         return "build-ci.yml"
     return "build.yml"
+
+
+def load_build_config(config):
+    return yaml.safe_load(open(config, "r"))

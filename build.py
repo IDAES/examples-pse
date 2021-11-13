@@ -76,7 +76,7 @@ from string import Template
 import sys
 import tempfile
 import time
-from typing import List, TextIO, Tuple, Optional
+from typing import TextIO, Optional
 import urllib.parse
 import yaml
 
@@ -355,8 +355,8 @@ class NotebookBuilder(Builder):
         self._num_workers = self.s.get("num_workers", default=2)
         self._timeout = self.s.get("timeout", default=60)
         self._merge_options(options)
-        self._test_mode = self.s.get("test_mode")
-        self._copy_mode = self.s.get("copy_mode")
+        self._test_mode = self.s.get("test_mode", False)
+        self._copy_mode = self.s.get("copy_mode", False)
         if self._test_mode and self._copy_mode:
             raise ValueError("Cannot set both test_mode and copy_mode in options")
         self._open_error_file()
@@ -581,10 +581,14 @@ class NotebookBuilder(Builder):
                 wait_time = f"{timeout // 60} minute{'' if timeout == 60 else 's'}"
             else:
                 sec = timeout - (timeout // 60 * 60)
-                wait_time = f"{timeout // 60} minute{'' if timeout == 60 else 's'}, " \
-                            f"{sec} second{'' if sec == 1 else 's'}"
-        notify(f"Convert notebooks with {num_workers} "
-               f"worker{'' if num_workers == 1 else 's'}. Timeout after {wait_time}.")
+                wait_time = (
+                    f"{timeout // 60} minute{'' if timeout == 60 else 's'}, "
+                    f"{sec} second{'' if sec == 1 else 's'}"
+                )
+        notify(
+            f"Convert notebooks with {num_workers} "
+            f"worker{'' if num_workers == 1 else 's'}. Timeout after {wait_time}."
+        )
 
         # Create workers
         worker = ParallelNotebookWorker(
@@ -1426,14 +1430,16 @@ class IndexPage:
                     value = nb[key]
                     if self._dev:
                         # dev-mode links are different
-                        glob_expr = f"{self._dev_path}/{path}/{key}*.ipynb"
+                        glob_base = f"{self._dev_path}/{path}/{key}"
+                        glob_expr = f"{glob_base}*.ipynb"
                         real_notebook_names = glob.glob(glob_expr)
                         if len(real_notebook_names) < 1:
-                            _log.fatal(
-                                f"In developer mode, no notebooks for '{glob_expr}: "
-                                f"{real_notebook_names}"
+                            errmsg = (
+                                f"(dev mode) no notebooks for entry '{path}/{key}' "
+                                f"found in directories under '{self._dev_path}/'"
                             )
-                            raise ValueError("Developer mode: notebook not found")
+                            _log.fatal(errmsg)
+                            raise ValueError(errmsg)
                         if len(real_notebook_names) > 1:
                             real_notebook_names.sort(key=len)  # shortest first
                         nb_name = Path(real_notebook_names[0]).name
@@ -1443,7 +1449,8 @@ class IndexPage:
                         for suffix in "exercise", "solution":
                             self._write(f"[[{suffix}]({url})] ")
                     elif tutorials:
-                        # for tutorials, default link is exercise, but provide both in brackets at end
+                        # for tutorials, default link is exercise, but provide both
+                        # in brackets at end
                         url = urllib.parse.quote(str(path) + f"/{key}_exercise.ipynb")
                         self._write(f"  * [{key}]({url}) - {value} ")
                         for suffix in "exercise", "solution":
@@ -1474,8 +1481,10 @@ class IndexPage:
         sections.append(
             [
                 "## Contact info\n"
-                "General, background and overview information is available at the [IDAES main website](https://idaes.org).\n"
-                "Framework development happens at our GitHub repo where you can report issues/bugs or make contributions.\n"
+                "General, background and overview information is available at the "
+                "[IDAES main website](https://idaes.org).\n"
+                "Framework development happens at our GitHub repo where you can report "
+                "issues/bugs or make contributions.\n"
                 "For further enquiries, send an email to: idaes-support@idaes.org\n"
             ]
         )
@@ -1816,6 +1825,7 @@ def main():
 
     if args.build_index:
         notify("Build index page")
+        ix_status, ix_err = 0, ""
         if args.index_input is None:
             index_input = settings.get("notebook_index.input_file")
         else:
@@ -1834,11 +1844,18 @@ def main():
             ix_page = IndexPage(input_path)
             ix_page.convert(output_path, dev_mode=dev_mode)
         except IndexPageInputFile as err:
-            _log.fatal(f"Error reading from intput file: {err}")
-            status_code = 2
+            ix_status, ix_err = 1, f"Error reading from intput file: {err}"
+            _log.fatal(ix_err)
         except IndexPageOutputFile as err:
-            _log.fatal(f"Error writing to output file: {err}")
-            status_code = 2
+            ix_status, ix_err = 2, f"Error writing to output file: {err}"
+            _log.fatal(ix_err)
+        except ValueError as err:
+            ix_status, ix_err = 3, f"Unknown error: {err}"
+            _log.fatal(ix_err)
+        if ix_status != 0:
+            status_code = ix_status
+            notify(f"Building index page failed:", level=1)
+            notify(f"{ix_err}", level=2)
 
     if args.build_linkcheck:
         notify("Run Sphinx linkchecker")
