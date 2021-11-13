@@ -335,7 +335,7 @@ class NotebookBuilder(Builder):
         self._nb_error_file = None  # error file, for notebook execution failures
         self._results = None  # record results here
         self._nb_remove_config = None  # traitlets.Config for removing test cells
-        self._test_mode, self._num_workers = None, 1
+        self._test_mode, self._copy_mode, self._num_workers = None, None, 1
         self._match_expr = None
         # Lists of entries (or just one, for outdir) for each subdirectory
         self.notebooks_to_convert, self.data_files, self.outdir, self.depth = (
@@ -350,6 +350,9 @@ class NotebookBuilder(Builder):
         self._num_workers = self.s.get("num_workers", default=2)
         self._merge_options(options)
         self._test_mode = self.s.get("test_mode")
+        self._copy_mode = self.s.get("copy_mode")
+        if self._test_mode and self._copy_mode:
+            raise ValueError("Cannot set both test_mode and copy_mode in options")
         self._open_error_file()
         self._ep = self._create_preprocessor()
         self._imgdir = (
@@ -458,7 +461,7 @@ class NotebookBuilder(Builder):
 
     def _read_template(self):
         nb_template_path = self.root_path / self.s.get("template")
-        notify(f"reading notebook template from path: {nb_template_path}")
+        notify(f"Reading notebook template from path: {nb_template_path}", level=1)
         try:
             with nb_template_path.open("r") as f:
                 nb_template = Template(f.read())
@@ -565,6 +568,7 @@ class NotebookBuilder(Builder):
             wrapper_template=self.s.get("Template"),
             remove_config=self._nb_remove_config,
             test_mode=self._test_mode,
+            copy_mode=self._copy_mode,
             # TODO we should DRY timeout to an attr so that the same value is consistently used here and in _create_preprocessor()
             timeout=self.s.get("timeout")
         )
@@ -660,6 +664,7 @@ class ParallelNotebookWorker:
         wrapper_template: Optional[Template] = None,
         remove_config: Optional[Config] = None,
         test_mode: bool = False,
+            copy_mode: bool = False,
         timeout = None,
     ):
         self.processor = processor
@@ -667,7 +672,7 @@ class ParallelNotebookWorker:
             wrapper_template,
             remove_config,
         )
-        self.test_mode = test_mode
+        self.test_mode, self.copy_mode = test_mode, copy_mode
         self.log_q, self.id_ = None, 0
         self._timeout = timeout
 
@@ -748,7 +753,10 @@ class ParallelNotebookWorker:
         Returns:
             True if conversion was performed, False if no conversion was needed
         """
-        info, dbg = logging.INFO, logging.DEBUG  # aliases
+        converted = True
+        verb = "running" if self.test_mode else (
+            "copying" if self.copy_mode else "converting")
+        notify(f"{verb.title()} notebook {job.nb.name}", level=1)
         # strip special cells.
         if self._has_tagged_cells(job.nb, set(self.CELL_TAGS.values())):
             self.log_debug(f"notebook '{job.nb.name}' has test cell(s)")
@@ -767,22 +775,35 @@ class ParallelNotebookWorker:
                 f"Skip notebook conversion, failure marker is newer, for: {entry.name}"
             )
             failed_datetime = datetime.fromtimestamp(failed_time)
+            if self.copy_mode:
+                notify(f"Skip copying notebook: previous execution failed", level=2)
+                return False
             raise NotebookPreviouslyFailedError(f"at {failed_datetime}")
-        # Stop if converted result is newer than source file.
+        # Do not execute if converted result is newer than source file.
         if self._previously_converted(job, entry):
             self.log_info(
                 f"Skip notebook conversion, output is newer, for: {entry.name}"
             )
-            return False
-        self.log_info(f"Running notebook: {entry.name}")
-        try:
-            nb = self._parse_and_execute(entry)
-        except NotebookExecError as err:
-            self.log_error(f"Notebook execution failed: {err}")
-            raise
-        if self.test_mode:  # don't do export in test mode
-            return True
+            converted = False
+            nb = self._parse_notebook(entry)
+        else:
+            nb = self._parse_notebook(entry)
+            # Do not execute in copy_mode
+            if not self.copy_mode:
+                self.log_info(f"Running notebook: {entry.name}")
+                try:
+                    self._execute_notebook(nb, entry)
+                except NotebookExecError as err:
+                    self.log_error(f"Notebook execution failed: {err}")
+                    raise
+        # Export notebooks in output formats
+        if not self.test_mode:  # don't do export in test mode
+            self._export_notebook(nb, entry, job)
+        return converted
 
+    def _export_notebook(self, nb, entry, job):
+        """Export notebooks in output formats.
+        """
         self.log_info(f"Exporting notebook '{entry.name}' to directory {job.outdir}")
         wrt = FilesWriter()
         # export each notebook into multiple target formats
@@ -806,7 +827,6 @@ class ParallelNotebookWorker:
             # move notebooks into docs directory
             self.log_debug(f"move notebook '{entry} to output directory: {job.outdir}")
             shutil.copy(entry, job.outdir / entry.name)
-        return True
 
     def _has_tagged_cells(self, entry: Path, tags: set) -> bool:
         """Quickly check whether this notebook has any cells with the given tag(s).
@@ -959,8 +979,7 @@ class ParallelNotebookWorker:
         stripped_entry = job.tmpdir / f"{nb_name}.ipynb"
         return stripped_entry
 
-    def _parse_and_execute(self, entry):
-        # parse
+    def _parse_notebook(self, entry):
         self.log_debug(f"parsing '{entry}'")
         try:
             nb = nbformat.read(str(entry), as_version=self.JUPYTER_NB_VERSION)
@@ -968,8 +987,9 @@ class ParallelNotebookWorker:
             raise NotebookFormatError(f"'{entry}' is not JSON")
         except AttributeError:
             raise NotebookFormatError(f"'{entry}' has invalid format")
+        return nb
 
-        # execute
+    def _execute_notebook(self, nb, entry):
         self.log_debug(f"executing '{entry}'")
         t0 = time.time()
         try:
@@ -980,7 +1000,6 @@ class ParallelNotebookWorker:
         except TimeoutError as err:
             dur, timeout = time.time() - t0, self._timeout
             raise NotebookError(f"timeout for '{entry}': {dur}s > {timeout}s")
-        return nb
 
     def _create_notebook_wrapper_page(self, job: Job, nb_file: str):
         """Generate a Sphinx documentation page for the Module.
@@ -1255,7 +1274,7 @@ class SphinxLinkcheckBuilder(Builder):
         notify(f"Running Sphinx command: {' '.join(cmd)}", level=1)
         proc = subprocess.Popen(cmd, stdout=stdout_kw, stderr=stderr_kw)
         proc.wait()
-        notify(f"Done, output in {lc_dir}", level=1)
+        notify(f"Linkchecker output in: {lc_dir}", level=1)
 
 
 class Cleaner(Builder):
@@ -1531,9 +1550,6 @@ def print_usage():
     command = "python build.py"
     message = (
         "\n"
-        "# tl;dr To convert notebooks and build docs, use this command:\n"
-        "{command} -crd\n"
-        "\n"
         "The build.py command is used to create the documentation from\n"
         "the Jupyter Notebooks and hand-written '.rst' files in this\n"
         "repository. It is also used by tests, programmatically, to run\n"
@@ -1552,31 +1568,33 @@ def print_usage():
         "{command} --remove\n"
         "{command} -r  # <-- short option\n"
         "\n"
-        "# Convert Jupyter notebooks. Only those notebooks\n"
-        "# that have not changed since the last time this was run will\n"
-        "# be re-executed. Converted notebooks are stored in the 'docs'\n"
-        "# directory, in locations configured in the 'build.yml'\n"
-        "# configuration file.\n"
+        "# Execute Jupyter notebooks. This is slow.\n"
+        "# Only those notebooks that have not changed since the last time\n"
+        "# this was run will be re-executed.\n"
+        "{command} --exec\n"
+        "{command} -e  # <-- short option\n"
+        "\n"
+        "# Copy Jupyter notebooks into docs. This is quick.\n"
+        "{command} --copy\n"
+        "{command} -y  # <-- short option\n"
+        "\n"
+        "# Convert Jupyter notebooks. Convert means execute and copy into docs.\n"
         "{command} --convert\n"
         "{command} -c  # <-- short option\n"
         "\n"
-        "# Convert Jupyter notebooks, as in previous command,\n"
-        "# then build Sphinx documentation.\n"
-        "# This can be combined with -r/--remove to convert all notebooks.\n"
-        "{command} -cd\n"
-        "\n"
-        "# Run notebooks, but do not convert them into any other form.\n"
-        "# This can be combined with -r/--remove to run all notebooks.\n"
-        "{command} --test\n"
-        "{command} -t  # <-- short option\n"
-        "\n"
-        "# Generate various versions of the notebook index page from the YAML input file\n"
+        "# Generate the notebook index page from the YAML input file\n"
         "{command} --index-input nb_index.yaml --index-output nb_index.md"
         "\n"
         "# Run with <options> at different levels of verbosity\n"
         "{command} <options>      # Show warning, error, fatal messages\n"
         "{command} -v <options>   # Add informational (info) messages\n"
         "{command} -vv <options>  # Add debug messages\n"
+        "\n"
+        "* To fully re-run all notebooks and build docs, use this command:\n"
+        "{command} -crd\n"
+        "\n"
+        "* To generate docs without the long delay of running them:\n"
+        "{command} -dy\n"
         "\n"
     )
     print(message.format(command=command))
@@ -1604,11 +1622,18 @@ def main():
         "--convert", "-c", action="store_true", help="Convert Jupyter notebooks",
     )
     ap.add_argument(
-        "--test",
-        "-t",
+        "--exec",
+        "-e",
         dest="test_mode",
         action="store_true",
-        help="Run notebooks but do not convert them.",
+        help="Execute notebooks (do not copy them into docs)",
+    )
+    ap.add_argument(
+        "--copy",
+        "-y",
+        dest="copy_mode",
+        action="store_true",
+        help="Copy notebooks into docs (do not run them)"
     )
     ap.add_argument(
         "-v",
@@ -1674,11 +1699,11 @@ def main():
 
     # Check for confusing option combinations
     if args.convert and args.test_mode:
-        ap.error("-t/--test conflicts with notebook conversion -c/--convert; pick one")
-    if args.docs and args.test_mode:
-        ap.error(
-            "-t/--test should not be used with -d/--docs, as it does not convert any notebooks"
-        )
+        ap.error(f"-e/--exec conflicts with -c/--convert; pick one")
+    if args.convert and args.copy_mode:
+        ap.error(f"-y/--copy conflicts with -c/--convert; pick one")
+    if args.test_mode and args.copy_mode:
+        ap.error(f"-y/--copy conflicts with -e/--exec; pick one")
 
     # If building docs, check for working Sphinx command
     if args.docs:
@@ -1729,7 +1754,7 @@ def main():
     run_notebooks = args.convert
     build_docs = args.docs
     clean_files = args.remove
-    test_mode = args.test_mode
+    test_mode, copy_mode = args.test_mode, args.copy_mode
 
     # Clean first, if requested
     if clean_files:
@@ -1739,12 +1764,12 @@ def main():
 
     status_code = 0  # start with success
 
-    if run_notebooks or test_mode:
-        verb = "Run" if test_mode else "Convert"
+    if run_notebooks or test_mode or copy_mode:
+        verb = "Run" if test_mode else ("Copy" if copy_mode else "Convert")
         notify(f"{verb} Jupyter notebooks")
         nbb = NotebookBuilder(settings)
         try:
-            nbb.build({"test_mode": test_mode})
+            nbb.build({"test_mode": test_mode, "copy_mode": copy_mode})
         except NotebookError as err:
             _log.fatal(f"Could not build notebooks: {err}")
             return -1
