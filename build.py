@@ -1288,7 +1288,7 @@ class SphinxBuilder(Builder):
 
 class SphinxLinkcheckBuilder(Builder):
     """Run the Sphinx 'linkcheck' builder to find broken links in the
-    documentation, including converted Jupyter notebooks.
+       documentation, including converted Jupyter notebooks.
     """
 
     def build(self, options):
@@ -1579,6 +1579,7 @@ def get_git_branch():
     return branch
 
 
+
 def print_usage():
     """Print a detailed usage message."""
     command = "python build.py"
@@ -1714,7 +1715,7 @@ def main():
         default=None,
         type=int,
         help="Number of parallel processes to run. Overrides "
-        "`notebook.num_workers` in settings",
+             "`notebook.num_workers` in settings",
     )
     ap.add_argument(
         "-x",
@@ -1856,6 +1857,11 @@ def main():
             status_code = ix_status
             notify(f"Building index page failed:", level=1)
             notify(f"{ix_err}", level=2)
+
+    if args.build_linkcheck:
+        notify("Run Sphinx linkchecker")
+        builder = SphinxLinkcheckBuilder(settings)
+        builder.build({"hide_output": args.hide_sphinx_output})
 
     if args.build_linkcheck:
         notify("Run Sphinx linkchecker")
