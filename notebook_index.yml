@@ -100,19 +100,23 @@ contents:
         name: UnitModels
         title: "Unit Models"
         description: Unit model examples
-        notebooks:
-          - compressor: "Compressor Unit Model with Span-Wagner Property Package for supercritical CO2"
-          - heater: >
-              Heat a liquid mixture of benzene-toluene using a simple heater unit model and
-              an ideal property package
-          - mixer: Mixer unit model with ideal property package
-          - pump: Pump unit model with iapws property package
-          - heat exchanger 0D: Heat Exchanger 0D unit model heating a benzene-toluene mixture using steam
         subfolders:
+          -
+            name: Operations
+            title: "Operations"
+            description: Detailed examples on importing and implementing IDAES unit operations
+            notebooks:
+              - compressor: "Compressor Unit Model with Span-Wagner Property Package for supercritical CO2"
+              - heater: >
+                  Heat a liquid mixture of benzene-toluene using a simple heater unit model and
+                  an ideal property package
+              - mixer: Mixer unit model with ideal property package
+              - pump: Pump unit model with iapws property package
+              - heat exchanger 0D: Heat Exchanger 0D unit model heating a benzene-toluene mixture using steam
           -
             name: Reactors
             title: "Reactors"
-            description: Detailed examples on importing and implementing IDAES reactor models in flowsheets
+            description: Detailed examples on importing and implementing IDAES reactor models
             notebooks:
               - cstr: CSTR unit model with ideal property package, pure liquid phase and rate-kinetics reaction
               - plug_flow_reactor: Plug flow reactor unit model with ideal property package, pure liquid phase and rate-kinetics reaction
