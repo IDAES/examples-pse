@@ -32,8 +32,8 @@ This example will demonstrate the simulation of the 0D heat exchanger by
 fixing any 2 of the following degrees of freedom: - heat transfer area -
 overall heat transfer coefficient - minimum approach temperature
 
-IDAES documentation reference for heat excahnger 0D model:
-https://idaespse.readthedocs.io/en/latest/models/
+IDAES documentation reference for heat exchanger 0D model:
+https://idaes-pse.readthedocs.io/en/latest/technical_specs/model_libraries/generic/unit_models/heat_exchanger.html
 
 **Setting up the problem in IDAES**
 
@@ -84,8 +84,8 @@ https://idaespse.readthedocs.io/en/latest/models/
 
 .. parsed-literal::
 
-    2021-11-30 12:29:43 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.properties_tube.benzene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
-    2021-11-30 12:29:43 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.properties_tube.toluene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-01 06:59:50 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.properties_tube.benzene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-01 06:59:50 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.properties_tube.toluene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
     
 
 .. code:: ipython3
@@ -188,21 +188,21 @@ Option 1: Fix overall HTC and the heat transfer area
 
 .. parsed-literal::
 
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.shell: Initialization Complete
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Starting initialization
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Dew and bubble point initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Equilibrium temperature initialization completed.
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: State variable initialization completed.
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Phase equilibrium initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Starting initialization
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Dew and bubble point initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Equilibrium temperature initialization completed.
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: State variable initialization completed.
-    2021-11-30 12:29:44 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Phase equilibrium initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:45 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:45 [INFO] idaes.init.fs.heat_exchanger.tube: Initialization Complete
-    2021-11-30 12:29:45 [INFO] idaes.init.fs.heat_exchanger: Initialization Completed, optimal - Optimal Solution Found
+    2021-12-01 06:59:50 [INFO] idaes.init.fs.heat_exchanger.shell: Initialization Complete
+    2021-12-01 06:59:50 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Starting initialization
+    2021-12-01 06:59:50 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:50 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Equilibrium temperature initialization completed.
+    2021-12-01 06:59:50 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: State variable initialization completed.
+    2021-12-01 06:59:50 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heat_exchanger.tube.properties_in: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Starting initialization
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Equilibrium temperature initialization completed.
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: State variable initialization completed.
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heat_exchanger.tube.properties_out: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heat_exchanger.tube: Initialization Complete
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heat_exchanger: Initialization Completed, optimal - Optimal Solution Found
     
     ====================================================================================
     Unit : fs.heat_exchanger                                                   Time: 0.0
@@ -301,7 +301,7 @@ exchanger area that will satisfy that condition.
       Termination condition: optimal
       Id: 0
       Error rc: 0
-      Time: 0.14772248268127441
+      Time: 0.10313701629638672
     Solution: 
     - number of solutions: 0
       number of solutions displayed: 0

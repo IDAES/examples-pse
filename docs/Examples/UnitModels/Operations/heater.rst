@@ -26,7 +26,7 @@ Therefore, in this tutorial, we will simulate the following cases:
    heat duty to 2 J/s.
 
 IDAES documentation reference for heater model:
-https://idaes-pse.readthedocs.io/en/stable/models/heater.html#
+https://idaes-pse.readthedocs.io/en/latest/technical_specs/model_libraries/generic/unit_models/heater.html
 
 Setting up the problem in IDAES
 -------------------------------
@@ -118,7 +118,8 @@ depending on the details required by the user. In general, when a
 particular output level is set, any information at that level and above
 gets picked up by logger. The default level taken by the logger is INFO.
 More information on these levels can be found in the IDAES
-documentation: https://idaes-pse.readthedocs.io/en/latest/logging.html
+documentation:
+https://idaes-pse.readthedocs.io/en/latest/user_guide/logging.html
 
 .. code:: ipython3
 
@@ -135,22 +136,22 @@ documentation: https://idaes-pse.readthedocs.io/en/latest/logging.html
 
 .. parsed-literal::
 
-    2021-11-30 12:29:48 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 1 skipped.
-    2021-11-30 12:29:48 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
-    2021-11-30 12:29:48 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 1 skipped.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume.properties_out: State Released.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume: Initialization Complete
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater: Initialization Step 1 Complete.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater: Initialization Step 2 optimal - Optimal Solution Found.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater.control_volume.properties_in: State Released.
-    2021-11-30 12:29:49 [INFO] idaes.init.fs.heater: Initialization Complete: optimal - Optimal Solution Found
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 1 skipped.
+    2021-12-01 06:59:51 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 2 optimal - Optimal Solution Found.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 3 optimal - Optimal Solution Found.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 4 optimal - Optimal Solution Found.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_in: Initialization Step 5 optimal - Optimal Solution Found.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 1 skipped.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 2 optimal - Optimal Solution Found.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 3 optimal - Optimal Solution Found.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 4 optimal - Optimal Solution Found.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_out: Initialization Step 5 optimal - Optimal Solution Found.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_out: State Released.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume: Initialization Complete
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater: Initialization Step 1 Complete.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater: Initialization Step 2 optimal - Optimal Solution Found.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater.control_volume.properties_in: State Released.
+    2021-12-01 06:59:52 [INFO] idaes.init.fs.heater: Initialization Complete: optimal - Optimal Solution Found
     
 
 Obtaining Simulation Results
@@ -223,7 +224,7 @@ Obtaining Simulation Results
     Number of equality constraint Jacobian evaluations   = 1
     Number of inequality constraint Jacobian evaluations = 0
     Number of Lagrangian Hessian evaluations             = 0
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
     Total CPU secs in NLP function evaluations           =      0.000
     
     EXIT: Optimal Solution Found.
@@ -344,7 +345,7 @@ Case 2: Fix Heat Duty
     Number of equality constraint Jacobian evaluations   = 1
     Number of inequality constraint Jacobian evaluations = 0
     Number of Lagrangian Hessian evaluations             = 0
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
     Total CPU secs in NLP function evaluations           =      0.000
     
     EXIT: Optimal Solution Found.

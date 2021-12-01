@@ -329,16 +329,16 @@ fix the outlet temperature of H101 to 328.15 K.
 
     m.fs.H101.outlet.temperature.fix(328.15*pyunits.K)
 
-Unlike the previous two examples, we will need to specify both initial
-conversion and heat duty values (these are the only two free variables
-to choose from). Since heat duty and the outlet reactor temperature are
-interdependent, we can choose to specify this quantity instead. While
-the reaction kinetic parameters exist in the property package, we also
-do not need to add a rate constant expression since generation is
-explicitly defined through the conversion/yield. Note that our initial
-problem will solve with zero *temperature change* but will be infeasible
-with zero *heat duty*; this is due to the heat of reaction enforced by
-allowing heat transfer and mandating a non-zero conversion.
+We will need to specify both initial conversion and heat duty values
+(these are the only two free variables to choose from). Since heat duty
+and the outlet reactor temperature are interdependent, we can choose to
+specify this quantity instead. While the reaction kinetic parameters
+exist in the property package, we also do not need to add a rate
+constant expression since generation is explicitly defined through the
+conversion/yield. Note that our initial problem will solve with zero
+*temperature change* but will be infeasible with zero *heat duty*; this
+is due to the heat of reaction enforced by allowing heat transfer and
+mandating a non-zero conversion.
 
 .. code:: ipython3
 
@@ -386,27 +386,27 @@ streams via arc definitions as follows:
 
 .. parsed-literal::
 
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.M101.reagent_feed_state: Starting initialization
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.M101.reagent_feed_state: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.M101.catalyst_feed_state: Starting initialization
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.M101.catalyst_feed_state: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.M101.mixed_state: Starting initialization
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.M101.mixed_state: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.M101.mixed_state: Property package initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.H101.control_volume.properties_in: Starting initialization
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.H101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:36 [INFO] idaes.init.fs.H101.control_volume.properties_out: Starting initialization
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.H101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.R101.control_volume.properties_in: Starting initialization
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.R101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.R101.control_volume.properties_out: Starting initialization
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.R101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.R101.control_volume.reactions: Initialization Complete.
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2021-11-30 12:29:37 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2021-12-01 07:00:01 [INFO] idaes.init.fs.M101.reagent_feed_state: Starting initialization
+    2021-12-01 07:00:01 [INFO] idaes.init.fs.M101.reagent_feed_state: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 07:00:01 [INFO] idaes.init.fs.M101.catalyst_feed_state: Starting initialization
+    2021-12-01 07:00:01 [INFO] idaes.init.fs.M101.catalyst_feed_state: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 07:00:01 [INFO] idaes.init.fs.M101.mixed_state: Starting initialization
+    2021-12-01 07:00:01 [INFO] idaes.init.fs.M101.mixed_state: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 07:00:01 [INFO] idaes.init.fs.M101.mixed_state: Property package initialization: optimal - Optimal Solution Found.
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.H101.control_volume.properties_in: Starting initialization
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.H101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.H101.control_volume.properties_out: Starting initialization
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.H101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.R101.control_volume.properties_in: Starting initialization
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.R101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 07:00:02 [INFO] idaes.init.fs.R101.control_volume.properties_out: Starting initialization
+    2021-12-01 07:00:03 [INFO] idaes.init.fs.R101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 07:00:03 [INFO] idaes.init.fs.R101.control_volume.reactions: Initialization Complete.
+    2021-12-01 07:00:03 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2021-12-01 07:00:03 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
     
 
 .. code:: ipython3
@@ -479,7 +479,7 @@ streams via arc definitions as follows:
     Number of equality constraint Jacobian evaluations   = 4
     Number of inequality constraint Jacobian evaluations = 0
     Number of Lagrangian Hessian evaluations             = 3
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.004
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
     Total CPU secs in NLP function evaluations           =      0.000
     
     EXIT: Optimal Solution Found.
@@ -545,8 +545,9 @@ Optimizing Ethylene Glycol Production
 Now that the flowsheet has been squared and solved, we can run a small
 optimization problem to minimize our production costs. Suppose we
 require at least 200 million pounds/year of ethylene glycol produced and
-at least 90% conversion of ethylene oxide, allowing for variable reactor
-heat duty/outlet temperature and reactor temperature (heater outlet).
+90% conversion of ethylene oxide, allowing for variable reactor volume
+(considering operating/non-capital costs only) and reactor temperature
+(heater outlet).
 
 Let us declare our objective function for this problem.
 
@@ -562,10 +563,7 @@ outlet temperature is set by state variable bounds in property package):
 .. code:: ipython3
 
     m.fs.eg_prod_con = Constraint(expr=m.fs.eg_prod >= 200*pyunits.Mlb/pyunits.yr)  # MM lb/year
-    
-    m.fs.conversion_con = Constraint(expr=m.fs.R101.conversion >= 0.90*pyunits.dimensionless)  # fraction
-    
-    m.fs.R101.conversion.unfix()
+    m.fs.R101.conversion.fix(0.90)
     
     m.fs.H101.outlet.temperature.unfix()
     m.fs.H101.outlet.temperature[0].setlb(328.15*pyunits.K)
@@ -607,54 +605,53 @@ solve this problem.
     
     This is Ipopt version 3.13.2, running with linear solver ma27.
     
-    Number of nonzeros in equality constraint Jacobian...:      236
-    Number of nonzeros in inequality constraint Jacobian.:        2
-    Number of nonzeros in Lagrangian Hessian.............:      242
+    Number of nonzeros in equality constraint Jacobian...:      235
+    Number of nonzeros in inequality constraint Jacobian.:        1
+    Number of nonzeros in Lagrangian Hessian.............:      241
     
-    Total number of variables............................:       68
+    Total number of variables............................:       67
                          variables with only lower bounds:        0
-                    variables with lower and upper bounds:       59
+                    variables with lower and upper bounds:       58
                          variables with only upper bounds:        0
     Total number of equality constraints.................:       65
-    Total number of inequality constraints...............:        2
-            inequality constraints with only lower bounds:        2
+    Total number of inequality constraints...............:        1
+            inequality constraints with only lower bounds:        1
        inequality constraints with lower and upper bounds:        0
             inequality constraints with only upper bounds:        0
     
     iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
        0  3.4581399e+06 1.76e+06 6.34e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-       1  3.4240101e+06 1.76e+06 2.48e+01  -1.0 9.58e+08    -  1.46e-03 5.83e-05f  1
-       2  3.4236530e+06 1.76e+06 1.56e+03  -1.0 3.49e+05    -  9.07e-02 1.48e-03f  1
-       3  3.4237931e+06 1.73e+06 1.90e+03  -1.0 1.56e+04    -  4.15e-02 1.78e-02h  1
-       4  3.4237959e+06 1.73e+06 2.80e+06  -1.0 2.65e+04    -  9.44e-01 1.81e-04h  1
-       5  3.4238022e+06 1.73e+06 1.32e+06  -1.0 6.76e+05    -  7.17e-06 1.54e-05h  1
-       6  3.4269127e+06 1.72e+06 3.06e+06  -1.0 7.60e+05    -  1.98e-05 6.70e-03h  1
-       7  3.8613024e+06 1.12e+05 3.91e+05  -1.0 7.55e+05    -  6.70e-03 9.42e-01h  1
-       8  3.8850641e+06 1.26e+04 2.25e+04  -1.0 4.38e+04    -  9.90e-01 8.88e-01h  1
-       9  3.8880240e+06 1.15e+02 2.06e+02  -1.0 4.89e+03    -  9.90e-01 9.91e-01h  1
+       1  3.4605126e+06 1.75e+06 1.17e+01  -1.0 6.89e+05    -  7.82e-02 6.15e-03h  1
+       2  3.4948057e+06 1.61e+06 1.97e+02  -1.0 6.78e+05    -  5.09e-02 8.29e-02h  1
+       3  3.5388972e+06 1.42e+06 2.64e+02  -1.0 6.38e+05    -  4.18e-01 1.13e-01h  1
+       4  3.7092178e+06 7.31e+05 1.40e+02  -1.0 5.72e+05    -  9.05e-01 4.88e-01h  1
+       5  3.8862654e+06 8.80e+03 1.01e+01  -1.0 2.93e+05    -  8.57e-01 9.90e-01h  1
+       6  3.8880357e+06 7.57e+01 3.51e+00  -1.0 2.92e+03    -  9.90e-01 9.91e-01h  1
+       7  3.8880510e+06 2.23e-05 2.03e+03  -1.0 2.50e+01    -  9.92e-01 1.00e+00h  1
+       8  3.8880508e+06 4.94e-07 2.37e-06  -2.5 1.73e-01    -  1.00e+00 1.00e+00f  1
+       9  3.8880508e+06 2.23e-08 3.69e-07  -5.7 5.04e-03    -  1.00e+00 1.00e+00f  1
     iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-      10  3.8880508e+06 7.17e-05 1.49e-01  -3.8 4.39e+01    -  1.00e+00 1.00e+00h  1
-      11  3.8880508e+06 1.46e-08 4.13e-07  -7.0 5.17e-04    -  1.00e+00 1.00e+00f  1
+      10  3.8880508e+06 9.31e-10 5.41e-07  -7.0 3.11e-06    -  1.00e+00 1.00e+00h  1
     
-    Number of Iterations....: 11
+    Number of Iterations....: 10
     
                                        (scaled)                 (unscaled)
-    Objective...............:   3.8880507982492442e+06    3.8880507982492442e+06
-    Dual infeasibility......:   4.1300224027586061e-07    4.1300224027586061e-07
-    Constraint violation....:   7.2759576141834259e-12    1.4627630662289448e-08
-    Complementarity.........:   9.1066277388888538e-08    9.1066277388888538e-08
-    Overall NLP error.......:   2.5311985076228633e-10    4.1300224027586061e-07
+    Objective...............:   3.8880508414204181e+06    3.8880508414204181e+06
+    Dual infeasibility......:   5.4067223484885157e-07    5.4067223484885157e-07
+    Constraint violation....:   7.2759576141834259e-12    9.3132257461547852e-10
+    Complementarity.........:   9.0909091253305424e-08    9.0909091253305424e-08
+    Overall NLP error.......:   9.0909091253305424e-08    5.4067223484885157e-07
     
     
-    Number of objective function evaluations             = 12
-    Number of objective gradient evaluations             = 12
-    Number of equality constraint evaluations            = 12
-    Number of inequality constraint evaluations          = 12
-    Number of equality constraint Jacobian evaluations   = 12
-    Number of inequality constraint Jacobian evaluations = 12
-    Number of Lagrangian Hessian evaluations             = 11
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.016
-    Total CPU secs in NLP function evaluations           =      0.000
+    Number of objective function evaluations             = 11
+    Number of objective gradient evaluations             = 11
+    Number of equality constraint evaluations            = 11
+    Number of inequality constraint evaluations          = 11
+    Number of equality constraint Jacobian evaluations   = 11
+    Number of inequality constraint Jacobian evaluations = 11
+    Number of Lagrangian Hessian evaluations             = 10
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+    Total CPU secs in NLP function evaluations           =      0.001
     
     EXIT: Optimal Solution Found.
     
@@ -676,7 +673,7 @@ solve this problem.
 
 .. parsed-literal::
 
-    operating cost = $ 3888050.798249244 per year
+    operating cost = $ 3888050.841420418 per year
     
     Heater results
     
@@ -753,8 +750,8 @@ Display optimal values for the decision variables and design variables:
     
     R101 outlet temperature =  450.0 K
     
-    Ethylene glycol produced =  225.41546823488122 MM lb/year
+    Ethylene glycol produced =  225.41547073949135 MM lb/year
     
-    Conversion achieved =  89.9999990000021  %
+    Conversion achieved =  90.0  %
     
 

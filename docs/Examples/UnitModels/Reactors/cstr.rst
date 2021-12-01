@@ -188,12 +188,12 @@ Adding Unit Models
 ------------------
 
 Let us start adding the unit models we have imported to the flowsheet.
-Here, we are adding a Mixer (assigned a name M101), a Heater (assigned a
-name H101) and a CSTR (assigned a name R101). Note that all unit models
-need to be given a property package argument. In addition to that, there
-are several arguments depending on the unit model, please refer to the
-documentation for more details
-(https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_lib/unit_models/index.html).
+Here, we are adding the Mixer (assigned a name M101) and a Heater
+(assigned a name H101). Note that all unit models need to be given a
+property package argument. In addition to that, there are several
+arguments depending on the unit model, please refer to the documentation
+for more details
+(https://idaes-pse.readthedocs.io/en/latest/technical_specs/model_libraries/generic/unit_models/index.html).
 For example, the Mixer unit model here is given a ``list`` consisting of
 names to the two inlets.
 
@@ -370,14 +370,7 @@ fixed, since the heat of reaction depends on the reactor conversion
         (m.fs.R101.inlet.flow_mol_phase_comp[0, "Liq", "ethylene_oxide"] -
          m.fs.R101.outlet.flow_mol_phase_comp[0, "Liq", "ethylene_oxide"]))
     
-    m.fs.R101.rate_constant = Expression(
-        expr=m.fs.reaction_params.reaction_R1.arrhenius_const *
-        exp(-m.fs.reaction_params.reaction_R1.energy_activation /
-            (Constants.gas_constant*m.fs.R101.control_volume.properties_in[0].temperature)))  # r = k[EO], k = [/s]
-    
-    m.fs.R101.perf_eqn_constraint = Constraint(
-        expr=m.fs.R101.volume[0] == (2*3.62e-3)*m.fs.R101.conversion /
-        (m.fs.R101.rate_constant*(1 - m.fs.R101.conversion)))  # 2 streams, each with 3.62 cudm/s flow
+    m.fs.R101.conversion.fix(0.80)
     
     m.fs.R101.volume.fix(5.538*pyunits.m**3)
 
@@ -413,27 +406,27 @@ streams via arc definitions as follows:
 
 .. parsed-literal::
 
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.M101.reagent_feed_state: Starting initialization
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.M101.reagent_feed_state: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.M101.catalyst_feed_state: Starting initialization
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.M101.catalyst_feed_state: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.M101.mixed_state: Starting initialization
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.M101.mixed_state: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.M101.mixed_state: Property package initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.H101.control_volume.properties_in: Starting initialization
-    2021-11-30 12:29:23 [INFO] idaes.init.fs.H101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.H101.control_volume.properties_out: Starting initialization
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.H101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.R101.control_volume.properties_in: Starting initialization
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.R101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.R101.control_volume.properties_out: Starting initialization
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.R101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.R101.control_volume.reactions: Initialization Complete.
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
-    2021-11-30 12:29:24 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+    2021-12-01 06:59:55 [INFO] idaes.init.fs.M101.reagent_feed_state: Starting initialization
+    2021-12-01 06:59:55 [INFO] idaes.init.fs.M101.reagent_feed_state: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:55 [INFO] idaes.init.fs.M101.catalyst_feed_state: Starting initialization
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.M101.catalyst_feed_state: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.M101.mixed_state: Starting initialization
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.M101.mixed_state: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.M101.mixed_state: Property package initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.H101.control_volume.properties_in: Starting initialization
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.H101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.H101.control_volume.properties_out: Starting initialization
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.H101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.R101.control_volume.properties_in: Starting initialization
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.R101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:56 [INFO] idaes.init.fs.R101.control_volume.properties_out: Starting initialization
+    2021-12-01 06:59:57 [INFO] idaes.init.fs.R101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+    2021-12-01 06:59:57 [INFO] idaes.init.fs.R101.control_volume.reactions: Initialization Complete.
+    2021-12-01 06:59:57 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+    2021-12-01 06:59:57 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
     
 
 .. code:: ipython3
@@ -468,15 +461,15 @@ streams via arc definitions as follows:
     
     This is Ipopt version 3.13.2, running with linear solver ma27.
     
-    Number of nonzeros in equality constraint Jacobian...:      242
+    Number of nonzeros in equality constraint Jacobian...:      239
     Number of nonzeros in inequality constraint Jacobian.:        0
-    Number of nonzeros in Lagrangian Hessian.............:      234
+    Number of nonzeros in Lagrangian Hessian.............:      231
     
-    Total number of variables............................:       67
+    Total number of variables............................:       66
                          variables with only lower bounds:        0
-                    variables with lower and upper bounds:       58
+                    variables with lower and upper bounds:       57
                          variables with only upper bounds:        0
-    Total number of equality constraints.................:       67
+    Total number of equality constraints.................:       66
     Total number of inequality constraints...............:        0
             inequality constraints with only lower bounds:        0
        inequality constraints with lower and upper bounds:        0
@@ -484,7 +477,7 @@ streams via arc definitions as follows:
     
     iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
        0  0.0000000e+00 1.76e+06 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-       1  0.0000000e+00 1.77e+04 2.29e-03  -1.0 2.31e-02    -  9.90e-01 9.90e-01h  1
+       1  0.0000000e+00 1.77e+04 2.33e-03  -1.0 2.32e-02    -  9.90e-01 9.90e-01h  1
        2  0.0000000e+00 1.67e+02 5.83e-01  -1.0 2.29e-02    -  9.90e-01 9.91e-01h  1
        3  0.0000000e+00 1.10e-06 8.89e+02  -1.0 2.14e-04    -  9.91e-01 1.00e+00h  1
     Cannot recompute multipliers for feasibility problem.  Error in eq_mult_calculator
@@ -506,8 +499,8 @@ streams via arc definitions as follows:
     Number of equality constraint Jacobian evaluations   = 4
     Number of inequality constraint Jacobian evaluations = 0
     Number of Lagrangian Hessian evaluations             = 3
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.003
-    Total CPU secs in NLP function evaluations           =      0.001
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    Total CPU secs in NLP function evaluations           =      0.000
     
     EXIT: Optimal Solution Found.
     
@@ -524,7 +517,7 @@ What is the total operating cost?
 
 .. parsed-literal::
 
-    operating cost = $ 3451440.8331560493  per year
+    operating cost = $ 3458138.23702813  per year
     
 
 For this operating cost, what conversion did we achieve of ethylene
@@ -552,21 +545,21 @@ oxide to ethylene glycol?
         Variables: 
     
         Key       : Value       : Fixed : Bounds
-        Heat Duty : -5.6457e+06 : False : (None, None)
+        Heat Duty : -5.6566e+06 : False : (None, None)
            Volume :      5.5380 :  True : (None, None)
     
     ------------------------------------------------------------------------------------
         Stream Table
                                                      Inlet     Outlet  
-        Molar Flowrate ('Liq', 'ethylene_oxide')      58.000     11.690
-        Molar Flowrate ('Liq', 'water')               239.60     193.29
+        Molar Flowrate ('Liq', 'ethylene_oxide')      58.000     11.600
+        Molar Flowrate ('Liq', 'water')               239.60     193.20
         Molar Flowrate ('Liq', 'sulfuric_acid')      0.33401    0.33401
-        Molar Flowrate ('Liq', 'ethylene_glycol') 2.0000e-05     46.310
-        Temperature                                   328.15     328.46
+        Molar Flowrate ('Liq', 'ethylene_glycol') 2.0000e-05     46.400
+        Temperature                                   328.15     328.27
         Pressure                                  1.0000e+05 1.0000e+05
     ====================================================================================
     
-    Conversion achieved =  79.84492859754936 %
+    Conversion achieved =  80.0 %
     
     Assuming a 20% design factor for reactor volume, total CSTR volume required =  6.6456 m^3 =  1755.5817911513113  gal
     
@@ -577,9 +570,9 @@ Optimizing Ethylene Glycol Production
 Now that the flowsheet has been squared and solved, we can run a small
 optimization problem to minimize our production costs. Suppose we
 require at least 200 million pounds/year of ethylene glycol produced and
-at least 90% conversion of ethylene oxide, allowing for variable reactor
-volume (considering operating/non-capital costs only) and reactor
-temperature (heater outlet).
+90% conversion of ethylene oxide, allowing for variable reactor volume
+(considering operating/non-capital costs only) and reactor temperature
+(heater outlet).
 
 Let us declare our objective function for this problem.
 
@@ -594,7 +587,7 @@ until now, as well as set bounds for the design variables:
 .. code:: ipython3
 
     m.fs.eg_prod_con = Constraint(expr=m.fs.eg_prod >= 200*pyunits.Mlb/pyunits.yr)  # MM lb/year
-    m.fs.conversion_con = Constraint(expr=m.fs.R101.conversion >= 0.90*pyunits.dimensionless)  # fraction
+    m.fs.R101.conversion.fix(0.90)
     
     m.fs.R101.volume.unfix()
     m.fs.R101.volume.setlb(0*pyunits.m**3)
@@ -638,54 +631,54 @@ solve this problem.
     
     This is Ipopt version 3.13.2, running with linear solver ma27.
     
-    Number of nonzeros in equality constraint Jacobian...:      246
-    Number of nonzeros in inequality constraint Jacobian.:        2
-    Number of nonzeros in Lagrangian Hessian.............:      249
+    Number of nonzeros in equality constraint Jacobian...:      242
+    Number of nonzeros in inequality constraint Jacobian.:        1
+    Number of nonzeros in Lagrangian Hessian.............:      246
     
-    Total number of variables............................:       69
+    Total number of variables............................:       68
                          variables with only lower bounds:        0
-                    variables with lower and upper bounds:       60
+                    variables with lower and upper bounds:       59
                          variables with only upper bounds:        0
-    Total number of equality constraints.................:       67
-    Total number of inequality constraints...............:        2
-            inequality constraints with only lower bounds:        2
+    Total number of equality constraints.................:       66
+    Total number of inequality constraints...............:        1
+            inequality constraints with only lower bounds:        1
        inequality constraints with lower and upper bounds:        0
             inequality constraints with only upper bounds:        0
     
     iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-       0  3.4514408e+06 1.76e+06 6.34e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-       1  3.4173170e+06 1.76e+06 2.50e+01  -1.0 9.49e+08    -  1.48e-03 5.89e-05f  1
-       2  3.4169707e+06 1.76e+06 3.12e+03  -1.0 3.18e+05    -  1.81e-01 1.49e-03f  1
-       3  3.4175736e+06 1.73e+06 1.62e+04  -1.0 5.69e+04    -  9.47e-01 1.78e-02h  1
-       4  3.4175798e+06 1.73e+06 4.08e+06  -1.0 5.60e+04    -  4.53e-02 1.81e-04h  1
-       5  3.4179129e+06 1.73e+06 6.47e+04  -1.0 7.72e+05    -  7.10e-06 7.07e-04h  1
-       6  3.8637961e+06 1.09e+05 7.09e+05  -1.0 7.73e+05    -  7.07e-04 9.45e-01h  1
-       7  3.8895705e+06 1.15e+03 6.32e+04  -1.0 4.26e+04    -  6.74e-01 9.90e-01h  1
-       8  3.8898382e+06 4.13e-02 5.80e+02  -1.0 4.38e+02    -  9.90e-01 1.00e+00h  1
-       9  3.8898378e+06 1.82e-05 3.10e+03  -1.7 5.31e-01    -  9.90e-01 1.00e+00f  1
+       0  3.4581382e+06 1.76e+06 6.34e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  3.4605299e+06 1.75e+06 8.67e+00  -1.0 6.94e+05    -  5.94e-02 6.15e-03h  1
+       2  3.4673339e+06 1.72e+06 1.30e+01  -1.0 6.91e+05    -  4.43e-02 1.61e-02h  3
+       3  3.5036010e+06 1.57e+06 7.53e+01  -1.0 6.84e+05    -  1.01e-01 8.68e-02h  1
+       4  3.5773853e+06 1.27e+06 3.16e+02  -1.0 6.32e+05    -  7.40e-01 1.91e-01h  1
+       5  3.8866006e+06 1.72e+04 9.24e+03  -1.0 5.11e+05    -  4.81e-01 9.90e-01h  1
+       6  3.8896813e+06 1.59e+02 1.04e+02  -1.0 5.09e+03    -  9.90e-01 9.91e-01h  1
+       7  3.8897098e+06 1.05e-04 1.37e+03  -1.0 4.67e+01    -  9.90e-01 1.00e+00h  1
+       8  3.8897096e+06 2.04e-06 2.64e+02  -2.5 1.73e-01    -  9.97e-01 1.00e+00f  1
+       9  3.8897096e+06 4.66e-09 3.97e-07  -3.8 4.85e-03    -  1.00e+00 1.00e+00f  1
     iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-      10  3.8898378e+06 5.59e-09 2.04e-07  -1.7 1.59e-04    -  1.00e+00 1.00e+00h  1
-      11  3.8898378e+06 3.91e-08 1.13e-06  -5.7 3.28e-02    -  1.00e+00 1.00e+00f  1
+      10  3.8897096e+06 7.45e-09 3.69e-07  -5.7 2.65e-04    -  1.00e+00 1.00e+00f  1
+      11  3.8897096e+06 4.66e-09 3.02e-07  -7.0 3.12e-06    -  1.00e+00 1.00e+00h  1
     
     Number of Iterations....: 11
     
                                        (scaled)                 (unscaled)
-    Objective...............:   3.8898378059242074e+06    3.8898378059242074e+06
-    Dual infeasibility......:   1.1319999379047485e-06    1.1319999379047485e-06
-    Constraint violation....:   2.1058887966773909e-10    3.9115548133850104e-08
-    Complementarity.........:   1.9690410971671327e-06    1.9690410971671327e-06
-    Overall NLP error.......:   5.5641154367622976e-09    1.9690410971671327e-06
+    Objective...............:   3.8897095750396615e+06    3.8897095750396615e+06
+    Dual infeasibility......:   3.0225365574728907e-07    3.0225365574728907e-07
+    Constraint violation....:   7.2759576141834259e-12    4.6566128730773926e-09
+    Complementarity.........:   9.0909099377807583e-08    9.0909099377807583e-08
+    Overall NLP error.......:   9.0909099377807583e-08    3.0225365574728907e-07
     
     
-    Number of objective function evaluations             = 12
+    Number of objective function evaluations             = 15
     Number of objective gradient evaluations             = 12
-    Number of equality constraint evaluations            = 12
-    Number of inequality constraint evaluations          = 12
+    Number of equality constraint evaluations            = 15
+    Number of inequality constraint evaluations          = 15
     Number of equality constraint Jacobian evaluations   = 12
     Number of inequality constraint Jacobian evaluations = 12
     Number of Lagrangian Hessian evaluations             = 11
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.010
-    Total CPU secs in NLP function evaluations           =      0.002
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.003
+    Total CPU secs in NLP function evaluations           =      0.006
     
     EXIT: Optimal Solution Found.
     
@@ -707,7 +700,7 @@ solve this problem.
 
 .. parsed-literal::
 
-    operating cost = $ 3889837.805924208 per year
+    operating cost = $ 3889709.575039662 per year
     
     Heater results
     
@@ -742,8 +735,8 @@ solve this problem.
         Variables: 
     
         Key       : Value       : Fixed : Bounds
-        Heat Duty : -6.3637e+06 : False : (None, None)
-           Volume :      12.581 : False : (0, 18.927058919999997)
+        Heat Duty : -6.3635e+06 : False : (None, None)
+           Volume :      18.927 : False : (0, 18.927058919999997)
     
     ------------------------------------------------------------------------------------
         Stream Table
@@ -752,7 +745,7 @@ solve this problem.
         Molar Flowrate ('Liq', 'water')               239.60     187.40
         Molar Flowrate ('Liq', 'sulfuric_acid')      0.33401    0.33401
         Molar Flowrate ('Liq', 'ethylene_glycol') 2.0000e-05     52.200
-        Temperature                                   328.15     329.27
+        Temperature                                   328.15     338.37
         Pressure                                  1.0000e+05 1.0000e+05
     ====================================================================================
     
@@ -783,10 +776,10 @@ Display optimal values for the decision variables and design variables:
     
     H101 outlet temperature =  328.15 K
     
-    Assuming a 20% design factor for reactor volume, total CSTR volume required =  15.097797562903564 m^3 =  3988.4161682800864  gal
+    Assuming a 20% design factor for reactor volume, total CSTR volume required =  22.712470703999994 m^3 =  5999.999999999999  gal
     
-    Ethylene glycol produced =  225.41546823498317 MM lb/year
+    Ethylene glycol produced =  225.41547073949135 MM lb/year
     
-    Conversion achieved =  89.99999900004279  %
+    Conversion achieved =  90.0  %
     
 
