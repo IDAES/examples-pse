@@ -46,6 +46,9 @@ jobs:
       uses: ./.github/actions/setup-idaes
       with:
         install-target: -r requirements.txt
+    - name: Install pandoc
+      run: |
+        conda install --yes pandoc
     - name: Run pytest (unit)
       run: |
         pytest --verbose -m unit tests/
@@ -82,7 +85,7 @@ jobs:
         install-target: -r requirements.txt
     - name: Install pandoc
       run: |
-        sudo apt-get install --quiet --yes pandoc
+        conda install --yes pandoc
     - name: Check installed versions
       run: |
         idaes --version
