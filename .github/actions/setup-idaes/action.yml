@@ -43,3 +43,9 @@ runs:
         echo '::group::Output of "idaes get-extensions" command'
         idaes get-extensions --verbose
         echo '::endgroup::'
+    - name: Display environment info
+      shell: bash -l {0}
+      run: |
+        echo '::group::Output of "idaes environment-info" command'
+        idaes environment-info
+        echo '::endgroup::'
