@@ -104,7 +104,7 @@ jobs:
         name: build-outputs-py${{ matrix.python-version }}
         path: |
           *-errors.txt
-          docs_test/_build/html/
+          docs_test/
     - name: Check for broken links in HTML docs
       run: |
         # linkchecker refuses to load files from its own installation directory if they are world-writable
