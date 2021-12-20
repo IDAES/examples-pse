@@ -24,6 +24,7 @@ jobs:
   examples:
     name: Build examples (py${{ matrix.python-version }}/${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    if: "false"  # FIXME: remove after debugging
     strategy:
       # if fail-fast == true (the default), jobs for the remaining values in the matrix are cancelled
       fail-fast: false
