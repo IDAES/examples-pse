@@ -101,7 +101,7 @@ jobs:
       uses: actions/upload-artifact@v2
       if: always()
       with:
-        name: build-outputs-${{ matrix.python-version }}/${{ matrix.os }}
+        name: build-outputs-py${{ matrix.python-version }}
         path: |
           *-errors.txt
           docs_test/_build/html/
