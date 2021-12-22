@@ -41,8 +41,9 @@ in the appropriate folder under `src/` with that name. For example, if you are a
    that are being added under that subfolder. For each notebook, add an entry with the name of the notebook,
    exactly matching the filename, a colon, and the description. Use existing entries as a template.
    
-6. If you added a subfolder, add this to the `build.yml` file, so the build process will see it. Otherwise,
-   you should not need to do anything with this file.
+6. If you added a subfolder, add this to the `build.yml` file, so the build process will see it. To update the CI
+   jobs, add this to the `build-ci.yml` file as well so the build process will see it during integration testing.
+   Otherwise, you should not need to do anything with this file.
 
 7. Add the notebook to the documentation section. This means that you need to add a line in a file called `index.rst`
    in a directory under `docs/` matching the directory for the notebook under `src`. So, for the 
