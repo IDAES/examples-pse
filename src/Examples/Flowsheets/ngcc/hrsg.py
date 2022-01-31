@@ -1036,7 +1036,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.evap_hp.area, 1e-4)
         iscale.set_scaling_factor(self.evap_hp.overall_heat_transfer_coefficient, 1e-2)
 
-    def initialize(self, outlvl=idaeslog.NOTSET, solver=None, optarg=None):
+    def initialize(self, outlvl=idaeslog.NOTSET, solver=None, optarg=None, load_from="hrsg_init.json.gz", save_to="hrsg_init.json.gz"):
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
 
@@ -1044,11 +1044,12 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         init_log.info_high("HRSG Initialization Starting")
 
-        init_fname = "hrsg_init.json.gz"
-        if os.path.exists(init_fname):
-            init_log.info_high(f"HRSG load initial from {init_fname}")
-            iutil.from_json(self, fname=init_fname, wts=iutil.StoreSpec(suffix=False))
-            return
+        if load_from is not None:
+            if os.path.exists(load_from):
+                init_log.info_high(f"HRSG load initial from {load_from}")
+                # here suffix=False avoids loading scaling factors
+                iutil.from_json(self, fname=load_from, wts=iutil.StoreSpec(suffix=False))
+                return
 
         ######### LP Section ###########
         # FLUE GAS Inlet to econ_lp (F = 138406 kgmol/hr, T = 15 C, P=0.1 MPa abs)
@@ -1090,7 +1091,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.evap_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
         self.evap_lp.lp_vap_frac_eqn.activate()
         self.evap_lp.overall_heat_transfer_coefficient.unfix()
-        solver_obj.solve(self.evap_lp, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.evap_lp, tee=slc.tee)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"evap_lp failed to initialize successfully.")
 
         propagate_state(self.drum_lp.inlet, self.evap_lp.tube_outlet)
         self.drum_lp.initialize()
@@ -1098,10 +1103,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.drum_lp.inlet.flow_mol[0].fix()
         self.drum_lp.inlet.enth_mol[0].fix()
         self.drum_lp.inlet.pressure[0].fix()
-        solver_obj.solve(self.drum_lp, tee=False)
-        self.drum_lp.inlet.flow_mol[0].unfix()
-        self.drum_lp.inlet.enth_mol[0].unfix()
-        self.drum_lp.inlet.pressure[0].unfix()
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.drum_lp, tee=slc.tee)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"drum_lp failed to initialize successfully.")
 
         propagate_state(self.splitter1.inlet, self.drum_lp.liq_outlet)
         self.splitter1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
@@ -1151,10 +1157,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_ip1.side_1_inlet.flow_mol[0].fix()
         self.econ_ip1.side_1_inlet.enth_mol[0].fix()
         self.econ_ip1.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.econ_ip1, tee=False)
-        self.econ_ip1.side_1_inlet.flow_mol[0].unfix()
-        self.econ_ip1.side_1_inlet.enth_mol[0].unfix()
-        self.econ_ip1.side_1_inlet.pressure[0].unfix()
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.econ_ip1, tee=slc.tee)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} econ_ip1 failed to initialize successfully.")
 
         propagate_state(self.splitter_ip1.inlet, self.econ_ip1.side_1_outlet)
         self.splitter_ip1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
@@ -1172,7 +1179,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_ip2.side_1_inlet.flow_mol[0].fix()
         self.econ_ip2.side_1_inlet.enth_mol[0].fix()
         self.econ_ip2.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.econ_ip2, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.econ_ip2, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} econ_ip2 failed to initialize successfully.")
 
         propagate_state(self.evap_ip.tube_inlet, self.econ_ip2.side_1_outlet)
         self.evap_ip.shell_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1191,7 +1202,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.evap_ip.overall_heat_transfer_coefficient.fix(150)
         self.evap_ip.ip_sat_vap_eqn.activate()
         self.evap_ip.heat_transfer_equation.deactivate()
-        solver_obj.solve(self.evap_ip, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.evap_ip, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} evap_ip failed to initialize successfully.")
 
         propagate_state(self.sh_ip1.side_1_inlet, self.evap_ip.tube_outlet)
         self.sh_ip1.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1206,7 +1221,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip1.side_1_inlet.flow_mol[0].fix()
         self.sh_ip1.side_1_inlet.enth_mol[0].fix()
         self.sh_ip1.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.sh_ip1, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.sh_ip1, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} sh_ip1 failed to initialize successfully.")
 
         self.splitter_ip2.inlet.flow_mol[0].fix(7503.7337)
         self.splitter_ip2.inlet.enth_mol[0].fix(
@@ -1217,7 +1236,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.splitter_ip2.split_fraction[0, "toEjector"].fix(0.00074)
         self.splitter_ip2.split_fraction[0, "toDryer"].fix(0.000274)
         self.splitter_ip2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        solver_obj.solve(self.splitter_ip2, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.splitter_ip2, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} splitter_ip2 failed to initialize successfully.")
 
         propagate_state(self.mixer_ip1.sh_ip1, self.sh_ip1.side_1_outlet)
         propagate_state(self.mixer_ip1.Cold_reheat, self.splitter_ip2.Cold_reheat)
@@ -1242,7 +1265,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip2.side_1_inlet.flow_mol[0].fix()
         self.sh_ip2.side_1_inlet.enth_mol[0].fix()
         self.sh_ip2.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.sh_ip2, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.sh_ip2, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} sh_ip2 failed to initialize successfully.")
 
         propagate_state(self.sh_ip3.side_1_inlet, self.sh_ip2.side_1_outlet)
         self.sh_ip3.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1257,7 +1284,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip3.side_1_inlet.flow_mol[0].fix()
         self.sh_ip3.side_1_inlet.enth_mol[0].fix()
         self.sh_ip3.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.sh_ip3, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.sh_ip3, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} sh_ip3 failed to initialize successfully.")
         init_log.info("Intermediate pressure system initialization - Completed")
 
         propagate_state(self.econ_hp1.side_1_inlet, self.pump_hp.outlet)
@@ -1273,7 +1304,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp1.side_1_inlet.flow_mol[0].fix()
         self.econ_hp1.side_1_inlet.enth_mol[0].fix()
         self.econ_hp1.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.econ_hp1, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.econ_hp1, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} econ_hp1 failed to initialize successfully.")
 
         propagate_state(self.econ_hp2.side_1_inlet, self.econ_hp1.side_1_outlet)
         self.econ_hp2.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1288,7 +1323,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp2.side_1_inlet.flow_mol[0].fix()
         self.econ_hp2.side_1_inlet.enth_mol[0].fix()
         self.econ_hp2.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.econ_hp2, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.econ_hp2, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} econ_hp2 failed to initialize successfully.")
 
         propagate_state(self.econ_hp3.side_1_inlet, self.econ_hp2.side_1_outlet)
         self.econ_hp3.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1303,7 +1342,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp3.side_1_inlet.flow_mol[0].fix()
         self.econ_hp3.side_1_inlet.enth_mol[0].fix()
         self.econ_hp3.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.econ_hp3, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.econ_hp3, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} econ_hp3 failed to initialize successfully.")
 
         propagate_state(self.econ_hp4.side_1_inlet, self.econ_hp3.side_1_outlet)
         self.econ_hp4.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1318,7 +1361,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp4.side_1_inlet.flow_mol[0].fix()
         self.econ_hp4.side_1_inlet.enth_mol[0].fix()
         self.econ_hp4.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.econ_hp4, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.econ_hp4, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} econ_hp4 failed to initialize successfully.")
 
         propagate_state(self.econ_hp5.side_1_inlet, self.econ_hp4.side_1_outlet)
         self.econ_hp5.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1333,7 +1380,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp5.side_1_inlet.flow_mol[0].fix()
         self.econ_hp5.side_1_inlet.enth_mol[0].fix()
         self.econ_hp5.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.econ_hp5, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.econ_hp5, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} econ_hp5 failed to initialize successfully.")
 
         self.evap_hp.area.fix(8368.6)
         self.evap_hp.overall_heat_transfer_coefficient.fix(150)
@@ -1353,7 +1404,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.evap_hp.tube_inlet.flow_mol[0].fix()
         self.evap_hp.tube_inlet.enth_mol[0].fix()
         self.evap_hp.tube_inlet.pressure[0].fix()
-        solver_obj.solve(self.evap_hp, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.evap_hp, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} evap_hp failed to initialize successfully.")
 
         propagate_state(self.sh_hp1.side_1_inlet, self.evap_hp.tube_outlet)
         self.sh_hp1.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1368,7 +1423,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp1.side_1_inlet.flow_mol[0].fix()
         self.sh_hp1.side_1_inlet.enth_mol[0].fix()
         self.sh_hp1.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.sh_hp1, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.sh_hp1, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} sh_hp1 failed to initialize successfully.")
 
         propagate_state(self.sh_hp2.side_1_inlet, self.sh_hp1.side_1_outlet)
         self.sh_hp2.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1383,7 +1442,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp2.side_1_inlet.flow_mol[0].fix()
         self.sh_hp2.side_1_inlet.enth_mol[0].fix()
         self.sh_hp2.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.sh_hp2, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.sh_hp2, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} sh_hp2 failed to initialize successfully.")
 
         propagate_state(self.sh_hp3.side_1_inlet, self.sh_hp2.side_1_outlet)
         self.sh_hp3.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1398,7 +1461,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp3.side_1_inlet.flow_mol[0].fix()
         self.sh_hp3.side_1_inlet.enth_mol[0].fix()
         self.sh_hp3.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.sh_hp3, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.sh_hp3, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} sh_hp3 failed to initialize successfully.")
 
         propagate_state(self.sh_hp4.side_1_inlet, self.sh_hp3.side_1_outlet)
         self.sh_hp4.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1413,9 +1480,19 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp4.side_1_inlet.flow_mol[0].fix()
         self.sh_hp4.side_1_inlet.enth_mol[0].fix()
         self.sh_hp4.side_1_inlet.pressure[0].fix()
-        solver_obj.solve(self.sh_hp4, tee=False)
+        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+            res = solver_obj.solve(self.sh_hp4, tee=False)
+        if not pyo.check_optimal_termination(res):
+            raise InitializationError(
+                f"{self.name} sh_hp4 failed to initialize successfully.")
 
         # unfix inlets that were fixed for initialization
+        self.drum_lp.inlet.flow_mol[0].unfix()
+        self.drum_lp.inlet.enth_mol[0].unfix()
+        self.drum_lp.inlet.pressure[0].unfix()
+        self.econ_ip1.side_1_inlet.flow_mol[0].unfix()
+        self.econ_ip1.side_1_inlet.enth_mol[0].unfix()
+        self.econ_ip1.side_1_inlet.pressure[0].unfix()
         self.evap_lp.tube_inlet.flow_mol[0].unfix()
         self.evap_lp.tube_inlet.enth_mol[0].unfix()
         self.evap_lp.tube_inlet.pressure[0].unfix()
@@ -1534,8 +1611,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_lp.side_2_inlet.pressure[0].unfix()
         self.econ_lp.side_2_inlet.temperature[0].unfix()
 
-        iutil.to_json(self, fname=init_fname)
-        init_log.info_low(f"Initialization saved to {init_fname}")
+        if save_to is not None:
+            iutil.to_json(self, fname=save_to)
+            init_log.info_low(f"Initialization saved to {save_to}")
         init_log.info("High pressure system initialization - Completed")
 
     def _stream_tags(self):
@@ -1547,7 +1625,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             ta.arcs_to_stream_dict(
                 self,
                 descend_into=False,
-                additional={  # these are steams in or out without an arc
+                additional={  # these are streams in or out without an arc
                     "lp01": self.econ_lp.side_1_inlet,
                     "lp03": self.mixer1.Preheater,
                     "ip04": self.splitter_ip1.toNGPH,
