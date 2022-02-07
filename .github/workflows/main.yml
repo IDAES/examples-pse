@@ -23,18 +23,23 @@ defaults:
 jobs:
   examples:
     name: Build examples (py${{ matrix.python-version }}/${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os-runner }}
     strategy:
       # if fail-fast == true (the default), jobs for the remaining values in the matrix are cancelled
       fail-fast: false
       matrix:
         python-version:
-          - '3.6'
           - '3.7'
           - '3.8'
+          - '3.9'
         os:
-          - ubuntu-18.04
-          - windows-latest
+          - linux
+          - windows
+        include:
+          - os: linux
+            os-runner: ubuntu-18.04
+          - os: windows
+            os-runner: windows-2019
     steps:
     - name: Set up Conda environment
       uses: conda-incubator/setup-miniconda@v2.1.1
@@ -66,9 +71,9 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - '3.6'
           - '3.7'
           - '3.8'
+          - '3.9'
     steps:
     - name: Set up Conda environment
       uses: conda-incubator/setup-miniconda@v2.1.1
