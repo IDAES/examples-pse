@@ -106,12 +106,14 @@ jobs:
         mkdir ./docs_test && cp -r ./docs/{conf.py,index.rst,_images,_static,_templates} ./docs_test/
         ls -lah ./docs_test
         python build.py -v --config ./build-ci.yml -cd
-    - name: Save Sphinx build error logs
+    - name: Save build outputs
       uses: actions/upload-artifact@v2
-      if: failure()
+      if: always()
       with:
-        name: sphinx-error-logs
-        path: sphinx-errors.txt
+        name: examples-pse-build-docs-${{ matrix.python-version }}
+        path: |
+          sphinx-errors.txt
+          docs_test/_build/html/
     - name: Check for broken links in HTML docs
       run: |
         # linkchecker refuses to load files from its own installation directory if they are world-writable
