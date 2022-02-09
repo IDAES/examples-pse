@@ -40,6 +40,7 @@ jobs:
             os-runner: ubuntu-18.04
           - os: windows
             os-runner: windows-2019
+            skip-wsl-only: true
     steps:
     - name: Set up Conda environment
       uses: conda-incubator/setup-miniconda@v2.1.1
@@ -47,6 +48,10 @@ jobs:
         activate-environment: ${{ env.IDAES_CONDA_ENV_NAME_DEV }}
         python-version: ${{ matrix.python-version }}
     - uses: actions/checkout@v2
+    - name: Skip notebooks that require WSL to run on Windows
+      if: matrix.skip-wsl-only
+      run: |
+        rm -r src/Examples/DAE/petsc*.ipynb
     - name: Set up IDAES
       uses: ./.github/actions/setup-idaes
       with:
