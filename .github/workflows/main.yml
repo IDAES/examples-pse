@@ -35,6 +35,11 @@ jobs:
         os:
           - linux
           - windows
+        idaes-pse-ref:
+          - c706199
+          - 747b6db
+          - d3fbefe
+          - 9be0731
         include:
           - os: linux
             os-runner: ubuntu-18.04
@@ -47,10 +52,12 @@ jobs:
         activate-environment: ${{ env.IDAES_CONDA_ENV_NAME_DEV }}
         python-version: ${{ matrix.python-version }}
     - uses: actions/checkout@v2
-    - name: Set up IDAES
+    - name: Set up IDAES (ref. ${{ matrix.idaes-pse-ref }})
       uses: ./.github/actions/setup-idaes
+      env:
+        _idaes_pip_target: idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/${{ matrix.idaes-pse-ref }}.zip
       with:
-        install-target: -r requirements.txt
+        install-target: -r requirements.txt "$_idaes_pip_target"
     - name: Run pytest (unit)
       run: |
         pytest --verbose -m unit tests/
@@ -74,6 +81,11 @@ jobs:
           - '3.7'
           - '3.8'
           - '3.9'
+        idaes-pse-ref:
+          - c706199
+          - 747b6db
+          - d3fbefe
+          - 9be0731
     steps:
     - name: Set up Conda environment
       uses: conda-incubator/setup-miniconda@v2.1.1
@@ -81,10 +93,12 @@ jobs:
         activate-environment: ${{ env.IDAES_CONDA_ENV_NAME_DEV }}
         python-version: ${{ matrix.python-version }}
     - uses: actions/checkout@v2
-    - name: Set up IDAES
+    - name: Set up IDAES (ref. ${{ matrix.idaes-pse-ref }})
       uses: ./.github/actions/setup-idaes
+      env:
+        _idaes_pip_target: idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/${{ matrix.idaes-pse-ref }}.zip
       with:
-        install-target: -r requirements.txt
+        install-target: -r requirements.txt "$_idaes_pip_target"
     - name: Install pandoc
       run: |
         sudo apt-get install --quiet --yes pandoc
