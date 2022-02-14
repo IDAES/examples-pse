@@ -22,7 +22,7 @@ defaults:
 
 jobs:
   examples:
-    name: Build examples (py${{ matrix.python-version }}/${{ matrix.os }})
+    name: Build examples (py${{ matrix.python-version }}/${{ matrix.os }}/${{ matrix.idaes-pse-ref }})
     runs-on: ${{ matrix.os-runner }}
     strategy:
       # if fail-fast == true (the default), jobs for the remaining values in the matrix are cancelled
@@ -72,7 +72,7 @@ jobs:
         path: ci-test-errors.txt
 
   build-examples-docs:
-    name: Build examples docs (py${{ matrix.python-version }})
+    name: Build examples docs (py${{ matrix.python-version }}/${{ matrix.idaes-pse-ref }})
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
