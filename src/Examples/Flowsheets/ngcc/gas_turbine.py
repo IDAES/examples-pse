@@ -16,6 +16,8 @@ __author__ = "John Eslick"
 import os
 import csv
 
+import pandas as pd
+
 import pyomo.environ as pyo
 from pyomo.network import Arc
 from pyomo.common.fileutils import this_file_dir
@@ -622,7 +624,48 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
             self.feed_fuel1.mole_frac_comp[:,i].fix(v)
 
     def _add_tags(self):
-        pass
+        tag_group = iutil.ModelTagGroup()
+        self.tags_streams = tag_group
+        stream_states = tables.stream_states_dict(
+            tables.arcs_to_stream_dict(self, descend_into=False))
+        for i, s in stream_states.items():  # create the tags for steam quantities
+            tag_group[f"{i}_F"] = iutil.ModelTag(
+                doc=f"{i}: mass flow",
+                expr=s.flow_mass,
+                format_string="{:.3f}",
+                display_units=pyo.units.kg / pyo.units.s,
+            )
+            tag_group[f"{i}_Fmol"] = iutil.ModelTag(
+                doc=f"{i}: mole flow",
+                expr=s.flow_mol,
+                format_string="{:.3f}",
+                display_units=pyo.units.kmol / pyo.units.s,
+            )
+            tag_group[f"{i}_Fvol"] = iutil.ModelTag(
+                doc=f"{i}: volumetric flow",
+                expr=s.flow_vol,
+                format_string="{:.3f}",
+                display_units=pyo.units.m ** 3 / pyo.units.s,
+            )
+            tag_group[f"{i}_P"] = iutil.ModelTag(
+                doc=f"{i}: pressure",
+                expr=s.pressure,
+                format_string="{:.3f}",
+                display_units=pyo.units.bar,
+            )
+            tag_group[f"{i}_T"] = iutil.ModelTag(
+                doc=f"{i}: temperature",
+                expr=s.temperature,
+                format_string="{:.2f}",
+                display_units=pyo.units.K,
+            )
+            for c in s.mole_frac_comp:
+                tag_group[f"{i}_y{c}"] = iutil.ModelTag(
+                    doc=f"{i}: mole percent {c}",
+                    expr=s.mole_frac_comp[c] * 100,
+                    format_string="{:.3f}",
+                    display_units="%",
+                )
 
     def _set_scaling(self):
         prop_packages = {
@@ -884,6 +927,30 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         # Solve
         solver_obj.solve(self, tee=True)
 
+    @staticmethod
+    def _stream_col_gen(tag_group):
+        for tag in tag_group.values():
+            spltstr = tag.doc.split(":")
+            stream = spltstr[0].strip()
+            col = f"{spltstr[1].strip()} ({tag.get_unit_str()})"
+            yield tag, stream, col
+
+    @staticmethod
+    def _stream_table(tag_group):
+        rows = set()
+        cols = set()
+        tags = []
+        for tag, stream, col in GasTurbineFlowsheetData._stream_col_gen(tag_group):
+            rows.add(stream)
+            cols.add(col)
+            tags.append((tag, stream, col))
+        df = pd.DataFrame(index=sorted(rows), columns=sorted(cols))
+        for tag, stream, col in tags:
+            df.at[stream, col] = tag.get_display_value()
+        return df
+
+    def streams_dataframe(self):
+        return self._stream_table(self.tags_streams)
 
 
 def run_full_load(m, solver):
