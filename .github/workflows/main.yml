@@ -24,6 +24,7 @@ jobs:
   examples:
     name: Build examples (py${{ matrix.python-version }}/${{ matrix.os }}/${{ matrix.idaes-pse-ref }})
     runs-on: ${{ matrix.os-runner }}
+    if: "false"
     strategy:
       # if fail-fast == true (the default), jobs for the remaining values in the matrix are cancelled
       fail-fast: false
@@ -72,7 +73,7 @@ jobs:
         path: ci-test-errors.txt
 
   build-examples-docs:
-    name: Build examples docs (py${{ matrix.python-version }}/${{ matrix.idaes-pse-ref }})
+    name: Build examples docs (py${{ matrix.python-version }}/${{ matrix.idaes-pse-ref }}/${{ matrix.attempt }})
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
@@ -86,6 +87,11 @@ jobs:
           - 747b6df
           - d3fbefe
           - 9be0731
+        attempt:
+          - 1
+          - 2
+          - 3
+          - 4
     steps:
     - name: Set up Conda environment
       uses: conda-incubator/setup-miniconda@v2.1.1
