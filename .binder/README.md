@@ -1,6 +1,6 @@
 # Run example notebooks in Binder
 
-Binder (https://mybinder.org) provides a short-lived, temporary cloud environment where Jupyter notebooks can be run without having to install any software locally.
+Binder (https://mybinder.org) provides a short-lived, temporary Linux cloud environment where Jupyter notebooks can be run without having to install any software locally.
 
 ## Quickstart
 
