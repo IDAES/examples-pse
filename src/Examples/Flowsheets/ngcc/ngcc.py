@@ -176,23 +176,6 @@ class NgccFlowsheetData(FlowsheetBlockData):
             return b.control_volume.properties_out[t].enth_mol == \
                 b.control_volume.properties_out[t].enth_mol_sat_phase["Liq"] - 100
 
-    def _scaling_guess(self):
-        for (t, i) in self.fg_translate.mol_frac_eqn:
-            iscale.constraint_scaling_transform(
-                self.fg_translate.mol_frac_eqn[t, i], 1e-2)
-        for t in self.fg_translate.temperature_eqn:
-            iscale.constraint_scaling_transform(
-                self.fg_translate.temperature_eqn[t], 1e-2)
-        for t in self.fg_translate.pressure_eqn:
-            iscale.constraint_scaling_transform(
-                self.fg_translate.pressure_eqn[t], 1e-5)
-        iscale.set_scaling_factor(self.ng_preheat.shell.heat, 1e-5)
-        iscale.set_scaling_factor(self.ng_preheat.tube.heat, 1e-5)
-        iscale.set_scaling_factor(
-            self.ng_preheat.overall_heat_transfer_coefficient, 1e-2)
-        iscale.set_scaling_factor(self.ng_preheat.area, 1e-3)
-        iscale.set_scaling_factor(self.reboiler.control_volume.heat, 1e-7)
-
         @self.Expression(self.config.time)
         def gross_power(b, t):
             return b.gt.gt_power[t] + b.st.steam_turbine.power[t]
@@ -271,7 +254,26 @@ class NgccFlowsheetData(FlowsheetBlockData):
         def reboiler_duty_eqn(b, t):
             return b.reboiler_duty_expr[t] == b.reboiler.control_volume.heat[t]
 
+        @self.Constraint(self.config.time)
+        def net_power_constraint(b, t):
+            return b.net_power_mw[t]/100.0 == -b.net_power[t]/1e6/100.0
 
+    def _scaling_guess(self):
+        for (t, i) in self.fg_translate.mol_frac_eqn:
+            iscale.constraint_scaling_transform(
+                self.fg_translate.mol_frac_eqn[t, i], 1e-2)
+        for t in self.fg_translate.temperature_eqn:
+            iscale.constraint_scaling_transform(
+                self.fg_translate.temperature_eqn[t], 1e-2)
+        for t in self.fg_translate.pressure_eqn:
+            iscale.constraint_scaling_transform(
+                self.fg_translate.pressure_eqn[t], 1e-5)
+        iscale.set_scaling_factor(self.ng_preheat.shell.heat, 1e-5)
+        iscale.set_scaling_factor(self.ng_preheat.tube.heat, 1e-5)
+        iscale.set_scaling_factor(
+            self.ng_preheat.overall_heat_transfer_coefficient, 1e-2)
+        iscale.set_scaling_factor(self.ng_preheat.area, 1e-3)
+        iscale.set_scaling_factor(self.reboiler.control_volume.heat, 1e-7)
 
     def initialize(
         self,
@@ -401,4 +403,5 @@ class NgccFlowsheetData(FlowsheetBlockData):
         self.st.hp_steam_temperature.fix(855)
         self.st.steam_turbine_lp_split.reboiler.flow_mol.unfix()
         self.reboiler_duty_eqn.activate()
+        self.hrsg.split_fg_lp.split_fraction[:, "toLP_SH"].fix(0.55)
         solver_obj.solve(self, tee=True)
