@@ -590,11 +590,11 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
             "C2H6":0.0320,
             "C3H8":0.007,
             "C4H10":0.004,
-            "O2":0.0,
-            "H2O":0.0,
+            "O2":1e-19,
+            "H2O":1e-19,
             "CO2":0.01,
             "N2":0.0160,
-            "Ar":0.0}
+            "Ar":1e-19}
 
 
         self.vsv.deltaP.fix(-100)
@@ -775,11 +775,20 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         outlvl=idaeslog.NOTSET,
         solver=None,
         optarg=None,
-        load_from="steam_turbine_init.json.gz",
-        save_to="steam_turbine_init.json.gz",
+        load_from="gas_turbine_init.json.gz",
+        save_to="gas_turbine_init.json.gz",
     ):
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
+
+        if load_from is not None:
+            if os.path.exists(load_from):
+                init_log.info_high(f"GT load initial from {load_from}")
+                # here suffix=False avoids loading scaling factors
+                iutil.from_json(
+                    self, fname=load_from, wts=iutil.StoreSpec(suffix=False)
+                )
+                return
 
         init_log.info_high("Gas Turbine Initialization Starting")
         solver_obj = iutil.get_solver(solver, optarg)
@@ -926,6 +935,13 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         self.gt_power[0].fix(-480e6) # Watts negative because is power out
         # Solve
         solver_obj.solve(self, tee=True)
+
+        if save_to is not None:
+            iutil.to_json(self)
+            if save_to is not None:
+                iutil.to_json(self, fname=save_to)
+                init_log.info_high(f"Initialization saved to {save_to}")
+
 
     @staticmethod
     def _stream_col_gen(tag_group):

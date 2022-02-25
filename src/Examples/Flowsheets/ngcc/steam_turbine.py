@@ -330,7 +330,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
 
         if load_from is not None:
             if os.path.exists(load_from):
-                init_log.info_high(f"HRSG load initial from {load_from}")
+                init_log.info_high(f"ST load initial from {load_from}")
                 # here suffix=False avoids loading scaling factors
                 iutil.from_json(
                     self, fname=load_from, wts=iutil.StoreSpec(suffix=False)
