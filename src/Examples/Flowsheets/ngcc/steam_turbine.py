@@ -81,7 +81,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             doc="Split off carbon capture steam.",
             default={
                 "property_package": self.prop_water,
-                "outlet_list": ["turbine", "reboiler"],
+                "outlet_list": ["turbine", "reboiler", "soec"],
             },
         )
         self.dummy_reheat = gum.Heater(
@@ -246,7 +246,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         self.steam_turbine_lp_mix.hrsg.pressure.fix(p)
         self.steam_turbine_lp_mix.hrsg.flow_mol.fix(3000)
 
-        # self.steam_turbine_lp_split.split_fraction[0, "reboiler"].fix(0.001)
+        self.steam_turbine_lp_split.split_fraction[0, "soec"].fix(0.0001)
         self.steam_turbine_lp_split.reboiler.flow_mol.fix(4000.0)
 
         for i, s in self.steam_turbine.hp_stages.items():
@@ -412,6 +412,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
                     "t14": self.return_mix.dryer,
                     "t15": self.return_mix.reclaimer,
                     "t17": self.steam_turbine_lp_split.reboiler,
+                    "t18": self.steam_turbine_lp_split.soec,
                     "cw01": self.main_condenser.tube_inlet,
                     "cw02": self.main_condenser.tube_outlet,
                 },

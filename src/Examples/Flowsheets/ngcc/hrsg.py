@@ -115,6 +115,15 @@ class HrsgFlowsheetData(FlowsheetBlockData):
                 "flow_pattern": HeatExchangerFlowPattern.countercurrent,
             },
         )
+        self.mixer_soec = HelmMixer(
+            doc="Mixer for econ_lp outlet and preheater streams",
+            default={
+                "dynamic": False,
+                "property_package": prop_water,
+                "momentum_mixing_type": MomentumMixingType.minimize,
+                "inlet_list": ["main", "soec_makeup"],
+            },
+        )
         self.split_fg_lp = Splitter(
             doc="LP section bypass flue gas splitter",
             default={
@@ -459,6 +468,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.lp05 = Arc(
             doc="evap_lp to drum_lp",
             source=self.evap_lp.tube_outlet,
+            destination=self.mixer_soec.main,
+        )
+        self.lp13 = Arc(
+            doc="evap_lp to drum_lp",
+            source=self.mixer_soec.outlet,
             destination=self.drum_lp.inlet,
         )
         self.lp10 = Arc(
@@ -712,6 +726,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.pump_hp.efficiency_isentropic.fix(0.80)
 
         self.evap_lp.area.fix(42032.0 * 0.5)
+
+        self.mixer_soec.soec_makeup.flow_mol.fix(0.0)
+        self.mixer_soec.soec_makeup.pressure.fix(8*pyo.units.bar)
+        self.mixer_soec.soec_makeup.enth_mol.fix(
+            iapws95.htpx(P=8*pyo.units.bar, x=0.2))
 
         self.sh_lp.tube_di.fix(0.051)
         self.sh_lp.tube_thickness.fix(0.003)
@@ -1104,6 +1123,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             res = solver_obj.solve(self.evap_lp, tee=slc.tee)
         if not pyo.check_optimal_termination(res):
             raise InitializationError(f"evap_lp failed to initialize successfully.")
+
+        propagate_state(self.lp13)
+        self.mixer_soec.initialize
 
         propagate_state(self.drum_lp.inlet, self.evap_lp.tube_outlet)
         self.drum_lp.initialize()
@@ -1652,6 +1674,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
                 additional={  # these are streams in or out without an arc
                     "lp01": self.econ_lp.side_1_inlet,
                     "lp03": self.mixer1.Preheater,
+                    "lp12": self.mixer_soec.soec_makeup,
                     "ip04": self.splitter_ip1.toNGPH,
                     "lp11": self.sh_lp.side_1_outlet,
                     "hp11": self.sh_hp4.side_1_outlet,
