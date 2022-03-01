@@ -36,6 +36,7 @@ import idaes.core.util.scaling as iscale
 from idaes.core.util.misc import get_solver
 import idaes.core.plugins
 from idaes.power_generation.properties.natural_gas_PR import get_prop, get_rxn
+from idaes.generic_models.properties import iapws95
 from idaes.core.solvers import use_idaes_solver_configuration_defaults
 import idaes.logger as idaeslog
 
@@ -84,6 +85,7 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         # gas streams are Air, combstion mixture, and flue gas.  Fortunately
         # natural gas has some air compoents in it so the combustion property
         # parameters can be used for natural gas and natural gas mixed with air.
+        self.prop_water = iapws95.Iapws95ParameterBlock()
         self.air_prop_params = GenericParameterBlock(
             default=get_prop(air_species, ["Vap"]),
             doc="Air property parameters",
@@ -163,6 +165,12 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                 "inlet_property_package": self.air_prop_params,
                 "outlet_property_package": self.cmb_prop_params,
                 "outlet_state_defined": False
+            }
+        )
+        self.ng_preheat = um.HeatExchanger(
+            default={
+                "shell": {"property_package": self.prop_water},
+                "tube": {"property_package": self.cmb_prop_params}
             }
         )
         self.inject1 = um.Mixer(
@@ -441,15 +449,21 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         for blk in translators:
             blk.temperature_eqn = pyo.Constraint(self.time, rule=rule_temperature)
             blk.pressure_eqn = pyo.Constraint(self.time, rule=rule_pressure)
+            for t in self.config.time:
+                iscale.constraint_scaling_transform(blk.temperature_eqn[t], 1e-2)
+                iscale.constraint_scaling_transform(blk.pressure_eqn[t], 1e-6)
 
         self.inject_translator.flow_mole_comp_eqn = pyo.Constraint(
             self.time,
             self.air_species,
             rule=rule_flow_mol_comp
         )
+        for i, c in self.inject_translator.flow_mole_comp_eqn.items():
+            iscale.constraint_scaling_transform(c, 1e-3)
 
         self.inject_translator.zero_flow_eqn = pyo.Constraint(
             self.time, self.cmb_species - self.air_species, rule=rule_zero_flow)
+
 
         for blk in {self.translator1, self.translator2, self.translator3}:
             blk.flow_mole_comp_eqn = pyo.Constraint(
@@ -459,15 +473,26 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                 self.flue_species - self.air_species,
                 rule=rule_zero_flow
             )
+            for i, c in blk.flow_mole_comp_eqn.items():
+                iscale.constraint_scaling_transform(c, 1e-3)
 
         self.flue_translator.flow_mole_comp_eqn = pyo.Constraint(
             self.time, self.flue_species, rule=rule_flow_mol_comp)
 
+        for i, c in self.flue_translator.flow_mole_comp_eqn.items():
+            iscale.constraint_scaling_transform(c, 1e-3)
+
+
     def _add_arcs(self):
         self.fuel01 = Arc(
             source=self.feed_fuel1.outlet,
+            destination=self.ng_preheat.tube_inlet,
+            doc="Fuel feed block to fuel preheater"
+        )
+        self.fuel02 = Arc(
+            source=self.ng_preheat.tube_outlet,
             destination=self.inject1.gas,
-            doc="Fuel feed block to fuel injector"
+            doc="Fuel preheater to fuel injector"
         )
         self.air01 = Arc(
             source=self.feed_air1.outlet,
@@ -598,7 +623,7 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
 
 
         self.vsv.deltaP.fix(-100)
-        self.cmp1.efficiency_isentropic.fix(0.9)
+        self.cmp1.efficiency_isentropic.fix(0.85)
         self.cmp1.ratioP.fix(19.075)
         # blabe cooling air valves use expected flow to calculate valve flow
         # coefficients, so here set expected flow and after init the opening will
@@ -623,11 +648,26 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         for i, v in ng_comp.items():
             self.feed_fuel1.mole_frac_comp[:,i].fix(v)
 
+        self.ng_preheat.area.fix(5000)
+        self.ng_preheat.overall_heat_transfer_coefficient.fix(100)
+        self.ng_preheat.shell_inlet.flow_mol.fix(850)
+        self.ng_preheat.shell_inlet.pressure.fix(4.2e6)
+        self.ng_preheat.shell_inlet.enth_mol.fix(14e3)
+
+
     def _add_tags(self):
         tag_group = iutil.ModelTagGroup()
         self.tags_streams = tag_group
         stream_states = tables.stream_states_dict(
-            tables.arcs_to_stream_dict(self, descend_into=False))
+            tables.arcs_to_stream_dict(
+                self,
+                descend_into=False,
+                additional={
+                    "st01":self.ng_preheat.shell_inlet,
+                    "st02":self.ng_preheat.shell_outlet,
+                }
+            )
+        )
         for i, s in stream_states.items():  # create the tags for steam quantities
             tag_group[f"{i}_F"] = iutil.ModelTag(
                 doc=f"{i}: mass flow",
@@ -659,10 +699,18 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                 format_string="{:.2f}",
                 display_units=pyo.units.K,
             )
-            for c in s.mole_frac_comp:
-                tag_group[f"{i}_y{c}"] = iutil.ModelTag(
+            try:
+                for c in s.mole_frac_comp:
+                    tag_group[f"{i}_y{c}"] = iutil.ModelTag(
+                        doc=f"{i}: mole percent {c}",
+                        expr=s.mole_frac_comp[c] * 100,
+                        format_string="{:.3f}",
+                        display_units="%",
+                    )
+            except AttributeError: # it's steam
+                tag_group[f"{i}_yH2O"] = iutil.ModelTag(
                     doc=f"{i}: mole percent {c}",
-                    expr=s.mole_frac_comp[c] * 100,
+                    expr=100,
                     format_string="{:.3f}",
                     display_units="%",
                 )
@@ -743,6 +791,8 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
             iscale.set_scaling_factor(v, 1e-6)
         for v in self.valve03.deltaP.values():
             iscale.set_scaling_factor(v, 1e-6)
+        for v in self.gt_power.values():
+            iscale.set_scaling_factor(v, 1e-8)
         for c in self.o2_flow.values():
             iscale.constraint_scaling_transform(c, 10)
         for c in self.gt_power_eqn.values():
@@ -769,6 +819,12 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
             iscale.constraint_scaling_transform(c, 2)
         for c in self.inject1.mxpress_eqn.values():
             iscale.constraint_scaling_transform(c, 1e-5)
+        iscale.set_scaling_factor(self.ng_preheat.shell.heat, 1e-5)
+        iscale.set_scaling_factor(self.ng_preheat.tube.heat, 1e-5)
+        iscale.set_scaling_factor(
+            self.ng_preheat.overall_heat_transfer_coefficient, 1e-2)
+        iscale.set_scaling_factor(self.ng_preheat.area, 1e-3)
+
 
     def initialize(
         self,
@@ -817,6 +873,8 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         self.inject_translator.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         propagate_state(self.air04b)
         propagate_state(self.fuel01)
+        self.ng_preheat.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
+        propagate_state(self.fuel02)
         self.inject1.mixed_state[0].pressure = pyo.value(self.inject1.air.pressure[0])
         self.inject1.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         # combustor
@@ -912,7 +970,7 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                                    # drop in the VSV valve, decresing throttle loss
         # Exhaust pressure will be a bit over ATM due to HRSG. This will come from
         # HRSG model when coupled to form NGCC model
-        self.gts3.control_volume.properties_out[0].pressure.fix(102594)
+        self.exhaust_1.pressure.fix(103421)
         # Don't know how much blade cooling air is needed for off desing case, but
         # full load flows were based on WVU model.  For now just leave valves at
         # fixed opening.
@@ -924,15 +982,16 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         self.feed_air1.temperature.fix(288.15)
         self.feed_air1.pressure.fix(103421)
         # Gas at fuel injection
-        self.feed_fuel1.temperature.fix(310.928)
+        self.feed_fuel1.temperature.fix(299.817)
         self.feed_fuel1.pressure.fix(3.10264e6)
         # It looks like the O2 or air/fuel ratio is actually determined to roughly
         # get a constant exhaust temperature.  In a real gas turbine there are
         # probably a lot of complex factors, but here we fix the exhaust temp.
         self.cmbout_o2_mol_frac.unfix()
-        self.exhaust_1.temperature.fix(910)
+        self.exhaust_1.temperature.fix(898)
+
         # Fix the gross power output
-        self.gt_power[0].fix(-480e6) # Watts negative because is power out
+        self.gt_power[0].fix(-477e6) # Watts negative because is power out
         # Solve
         solver_obj.solve(self, tee=True)
 

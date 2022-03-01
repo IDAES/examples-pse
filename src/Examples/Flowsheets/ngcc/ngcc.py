@@ -60,16 +60,6 @@ class NgccFlowsheetData(FlowsheetBlockData):
                 "outlet_property_package": self.hrsg.prop_gas
             }
         )
-        self.ng_preheat = um.HeatExchanger(
-            default={
-                "shell": {"property_package": self.hrsg.prop_water},
-                "tube": {"property_package": self.gt.cmb_prop_params}
-            }
-        )
-        self.reboiler = um.Heater(
-            doc="Carbon capture system reboiler",
-            default={"property_package": self.hrsg.prop_water}
-        )
 
     def _add_arcs(self):
         self.g08a = Arc(
@@ -97,28 +87,16 @@ class NgccFlowsheetData(FlowsheetBlockData):
             destination=self.hrsg.econ_lp.tube_inlet
         )
         self.t01a = Arc(
-            source=self.hrsg.sh_hp4.side_1_outlet,
+            source=self.hrsg.sh_hp4.tube_outlet,
             destination=self.st.steam_turbine.inlet_split.inlet
         )
-        self.fuel01dupe = Arc(
-            source=self.ng_preheat.tube_outlet,
-            destination=self.gt.inject1.gas
-        )
-        self.st01 = Arc(
+        self.st01a = Arc(
             source=self.hrsg.splitter_ip1.toNGPH,
-            destination=self.ng_preheat.shell_inlet
+            destination=self.gt.ng_preheat.shell_inlet
         )
-        self.st02 = Arc(
-            source=self.ng_preheat.shell_outlet,
+        self.st02a = Arc(
+            source=self.gt.ng_preheat.shell_outlet,
             destination=self.hrsg.mixer1.Preheater
-        )
-        self.t17a = Arc(
-            source=self.reboiler.outlet,
-            destination=self.st.return_mix.reboiler
-        )
-        self.t13a = Arc(
-            source=self.st.steam_turbine_lp_split.reboiler,
-            destination=self.reboiler.inlet
         )
         pyo.TransformationFactory("network.expand_arcs").apply_to(self)
 
@@ -142,7 +120,7 @@ class NgccFlowsheetData(FlowsheetBlockData):
             units=pyo.units.kg/pyo.units.s
         )
         self.cap_specific_compression_power = pyo.Var(
-            initialize=0.25e6,
+            initialize=0.2748e6,
             units=pyo.units.J/pyo.units.kg
         )
         self.cap_additional_reboiler_duty = pyo.Var(
@@ -171,10 +149,6 @@ class NgccFlowsheetData(FlowsheetBlockData):
         @self.fg_translate.Constraint(self.time)
         def pressure_eqn(b, t):
             return b.outlet.pressure[t] == b.inlet.pressure[t]
-        @self.reboiler.Constraint(self.time)
-        def reboiler_condense_eqn(b, t):
-            return b.control_volume.properties_out[t].enth_mol == \
-                b.control_volume.properties_out[t].enth_mol_sat_phase["Liq"] - 100
 
         @self.Expression(self.config.time)
         def gross_power(b, t):
@@ -252,28 +226,21 @@ class NgccFlowsheetData(FlowsheetBlockData):
 
         @self.Constraint(self.config.time)
         def reboiler_duty_eqn(b, t):
-            return b.reboiler_duty_expr[t] == b.reboiler.control_volume.heat[t]
+            return b.reboiler_duty_expr[t] == b.st.reboiler.control_volume.heat[t]
 
         @self.Constraint(self.config.time)
         def net_power_constraint(b, t):
             return b.net_power_mw[t]/100.0 == -b.net_power[t]/1e6/100.0
 
     def _scaling_guess(self):
-        for (t, i) in self.fg_translate.mol_frac_eqn:
-            iscale.constraint_scaling_transform(
-                self.fg_translate.mol_frac_eqn[t, i], 1e-2)
-        for t in self.fg_translate.temperature_eqn:
-            iscale.constraint_scaling_transform(
-                self.fg_translate.temperature_eqn[t], 1e-2)
-        for t in self.fg_translate.pressure_eqn:
-            iscale.constraint_scaling_transform(
-                self.fg_translate.pressure_eqn[t], 1e-5)
-        iscale.set_scaling_factor(self.ng_preheat.shell.heat, 1e-5)
-        iscale.set_scaling_factor(self.ng_preheat.tube.heat, 1e-5)
-        iscale.set_scaling_factor(
-            self.ng_preheat.overall_heat_transfer_coefficient, 1e-2)
-        iscale.set_scaling_factor(self.ng_preheat.area, 1e-3)
-        iscale.set_scaling_factor(self.reboiler.control_volume.heat, 1e-7)
+        for i, c in self.fg_translate.mol_frac_eqn.items():
+            iscale.constraint_scaling_transform(c, 1e-2)
+        for t, c in self.fg_translate.temperature_eqn.items():
+            iscale.constraint_scaling_transform(c, 1e-2)
+        for t, c in self.fg_translate.pressure_eqn.items():
+            iscale.constraint_scaling_transform(c, 1e-5)
+        for t, c in self.reboiler_duty_eqn.items():
+            iscale.constraint_scaling_transform(c, 1e-7)
 
     def initialize(
         self,
@@ -292,116 +259,71 @@ class NgccFlowsheetData(FlowsheetBlockData):
         self.fuel_lhv.fix()
         self.fuel_hhv.fix()
 
-        self.reboiler_duty_eqn.deactivate()
-
         solver_obj = iutil.get_solver(solver, optarg)
-        self.t01a_expanded.deactivate()
-        self.gt.initialize()
 
+        self.gt.initialize()
         propagate_state(self.g08a)
         self.fg_translate.initialize()
         propagate_state(self.g08b, overwrite_fixed=True)
-
         self.hrsg.initialize()
-        solver_obj.solve(self.hrsg, tee=True)
         self.hrsg.sh_hp4.shell_inlet.unfix()
         propagate_state(self.t05a, overwrite_fixed=True)
         self.st.initialize()
-        self.st.return_mix.reboiler.unfix()
-        # using the pump pressure to control flow, so just using a fix delta P
-        # in the throttle valves
-        dp = pyo.value(-5e5)
-        self.st.steam_turbine.throttle_valve[1].deltaP.fix(dp)
-        self.st.steam_turbine.throttle_valve[2].deltaP.fix(dp)
-        self.st.steam_turbine.throttle_valve[3].deltaP.fix(dp)
-        self.st.steam_turbine.throttle_valve[4].deltaP.fix(dp)
-        self.st.steam_turbine.throttle_valve[1].pressure_flow_equation.deactivate()
-        self.st.steam_turbine.throttle_valve[2].pressure_flow_equation.deactivate()
-        self.st.steam_turbine.throttle_valve[3].pressure_flow_equation.deactivate()
-        self.st.steam_turbine.throttle_valve[4].pressure_flow_equation.deactivate()
 
-        propagate_state(self.t13a)
-        self.reboiler.initialize()
-
-        self.ng_preheat.area.fix(5000)
-        self.ng_preheat.overall_heat_transfer_coefficient.fix(100)
-        self.ng_preheat.tube_inlet.fix()
-        propagate_state(self.st01)
-        propagate_state(
-            source=self.gt.feed_fuel1.outlet,
-            destination=self.ng_preheat.tube_inlet,
-            overwrite_fixed=True
-        )
-        self.ng_preheat.tube_inlet.temperature.fix(311)
-        self.ng_preheat.initialize()
-        #self.hrsg.mixer1.Preheater.unfix()
-        self.st02_expanded.deactivate()
-        self.ng_preheat.tube_inlet.flow_mol.unfix()
-        self.gt.feed_fuel1.flow_mol.unfix()
-        self.gt.feed_fuel1.pressure.unfix()
-        self.gt.feed_fuel1.temperature.unfix()
-        self.gt.feed_fuel1.mole_frac_comp.unfix()
-
+        # solver sheet with some disconnected streams
+        #self.st02a_expanded.deactivate() # steam from ng preheat
+        #self.st01a_expanded.deactivate() # steam to ng preheat
+        self.t01a_expanded.deactivate() # main steam to turbine
+        #self.t02a_expanded.deactivate() # cold reheat
+        #self.t03a_expanded.deactivate() # hot reheat
         self.st.steam_turbine_lp_mix.hrsg.unfix()
+        self.hrsg.econ_lp.tube_inlet.unfix()
+        self.st.steam_turbine_lp_split.reboiler.flow_mol.unfix()
+        #solver_obj.solve(self, tee=True)
 
+        self.t01a.source.display()
+
+        # hook in preheater
+        print("preheater and reheater")
+        #self.st02a_expanded.activate() # steam from ng preheat
+        #self.st01a_expanded.activate() # steam to ng preheat
+        self.gt.ng_preheat.shell_inlet.unfix()
+        self.hrsg.mixer1.Preheater.unfix()
+        #propagate_state(self.t01a, overwrite_fixed=True)
+        propagate_state(self.t02a, overwrite_fixed=True)
+        propagate_state(self.t03a, overwrite_fixed=True)
+        self.hrsg.splitter_ip2.inlet.unfix()
         self.st.t02_dummy.deactivate()
         self.st.t03_dummy.deactivate()
         self.st.dummy_reheat.deactivate()
-        self.hrsg.splitter_ip2.inlet.unfix()
-        propagate_state(arc=self.t02a)
-        propagate_state(arc=self.t03a)
-
-        self.hrsg.econ_lp.tube_inlet.unfix()
+        #self.t02a_expanded.activate() # hot reheat
+        #self.t03a_expanded.activate() # cold reheat
         solver_obj.solve(self, tee=True)
 
-        self.hrsg.mixer1.Preheater.unfix()
-        self.st02_expanded.activate()
-        solver_obj.solve(self, tee=True)
+        #self.t01a.source.display()
 
-
+        # hook main steam
+        print("main steam")
         self.t01a_expanded.activate()
-        self.st.cond_pump.control_volume.properties_out[0].pressure.fix(
-            pyo.value(self.hrsg.econ_lp.tube_inlet.pressure[0]))
-        self.st.cond_pump.deltaP.unfix()
-        self.st.hp_steam_temperature.unfix()
         self.st.hotwell.makeup.flow_mol[:].unfix()
         self.st.steam_turbine.inlet_split.inlet.unfix()
-        self.hrsg.evap_lp.vapor_frac_control.fix(0.12)
+        #propagate_state(self.t01a)
+        #self.hrsg.pump_hp.outlet.pressure[0].unfix()
+        #self.st.steam_turbine.inlet_split.inlet.flow_mol.fix()
         solver_obj.solve(self, tee=True)
 
-        self.gt.gt_power[0].fix(-477e6)
-        self.gt.exhaust_1.temperature.fix(898)
-        self.gt.gts3.control_volume.properties_out[0].pressure.fix(103421)
-        self.st.cond_pump.control_volume.properties_out[0].pressure.fix(655000)
-        self.gt.cmp1.efficiency_isentropic.fix(0.85)
-        self.ng_preheat.tube_inlet.temperature.fix(311)
-        solver_obj.solve(self, tee=True)
-
-        hp_sh = [
-            self.hrsg.sh_hp1.fcorrection_htc,
-            self.hrsg.sh_hp2.fcorrection_htc,
-            self.hrsg.sh_hp3.fcorrection_htc,
-            self.hrsg.sh_hp4.fcorrection_htc
-        ]
-        ip_sh = [
-            self.hrsg.sh_ip1.fcorrection_htc,
-            self.hrsg.sh_ip2.fcorrection_htc,
-            self.hrsg.sh_ip3.fcorrection_htc
-        ]
-        for c in hp_sh:
-            c.value = pyo.value(c * 0.75)
-        for c in ip_sh:
-            c.value = pyo.value(c * 1.45)
-        self.hrsg.sh_lp.fcorrection_htc.value = pyo.value(
-            self.hrsg.sh_lp.fcorrection_htc * 1.1)
-        for i, s in self.st.steam_turbine.lp_stages.items():
-            s.ratioP[:] = 0.754
-
-        solver_obj.solve(self, tee=True)
-
+        print("fix steam temperature")
+        self.st.hp_steam_temperature.display()
+        self.st.hp_steam_temperature.fix()
         self.hrsg.pump_hp.outlet.pressure[0].unfix()
+        solver_obj.solve(self, tee=True)
+
+        """
+        print("set steam temperature 855")
         self.st.hp_steam_temperature.fix(855)
-        self.st.steam_turbine_lp_split.reboiler.flow_mol.unfix()
-        self.reboiler_duty_eqn.activate()
-        self.hrsg.split_fg_lp.split_fraction[:, "toLP_SH"].fix(0.55)
+        solver_obj.solve(self, tee=True)
+        """
+
+        self.net_power_mw.fix(650)
+        self.gt.gt_power.unfix()
         solver_obj.solve(self, tee=True)

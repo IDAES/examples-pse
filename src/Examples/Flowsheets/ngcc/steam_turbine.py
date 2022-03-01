@@ -120,6 +120,10 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
                 "inlet_list": ["pump", "reboiler", "dryer", "reclaimer"],
             },
         )
+        self.reboiler = gum.Heater(
+            doc="Carbon capture system reboiler",
+            default={"property_package": self.prop_water}
+        )
 
     def _add_constraints(self):
         # The mixer for LP steam from Turbine and HRSG is assumed to be at turbine P
@@ -152,8 +156,8 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             return 1e-6 * b.pump_state[t].pressure == 1e-6 * b.mixed_state[t].pressure
 
         # A few more variables and constraints
-        self.hp_steam_temperature = pyo.Var(self.time, initialize=850)
-        self.hot_reheat_temperature = pyo.Var(self.time, initialize=850)
+        self.hp_steam_temperature = pyo.Var(self.time, initialize=855)
+        self.hot_reheat_temperature = pyo.Var(self.time, initialize=855)
 
         @self.Constraint(self.time)
         def main_steam_temperature_eqn(b, t):
@@ -170,6 +174,11 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
                 .control_volume.properties_out[t]
                 .temperature
             )
+
+        @self.reboiler.Constraint(self.time)
+        def reboiler_condense_eqn(b, t):
+            return b.control_volume.properties_out[t].enth_mol == \
+                b.control_volume.properties_out[t].enth_mol_sat_phase["Liq"] - 100
 
     def _add_arcs(self):
         self.t02_dummy = Arc(
@@ -218,19 +227,27 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             source=self.cond_pump.outlet,
             destination=self.return_mix.pump,
         )
+        self.t13 = Arc(
+            source=self.reboiler.outlet,
+            destination=self.return_mix.reboiler
+        )
+        self.t17 = Arc(
+            source=self.steam_turbine_lp_split.reboiler,
+            destination=self.reboiler.inlet
+        )
         pyo.TransformationFactory("network.expand_arcs").apply_to(self)
 
     def _set_initial_inputs(self):
         # set some inputs and get ready to initialize
         # Set the inlet of the turbine
         p = 16.5e6
-        hin = pyo.value(iapws95.htpx(T=858 * pyo.units.K, P=p * pyo.units.Pa))
+        hin = pyo.value(iapws95.htpx(T=857 * pyo.units.K, P=p * pyo.units.Pa))
         self.steam_turbine.inlet_split.inlet.enth_mol[0].fix(hin)
-        self.steam_turbine.inlet_split.inlet.flow_mol[0].fix(6.5064e3)
+        self.steam_turbine.inlet_split.inlet.flow_mol[0].fix(7.4e3)
         self.steam_turbine.inlet_split.inlet.pressure[0].fix(p)
         # set conditions for disconnected IP section, will take flow from HP
         p = 3.5e6
-        hin = pyo.value(iapws95.htpx(T=858 * pyo.units.K, P=p * pyo.units.Pa))
+        hin = pyo.value(iapws95.htpx(T=855 * pyo.units.K, P=p * pyo.units.Pa))
         self.steam_turbine.ip_stages[1].inlet.flow_mol[0].value = 6.5064e3
         self.steam_turbine.ip_stages[1].inlet.enth_mol[0].value = hin
         self.steam_turbine.ip_stages[1].inlet.pressure[0].value = p
@@ -246,7 +263,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         self.steam_turbine_lp_mix.hrsg.pressure.fix(p)
         self.steam_turbine_lp_mix.hrsg.flow_mol.fix(3000)
 
-        self.steam_turbine_lp_split.split_fraction[0, "soec"].fix(0.0001)
+        self.steam_turbine_lp_split.split_fraction[0, "soec"].fix(1e-5)
         self.steam_turbine_lp_split.reboiler.flow_mol.fix(4000.0)
 
         for i, s in self.steam_turbine.hp_stages.items():
@@ -258,7 +275,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             s.efficiency_isentropic[:] = 0.89
             iscale.set_scaling_factor(s.control_volume.work, 1e-6)
         for i, s in self.steam_turbine.lp_stages.items():
-            s.ratioP[:] = 0.75
+            s.ratioP[:] = 0.754
             s.efficiency_isentropic[:] = 0.89
             iscale.set_scaling_factor(s.control_volume.work, 1e-6)
 
@@ -290,13 +307,8 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         self.hotwell.makeup.enth_mol.fix(2500)
         self.hotwell.makeup.pressure.fix(101325)
         self.cond_pump.efficiency_isentropic.fix(0.80)
-        self.cond_pump.deltaP.fix(2.5e6)
+        self.cond_pump.control_volume.properties_out[0].pressure.fix(655000)
 
-        p = 0.49e6
-        hin = pyo.value(iapws95.htpx(T=424 * pyo.units.K, P=p * pyo.units.Pa))
-        self.return_mix.reboiler.enth_mol[0].fix(hin)
-        self.return_mix.reboiler.flow_mol[0].fix(4000.0)
-        self.return_mix.reboiler.pressure[0].fix(p)
         p = 2e6
         hin = pyo.value(iapws95.htpx(T=487 * pyo.units.K, P=p * pyo.units.Pa))
         self.return_mix.reclaimer.enth_mol[0].fix(hin)
@@ -313,6 +325,13 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.main_condenser.shell.heat, 1e-6)
         iscale.set_scaling_factor(self.main_condenser.tube.heat, 1e-6)
         iscale.set_scaling_factor(self.cond_pump.control_volume.work, 1e-6)
+        iscale.set_scaling_factor(self.steam_turbine.throttle_valve[1].control_volume.deltaP, 1e-3)
+        iscale.set_scaling_factor(self.steam_turbine.throttle_valve[2].control_volume.deltaP, 1e-3)
+        iscale.set_scaling_factor(self.steam_turbine.throttle_valve[3].control_volume.deltaP, 1e-3)
+        iscale.set_scaling_factor(self.steam_turbine.throttle_valve[4].control_volume.deltaP, 1e-3)
+        iscale.set_scaling_factor(self.steam_turbine.outlet_stage.control_volume.properties_out[0.0].pressure, 1e-3)
+        iscale.set_scaling_factor(self.steam_turbine.outlet_stage.control_volume.properties_out[0.0].pressure, 1e-3)
+        iscale.set_scaling_factor(self.reboiler.control_volume.heat, 1e-7)
 
     def initialize(
         self,
@@ -361,6 +380,13 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         iinit.propagate_state(arc=self.t04)
         self.steam_turbine_lp_mix.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
 
+        iinit.propagate_state(self.t16)
+        self.steam_turbine_lp_split.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
+
+        iinit.propagate_state(self.t17)
+        self.reboiler.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
+        iinit.propagate_state(self.t13)
+
         iinit.propagate_state(arc=self.t06)
         iinit.propagate_state(arc=self.t07)
         self.main_condenser.initialize(outlvl=outlvl, solver=solver, optarg=optarg, unfix="pressure")
@@ -382,7 +408,17 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             raise InitializationError(f"steam turbine failed to initialize.")
 
         # Adjust flow coefficient for steam extraction
-        self.steam_turbine.outlet_stage.flow_coeff.fix(0.10)
+        self.steam_turbine.outlet_stage.flow_coeff.fix(0.09)
+        dp = pyo.value(-5e5)
+        self.steam_turbine.throttle_valve[1].deltaP.fix(dp)
+        self.steam_turbine.throttle_valve[2].deltaP.fix(dp)
+        self.steam_turbine.throttle_valve[3].deltaP.fix(dp)
+        self.steam_turbine.throttle_valve[4].deltaP.fix(dp)
+        self.steam_turbine.throttle_valve[1].pressure_flow_equation.deactivate()
+        self.steam_turbine.throttle_valve[2].pressure_flow_equation.deactivate()
+        self.steam_turbine.throttle_valve[3].pressure_flow_equation.deactivate()
+        self.steam_turbine.throttle_valve[4].pressure_flow_equation.deactivate()
+
         with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
             res = solver_obj.solve(self, tee=slc.tee)
         if not pyo.check_optimal_termination(res):

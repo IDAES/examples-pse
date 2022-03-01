@@ -98,7 +98,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             default={
                 "dynamic": False,
                 "property_package": prop_water,
-                "momentum_mixing_type": MomentumMixingType.minimize,
+                "momentum_mixing_type": MomentumMixingType.none,
                 "inlet_list": ["econ_lp", "Preheater"],
             },
         )
@@ -120,7 +120,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             default={
                 "dynamic": False,
                 "property_package": prop_water,
-                "momentum_mixing_type": MomentumMixingType.minimize,
+                "momentum_mixing_type": MomentumMixingType.none,
                 "inlet_list": ["main", "soec_makeup"],
             },
         )
@@ -233,7 +233,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             default={
                 "dynamic": False,
                 "property_package": prop_water,
-                "momentum_mixing_type": MomentumMixingType.minimize,
+                "momentum_mixing_type": MomentumMixingType.none,
                 "inlet_list": ["sh_ip1", "Cold_reheat"],
             },
         )
@@ -414,9 +414,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         # LP evaporator performance fixed to vaporize ~18 % of water inlet
         #
         self.evap_lp.vapor_frac_control = pyo.Var(
-            initialize=0.18, doc="parameter to determine vapor flowrate"
+            initialize=0.12, doc="parameter to determine vapor flowrate"
         )
-        self.evap_lp.vapor_frac_control.fix(0.18)
+        self.evap_lp.vapor_frac_control.fix(0.12)
 
         @self.evap_lp.Constraint(self.time)
         def lp_vap_frac_eqn(b, t):
@@ -452,6 +452,18 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         # heat transfer determined by above
         self.evap_hp.heat_transfer_equation.deactivate()
+
+        @self.mixer1.Constraint(self.config.time)
+        def mixer1_pressure_eqn(b, t):
+            return b.mixed_state[t].pressure == b.econ_lp_state[t].pressure
+
+        @self.mixer_soec.Constraint(self.config.time)
+        def mixer_soec_pressure_eqn(b, t):
+            return b.mixed_state[t].pressure == b.main_state[t].pressure
+
+        @self.mixer_ip1.Constraint(self.config.time)
+        def mixer_ip1_pressure_eqn(b, t):
+            return b.mixed_state[t].pressure == b.sh_ip1_state[t].pressure
 
     def _add_arcs(self):
         ######### LP Section ###########
@@ -727,7 +739,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         self.evap_lp.area.fix(42032.0 * 0.5)
 
-        self.mixer_soec.soec_makeup.flow_mol.fix(0.0)
+        self.mixer_soec.soec_makeup.flow_mol.fix(0)
         self.mixer_soec.soec_makeup.pressure.fix(8*pyo.units.bar)
         self.mixer_soec.soec_makeup.enth_mol.fix(
             iapws95.htpx(P=8*pyo.units.bar, x=0.2))
@@ -745,7 +757,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_lp.shell_r_fouling = 0.00088
         if self.sh_lp.config.has_radiation:
             self.sh_lp.emissivity_wall.fix(0.7)
-        self.sh_lp.fcorrection_htc.fix(1.0)
+        self.sh_lp.fcorrection_htc.fix(1.1)
         self.sh_lp.fcorrection_dp_tube.fix(1.0)
         self.sh_lp.fcorrection_dp_shell.fix(1.0)
 
@@ -802,7 +814,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip1.shell_r_fouling = 0.00088
         if self.sh_ip1.config.has_radiation:
             self.sh_ip1.emissivity_wall.fix(0.7)
-        self.sh_ip1.fcorrection_htc.fix(0.85)
+        self.sh_ip1.fcorrection_htc.fix(0.85*1.45)
         self.sh_ip1.fcorrection_dp_tube.fix(1.0)
         self.sh_ip1.fcorrection_dp_shell.fix(1.0)
 
@@ -819,7 +831,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip2.shell_r_fouling = 0.00088
         if self.sh_ip2.config.has_radiation:
             self.sh_ip2.emissivity_wall.fix(0.7)
-        self.sh_ip2.fcorrection_htc.fix(0.85)
+        self.sh_ip2.fcorrection_htc.fix(0.85*1.45)
         self.sh_ip2.fcorrection_dp_tube.fix(1.0)
         self.sh_ip2.fcorrection_dp_shell.fix(1.0)
 
@@ -836,7 +848,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip3.shell_r_fouling = 0.00088
         if self.sh_ip3.config.has_radiation:
             self.sh_ip3.emissivity_wall.fix(0.7)
-        self.sh_ip3.fcorrection_htc.fix(0.95)
+        self.sh_ip3.fcorrection_htc.fix(0.95*1.45)
         self.sh_ip3.fcorrection_dp_tube.fix(1.0)
         self.sh_ip3.fcorrection_dp_shell.fix(1.0)
 
@@ -939,7 +951,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp1.shell_r_fouling = 0.00088
         if self.sh_hp1.config.has_radiation:
             self.sh_hp1.emissivity_wall.fix(0.7)
-        self.sh_hp1.fcorrection_htc.fix(1.2)
+        self.sh_hp1.fcorrection_htc.fix(1.2*0.75)
         self.sh_hp1.fcorrection_dp_tube.fix(1.0)
         self.sh_hp1.fcorrection_dp_shell.fix(1.0)
 
@@ -956,7 +968,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp2.shell_r_fouling = 0.00088
         if self.sh_hp2.config.has_radiation:
             self.sh_hp2.emissivity_wall.fix(0.7)
-        self.sh_hp2.fcorrection_htc.fix(0.95)
+        self.sh_hp2.fcorrection_htc.fix(0.95*0.75)
         self.sh_hp2.fcorrection_dp_tube.fix(1.0)
         self.sh_hp2.fcorrection_dp_shell.fix(1.0)
 
@@ -973,7 +985,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp3.shell_r_fouling = 0.00088
         if self.sh_hp3.config.has_radiation:
             self.sh_hp3.emissivity_wall.fix(0.7)
-        self.sh_hp3.fcorrection_htc.fix(0.95)
+        self.sh_hp3.fcorrection_htc.fix(0.95*0.75)
         self.sh_hp3.fcorrection_dp_tube.fix(1.0)
         self.sh_hp3.fcorrection_dp_shell.fix(1.0)
 
@@ -990,7 +1002,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp4.shell_r_fouling = 0.00088
         if self.sh_hp4.config.has_radiation:
             self.sh_hp4.emissivity_wall.fix(0.7)
-        self.sh_hp4.fcorrection_htc.fix(0.95)
+        self.sh_hp4.fcorrection_htc.fix(0.95*0.75)
         self.sh_hp4.fcorrection_dp_tube.fix(1.0)
         self.sh_hp4.fcorrection_dp_shell.fix(1.0)
 
@@ -1055,6 +1067,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.evap_hp.area, 1e-4)
         iscale.set_scaling_factor(self.evap_hp.overall_heat_transfer_coefficient, 1e-2)
 
+        for t in self.config.time:
+            iscale.constraint_scaling_transform(self.mixer1.mixer1_pressure_eqn[t], 1e-6)
+            iscale.constraint_scaling_transform(self.mixer_soec.mixer_soec_pressure_eqn[t], 1e-6)
+            iscale.constraint_scaling_transform(self.mixer_ip1.mixer_ip1_pressure_eqn[t], 1e-6)
+
     def initialize(
         self,
         outlvl=idaeslog.NOTSET,
@@ -1087,7 +1104,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_lp.side_1_inlet.enth_mol[0].fix(
             iapws95.htpx(T=357.03 * pyo.units.K, P=599844 * pyo.units.Pa)
         )
-        self.econ_lp.side_1_inlet.pressure[0].fix(599844)
+        self.econ_lp.side_1_inlet.pressure[0].fix(655000)
         self.econ_lp.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
         self.econ_lp.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
         self.econ_lp.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
@@ -1097,9 +1114,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
 
         propagate_state(self.mixer1.econ_lp, self.econ_lp.side_1_outlet)
-        self.mixer1.Preheater.flow_mol[0].fix(907.89)
+        self.mixer1.Preheater.flow_mol[0].fix(833)
         self.mixer1.Preheater.enth_mol[0].fix(
-            iapws95.htpx(T=333.15 * pyo.units.K, P=3.509e6 * pyo.units.Pa)
+            iapws95.htpx(T=333.15 * pyo.units.K, P=42 * pyo.units.bar)
         )
         self.mixer1.Preheater.pressure[0].fix(3.509e6)
         self.mixer1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
@@ -1118,7 +1135,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.evap_lp.tube_inlet.pressure[0].fix()
         self.evap_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
         self.evap_lp.lp_vap_frac_eqn.activate()
-        self.evap_lp.overall_heat_transfer_coefficient.unfix()
+        self.evap_lp.heat_transfer_equation.deactivate()
         with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
             res = solver_obj.solve(self.evap_lp, tee=slc.tee)
         if not pyo.check_optimal_termination(res):
@@ -1146,7 +1163,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.pump_ip.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
 
         propagate_state(self.pump_hp.inlet, self.splitter1.toHP)
-        self.pump_hp.outlet.pressure[0].fix(2.4359e7)
+        self.pump_hp.outlet.pressure[0].fix(2.25e7)
         self.pump_hp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
 
         self.split_fg_lp.inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
@@ -1155,7 +1172,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.split_fg_lp.inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
         self.split_fg_lp.inlet.temperature[0].fix(640.15)
         self.split_fg_lp.inlet.pressure[0].fix(103421)
-        self.split_fg_lp.split_fraction[0, "toLP_SH"].fix(0.5)
+        self.split_fg_lp.split_fraction[0, "toLP_SH"].fix(0.55)
         self.split_fg_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
 
         propagate_state(self.sh_lp.side_1_inlet, self.drum_lp.vap_outlet)
