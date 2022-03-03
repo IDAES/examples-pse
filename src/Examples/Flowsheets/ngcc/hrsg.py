@@ -39,7 +39,9 @@ from idaes.power_generation.unit_models.helm import (
 from idaes.generic_models.unit_models.heat_exchanger import (
     HeatExchanger,
     HeatExchangerFlowPattern,
-    delta_temperature_underwood_callback,
+    HeatExchangerPhaseChange,
+    delta_temperature_lmtd_callback as delta_temperature_underwood_callback,
+    delta_temperature_lmtd_callback,
 )
 from idaes.power_generation.unit_models.boiler_heat_exchanger import (
     BoilerHeatExchanger,
@@ -111,8 +113,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             default={
                 "shell": {"property_package": prop_gas},
                 "tube": {"property_package": prop_water},
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temperature_lmtd_callback,
                 "flow_pattern": HeatExchangerFlowPattern.countercurrent,
+                "phase_change": HeatExchangerPhaseChange.evaporator,
             },
         )
         self.mixer_soec = HelmMixer(
@@ -209,9 +212,10 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             doc="IP evaporator",
             default={
                 "shell": {"property_package": prop_gas},
-                "tube": {"property_package": prop_water, "has_pressure_change": True},
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "tube": {"property_package": prop_water},
+                "delta_temperature_callback": delta_temperature_lmtd_callback,
                 "flow_pattern": HeatExchangerFlowPattern.countercurrent,
+                "phase_change": HeatExchangerPhaseChange.evaporator,
             },
         )
         self.sh_ip1 = BoilerHeatExchanger(
@@ -347,8 +351,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             default={
                 "shell": {"property_package": prop_gas},
                 "tube": {"property_package": prop_water},
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temperature_lmtd_callback,
                 "flow_pattern": HeatExchangerFlowPattern.countercurrent,
+                "phase_change": HeatExchangerPhaseChange.evaporator,
             },
         )
         self.sh_hp1 = BoilerHeatExchanger(
@@ -411,47 +416,20 @@ class HrsgFlowsheetData(FlowsheetBlockData):
     def _add_flowsheet_constraints(self):
         """Add additional flowsheet constraints."""
         #
-        # LP evaporator performance fixed to vaporize ~18 % of water inlet
-        #
-        self.evap_lp.vapor_frac_control = pyo.Var(
-            initialize=0.12, doc="parameter to determine vapor flowrate"
-        )
-        self.evap_lp.vapor_frac_control.fix(0.12)
-
-        @self.evap_lp.Constraint(self.time)
-        def lp_vap_frac_eqn(b, t):
-            return (
-                b.tube.properties_out[0].vapor_frac == self.evap_lp.vapor_frac_control
-            )
-
-        # heat transfer determined by above
-        self.evap_lp.heat_transfer_equation.deactivate()
-
-        #
         # Everything evaporates in IP evaporator
         #
         @self.evap_ip.Constraint(self.config.time)
         def ip_sat_vap_eqn(b, t):
             return (
-                b.tube.properties_out[t].enth_mol
-                == b.tube.properties_out[t].enth_mol_sat_phase["Vap"] + 30
+                b.tube.properties_out[t].enth_mol / 1e3
+                == (b.tube.properties_out[t].enth_mol_sat_phase["Vap"] + 30) / 1e3
             )
-
-        # heat transfer determined by above
-        self.evap_ip.heat_transfer_equation.deactivate()
-
-        #
-        # HP Inlet must be vaporized
-        #
         @self.evap_hp.Constraint(self.config.time)
         def hp_sat_vap_eqn(b, t):
             return (
                 b.tube.properties_out[t].enth_mol
                 == b.tube.properties_out[t].enth_mol_sat_phase["Vap"] + 30
             )
-
-        # heat transfer determined by above
-        self.evap_hp.heat_transfer_equation.deactivate()
 
         @self.mixer1.Constraint(self.config.time)
         def mixer1_pressure_eqn(b, t):
@@ -469,7 +447,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         ######### LP Section ###########
         self.lp02 = Arc(
             doc="econ_lp to mixer1",
-            source=self.econ_lp.side_1_outlet,
+            source=self.econ_lp.tube_outlet,
             destination=self.mixer1.econ_lp,
         )
         self.lp04 = Arc(
@@ -727,17 +705,16 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_lp.delta_elevation.fix(1)
         self.econ_lp.tube_r_fouling = 0.000176
         self.econ_lp.shell_r_fouling = 0.00088
-        if self.econ_lp.config.has_radiation:
-            self.econ_lp.emissivity_wall.fix(0.7)
         self.econ_lp.fcorrection_htc.fix(1.5)
         self.econ_lp.fcorrection_dp_tube.fix(1.0)
         self.econ_lp.fcorrection_dp_shell.fix(1.0)
-        self.splitter1.split_fraction[0, "toIP"].fix(0.20626)
+        self.splitter1.split_fraction[0, "toIP"].fix(0.20)
 
         self.pump_ip.efficiency_isentropic.fix(0.80)
         self.pump_hp.efficiency_isentropic.fix(0.80)
 
-        self.evap_lp.area.fix(42032.0 * 0.5)
+        self.evap_lp.area.fix(8400)
+        self.evap_lp.overall_heat_transfer_coefficient.fix(212)
 
         self.mixer_soec.soec_makeup.flow_mol.fix(0)
         self.mixer_soec.soec_makeup.pressure.fix(8*pyo.units.bar)
@@ -755,9 +732,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_lp.delta_elevation.fix(1)
         self.sh_lp.tube_r_fouling = 0.000176
         self.sh_lp.shell_r_fouling = 0.00088
-        if self.sh_lp.config.has_radiation:
-            self.sh_lp.emissivity_wall.fix(0.7)
-        self.sh_lp.fcorrection_htc.fix(1.1)
+        self.sh_lp.fcorrection_htc.fix(1.0)
         self.sh_lp.fcorrection_dp_tube.fix(1.0)
         self.sh_lp.fcorrection_dp_shell.fix(1.0)
 
@@ -773,9 +748,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_ip1.delta_elevation.fix(1.0)
         self.econ_ip1.tube_r_fouling = 0.000176
         self.econ_ip1.shell_r_fouling = 0.00088
-        if self.econ_ip1.config.has_radiation:
-            self.econ_ip1.emissivity_wall.fix(0.7)
-        self.econ_ip1.fcorrection_htc.fix(1.9)
+        self.econ_ip1.fcorrection_htc.fix(1.0)
         self.econ_ip1.fcorrection_dp_tube.fix(1.0)
         self.econ_ip1.fcorrection_dp_shell.fix(1.0)
 
@@ -792,14 +765,12 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_ip2.delta_elevation.fix(12)
         self.econ_ip2.tube_r_fouling = 0.000176
         self.econ_ip2.shell_r_fouling = 0.00088
-        if self.econ_ip2.config.has_radiation:
-            self.econ_ip2.emissivity_wall.fix(0.7)
         self.econ_ip2.fcorrection_htc.fix(1.0)
         self.econ_ip2.fcorrection_dp_tube.fix(1.0)
         self.econ_ip2.fcorrection_dp_shell.fix(1.0)
 
-        self.evap_ip.area.fix(8368.6)
-        self.evap_ip.overall_heat_transfer_coefficient.fix(150)
+        self.evap_ip.area.fix(15000)
+        self.evap_ip.overall_heat_transfer_coefficient.fix(212)
 
         self.sh_ip1.tube_di.fix(0.051)
         self.sh_ip1.tube_thickness.fix(0.003)
@@ -812,9 +783,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip1.delta_elevation.fix(1)
         self.sh_ip1.tube_r_fouling = 0.000176
         self.sh_ip1.shell_r_fouling = 0.00088
-        if self.sh_ip1.config.has_radiation:
-            self.sh_ip1.emissivity_wall.fix(0.7)
-        self.sh_ip1.fcorrection_htc.fix(0.85*1.45)
+        self.sh_ip1.fcorrection_htc.fix(1.0)
         self.sh_ip1.fcorrection_dp_tube.fix(1.0)
         self.sh_ip1.fcorrection_dp_shell.fix(1.0)
 
@@ -829,9 +798,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip2.delta_elevation.fix(1)
         self.sh_ip2.tube_r_fouling = 0.000176
         self.sh_ip2.shell_r_fouling = 0.00088
-        if self.sh_ip2.config.has_radiation:
-            self.sh_ip2.emissivity_wall.fix(0.7)
-        self.sh_ip2.fcorrection_htc.fix(0.85*1.45)
+        self.sh_ip2.fcorrection_htc.fix(1.0)
         self.sh_ip2.fcorrection_dp_tube.fix(1.0)
         self.sh_ip2.fcorrection_dp_shell.fix(1.0)
 
@@ -846,9 +813,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip3.delta_elevation.fix(1)
         self.sh_ip3.tube_r_fouling = 0.000176
         self.sh_ip3.shell_r_fouling = 0.00088
-        if self.sh_ip3.config.has_radiation:
-            self.sh_ip3.emissivity_wall.fix(0.7)
-        self.sh_ip3.fcorrection_htc.fix(0.95*1.45)
+        self.sh_ip3.fcorrection_htc.fix(1.0)
         self.sh_ip3.fcorrection_dp_tube.fix(1.0)
         self.sh_ip3.fcorrection_dp_shell.fix(1.0)
 
@@ -864,8 +829,6 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp1.delta_elevation.fix(1.0)
         self.econ_hp1.tube_r_fouling = 0.000176
         self.econ_hp1.shell_r_fouling = 0.00088
-        if self.econ_hp1.config.has_radiation:
-            self.econ_hp1.emissivity_wall.fix(0.7)
         self.econ_hp1.fcorrection_htc.fix(1.0)
         self.econ_hp1.fcorrection_dp_tube.fix(0.05)
         self.econ_hp1.fcorrection_dp_shell.fix(0.05)
@@ -881,8 +844,6 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp2.delta_elevation.fix(1.0)
         self.econ_hp2.tube_r_fouling = 0.000176
         self.econ_hp2.shell_r_fouling = 0.00088
-        if self.econ_hp2.config.has_radiation:
-            self.econ_hp2.emissivity_wall.fix(0.7)
         self.econ_hp2.fcorrection_htc.fix(1.0)
         self.econ_hp2.fcorrection_dp_tube.fix(0.05)
         self.econ_hp2.fcorrection_dp_shell.fix(0.05)
@@ -898,9 +859,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp3.delta_elevation.fix(1.0)
         self.econ_hp3.tube_r_fouling = 0.000176
         self.econ_hp3.shell_r_fouling = 0.00088
-        if self.econ_hp3.config.has_radiation:
-            self.econ_hp3.emissivity_wall.fix(0.7)
-        self.econ_hp3.fcorrection_htc.fix(1.2)
+        self.econ_hp3.fcorrection_htc.fix(1.0)
         self.econ_hp3.fcorrection_dp_tube.fix(0.05)
         self.econ_hp3.fcorrection_dp_shell.fix(0.05)
 
@@ -915,8 +874,6 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp4.delta_elevation.fix(1.0)
         self.econ_hp4.tube_r_fouling = 0.000176
         self.econ_hp4.shell_r_fouling = 0.00088
-        if self.econ_hp4.config.has_radiation:
-            self.econ_hp4.emissivity_wall.fix(0.7)
         self.econ_hp4.fcorrection_htc.fix(1.0)
         self.econ_hp4.fcorrection_dp_tube.fix(0.05)
         self.econ_hp4.fcorrection_dp_shell.fix(0.05)
@@ -932,8 +889,6 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp5.delta_elevation.fix(1.0)
         self.econ_hp5.tube_r_fouling = 0.000176
         self.econ_hp5.shell_r_fouling = 0.00088
-        if self.econ_hp5.config.has_radiation:
-            self.econ_hp5.emissivity_wall.fix(0.7)
         self.econ_hp5.fcorrection_htc.fix(1.0)
         self.econ_hp5.fcorrection_dp_tube.fix(0.05)
         self.econ_hp5.fcorrection_dp_shell.fix(0.05)
@@ -949,9 +904,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp1.delta_elevation.fix(1)
         self.sh_hp1.tube_r_fouling = 0.000176
         self.sh_hp1.shell_r_fouling = 0.00088
-        if self.sh_hp1.config.has_radiation:
-            self.sh_hp1.emissivity_wall.fix(0.7)
-        self.sh_hp1.fcorrection_htc.fix(1.2*0.75)
+        self.sh_hp1.fcorrection_htc.fix(1.0)
         self.sh_hp1.fcorrection_dp_tube.fix(1.0)
         self.sh_hp1.fcorrection_dp_shell.fix(1.0)
 
@@ -966,9 +919,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp2.delta_elevation.fix(1)
         self.sh_hp2.tube_r_fouling = 0.000176
         self.sh_hp2.shell_r_fouling = 0.00088
-        if self.sh_hp2.config.has_radiation:
-            self.sh_hp2.emissivity_wall.fix(0.7)
-        self.sh_hp2.fcorrection_htc.fix(0.95*0.75)
+        self.sh_hp2.fcorrection_htc.fix(1.0)
         self.sh_hp2.fcorrection_dp_tube.fix(1.0)
         self.sh_hp2.fcorrection_dp_shell.fix(1.0)
 
@@ -983,9 +934,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp3.delta_elevation.fix(1)
         self.sh_hp3.tube_r_fouling = 0.000176
         self.sh_hp3.shell_r_fouling = 0.00088
-        if self.sh_hp3.config.has_radiation:
-            self.sh_hp3.emissivity_wall.fix(0.7)
-        self.sh_hp3.fcorrection_htc.fix(0.95*0.75)
+        self.sh_hp3.fcorrection_htc.fix(1.0)
         self.sh_hp3.fcorrection_dp_tube.fix(1.0)
         self.sh_hp3.fcorrection_dp_shell.fix(1.0)
 
@@ -1000,9 +949,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp4.delta_elevation.fix(1)
         self.sh_hp4.tube_r_fouling = 0.000176
         self.sh_hp4.shell_r_fouling = 0.00088
-        if self.sh_hp4.config.has_radiation:
-            self.sh_hp4.emissivity_wall.fix(0.7)
-        self.sh_hp4.fcorrection_htc.fix(0.95*0.75)
+        self.sh_hp4.fcorrection_htc.fix(1.0)
         self.sh_hp4.fcorrection_dp_tube.fix(1.0)
         self.sh_hp4.fcorrection_dp_shell.fix(1.0)
 
@@ -1060,6 +1007,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         iscale.set_scaling_factor(self.pump_ip.control_volume.work, 1e-6)
         iscale.set_scaling_factor(self.pump_hp.control_volume.work, 1e-7)
+        iscale.set_scaling_factor(self.pump_hp.control_volume.deltaP, 1e-9)
 
         iscale.set_scaling_factor(self.evap_hp.shell.heat, 1e-8)
         iscale.set_scaling_factor(self.evap_hp.tube.heat, 1e-8)
@@ -1099,183 +1047,100 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         ######### LP Section ###########
         # FLUE GAS Inlet to econ_lp (F = 138406 kgmol/hr, T = 15 C, P=0.1 MPa abs)
         fg_rate = 38446.11  # mol/s  from Baseline report table 5-22
+        fg_comp = {
+            "H2O": 0.0875,
+            "CO2": 0.0408,
+            "N2": 0.75,
+            "O2": 0.1217,
+        }
+        def _set_fg_port(port, temperature, pressure, flow=fg_rate, fix=True):
+            port.temperature[:].set_value(temperature)
+            port.pressure[:].set_value(pressure)
+            for c, v in fg_comp.items():
+                port.flow_mol_comp[:, c].set_value(flow * v)
+            if fix:
+                port.fix()
 
-        self.econ_lp.side_1_inlet.flow_mol[0].fix(9790.55)
-        self.econ_lp.side_1_inlet.enth_mol[0].fix(
-            iapws95.htpx(T=357.03 * pyo.units.K, P=599844 * pyo.units.Pa)
+        # Feedwater inlet
+        self.econ_lp.tube_inlet.flow_mol[0].fix(9790.55)
+        self.econ_lp.tube_inlet.pressure[0].fix(655000)
+        self.econ_lp.tube_inlet.enth_mol[0].fix(
+            iapws95.htpx(T=357 * pyo.units.K, P=655000 * pyo.units.Pa)
         )
-        self.econ_lp.side_1_inlet.pressure[0].fix(655000)
-        self.econ_lp.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.econ_lp.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.econ_lp.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.econ_lp.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.econ_lp.side_2_inlet.temperature[0].fix(433)
-        self.econ_lp.side_2_inlet.pressure[0].fix(103421)
-        self.econ_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
 
-        propagate_state(self.mixer1.econ_lp, self.econ_lp.side_1_outlet)
+        _set_fg_port(self.econ_lp.shell_inlet, temperature=433, pressure=103421)
+        self.econ_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
+        propagate_state(self.lp02)
+
         self.mixer1.Preheater.flow_mol[0].fix(833)
         self.mixer1.Preheater.enth_mol[0].fix(
             iapws95.htpx(T=333.15 * pyo.units.K, P=42 * pyo.units.bar)
         )
         self.mixer1.Preheater.pressure[0].fix(3.509e6)
         self.mixer1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
+        propagate_state(self.lp04)
 
-        propagate_state(self.evap_lp.tube_inlet, self.mixer1.outlet)
-        self.evap_lp.shell_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.evap_lp.shell_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.evap_lp.shell_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.evap_lp.shell_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.evap_lp.shell_inlet.temperature[0].fix(543.31)
-        self.evap_lp.shell_inlet.pressure[0].fix(103421)
-        self.evap_lp.overall_heat_transfer_coefficient.fix(212)
-        self.evap_lp.lp_vap_frac_eqn.deactivate()
-        self.evap_lp.tube_inlet.flow_mol[0].fix()
-        self.evap_lp.tube_inlet.enth_mol[0].fix()
-        self.evap_lp.tube_inlet.pressure[0].fix()
+        _set_fg_port(self.evap_lp.shell_inlet, temperature=543.31, pressure=103421)
         self.evap_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.evap_lp.lp_vap_frac_eqn.activate()
-        self.evap_lp.heat_transfer_equation.deactivate()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.evap_lp, tee=slc.tee)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(f"evap_lp failed to initialize successfully.")
+        propagate_state(self.lp05)
 
+        self.mixer_soec.initialize()
         propagate_state(self.lp13)
-        self.mixer_soec.initialize
 
-        propagate_state(self.drum_lp.inlet, self.evap_lp.tube_outlet)
         self.drum_lp.initialize()
+        propagate_state(self.lp06)
+        propagate_state(self.lp10)
 
-        self.drum_lp.inlet.flow_mol[0].fix()
-        self.drum_lp.inlet.enth_mol[0].fix()
-        self.drum_lp.inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.drum_lp, tee=slc.tee)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(f"drum_lp failed to initialize successfully.")
 
-        propagate_state(self.splitter1.inlet, self.drum_lp.liq_outlet)
         self.splitter1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
+        propagate_state(self.lp08)
+        propagate_state(self.lp09)
 
-        propagate_state(self.pump_ip.inlet, self.splitter1.toIP)
-        self.pump_ip.outlet.pressure[0].fix(4.385e6)
-        self.pump_ip.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-
-        propagate_state(self.pump_hp.inlet, self.splitter1.toHP)
-        self.pump_hp.outlet.pressure[0].fix(2.25e7)
-        self.pump_hp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-
-        self.split_fg_lp.inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.split_fg_lp.inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.split_fg_lp.inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.split_fg_lp.inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.split_fg_lp.inlet.temperature[0].fix(640.15)
-        self.split_fg_lp.inlet.pressure[0].fix(103421)
         self.split_fg_lp.split_fraction[0, "toLP_SH"].fix(0.55)
+        _set_fg_port(self.split_fg_lp.inlet, temperature=640.15, pressure=103421)
         self.split_fg_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-
-        propagate_state(self.sh_lp.side_1_inlet, self.drum_lp.vap_outlet)
-        propagate_state(self.sh_lp.side_2_inlet, self.split_fg_lp.toLP_SH)
+        propagate_state(self.g20)
+        propagate_state(self.g22)
 
         self.sh_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
 
-        self.sh_lp.side_1_inlet.flow_mol[0].fix()
-        self.sh_lp.side_1_inlet.enth_mol[0].fix()
-        self.sh_lp.side_1_inlet.pressure[0].fix()
+        self.mixer_lp2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
 
         init_log.info("Low pressure system initialization - Completed")
 
-        propagate_state(self.mixer_lp2.fromLP_SH, self.sh_lp.side_2_inlet)
-        propagate_state(self.mixer_lp2.bypass, self.split_fg_lp.toMixer)
-        self.mixer_lp2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
+        self.pump_ip.outlet.pressure[0].fix(4.385e6)
+        self.pump_ip.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
+        propagate_state(self.ip01)
 
-        propagate_state(self.econ_ip1.side_1_inlet, self.pump_ip.outlet)
-        self.econ_ip1.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.econ_ip1.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.econ_ip1.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.econ_ip1.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.econ_ip1.side_2_inlet.temperature[0].fix(579.46)
-        self.econ_ip1.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.econ_ip1.shell_inlet, temperature=579.46, pressure=103421)
         self.econ_ip1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.econ_ip1.deltaP_tube_eqn.deactivate()
-        self.econ_ip1.deltaP_tube.fix(-1.79e05)
-        self.econ_ip1.side_1_inlet.flow_mol[0].fix()
-        self.econ_ip1.side_1_inlet.enth_mol[0].fix()
-        self.econ_ip1.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.econ_ip1, tee=slc.tee)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} econ_ip1 failed to initialize successfully."
-            )
+        #self.econ_ip1.deltaP_tube_eqn.deactivate()
+        #self.econ_ip1.deltaP_tube.fix(-1.79e05)
+        propagate_state(self.ip02)
 
-        propagate_state(self.splitter_ip1.inlet, self.econ_ip1.side_1_outlet)
         self.splitter_ip1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
+        propagate_state(self.ip03)
 
-        propagate_state(self.econ_ip2.side_1_inlet, self.splitter_ip1.toIP_ECON2)
-        self.econ_ip2.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.econ_ip2.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.econ_ip2.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.econ_ip2.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.econ_ip2.side_2_inlet.temperature[0].fix(607)
-        self.econ_ip2.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.econ_ip2.shell_inlet, temperature=607, pressure=103421)
         self.econ_ip2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.econ_ip2.deltaP_tube_eqn.deactivate()
-        self.econ_ip2.deltaP_tube.fix(-1.63e05)
-        self.econ_ip2.side_1_inlet.flow_mol[0].fix()
-        self.econ_ip2.side_1_inlet.enth_mol[0].fix()
-        self.econ_ip2.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.econ_ip2, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} econ_ip2 failed to initialize successfully."
-            )
+        #self.econ_ip2.deltaP_tube_eqn.deactivate()
+        #self.econ_ip2.deltaP_tube.fix(-1.63e05)
+        propagate_state(self.ip05)
 
-        propagate_state(self.evap_ip.tube_inlet, self.econ_ip2.side_1_outlet)
-        self.evap_ip.shell_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.evap_ip.shell_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.evap_ip.shell_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.evap_ip.shell_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.evap_ip.shell_inlet.temperature[0].fix(618.0)
-        self.evap_ip.shell_inlet.pressure[0].fix(103421)
         self.evap_ip.ip_sat_vap_eqn.deactivate()
-        self.evap_ip.heat_transfer_equation.activate()
-        self.evap_ip.tube.deltaP.fix(-1.62e05)
-        self.evap_ip.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.evap_ip.tube_inlet.flow_mol[0].fix()
-        self.evap_ip.tube_inlet.pressure[0].fix()
-        self.evap_ip.tube_inlet.enth_mol[0].fix()
-        self.evap_ip.overall_heat_transfer_coefficient.fix(150)
-        self.evap_ip.ip_sat_vap_eqn.activate()
-        self.evap_ip.heat_transfer_equation.deactivate()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.evap_ip, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} evap_ip failed to initialize successfully."
-            )
+        #self.evap_ip.tube.deltaP.fix(-1.62e05)
+        _set_fg_port(self.evap_ip.shell_inlet, temperature=630, pressure=103421)
+        #self.evap_ip.delta_temperature_in_equation.deactivate()
+        #self.evap_ip.delta_temperature_out_equation.deactivate()
+        self.evap_ip.initialize(solver=solver, outlvl=idaeslog.DEBUG, optarg=optarg)
+        propagate_state(self.ip06)
+        #self.evap_ip.ip_sat_vap_eqn.activate()
 
-        propagate_state(self.sh_ip1.side_1_inlet, self.evap_ip.tube_outlet)
-        self.sh_ip1.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.sh_ip1.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.sh_ip1.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.sh_ip1.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.sh_ip1.side_2_inlet.temperature[0].fix(668.15)
-        self.sh_ip1.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.sh_ip1.shell_inlet, temperature=670, pressure=103421)
         self.sh_ip1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.sh_ip1.deltaP_tube_eqn.deactivate()
-        self.sh_ip1.deltaP_tube.fix(-1.55e05)
-        self.sh_ip1.side_1_inlet.flow_mol[0].fix()
-        self.sh_ip1.side_1_inlet.enth_mol[0].fix()
-        self.sh_ip1.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.sh_ip1, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} sh_ip1 failed to initialize successfully."
-            )
+        #self.sh_ip1.deltaP_tube_eqn.deactivate()
+        #self.sh_ip1.deltaP_tube.fix(-1.55e05)
+        propagate_state(self.ip07)
 
         self.splitter_ip2.inlet.flow_mol[0].fix(7503.7337)
         self.splitter_ip2.inlet.enth_mol[0].fix(
@@ -1286,15 +1151,8 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.splitter_ip2.split_fraction[0, "toEjector"].fix(0.00074)
         self.splitter_ip2.split_fraction[0, "toDryer"].fix(0.000274)
         self.splitter_ip2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.splitter_ip2, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} splitter_ip2 failed to initialize successfully."
-            )
+        propagate_state(self.ip15)
 
-        propagate_state(self.mixer_ip1.sh_ip1, self.sh_ip1.side_1_outlet)
-        propagate_state(self.mixer_ip1.Cold_reheat, self.splitter_ip2.Cold_reheat)
         self.mixer_ip1.sh_ip1.flow_mol[0].fix()
         self.mixer_ip1.sh_ip1.enth_mol[0].fix()
         self.mixer_ip1.sh_ip1.pressure[0].fix()
@@ -1302,287 +1160,92 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.mixer_ip1.Cold_reheat.enth_mol[0].fix()
         self.mixer_ip1.Cold_reheat.pressure[0].fix()
         self.mixer_ip1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
+        propagate_state(self.ip08)
 
-        propagate_state(self.sh_ip2.side_1_inlet, self.mixer_ip1.outlet)
-        self.sh_ip2.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.sh_ip2.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.sh_ip2.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.sh_ip2.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.sh_ip2.side_2_inlet.temperature[0].fix(802.35)  # 878.15)  # K
-        self.sh_ip2.side_2_inlet.pressure[0].fix(103421)  # Pa
+        _set_fg_port(self.sh_ip2.shell_inlet, temperature=802, pressure=103421)
         self.sh_ip2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.sh_ip2.deltaP_tube_eqn.deactivate()
-        self.sh_ip2.deltaP_tube.fix(-7.45e04)
-        self.sh_ip2.side_1_inlet.flow_mol[0].fix()
-        self.sh_ip2.side_1_inlet.enth_mol[0].fix()
-        self.sh_ip2.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.sh_ip2, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} sh_ip2 failed to initialize successfully."
-            )
+        #self.sh_ip2.deltaP_tube_eqn.deactivate()
+        #self.sh_ip2.deltaP_tube.fix(-7.45e04)
+        propagate_state(self.ip09)
 
-        propagate_state(self.sh_ip3.side_1_inlet, self.sh_ip2.side_1_outlet)
-        self.sh_ip3.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.sh_ip3.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.sh_ip3.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.sh_ip3.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.sh_ip3.side_2_inlet.temperature[0].fix(868.35)
-        self.sh_ip3.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.sh_ip3.shell_inlet, temperature=868, pressure=103421)
         self.sh_ip3.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.sh_ip3.deltaP_tube_eqn.deactivate()
-        self.sh_ip3.deltaP_tube.fix(-7.31e04)
-        self.sh_ip3.side_1_inlet.flow_mol[0].fix()
-        self.sh_ip3.side_1_inlet.enth_mol[0].fix()
-        self.sh_ip3.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.sh_ip3, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} sh_ip3 failed to initialize successfully."
-            )
+        #self.sh_ip3.deltaP_tube_eqn.deactivate()
+        #self.sh_ip3.deltaP_tube.fix(-7.31e04)
+
         init_log.info("Intermediate pressure system initialization - Completed")
 
-        propagate_state(self.econ_hp1.side_1_inlet, self.pump_hp.outlet)
-        self.econ_hp1.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.econ_hp1.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.econ_hp1.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.econ_hp1.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.econ_hp1.side_2_inlet.temperature[0].fix(566.35)
-        self.econ_hp1.side_2_inlet.pressure[0].fix(103421)
+        self.pump_hp.outlet.pressure[0].fix(2.15e7)
+        self.pump_hp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
+        propagate_state(self.hp01)
+
+        _set_fg_port(self.econ_hp1.shell_inlet, temperature=566, pressure=103421)
         self.econ_hp1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.econ_hp1.deltaP_tube_eqn.deactivate()
-        self.econ_hp1.deltaP_tube.fix(-9.79e05)
-        self.econ_hp1.side_1_inlet.flow_mol[0].fix()
-        self.econ_hp1.side_1_inlet.enth_mol[0].fix()
-        self.econ_hp1.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.econ_hp1, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} econ_hp1 failed to initialize successfully."
-            )
+        #self.econ_hp1.deltaP_tube_eqn.deactivate()
+        #self.econ_hp1.deltaP_tube.fix(-9.79e05)
+        propagate_state(self.hp02)
 
-        propagate_state(self.econ_hp2.side_1_inlet, self.econ_hp1.side_1_outlet)
-        self.econ_hp2.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.econ_hp2.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.econ_hp2.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.econ_hp2.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.econ_hp2.side_2_inlet.temperature[0].fix(596.35)
-        self.econ_hp2.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.econ_hp2.shell_inlet, temperature=596, pressure=103421)
         self.econ_hp2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.econ_hp2.deltaP_tube_eqn.deactivate()
-        self.econ_hp2.deltaP_tube.fix(-9.38e05)
-        self.econ_hp2.side_1_inlet.flow_mol[0].fix()
-        self.econ_hp2.side_1_inlet.enth_mol[0].fix()
-        self.econ_hp2.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.econ_hp2, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} econ_hp2 failed to initialize successfully."
-            )
+        #self.econ_hp2.deltaP_tube_eqn.deactivate()
+        #self.econ_hp2.deltaP_tube.fix(-9.38e05)
+        propagate_state(self.hp03)
 
-        propagate_state(self.econ_hp3.side_1_inlet, self.econ_hp2.side_1_outlet)
-        self.econ_hp3.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.econ_hp3.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.econ_hp3.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.econ_hp3.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.econ_hp3.side_2_inlet.temperature[0].fix(667.35)
-        self.econ_hp3.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.econ_hp3.shell_inlet, temperature=607, pressure=103421)
         self.econ_hp3.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.econ_hp3.deltaP_tube_eqn.deactivate()
-        self.econ_hp3.deltaP_tube.fix(-8.96e05)
-        self.econ_hp3.side_1_inlet.flow_mol[0].fix()
-        self.econ_hp3.side_1_inlet.enth_mol[0].fix()
-        self.econ_hp3.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.econ_hp3, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} econ_hp3 failed to initialize successfully."
-            )
+        #self.econ_hp3.deltaP_tube_eqn.deactivate()
+        #self.econ_hp3.deltaP_tube.fix(-8.96e05)
+        propagate_state(self.hp04)
 
-        propagate_state(self.econ_hp4.side_1_inlet, self.econ_hp3.side_1_outlet)
-        self.econ_hp4.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.econ_hp4.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.econ_hp4.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.econ_hp4.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.econ_hp4.side_2_inlet.temperature[0].fix(624.35)
-        self.econ_hp4.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.econ_hp4.shell_inlet, temperature=624, pressure=103421)
         self.econ_hp4.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.econ_hp4.deltaP_tube_eqn.deactivate()
-        self.econ_hp4.deltaP_tube.fix(-8.62e05)
-        self.econ_hp4.side_1_inlet.flow_mol[0].fix()
-        self.econ_hp4.side_1_inlet.enth_mol[0].fix()
-        self.econ_hp4.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.econ_hp4, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} econ_hp4 failed to initialize successfully."
-            )
+        #self.econ_hp4.deltaP_tube_eqn.deactivate()
+        #self.econ_hp4.deltaP_tube.fix(-8.62e05)
+        propagate_state(self.hp05)
 
-        propagate_state(self.econ_hp5.side_1_inlet, self.econ_hp4.side_1_outlet)
-        self.econ_hp5.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.econ_hp5.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.econ_hp5.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.econ_hp5.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.econ_hp5.side_2_inlet.temperature[0].fix(631.15)
-        self.econ_hp5.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.econ_hp5.shell_inlet, temperature=631, pressure=103421)
         self.econ_hp5.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.econ_hp5.deltaP_tube_eqn.deactivate()
-        self.econ_hp5.deltaP_tube.fix(-8.27e05)
-        self.econ_hp5.side_1_inlet.flow_mol[0].fix()
-        self.econ_hp5.side_1_inlet.enth_mol[0].fix()
-        self.econ_hp5.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.econ_hp5, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} econ_hp5 failed to initialize successfully."
-            )
+        #self.econ_hp5.deltaP_tube_eqn.deactivate()
+        #self.econ_hp5.deltaP_tube.fix(-8.27e05)
+        propagate_state(self.hp06)
 
-        self.evap_hp.area.fix(8368.6)
-        self.evap_hp.overall_heat_transfer_coefficient.fix(150)
-
-        propagate_state(self.evap_hp.tube_inlet, self.econ_hp5.side_1_outlet)
-        self.evap_hp.shell_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.evap_hp.shell_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.evap_hp.shell_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.evap_hp.shell_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.evap_hp.shell_inlet.temperature[0].fix(729.15)
-        self.evap_hp.shell_inlet.pressure[0].fix(103421)
+        self.evap_hp.area.fix(14000)
+        self.evap_hp.overall_heat_transfer_coefficient.fix(212)
         self.evap_hp.hp_sat_vap_eqn.deactivate()
-        self.evap_hp.heat_transfer_equation.activate()
+        _set_fg_port(self.evap_hp.shell_inlet, temperature=730, pressure=103421)
         self.evap_hp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.evap_hp.hp_sat_vap_eqn.activate()
-        self.evap_hp.heat_transfer_equation.deactivate()
-        self.evap_hp.tube_inlet.flow_mol[0].fix()
-        self.evap_hp.tube_inlet.enth_mol[0].fix()
-        self.evap_hp.tube_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.evap_hp, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} evap_hp failed to initialize successfully."
-            )
+        propagate_state(self.hp07)
 
-        propagate_state(self.sh_hp1.side_1_inlet, self.evap_hp.tube_outlet)
-        self.sh_hp1.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.sh_hp1.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.sh_hp1.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.sh_hp1.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.sh_hp1.side_2_inlet.temperature[0].fix(760.35)
-        self.sh_hp1.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.sh_hp1.shell_inlet, temperature=760, pressure=103421)
         self.sh_hp1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.sh_hp1.deltaP_tube_eqn.deactivate()
-        self.sh_hp1.deltaP_tube.fix(-8.27e05)
-        self.sh_hp1.side_1_inlet.flow_mol[0].fix()
-        self.sh_hp1.side_1_inlet.enth_mol[0].fix()
-        self.sh_hp1.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.sh_hp1, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} sh_hp1 failed to initialize successfully."
-            )
+        #self.sh_hp1.deltaP_tube_eqn.deactivate()
+        #self.sh_hp1.deltaP_tube.fix(-8.27e05)
+        propagate_state(self.hp08)
 
-        propagate_state(self.sh_hp2.side_1_inlet, self.sh_hp1.side_1_outlet)
-        self.sh_hp2.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.sh_hp2.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.sh_hp2.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.sh_hp2.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.sh_hp2.side_2_inlet.temperature[0].fix(806.35)
-        self.sh_hp2.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.sh_hp2.shell_inlet, temperature=806, pressure=103421)
         self.sh_hp2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.sh_hp2.deltaP_tube_eqn.deactivate()
-        self.sh_hp2.deltaP_tube.fix(-7.93e05)
-        self.sh_hp2.side_1_inlet.flow_mol[0].fix()
-        self.sh_hp2.side_1_inlet.enth_mol[0].fix()
-        self.sh_hp2.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.sh_hp2, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} sh_hp2 failed to initialize successfully."
-            )
+        #self.sh_hp2.deltaP_tube_eqn.deactivate()
+        #self.sh_hp2.deltaP_tube.fix(-7.93e05)
+        propagate_state(self.hp09)
 
-        propagate_state(self.sh_hp3.side_1_inlet, self.sh_hp2.side_1_outlet)
-        self.sh_hp3.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.sh_hp3.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.sh_hp3.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.sh_hp3.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.sh_hp3.side_2_inlet.temperature[0].fix(835.35)
-        self.sh_hp3.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.sh_hp3.shell_inlet, temperature=835, pressure=103421)
         self.sh_hp3.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.sh_hp3.deltaP_tube_eqn.deactivate()
-        self.sh_hp3.deltaP_tube.fix(-5.52e05)
-        self.sh_hp3.side_1_inlet.flow_mol[0].fix()
-        self.sh_hp3.side_1_inlet.enth_mol[0].fix()
-        self.sh_hp3.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.sh_hp3, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} sh_hp3 failed to initialize successfully."
-            )
+        #self.sh_hp3.deltaP_tube_eqn.deactivate()
+        #self.sh_hp3.deltaP_tube.fix(-5.52e05)
+        propagate_state(self.hp10)
 
-        propagate_state(self.sh_hp4.side_1_inlet, self.sh_hp3.side_1_outlet)
-        self.sh_hp4.side_2_inlet.flow_mol_comp[0, "H2O"].fix(fg_rate * 0.0875)
-        self.sh_hp4.side_2_inlet.flow_mol_comp[0, "CO2"].fix(fg_rate * 0.0408)
-        self.sh_hp4.side_2_inlet.flow_mol_comp[0, "N2"].fix(fg_rate * 0.75)
-        self.sh_hp4.side_2_inlet.flow_mol_comp[0, "O2"].fix(fg_rate * 0.1217)
-        self.sh_hp4.side_2_inlet.temperature[0].fix(878.15)
-        self.sh_hp4.side_2_inlet.pressure[0].fix(103421)
+        _set_fg_port(self.sh_hp4.shell_inlet, temperature=898.15, pressure=103421, fix=True)
         self.sh_hp4.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        self.sh_hp1.deltaP_tube_eqn.deactivate()
-        self.sh_hp1.deltaP_tube.fix(-5.45e05)
-        self.sh_hp4.side_1_inlet.flow_mol[0].fix()
-        self.sh_hp4.side_1_inlet.enth_mol[0].fix()
-        self.sh_hp4.side_1_inlet.pressure[0].fix()
-        with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
-            res = solver_obj.solve(self.sh_hp4, tee=False)
-        if not pyo.check_optimal_termination(res):
-            raise InitializationError(
-                f"{self.name} sh_hp4 failed to initialize successfully."
-            )
+        #self.sh_hp4.deltaP_tube_eqn.deactivate()
+        #self.sh_hp4.deltaP_tube.fix(-5.45e05)
 
         # unfix inlets that were fixed for initialization
-        self.drum_lp.inlet.flow_mol[0].unfix()
-        self.drum_lp.inlet.enth_mol[0].unfix()
-        self.drum_lp.inlet.pressure[0].unfix()
-        self.econ_ip1.side_1_inlet.flow_mol[0].unfix()
-        self.econ_ip1.side_1_inlet.enth_mol[0].unfix()
-        self.econ_ip1.side_1_inlet.pressure[0].unfix()
-        self.evap_lp.tube_inlet.flow_mol[0].unfix()
-        self.evap_lp.tube_inlet.enth_mol[0].unfix()
-        self.evap_lp.tube_inlet.pressure[0].unfix()
-        self.sh_lp.side_1_inlet.flow_mol[0].unfix()
-        self.sh_lp.side_1_inlet.enth_mol[0].unfix()
-        self.sh_lp.side_1_inlet.pressure[0].unfix()
-        self.econ_ip2.side_1_inlet.flow_mol[0].unfix()
-        self.econ_ip2.side_1_inlet.enth_mol[0].unfix()
-        self.econ_ip2.side_1_inlet.pressure[0].unfix()
-        self.evap_ip.tube_inlet.flow_mol[0].unfix()
-        self.evap_ip.tube_inlet.pressure[0].unfix()
-        self.evap_ip.tube_inlet.enth_mol[0].unfix()
-        self.sh_ip1.side_1_inlet.flow_mol[0].unfix()
-        self.sh_ip1.side_1_inlet.enth_mol[0].unfix()
-        self.sh_ip1.side_1_inlet.pressure[0].unfix()
         self.mixer_ip1.sh_ip1.flow_mol[0].unfix()
         self.mixer_ip1.sh_ip1.enth_mol[0].unfix()
         self.mixer_ip1.sh_ip1.pressure[0].unfix()
         self.mixer_ip1.Cold_reheat.flow_mol[0].unfix()
         self.mixer_ip1.Cold_reheat.enth_mol[0].unfix()
         self.mixer_ip1.Cold_reheat.pressure[0].unfix()
-        self.sh_ip2.side_1_inlet.flow_mol[0].unfix()
-        self.sh_ip2.side_1_inlet.enth_mol[0].unfix()
-        self.sh_ip2.side_1_inlet.pressure[0].unfix()
-        self.sh_ip3.side_1_inlet.flow_mol[0].unfix()
-        self.sh_ip3.side_1_inlet.enth_mol[0].unfix()
-        self.sh_ip3.side_1_inlet.pressure[0].unfix()
         self.econ_hp1.side_1_inlet.flow_mol[0].unfix()
         self.econ_hp1.side_1_inlet.enth_mol[0].unfix()
         self.econ_hp1.side_1_inlet.pressure[0].unfix()
@@ -1673,6 +1336,54 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_lp.side_2_inlet.flow_mol_comp[:, :].unfix()
         self.econ_lp.side_2_inlet.pressure[0].unfix()
         self.econ_lp.side_2_inlet.temperature[0].unfix()
+
+        gas_streams = [
+            #self.g09,
+            self.g10,
+            self.g11,
+            self.g12,
+            self.g13,
+            self.g14,
+            self.g15,
+            self.g16,
+            self.g17,
+            self.g18,
+            self.g19,
+            self.g20,
+            self.g21,
+            self.g22,
+            self.g23,
+            self.g24,
+            self.g25,
+            self.g26,
+            self.g27,
+            self.g28,
+            #self.g29,
+        ]
+        #res = solver_obj.solve(self, tee=True)
+        for g in gas_streams:
+            #propagate_state(g, overwrite_fixed=True)
+            g.destination.fix()
+            g.expanded_block.deactivate()
+        res = solver_obj.solve(self, tee=True)
+        for g in gas_streams:
+            g.destination.unfix()
+            g.expanded_block.activate()
+        res = solver_obj.solve(self, tee=True)
+
+        self.evap_ip.ip_sat_vap_eqn.activate()
+        self.splitter1.split_fraction[0, "toIP"].unfix()
+
+        for g in gas_streams:
+            #propagate_state(g, overwrite_fixed=True)
+            g.destination.fix()
+            g.expanded_block.deactivate()
+        res = solver_obj.solve(self, tee=True)
+        for g in gas_streams:
+            g.destination.unfix()
+            g.expanded_block.activate()
+        res = solver_obj.solve(self, tee=True)
+
 
         if save_to is not None:
             iutil.to_json(self, fname=save_to)

@@ -272,11 +272,11 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             iscale.set_scaling_factor(s.control_volume.work, 1e-6)
         for i, s in self.steam_turbine.ip_stages.items():
             s.ratioP[:] = 0.8264
-            s.efficiency_isentropic[:] = 0.89
+            s.efficiency_isentropic[:] = 0.85
             iscale.set_scaling_factor(s.control_volume.work, 1e-6)
         for i, s in self.steam_turbine.lp_stages.items():
             s.ratioP[:] = 0.754
-            s.efficiency_isentropic[:] = 0.89
+            s.efficiency_isentropic[:] = 0.81
             iscale.set_scaling_factor(s.control_volume.work, 1e-6)
 
         self.steam_turbine.outlet_stage.design_exhaust_flow_vol.fix(2300)
@@ -408,7 +408,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             raise InitializationError(f"steam turbine failed to initialize.")
 
         # Adjust flow coefficient for steam extraction
-        self.steam_turbine.outlet_stage.flow_coeff.fix(0.09)
+        self.steam_turbine.outlet_stage.flow_coeff.fix(0.10)
         dp = pyo.value(-5e5)
         self.steam_turbine.throttle_valve[1].deltaP.fix(dp)
         self.steam_turbine.throttle_valve[2].deltaP.fix(dp)

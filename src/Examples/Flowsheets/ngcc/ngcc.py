@@ -1,3 +1,4 @@
+import os
 import pyomo.environ as pyo
 from pyomo.network import Arc
 import idaes.generic_models.unit_models as um # um = unit models
@@ -106,12 +107,17 @@ class NgccFlowsheetData(FlowsheetBlockData):
             initialize=600,
             units=pyo.units.MW
         )
+        # default to 90% to compare to baseline
         self.cap_fraction = pyo.Var(
-            initialize=0.97,
+            initialize=0.90,
             units=pyo.units.dimensionless
         )
+        # Specific Reboiler Duty (SRD)
+        # From baseline with 90% capture 2.7 MJ/kg
+        # For PZ and 97% capture 3.6 MJ/kg
+        # For PZAS as 97% capture 2.4 MJ/kg
         self.cap_specific_reboiler_duty = pyo.Var(
-            initialize=2.6e6,
+            initialize=2.7e6,
             units=pyo.units.J/pyo.units.kg
         )
         self.cap_addtional_co2 = pyo.Var(
@@ -155,19 +161,24 @@ class NgccFlowsheetData(FlowsheetBlockData):
             return b.gt.gt_power[t] + b.st.steam_turbine.power[t]
 
         @self.Expression(self.config.time)
-        def aux_cooling(b, t):
-            return 1e3 * (4580 + 2370)
+        def aux_cooling_fans(b, t):
+            return 1e3 * (2370) * pyo.units.MW
+
+        @self.Expression(self.config.time)
+        def aux_cooling_pumps(b, t):
+            return 1e3 * (4580) * pyo.units.MW
 
         # Aux power expressions
         @self.Expression(self.config.time)
         def aux_combustion(b, t):
-            return 1e3 * 1020
+            return 1e3 * 1020.0 * pyo.units.MW
 
         @self.Expression(self.config.time)
         def aux_capture(b, t): #scale to flue gas flow
             return (
-                1e3 * 10600 * b.cap_fraction / 0.90 *
-                b.gt.gts2.control_volume.properties_out[t].flow_mass / 1090.759
+                10600000*pyo.units.W/62.1/pyo.units.kg*pyo.units.s * b.cap_fraction *
+                b.gt.gts2.control_volume.properties_out[t].flow_mol_comp["CO2"] *
+                0.04401 * pyo.units.kg / pyo.units.mol
             )
 
         @self.Expression(self.config.time)
@@ -180,11 +191,12 @@ class NgccFlowsheetData(FlowsheetBlockData):
 
         @self.Expression(self.config.time)
         def aux_transformer(b, t): # scale to gross power
-            return 1e3 * 2200 * b.gross_power[t] / 687.0e6
+            return - 1e3 * 2200 * b.gross_power[t] / 687.0e6
 
         @self.Expression(self.config.time)
         def aux_misc(b, t):
-            return 1e3 * 1000.
+            # turbine, scr, gw pumps, bop
+            return 1e3 * 1202.0 * pyo.units.MW
 
         @self.Expression(self.config.time)
         def net_power(b, t):
@@ -194,7 +206,8 @@ class NgccFlowsheetData(FlowsheetBlockData):
                 b.st.cond_pump.work[t] +
                 b.hrsg.pump_hp.work[t] +
                 b.hrsg.pump_ip.work[t] +
-                b.aux_cooling[t] +
+                b.aux_cooling_pumps[t] +
+                b.aux_cooling_fans[t] +
                 b.aux_combustion[t] +
                 b.aux_capture[t] +
                 b.aux_compression[t] +
@@ -250,6 +263,18 @@ class NgccFlowsheetData(FlowsheetBlockData):
         load_from="ngcc_init.json.gz",
         save_to="ngcc_init.json.gz",
     ):
+
+        init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
+        solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
+
+        if load_from is not None:
+            if os.path.exists(load_from):
+                init_log.info_high(f"NGCC load initial from {load_from}")
+                # here suffix=False avoids loading scaling factors
+                iutil.from_json(
+                    self, fname=load_from, wts=iutil.StoreSpec(suffix=False)
+                )
+                return
 
         self.cap_addtional_co2.fix()
         self.cap_fraction.fix()
@@ -322,8 +347,21 @@ class NgccFlowsheetData(FlowsheetBlockData):
         print("set steam temperature 855")
         self.st.hp_steam_temperature.fix(855)
         solver_obj.solve(self, tee=True)
+        self.gt.cmp1.efficiency_isentropic.fix(0.85)
+        solver_obj.solve(self, tee=True)
         """
-
-        self.net_power_mw.fix(650)
+        """
+        #power to 646
+        self.net_power_mw.fix(646)
         self.gt.gt_power.unfix()
         solver_obj.solve(self, tee=True)
+
+        #steam temp to 858
+        self.st.hp_steam_temperature.fix(858)
+        solver_obj.solve(self, tee=True)
+        """
+        if save_to is not None:
+            iutil.to_json(self)
+            if save_to is not None:
+                iutil.to_json(self, fname=save_to)
+                init_log.info_high(f"Initialization saved to {save_to}")

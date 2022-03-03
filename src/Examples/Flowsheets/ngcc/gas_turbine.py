@@ -39,6 +39,7 @@ from idaes.power_generation.properties.natural_gas_PR import get_prop, get_rxn
 from idaes.generic_models.properties import iapws95
 from idaes.core.solvers import use_idaes_solver_configuration_defaults
 import idaes.logger as idaeslog
+from idaes.core.util.tags import svg_tag
 
 
 @declare_process_block_class(
@@ -970,7 +971,7 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                                    # drop in the VSV valve, decresing throttle loss
         # Exhaust pressure will be a bit over ATM due to HRSG. This will come from
         # HRSG model when coupled to form NGCC model
-        self.exhaust_1.pressure.fix(103421)
+        self.exhaust_1.pressure.fix(1.1e5)
         # Don't know how much blade cooling air is needed for off desing case, but
         # full load flows were based on WVU model.  For now just leave valves at
         # fixed opening.
@@ -1026,6 +1027,20 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
 
     def streams_dataframe(self):
         return self._stream_table(self.tags_streams)
+
+    def write_pfd(self, fname=None):
+        """Add model results to the flowsheet template.  If fname is specified,
+        this saves the resulting svg to a file.  If fname is not specified, it
+        returns the svg string.
+        Args:
+            fname: Name of file to save svg.  If None, return the svg string
+        Returns: (None or Str)
+        """
+        infilename = os.path.join(this_file_dir(), "gas_turbine_template.svg")
+        with open(infilename, "r") as f:
+            s = svg_tag(svg=f, tag_group=self.tags_streams, outfile=fname)
+        if fname is None:
+            return s
 
 
 def run_full_load(m, solver):
