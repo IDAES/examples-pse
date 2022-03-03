@@ -5,5 +5,9 @@ Descriptive examples showing how to use some common IDAES unit models.
 .. toctree::
     Compressor <compressor_doc>
     Heater <heater_doc>
+    Heat Exchanger 0D <heat_exchanger_0D>
+    Heat Exchanger 1D <heat_exchanger_1D>
+    Heat Exchanger NTU <heat_exchanger_NTU>
     Mixer <mixer_doc>
     Pump <pump_doc>
+    Turbine <turbine_doc>
