@@ -11,6 +11,8 @@
 # at the URL "https://github.com/IDAES/idaes-pse".
 ##############################################################################
 
+__author__ "John Eslick"
+
 import re
 import os
 
@@ -61,7 +63,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             doc="Steam turbine",
             default={
                 "property_package": self.prop_water,
-                "num_parallel_inlet_stages": 4,
+                "num_parallel_inlet_stages": 1,
                 "num_hp": 7,  # full load ave P ratio about 0.8238 with inlet
                 "num_ip": 10,  # full load ave P ratio about 0.8264
                 "num_lp": 11,  # full load ave P ratio about 0.7194 with outlet
@@ -268,18 +270,19 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
 
         for i, s in self.steam_turbine.hp_stages.items():
             s.ratioP[:] = 0.8238
-            s.efficiency_isentropic[:] = 0.89
+            s.efficiency_isentropic[:] = 0.92
             iscale.set_scaling_factor(s.control_volume.work, 1e-6)
         for i, s in self.steam_turbine.ip_stages.items():
             s.ratioP[:] = 0.8264
-            s.efficiency_isentropic[:] = 0.85
+            s.efficiency_isentropic[:] = 0.91
             iscale.set_scaling_factor(s.control_volume.work, 1e-6)
         for i, s in self.steam_turbine.lp_stages.items():
             s.ratioP[:] = 0.754
-            s.efficiency_isentropic[:] = 0.81
+            s.efficiency_isentropic[:] = 0.90
             iscale.set_scaling_factor(s.control_volume.work, 1e-6)
 
-        self.steam_turbine.outlet_stage.design_exhaust_flow_vol.fix(2300)
+        self.steam_turbine.outlet_stage.eff_dry.fix(0.90)
+        self.steam_turbine.outlet_stage.design_exhaust_flow_vol.fix(1860)
         # Unfix the main steam flow for pressure driven flow
         self.steam_turbine.inlet_split.inlet.flow_mol.unfix()
         self.steam_turbine.outlet_stage.control_volume.properties_out[0].pressure.fix(
@@ -298,7 +301,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         )
 
         self.main_condenser.tube_inlet.flow_mol.fix(2e5)
-        self.main_condenser.tube_inlet.enth_mol.fix(1900)
+        self.main_condenser.tube_inlet.enth_mol.fix(1800)
         self.main_condenser.tube_inlet.pressure.fix(5e5)
         self.main_condenser.area.fix(5000)
         self.main_condenser.overall_heat_transfer_coefficient.fix(15000)
@@ -326,9 +329,6 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.main_condenser.tube.heat, 1e-6)
         iscale.set_scaling_factor(self.cond_pump.control_volume.work, 1e-6)
         iscale.set_scaling_factor(self.steam_turbine.throttle_valve[1].control_volume.deltaP, 1e-3)
-        iscale.set_scaling_factor(self.steam_turbine.throttle_valve[2].control_volume.deltaP, 1e-3)
-        iscale.set_scaling_factor(self.steam_turbine.throttle_valve[3].control_volume.deltaP, 1e-3)
-        iscale.set_scaling_factor(self.steam_turbine.throttle_valve[4].control_volume.deltaP, 1e-3)
         iscale.set_scaling_factor(self.steam_turbine.outlet_stage.control_volume.properties_out[0.0].pressure, 1e-3)
         iscale.set_scaling_factor(self.steam_turbine.outlet_stage.control_volume.properties_out[0.0].pressure, 1e-3)
         iscale.set_scaling_factor(self.reboiler.control_volume.heat, 1e-7)
@@ -341,6 +341,18 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         load_from="steam_turbine_init.json.gz",
         save_to="steam_turbine_init.json.gz",
     ):
+        """ Initialize the steam turbine flowsheet
+
+        Args:
+            outlvl: Logging level for initializtion
+            solver (str): solver to user for initializtion
+            optarg (dict): solver options
+            load_from (str): if file exists and is not None, load initialization
+            save_to (str): save initializtion
+
+        Returns:
+            None
+        """
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
 
@@ -408,16 +420,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             raise InitializationError(f"steam turbine failed to initialize.")
 
         # Adjust flow coefficient for steam extraction
-        self.steam_turbine.outlet_stage.flow_coeff.fix(0.10)
-        dp = pyo.value(-5e5)
-        self.steam_turbine.throttle_valve[1].deltaP.fix(dp)
-        self.steam_turbine.throttle_valve[2].deltaP.fix(dp)
-        self.steam_turbine.throttle_valve[3].deltaP.fix(dp)
-        self.steam_turbine.throttle_valve[4].deltaP.fix(dp)
-        self.steam_turbine.throttle_valve[1].pressure_flow_equation.deactivate()
-        self.steam_turbine.throttle_valve[2].pressure_flow_equation.deactivate()
-        self.steam_turbine.throttle_valve[3].pressure_flow_equation.deactivate()
-        self.steam_turbine.throttle_valve[4].pressure_flow_equation.deactivate()
+        self.steam_turbine.outlet_stage.flow_coeff.fix(0.09)
 
         with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
             res = solver_obj.solve(self, tee=slc.tee)
@@ -516,7 +519,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             fname: Name of file to save svg.  If None, return the svg string
         Returns: (None or Str)
         """
-        infilename = os.path.join(this_file_dir(), "steam_turbine_template.svg")
+        infilename = os.path.join(this_file_dir(), "templates/steam_turbine_template.svg")
         with open(infilename, "r") as f:
             s = svg_tag(svg=f, tag_group=self.tags_steam_streams, outfile=fname)
         if fname is None:

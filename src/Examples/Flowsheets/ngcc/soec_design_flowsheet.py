@@ -894,7 +894,7 @@ class SoecDesignFlowsheetData(FlowsheetBlockData):
             fname: Name of file to save svg.  If None, return the svg string
         Returns: (None or Str)
         """
-        infilename = os.path.join(this_file_dir(), "soec_template.svg")
+        infilename = os.path.join(this_file_dir(), "templates/soec_template.svg")
         with open(infilename, "r") as f:
             s = svg_tag(svg=f, tag_group=self.tags_streams, outfile=None)
         s = svg_tag(svg=s, tag_group=self.tags_output, outfile=None)

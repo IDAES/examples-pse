@@ -22,7 +22,6 @@ import pyomo.environ as pyo
 from pyomo.network import Arc
 from pyomo.common.fileutils import this_file_dir
 
-import idaes
 from idaes.core import FlowsheetBlockData, declare_process_block_class
 from idaes.generic_models.properties.core.generic.generic_property import (
     GenericParameterBlock)
@@ -34,10 +33,8 @@ from idaes.core.util.initialization import propagate_state
 import idaes.core.util.tables as tables
 import idaes.core.util.scaling as iscale
 from idaes.core.util.misc import get_solver
-import idaes.core.plugins
 from idaes.power_generation.properties.natural_gas_PR import get_prop, get_rxn
 from idaes.generic_models.properties import iapws95
-from idaes.core.solvers import use_idaes_solver_configuration_defaults
 import idaes.logger as idaeslog
 from idaes.core.util.tags import svg_tag
 
@@ -47,7 +44,8 @@ from idaes.core.util.tags import svg_tag
     doc=(
         "The gas turbine flowsheet is base on NETL report 'Cost and Performance "
         "Baseline for Fossil Energy Plants Volume 1: Bituminous Coal and Natural "
-        "Gas to Electricity.' Sept 2019, Case B31B."
+        "Gas to Electricity.' Sept 2019, Case B31B. This flowsheet is intended for "
+        "off-design steady state simulations."
     ),
 )
 class GasTurbineFlowsheetData(FlowsheetBlockData):
@@ -76,12 +74,14 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
             "c4h10_cmb":"C4H10",
         }
     ):
+        """Add property parameter blocks
+        """
         self.air_species = air_species
         self.cmb_species = cmb_species
         self.flue_species = flue_species
         self.rxns = rxns
         # Here three differnt type of property blocks are used, so that we can
-        # avoid components with zero concneration, which can cause problems with
+        # avoid components with zero flow, which can cause problems with
         # certain property calculations (entropy for example). Three types of
         # gas streams are Air, combstion mixture, and flue gas.  Fortunately
         # natural gas has some air compoents in it so the combustion property
@@ -358,7 +358,7 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                 -1373.6*f**3 + 31759*f**2 - 188528*f + 500520)
 
     def _add_constraints(self):
-        """ Add addtional needed constraints and expressions to the model.
+        """ Add addtional flowsheet constraints and expressions
         """
         self.cmbout_o2_mol_frac = pyo.Var(
             self.time,
@@ -391,7 +391,7 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                 b.control_volume.properties_in[t].pressure
             )
 
-        # Complete combustion, use key compoents and 100% conversion
+        # Complete combustion, use key components and 100% conversion
         @self.cmb1.Constraint(self.time, self.rxns.keys())
         def reaction_extent(b, t, r):
             key = self.rxns[r]
@@ -412,7 +412,7 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
 
         # Add a varable and constraint for gross power.  This allows fixing power
         # for simulations where a specific power output is desired.
-        self.gt_power = pyo.Var(self.time)
+        self.gt_power = pyo.Var(self.time, units=pyo.units.W)
         @self.Constraint(self.time)
         def gt_power_eqn(b, t):
             return b.gt_power[t] == b.gt_power_expr[t]
@@ -483,8 +483,9 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         for i, c in self.flue_translator.flow_mole_comp_eqn.items():
             iscale.constraint_scaling_transform(c, 1e-3)
 
-
     def _add_arcs(self):
+        """ Connect process unit models with arcs
+        """
         self.fuel01 = Arc(
             source=self.feed_fuel1.outlet,
             destination=self.ng_preheat.tube_inlet,
@@ -537,7 +538,6 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
             source=self.splt1.air07,
             destination=self.valve02.inlet,
             doc="Stage 2 blade cooling air splitter to valve",
-
         )
         self.air08a = Arc(
             source=self.valve02.outlet,
@@ -622,9 +622,8 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
             "N2":0.0160,
             "Ar":1e-19}
 
-
         self.vsv.deltaP.fix(-100)
-        self.cmp1.efficiency_isentropic.fix(0.85)
+        self.cmp1.efficiency_isentropic.fix(0.81)
         self.cmp1.ratioP.fix(19.075)
         # blabe cooling air valves use expected flow to calculate valve flow
         # coefficients, so here set expected flow and after init the opening will
@@ -655,7 +654,6 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         self.ng_preheat.shell_inlet.pressure.fix(4.2e6)
         self.ng_preheat.shell_inlet.enth_mol.fix(14e3)
 
-
     def _add_tags(self):
         tag_group = iutil.ModelTagGroup()
         self.tags_streams = tag_group
@@ -685,7 +683,7 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
             tag_group[f"{i}_Fvol"] = iutil.ModelTag(
                 doc=f"{i}: volumetric flow",
                 expr=s.flow_vol,
-                format_string="{:.3f}",
+                format_string="{:.1f}",
                 display_units=pyo.units.m ** 3 / pyo.units.s,
             )
             tag_group[f"{i}_P"] = iutil.ModelTag(
@@ -715,6 +713,104 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                     format_string="{:.3f}",
                     display_units="%",
                 )
+        tag_group = iutil.ModelTagGroup()
+        self.tags_output = tag_group
+        tag_group["valve01_opening"] = iutil.ModelTag(
+            doc=f"Blade cooling air valve01 opening",
+            expr=self.valve01.valve_opening[0] * 100,
+            format_string="{:.1f}",
+            display_units="%",
+        )
+        tag_group["valve02_opening"] = iutil.ModelTag(
+            doc=f"Blade cooling air valve02 opening",
+            expr=self.valve02.valve_opening[0] * 100,
+            format_string="{:.1f}",
+            display_units="%",
+        )
+        tag_group["valve03_opening"] = iutil.ModelTag(
+            doc=f"Blade cooling air valve03 opening",
+            expr=self.valve03.valve_opening[0] * 100,
+            format_string="{:.1f}",
+            display_units="%",
+        )
+        tag_group["cmp1_head_isen"] = iutil.ModelTag(
+            doc=f"Compressor isentropic head.",
+            expr=self.cmp1.performance_curve.head_isentropic[0],
+            format_string="{:.2f}",
+            display_units=pyo.units.kJ/pyo.units.kg,
+        )
+        tag_group["gts1_head_isen"] = iutil.ModelTag(
+            doc=f"Gas turbine stage 1 isentropic head.",
+            expr=self.gts1.performance_curve.head_isentropic[0],
+            format_string="{:.2f}",
+            display_units=pyo.units.kJ/pyo.units.kg,
+        )
+        tag_group["gts2_head_isen"] = iutil.ModelTag(
+            doc=f"Gas turbine stage 2 isentropic head.",
+            expr=self.gts2.performance_curve.head_isentropic[0],
+            format_string="{:.2f}",
+            display_units=pyo.units.kJ/pyo.units.kg,
+        )
+        tag_group["gts3_head_isen"] = iutil.ModelTag(
+            doc=f"Gas turbine stage 3 isentropic head.",
+            expr=self.gts3.performance_curve.head_isentropic[0],
+            format_string="{:.2f}",
+            display_units=pyo.units.kJ/pyo.units.kg,
+        )
+        tag_group["cmp1_eff_isen"] = iutil.ModelTag(
+            doc=f"Compressor isentropic efficiency.",
+            expr=100*self.cmp1.efficiency_isentropic[0],
+            format_string="{:.2f}",
+            display_units="%",
+        )
+        tag_group["gts1_eff_isen"] = iutil.ModelTag(
+            doc=f"Gas turbine stage 1 isentropic efficiency.",
+            expr=100*self.gts1.efficiency_isentropic[0],
+            format_string="{:.2f}",
+            display_units="%",
+        )
+        tag_group["gts2_eff_isen"] = iutil.ModelTag(
+            doc=f"Gas turbine stage 2 isentropic efficiency.",
+            expr=100*self.gts2.efficiency_isentropic[0],
+            format_string="{:.2f}",
+            display_units="%",
+        )
+        tag_group["gts3_eff_isen"] = iutil.ModelTag(
+            doc=f"Gas turbine stage 3 isentropic efficiency.",
+            expr=100*self.gts3.efficiency_isentropic[0],
+            format_string="{:.2f}",
+            display_units="%",
+        )
+        tag_group["cmp1_power"] = iutil.ModelTag(
+            doc=f"Compressor power",
+            expr=self.cmp1.control_volume.work[0],
+            format_string="{:.2f}",
+            display_units=pyo.units.MW,
+        )
+        tag_group["gts1_power"] = iutil.ModelTag(
+            doc=f"GT stage 1 power",
+            expr=self.gts1.control_volume.work[0],
+            format_string="{:.2f}",
+            display_units=pyo.units.MW,
+        )
+        tag_group["gts2_power"] = iutil.ModelTag(
+            doc=f"GT stage 2 power",
+            expr=self.gts2.control_volume.work[0],
+            format_string="{:.2f}",
+            display_units=pyo.units.MW,
+        )
+        tag_group["gts3_power"] = iutil.ModelTag(
+            doc=f"GT stage 3 power",
+            expr=self.gts3.control_volume.work[0],
+            format_string="{:.2f}",
+            display_units=pyo.units.MW,
+        )
+        tag_group["gt_total_power"] = iutil.ModelTag(
+            doc=f"Total gas turbine power output",
+            expr=-self.gt_power[0],
+            format_string="{:.2f}",
+            display_units=pyo.units.MW,
+        )
 
     def _set_scaling(self):
         prop_packages = {
@@ -835,6 +931,18 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         load_from="gas_turbine_init.json.gz",
         save_to="gas_turbine_init.json.gz",
     ):
+        """ Initialize the gas turbine flowsheet
+
+        Args:
+            outlvl: Logging level for initializtion
+            solver (str): solver to user for initializtion
+            optarg (dict): solver options
+            load_from (str): if file exists and is not None, load initialization
+            save_to (str): save initializtion
+
+        Returns:
+            None
+        """
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
 
@@ -1002,9 +1110,10 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                 iutil.to_json(self, fname=save_to)
                 init_log.info_high(f"Initialization saved to {save_to}")
 
-
     @staticmethod
     def _stream_col_gen(tag_group):
+        """Generate a stream table heading from a group of stream tags
+        """
         for tag in tag_group.values():
             spltstr = tag.doc.split(":")
             stream = spltstr[0].strip()
@@ -1013,6 +1122,8 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
 
     @staticmethod
     def _stream_table(tag_group):
+        """Generate a stream table from a group of stream tags
+        """
         rows = set()
         cols = set()
         tags = []
@@ -1026,144 +1137,21 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         return df
 
     def streams_dataframe(self):
+        """Get a stream table as a Pandas DataFrame"""
         return self._stream_table(self.tags_streams)
 
     def write_pfd(self, fname=None):
         """Add model results to the flowsheet template.  If fname is specified,
         this saves the resulting svg to a file.  If fname is not specified, it
         returns the svg string.
+
         Args:
             fname: Name of file to save svg.  If None, return the svg string
         Returns: (None or Str)
         """
-        infilename = os.path.join(this_file_dir(), "gas_turbine_template.svg")
+        infilename = os.path.join(this_file_dir(), "templates/gas_turbine_template.svg")
         with open(infilename, "r") as f:
-            s = svg_tag(svg=f, tag_group=self.tags_streams, outfile=fname)
+            s = svg_tag(svg=f, tag_group=self.tags_streams, outfile=None)
+        s = svg_tag(svg=s, tag_group=self.tags_output, outfile=fname)
         if fname is None:
             return s
-
-
-def run_full_load(m, solver):
-    """ Set the model up for off-design pressure driven flow.  Run 480 MW case.
-
-    Args:
-        m: (ConcreteModel) model to run
-        solver: (Solver)
-
-    Returns:
-        None
-    """
-
-
-def run_series(m, solver):
-    """Run off design at 480 MW then a series of lower loads. Call run_full_load
-    first to configure the model properly before calling this function. Saves
-    PFD and row in tabulated csv file results for each case.
-
-    Args:
-        m: (ConcreteModel) model to run
-        solver: (Solver)
-
-    Returns:
-        None
-    """
-    tags = m.tags
-    tag_format = m.tag_format
-    # Write the results to a CSV with these columns
-    columns=[
-        "power", "Fuel_flow", "Air_flow", "TI_temp", "TI_pressure",
-        "TI_flow", "EX_temp", "EX_pressure", "EX_flow", "FG_O2", "FG_CO2"]
-
-    # Write CSV header
-    with open("res.csv", "w", newline='') as f:
-        cw = csv.writer(f)
-        cw.writerow(columns)
-
-    # Run simulations, write CSV rows, and write flowsheets
-    for i, p in enumerate([480 - 48*j for j in range(9)]):
-        print(f"Loop {p}") # Print power to track progress
-        m.fs.gt_power[0].fix(-p*1e6) # fix gross power
-        solver.solve(m, tee=True)
-        with open("res.csv", "a", newline='') as f:
-            csv.writer(f).writerow([
-                p,
-                pyo.value(tags["fuel01_F"]), # mass flow
-                pyo.value(tags["air01_F"]), # mass flow
-                pyo.value(tags["g02_T"]),
-                pyo.value(tags["g02_P"]),
-                pyo.value(tags["g02_F"]),
-                pyo.value(tags["g08_T"]),
-                pyo.value(tags["g08_P"]),
-                pyo.value(tags["g08_F"]),
-                pyo.value(tags["g08_yO2"]),
-                pyo.value(tags["g08_yCO2"])])
-        write_pfd_results(f"gas_turbine_results_{p}.svg", tags, tag_format)
-
-
-if __name__ == "__main__":
-    #
-    # Solver config
-    #
-    # Use idaes config, because these will apply to all ipopt solvers created
-    use_idaes_solver_configuration_defaults()
-    idaes.cfg.ipopt["options"]["nlp_scaling_method"] = "user-scaling"
-    # due to a lot of component mole fractions being on their lower bound of 0
-    # bound push result in much longer solve times, so set it low.
-    idaes.cfg.ipopt["options"]["bound_push"] = 1e-10
-
-
-    comps = { # components present
-        "CH4", "C2H6", "C2H4", "CO", "H2S", "H2", "O2", "H2O", "CO2", "N2",
-        "Ar", "SO2"}
-    rxns = { # reactions and key compoents for conversion
-        "ch4_cmb":"CH4",
-        "c2h6_cmb":"C2H6",
-        "c2h4_cmb":"C2H4",
-        "co_cmb":"CO",
-        "h2s_cmb":"H2S",
-        "h2_cmb":"H2"}
-    phases = ["Vap"]
-    air_comp = {
-        "O2":0.2074,
-        "H2O":0.0099,
-        "CO2":0.0003,
-        "N2":0.7732,
-        "Ar":0.0092}
-    ng_comp = {
-        "CH4":0.87,
-        "C2H6":0.0846,
-        "C2H4":0.0003,
-        "CO":0.0009,
-        "H2S":0.0004,
-        "H2":0.0036,
-        "O2":0.0007,
-        "H2O":0.0,
-        "CO2":0.0034,
-        "N2":0.0361,
-        "Ar":0.0,
-        "SO2":0.0}
-
-    m, solver = main(
-        comps=comps,
-        rxns=rxns,
-        phases=phases,
-        air_comp=air_comp,
-        ng_comp=ng_comp)
-    run_full_load(m, solver)
-    #iscale.constraint_autoscale_large_jac(m)
-    jac, nlp = iscale.get_jacobian(m, scaled=True)
-    print("Extreme Jacobian entries:")
-    for i in iscale.extreme_jacobian_entries(jac=jac, nlp=nlp, large=100):
-        print(f"    {i[0]:.2e}, [{i[1]}, {i[2]}]")
-    print("Unscaled constraints:")
-    for c in iscale.unscaled_constraints_generator(m):
-        print(f"    {c}")
-    print("Scaled constraints by factor:")
-    for c, s in iscale.constraints_with_scale_factor_generator(m):
-        print(f"    {c}, {s}")
-    print("Badly scaled variables:")
-    for v, sv in iscale.badly_scaled_var_generator(m, large=1e2, small=1e-2, zero=1e-12):
-        print(f"    {v} -- {sv} -- {iscale.get_scaling_factor(v)}")
-    print(f"Jacobian Condition Number: {iscale.jacobian_cond(jac=jac):.2e}")
-    write_pfd_results("gas_turbine_results.svg", m.tags, m.tag_format)
-    #run_series(m, solver)

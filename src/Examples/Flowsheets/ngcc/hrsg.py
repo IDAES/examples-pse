@@ -11,8 +11,11 @@
 # at the URL "https://github.com/IDAES/idaes-pse".
 ##############################################################################
 """
-NGCC HRSG Subsystem for a 690MWe
+NGCC HRSG subsystem for a 690MWe with 97% CO2 capture
 """
+
+__author__ = ["M. Zamarripa", "John Eslick"]
+
 import os
 
 import pandas as pd
@@ -22,53 +25,48 @@ import pyomo.environ as pyo
 from pyomo.network import Arc
 
 import idaes.logger as idaeslog
-from idaes.core.util.model_statistics import degrees_of_freedom
+import idaes.core.util.tables as ta
+from idaes.core.util.tags import svg_tag
 from idaes.core.util.initialization import propagate_state
 from idaes.core import FlowsheetBlockData, declare_process_block_class
 import idaes.core.util as iutil
 import idaes.core.util.scaling as iscale
-from idaes.generic_models.unit_models import Mixer, Separator as Splitter
 from idaes.generic_models.properties import iapws95
 from idaes.power_generation.properties import FlueGasParameterBlock
+from idaes.power_generation.unit_models.helm.phase_separator import HelmPhaseSeparator
 from idaes.power_generation.unit_models.helm import (
     HelmMixer,
     MomentumMixingType,
     HelmSplitter,
+    HelmValve,
     HelmIsentropicCompressor as WaterPump,
 )
+from idaes.generic_models.unit_models import Mixer, Separator as Splitter
 from idaes.generic_models.unit_models.heat_exchanger import (
     HeatExchanger,
     HeatExchangerFlowPattern,
-    HeatExchangerPhaseChange,
-    delta_temperature_lmtd_callback as delta_temperature_underwood_callback,
+    delta_temperature_lmtd_callback as delta_temp_cb,
     delta_temperature_lmtd_callback,
 )
 from idaes.power_generation.unit_models.boiler_heat_exchanger import (
     BoilerHeatExchanger,
     TubeArrangement,
 )
-from idaes.power_generation.unit_models.helm.phase_separator import HelmPhaseSeparator
-import idaes.core.util.tables as ta
-from idaes.core.util.tags import svg_tag
-
-__author__ = "M. Zamarripa"
 
 
 @declare_process_block_class(
     "HrsgFlowsheet",
     doc=(
-        "The HRSG Flowsheet base on NETL report 'Cost and Performance Baseline "
+        "The HRSG Flowsheet is base on NETL report 'Cost and Performance Baseline "
         "for Fossil Energy Plants Volume 1: Bituminous Coal and Natural Gas to "
-        "Electricity.' Sept 2019, Case B31B."
+        "Electricity.' Sept 2019, Case B31B. This flowsheet is intended for steady "
+        "state off-design calculations."
     ),
 )
 class HrsgFlowsheetData(FlowsheetBlockData):
     def build(self):
         super().build()
-        self.prop_water = iapws95.Iapws95ParameterBlock()
-        self.prop_gas = FlueGasParameterBlock(
-            default={"components": ["N2", "O2", "CO2", "H2O"]}
-        )
+        self._add_properties()
         self._add_unit_models()
         self._add_flowsheet_constraints()
         self._add_arcs()
@@ -76,15 +74,27 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self._set_scaling_factors()
         self._stream_tags()
 
+    def _add_properties(self):
+        """Add property parameter blocks for steam (prop_water) and flue gas
+        (prop_gas).
+        """
+        self.prop_water = iapws95.Iapws95ParameterBlock()
+        self.prop_gas = FlueGasParameterBlock(
+            default={"components": ["N2", "O2", "CO2", "H2O"]}
+        )
+
     def _add_unit_models(self):
+        """Add process unit models
+        """
+        # short refernce to property parameter blocks
         prop_water = self.prop_water
         prop_gas = self.prop_gas
 
         ######### LP Section ###########
         self.econ_lp = BoilerHeatExchanger(
-            doc="Economizer",
+            doc="LP Economizer",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": False,
@@ -96,7 +106,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             },
         )
         self.mixer1 = HelmMixer(
-            doc="Mixer for econ_lp outlet and preheater streams",
+            doc="Mixer for econ_lp outlet and NG preheater return streams",
             default={
                 "dynamic": False,
                 "property_package": prop_water,
@@ -105,21 +115,20 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             },
         )
         self.drum_lp = HelmPhaseSeparator(
-            doc="LP drum, flash seperator",
+            doc="Phase seperator for LP evaporator (parital evaporator)",
             default={"property_package": prop_water},
         )
         self.evap_lp = HeatExchanger(
-            doc="LP evaporator",
+            doc="LP evaporator heat exchanger section",
             default={
                 "shell": {"property_package": prop_gas},
                 "tube": {"property_package": prop_water},
                 "delta_temperature_callback": delta_temperature_lmtd_callback,
                 "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "phase_change": HeatExchangerPhaseChange.evaporator,
             },
         )
         self.mixer_soec = HelmMixer(
-            doc="Mixer for econ_lp outlet and preheater streams",
+            doc="Mixer for evap_lp outlet and soec makeup",
             default={
                 "dynamic": False,
                 "property_package": prop_water,
@@ -128,7 +137,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             },
         )
         self.split_fg_lp = Splitter(
-            doc="LP section bypass flue gas splitter",
+            doc="LP superheater flue bypass gas splitter",
             default={
                 "property_package": prop_gas,
                 "ideal_separation": False,
@@ -145,7 +154,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_lp = BoilerHeatExchanger(
             doc="LP superheater",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": False,
@@ -176,7 +185,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_ip1 = BoilerHeatExchanger(
             doc="IP ecomonmizer part 1",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -188,7 +197,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             },
         )
         self.splitter_ip1 = HelmSplitter(
-            doc="IP economizer split for natrual gas preheater",
+            doc="IP economizer hot water split for natural gas preheater",
             default={
                 "property_package": prop_water,
                 "outlet_list": ["toIP_ECON2", "toNGPH"],
@@ -197,7 +206,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_ip2 = BoilerHeatExchanger(
             doc="IP ecomonmizer part 2",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -209,19 +218,18 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             },
         )
         self.evap_ip = HeatExchanger(
-            doc="IP evaporator",
+            doc="IP evaporator (total evaporator)",
             default={
                 "shell": {"property_package": prop_gas},
                 "tube": {"property_package": prop_water},
                 "delta_temperature_callback": delta_temperature_lmtd_callback,
                 "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "phase_change": HeatExchangerPhaseChange.evaporator,
             },
         )
         self.sh_ip1 = BoilerHeatExchanger(
             doc="IP superheater 1",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -251,7 +259,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip2 = BoilerHeatExchanger(
             doc="IP superheater 2",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -265,7 +273,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip3 = BoilerHeatExchanger(
             doc="IP superheater 3",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -279,7 +287,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp1 = BoilerHeatExchanger(
             doc="HP economizer 1",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -293,7 +301,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp2 = BoilerHeatExchanger(
             doc="HP economizer 2",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -307,7 +315,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp3 = BoilerHeatExchanger(
             doc="HP economizer 3",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -321,7 +329,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp4 = BoilerHeatExchanger(
             doc="HP economizer 4",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -335,7 +343,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp5 = BoilerHeatExchanger(
             doc="HP economizer 5",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -346,20 +354,26 @@ class HrsgFlowsheetData(FlowsheetBlockData):
                 "has_radiation": False,
             },
         )
+        self.evap_hp_valve = HelmValve(
+            doc="HP evaporator valve",
+            default={
+                "property_package": prop_water,
+            },
+        )
+        self.evap_hp_valve.pressure_flow_equation.deactivate()
         self.evap_hp = HeatExchanger(
-            doc="HP evaporator",
+            doc="HP evaporator (total evaporator)",
             default={
                 "shell": {"property_package": prop_gas},
                 "tube": {"property_package": prop_water},
                 "delta_temperature_callback": delta_temperature_lmtd_callback,
                 "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "phase_change": HeatExchangerPhaseChange.evaporator,
             },
         )
         self.sh_hp1 = BoilerHeatExchanger(
             doc="HP superheater 1",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -373,7 +387,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp2 = BoilerHeatExchanger(
             doc="HP superheater 2",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -387,7 +401,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp3 = BoilerHeatExchanger(
             doc="HP superheater 3",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -401,7 +415,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp4 = BoilerHeatExchanger(
             doc="HP superheater 4",
             default={
-                "delta_temperature_callback": delta_temperature_underwood_callback,
+                "delta_temperature_callback": delta_temp_cb,
                 "tube": {"property_package": prop_water},
                 "shell": {"property_package": prop_gas},
                 "has_pressure_change": True,
@@ -414,34 +428,34 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         )
 
     def _add_flowsheet_constraints(self):
-        """Add additional flowsheet constraints."""
-        #
-        # Everything evaporates in IP evaporator
-        #
-        @self.evap_ip.Constraint(self.config.time)
+        """Add additional flowsheet constraints.
+        """
+        @self.evap_ip.Constraint(
+            self.config.time, doc="Everything evaporates in IP evaporator")
         def ip_sat_vap_eqn(b, t):
             return (
-                b.tube.properties_out[t].enth_mol / 1e3
-                == (b.tube.properties_out[t].enth_mol_sat_phase["Vap"] + 30) / 1e3
+                b.tube.properties_out[t].enth_mol / 1e4
+                == (b.tube.properties_out[t].enth_mol_sat_phase["Vap"] + 30) / 1e4
             )
-        @self.evap_hp.Constraint(self.config.time)
+        @self.evap_hp.Constraint(
+            self.config.time, doc="Everything evaporates in HP evaporator")
         def hp_sat_vap_eqn(b, t):
             return (
-                b.tube.properties_out[t].enth_mol
-                == b.tube.properties_out[t].enth_mol_sat_phase["Vap"] + 30
+                b.tube.properties_out[t].enth_mol / 1e4
+                == (b.tube.properties_out[t].enth_mol_sat_phase["Vap"] + 30) / 1e4
             )
 
-        @self.mixer1.Constraint(self.config.time)
+        @self.mixer1.Constraint(self.config.time, doc="Mixed state pressure eqn.")
         def mixer1_pressure_eqn(b, t):
             return b.mixed_state[t].pressure == b.econ_lp_state[t].pressure
 
-        @self.mixer_soec.Constraint(self.config.time)
+        @self.mixer_soec.Constraint(self.config.time, doc="Mixed state pressure eqn.")
         def mixer_soec_pressure_eqn(b, t):
             return b.mixed_state[t].pressure == b.main_state[t].pressure
 
-        @self.mixer_ip1.Constraint(self.config.time)
+        @self.mixer_ip1.Constraint(self.config.time, doc="Mixed state pressure eqn.")
         def mixer_ip1_pressure_eqn(b, t):
-            return b.mixed_state[t].pressure == b.sh_ip1_state[t].pressure
+            return b.mixed_state[t].pressure == b.Cold_reheat_state[t].pressure
 
     def _add_arcs(self):
         ######### LP Section ###########
@@ -560,6 +574,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.hp06 = Arc(
             doc="econ_hp5 to evap_hp",
             source=self.econ_hp5.side_1_outlet,
+            destination=self.evap_hp_valve.inlet,
+        )
+        self.hp06b = Arc(
+            doc="evap_hp to sh_hp1",
+            source=self.evap_hp_valve.outlet,
             destination=self.evap_hp.tube_inlet,
         )
         self.hp07 = Arc(
@@ -707,13 +726,13 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_lp.shell_r_fouling = 0.00088
         self.econ_lp.fcorrection_htc.fix(1.5)
         self.econ_lp.fcorrection_dp_tube.fix(1.0)
-        self.econ_lp.fcorrection_dp_shell.fix(1.0)
+        self.econ_lp.fcorrection_dp_shell.fix(0.52)
         self.splitter1.split_fraction[0, "toIP"].fix(0.20)
 
         self.pump_ip.efficiency_isentropic.fix(0.80)
         self.pump_hp.efficiency_isentropic.fix(0.80)
 
-        self.evap_lp.area.fix(8400)
+        self.evap_lp.area.fix(10558.76)
         self.evap_lp.overall_heat_transfer_coefficient.fix(212)
 
         self.mixer_soec.soec_makeup.flow_mol.fix(0)
@@ -734,7 +753,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_lp.shell_r_fouling = 0.00088
         self.sh_lp.fcorrection_htc.fix(1.0)
         self.sh_lp.fcorrection_dp_tube.fix(1.0)
-        self.sh_lp.fcorrection_dp_shell.fix(1.0)
+        self.sh_lp.fcorrection_dp_shell.fix(0.52)
 
         ######### IP Section ###########
         self.econ_ip1.tube_di.fix(0.038)
@@ -750,7 +769,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_ip1.shell_r_fouling = 0.00088
         self.econ_ip1.fcorrection_htc.fix(1.0)
         self.econ_ip1.fcorrection_dp_tube.fix(1.0)
-        self.econ_ip1.fcorrection_dp_shell.fix(1.0)
+        self.econ_ip1.fcorrection_dp_shell.fix(0.52)
 
         self.splitter_ip1.split_fraction[0, "toNGPH"].fix(0.4592)
 
@@ -767,9 +786,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_ip2.shell_r_fouling = 0.00088
         self.econ_ip2.fcorrection_htc.fix(1.0)
         self.econ_ip2.fcorrection_dp_tube.fix(1.0)
-        self.econ_ip2.fcorrection_dp_shell.fix(1.0)
+        self.econ_ip2.fcorrection_dp_shell.fix(0.52)
 
-        self.evap_ip.area.fix(15000)
+        self.evap_ip.area.fix(11000.0)
         self.evap_ip.overall_heat_transfer_coefficient.fix(212)
 
         self.sh_ip1.tube_di.fix(0.051)
@@ -785,7 +804,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip1.shell_r_fouling = 0.00088
         self.sh_ip1.fcorrection_htc.fix(1.0)
         self.sh_ip1.fcorrection_dp_tube.fix(1.0)
-        self.sh_ip1.fcorrection_dp_shell.fix(1.0)
+        self.sh_ip1.fcorrection_dp_shell.fix(0.52)
 
         self.sh_ip2.tube_di.fix(0.0635)
         self.sh_ip2.tube_thickness.fix(0.003)
@@ -800,7 +819,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip2.shell_r_fouling = 0.00088
         self.sh_ip2.fcorrection_htc.fix(1.0)
         self.sh_ip2.fcorrection_dp_tube.fix(1.0)
-        self.sh_ip2.fcorrection_dp_shell.fix(1.0)
+        self.sh_ip2.fcorrection_dp_shell.fix(0.52)
 
         self.sh_ip3.tube_di.fix(0.0635)
         self.sh_ip3.tube_thickness.fix(0.003)
@@ -813,9 +832,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_ip3.delta_elevation.fix(1)
         self.sh_ip3.tube_r_fouling = 0.000176
         self.sh_ip3.shell_r_fouling = 0.00088
-        self.sh_ip3.fcorrection_htc.fix(1.0)
+        self.sh_ip3.fcorrection_htc.fix(1.14773)
         self.sh_ip3.fcorrection_dp_tube.fix(1.0)
-        self.sh_ip3.fcorrection_dp_shell.fix(1.0)
+        self.sh_ip3.fcorrection_dp_shell.fix(0.52)
 
         ######### HP Section ###########
         self.econ_hp1.tube_di.fix(0.051)
@@ -831,7 +850,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp1.shell_r_fouling = 0.00088
         self.econ_hp1.fcorrection_htc.fix(1.0)
         self.econ_hp1.fcorrection_dp_tube.fix(0.05)
-        self.econ_hp1.fcorrection_dp_shell.fix(0.05)
+        self.econ_hp1.fcorrection_dp_shell.fix(0.52)
 
         self.econ_hp2.tube_di.fix(0.051)
         self.econ_hp2.tube_thickness.fix(0.003)
@@ -846,7 +865,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp2.shell_r_fouling = 0.00088
         self.econ_hp2.fcorrection_htc.fix(1.0)
         self.econ_hp2.fcorrection_dp_tube.fix(0.05)
-        self.econ_hp2.fcorrection_dp_shell.fix(0.05)
+        self.econ_hp2.fcorrection_dp_shell.fix(0.52)
 
         self.econ_hp3.tube_di.fix(0.051)
         self.econ_hp3.tube_thickness.fix(0.003)
@@ -861,7 +880,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp3.shell_r_fouling = 0.00088
         self.econ_hp3.fcorrection_htc.fix(1.0)
         self.econ_hp3.fcorrection_dp_tube.fix(0.05)
-        self.econ_hp3.fcorrection_dp_shell.fix(0.05)
+        self.econ_hp3.fcorrection_dp_shell.fix(0.52)
 
         self.econ_hp4.tube_di.fix(0.051)
         self.econ_hp4.tube_thickness.fix(0.003)
@@ -876,7 +895,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp4.shell_r_fouling = 0.00088
         self.econ_hp4.fcorrection_htc.fix(1.0)
         self.econ_hp4.fcorrection_dp_tube.fix(0.05)
-        self.econ_hp4.fcorrection_dp_shell.fix(0.05)
+        self.econ_hp4.fcorrection_dp_shell.fix(0.52)
 
         self.econ_hp5.tube_di.fix(0.051)
         self.econ_hp5.tube_thickness.fix(0.003)
@@ -891,7 +910,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.econ_hp5.shell_r_fouling = 0.00088
         self.econ_hp5.fcorrection_htc.fix(1.0)
         self.econ_hp5.fcorrection_dp_tube.fix(0.05)
-        self.econ_hp5.fcorrection_dp_shell.fix(0.05)
+        self.econ_hp5.fcorrection_dp_shell.fix(0.52)
+
+        self.evap_hp_valve.deltaP.fix(-7e6)
+        self.evap_hp.area.fix(11535.367)
+        self.evap_hp.overall_heat_transfer_coefficient.fix(212)
 
         self.sh_hp1.tube_di.fix(0.0635)
         self.sh_hp1.tube_thickness.fix(0.003)
@@ -904,9 +927,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp1.delta_elevation.fix(1)
         self.sh_hp1.tube_r_fouling = 0.000176
         self.sh_hp1.shell_r_fouling = 0.00088
-        self.sh_hp1.fcorrection_htc.fix(1.0)
+        self.sh_hp1.fcorrection_htc.fix(0.7)
         self.sh_hp1.fcorrection_dp_tube.fix(1.0)
-        self.sh_hp1.fcorrection_dp_shell.fix(1.0)
+        self.sh_hp1.fcorrection_dp_shell.fix(0.52)
 
         self.sh_hp2.tube_di.fix(0.0635)
         self.sh_hp2.tube_thickness.fix(0.003)
@@ -919,9 +942,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp2.delta_elevation.fix(1)
         self.sh_hp2.tube_r_fouling = 0.000176
         self.sh_hp2.shell_r_fouling = 0.00088
-        self.sh_hp2.fcorrection_htc.fix(1.0)
+        self.sh_hp2.fcorrection_htc.fix(0.7)
         self.sh_hp2.fcorrection_dp_tube.fix(1.0)
-        self.sh_hp2.fcorrection_dp_shell.fix(1.0)
+        self.sh_hp2.fcorrection_dp_shell.fix(0.52)
 
         self.sh_hp3.tube_di.fix(0.0635)
         self.sh_hp3.tube_thickness.fix(0.003)
@@ -934,9 +957,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp3.delta_elevation.fix(1)
         self.sh_hp3.tube_r_fouling = 0.000176
         self.sh_hp3.shell_r_fouling = 0.00088
-        self.sh_hp3.fcorrection_htc.fix(1.0)
+        self.sh_hp3.fcorrection_htc.fix(0.7)
         self.sh_hp3.fcorrection_dp_tube.fix(1.0)
-        self.sh_hp3.fcorrection_dp_shell.fix(1.0)
+        self.sh_hp3.fcorrection_dp_shell.fix(0.52)
 
         self.sh_hp4.tube_di.fix(0.0635)
         self.sh_hp4.tube_thickness.fix(0.003)
@@ -949,12 +972,14 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp4.delta_elevation.fix(1)
         self.sh_hp4.tube_r_fouling = 0.000176
         self.sh_hp4.shell_r_fouling = 0.00088
-        self.sh_hp4.fcorrection_htc.fix(1.0)
+        self.sh_hp4.fcorrection_htc.fix(0.49584)
         self.sh_hp4.fcorrection_dp_tube.fix(1.0)
-        self.sh_hp4.fcorrection_dp_shell.fix(1.0)
+        self.sh_hp4.fcorrection_dp_shell.fix(0.52)
 
     def _set_scaling_factors(self):
-        hx_list = [
+        """ Set flowsheet scaling factors
+        """
+        hx_list = [ # list of boiler heat exchangers
             self.econ_lp,
             self.sh_lp,
             self.econ_ip1,
@@ -972,7 +997,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             self.sh_hp3,
             self.sh_hp4,
         ]
-        for unit in hx_list:
+        for unit in hx_list: # set boiler hx scaling factors
             iscale.set_scaling_factor(unit.side_1.heat, 1e-6)
             iscale.set_scaling_factor(unit.side_2.heat, 1e-6)
             iscale.set_scaling_factor(unit.overall_heat_transfer_coefficient, 1e-2)
@@ -1005,8 +1030,8 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.evap_ip.area, 1e-4)
         iscale.set_scaling_factor(self.evap_ip.overall_heat_transfer_coefficient, 1e-2)
 
-        iscale.set_scaling_factor(self.pump_ip.control_volume.work, 1e-6)
-        iscale.set_scaling_factor(self.pump_hp.control_volume.work, 1e-7)
+        iscale.set_scaling_factor(self.pump_ip.control_volume.work, 1e-7)
+        iscale.set_scaling_factor(self.pump_hp.control_volume.work, 1e-8)
         iscale.set_scaling_factor(self.pump_hp.control_volume.deltaP, 1e-9)
 
         iscale.set_scaling_factor(self.evap_hp.shell.heat, 1e-8)
@@ -1028,6 +1053,18 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         load_from="hrsg_init.json.gz",
         save_to="hrsg_init.json.gz",
     ):
+        """ Initialize the HRSG flowsheet
+
+        Args:
+            outlvl: Logging level for initializtion
+            solver (str): solver to user for initializtion
+            optarg (dict): solver options
+            load_from (str): if file exists and is not None, load initialization
+            save_to (str): save initializtion
+
+        Returns:
+            None
+        """
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
 
@@ -1053,7 +1090,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             "N2": 0.75,
             "O2": 0.1217,
         }
-        def _set_fg_port(port, temperature, pressure, flow=fg_rate, fix=True):
+        def _set_fg_port(port, temperature, pressure, flow=fg_rate, fix=False):
             port.temperature[:].set_value(temperature)
             port.pressure[:].set_value(pressure)
             for c, v in fg_comp.items():
@@ -1096,8 +1133,8 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         propagate_state(self.lp08)
         propagate_state(self.lp09)
 
-        self.split_fg_lp.split_fraction[0, "toLP_SH"].fix(0.55)
-        _set_fg_port(self.split_fg_lp.inlet, temperature=640.15, pressure=103421)
+        self.split_fg_lp.split_fraction[0, "toLP_SH"].fix(0.16779)
+        _set_fg_port(self.split_fg_lp.inlet, temperature=640.15, pressure=103421, fix=True)
         self.split_fg_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
         propagate_state(self.g20)
         propagate_state(self.g22)
@@ -1114,8 +1151,6 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         _set_fg_port(self.econ_ip1.shell_inlet, temperature=579.46, pressure=103421)
         self.econ_ip1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.econ_ip1.deltaP_tube_eqn.deactivate()
-        #self.econ_ip1.deltaP_tube.fix(-1.79e05)
         propagate_state(self.ip02)
 
         self.splitter_ip1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
@@ -1123,23 +1158,15 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         _set_fg_port(self.econ_ip2.shell_inlet, temperature=607, pressure=103421)
         self.econ_ip2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.econ_ip2.deltaP_tube_eqn.deactivate()
-        #self.econ_ip2.deltaP_tube.fix(-1.63e05)
         propagate_state(self.ip05)
 
         self.evap_ip.ip_sat_vap_eqn.deactivate()
-        #self.evap_ip.tube.deltaP.fix(-1.62e05)
         _set_fg_port(self.evap_ip.shell_inlet, temperature=630, pressure=103421)
-        #self.evap_ip.delta_temperature_in_equation.deactivate()
-        #self.evap_ip.delta_temperature_out_equation.deactivate()
-        self.evap_ip.initialize(solver=solver, outlvl=idaeslog.DEBUG, optarg=optarg)
+        self.evap_ip.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
         propagate_state(self.ip06)
-        #self.evap_ip.ip_sat_vap_eqn.activate()
 
         _set_fg_port(self.sh_ip1.shell_inlet, temperature=670, pressure=103421)
         self.sh_ip1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.sh_ip1.deltaP_tube_eqn.deactivate()
-        #self.sh_ip1.deltaP_tube.fix(-1.55e05)
         propagate_state(self.ip07)
 
         self.splitter_ip2.inlet.flow_mol[0].fix(7503.7337)
@@ -1164,53 +1191,40 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         _set_fg_port(self.sh_ip2.shell_inlet, temperature=802, pressure=103421)
         self.sh_ip2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.sh_ip2.deltaP_tube_eqn.deactivate()
-        #self.sh_ip2.deltaP_tube.fix(-7.45e04)
         propagate_state(self.ip09)
 
         _set_fg_port(self.sh_ip3.shell_inlet, temperature=868, pressure=103421)
         self.sh_ip3.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.sh_ip3.deltaP_tube_eqn.deactivate()
-        #self.sh_ip3.deltaP_tube.fix(-7.31e04)
 
         init_log.info("Intermediate pressure system initialization - Completed")
 
-        self.pump_hp.outlet.pressure[0].fix(2.15e7)
+        self.pump_hp.outlet.pressure[0].fix(24.4e6)
         self.pump_hp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
         propagate_state(self.hp01)
 
         _set_fg_port(self.econ_hp1.shell_inlet, temperature=566, pressure=103421)
         self.econ_hp1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.econ_hp1.deltaP_tube_eqn.deactivate()
-        #self.econ_hp1.deltaP_tube.fix(-9.79e05)
         propagate_state(self.hp02)
 
         _set_fg_port(self.econ_hp2.shell_inlet, temperature=596, pressure=103421)
         self.econ_hp2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.econ_hp2.deltaP_tube_eqn.deactivate()
-        #self.econ_hp2.deltaP_tube.fix(-9.38e05)
         propagate_state(self.hp03)
 
         _set_fg_port(self.econ_hp3.shell_inlet, temperature=607, pressure=103421)
         self.econ_hp3.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.econ_hp3.deltaP_tube_eqn.deactivate()
-        #self.econ_hp3.deltaP_tube.fix(-8.96e05)
         propagate_state(self.hp04)
 
         _set_fg_port(self.econ_hp4.shell_inlet, temperature=624, pressure=103421)
         self.econ_hp4.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.econ_hp4.deltaP_tube_eqn.deactivate()
-        #self.econ_hp4.deltaP_tube.fix(-8.62e05)
         propagate_state(self.hp05)
 
         _set_fg_port(self.econ_hp5.shell_inlet, temperature=631, pressure=103421)
         self.econ_hp5.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.econ_hp5.deltaP_tube_eqn.deactivate()
-        #self.econ_hp5.deltaP_tube.fix(-8.27e05)
         propagate_state(self.hp06)
 
-        self.evap_hp.area.fix(14000)
-        self.evap_hp.overall_heat_transfer_coefficient.fix(212)
+        self.evap_hp_valve.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
+        propagate_state(self.hp06b)
+
         self.evap_hp.hp_sat_vap_eqn.deactivate()
         _set_fg_port(self.evap_hp.shell_inlet, temperature=730, pressure=103421)
         self.evap_hp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
@@ -1218,26 +1232,18 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         _set_fg_port(self.sh_hp1.shell_inlet, temperature=760, pressure=103421)
         self.sh_hp1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.sh_hp1.deltaP_tube_eqn.deactivate()
-        #self.sh_hp1.deltaP_tube.fix(-8.27e05)
         propagate_state(self.hp08)
 
         _set_fg_port(self.sh_hp2.shell_inlet, temperature=806, pressure=103421)
         self.sh_hp2.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.sh_hp2.deltaP_tube_eqn.deactivate()
-        #self.sh_hp2.deltaP_tube.fix(-7.93e05)
         propagate_state(self.hp09)
 
         _set_fg_port(self.sh_hp3.shell_inlet, temperature=835, pressure=103421)
         self.sh_hp3.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.sh_hp3.deltaP_tube_eqn.deactivate()
-        #self.sh_hp3.deltaP_tube.fix(-5.52e05)
         propagate_state(self.hp10)
 
         _set_fg_port(self.sh_hp4.shell_inlet, temperature=898.15, pressure=103421, fix=True)
         self.sh_hp4.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
-        #self.sh_hp4.deltaP_tube_eqn.deactivate()
-        #self.sh_hp4.deltaP_tube.fix(-5.45e05)
 
         # unfix inlets that were fixed for initialization
         self.mixer_ip1.sh_ip1.flow_mol[0].unfix()
@@ -1246,101 +1252,17 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.mixer_ip1.Cold_reheat.flow_mol[0].unfix()
         self.mixer_ip1.Cold_reheat.enth_mol[0].unfix()
         self.mixer_ip1.Cold_reheat.pressure[0].unfix()
-        self.econ_hp1.side_1_inlet.flow_mol[0].unfix()
-        self.econ_hp1.side_1_inlet.enth_mol[0].unfix()
-        self.econ_hp1.side_1_inlet.pressure[0].unfix()
-        self.econ_hp2.side_1_inlet.flow_mol[0].unfix()
-        self.econ_hp2.side_1_inlet.enth_mol[0].unfix()
-        self.econ_hp2.side_1_inlet.pressure[0].unfix()
-        self.econ_hp3.side_1_inlet.flow_mol[0].unfix()
-        self.econ_hp3.side_1_inlet.enth_mol[0].unfix()
-        self.econ_hp3.side_1_inlet.pressure[0].unfix()
-        self.econ_hp4.side_1_inlet.flow_mol[0].unfix()
-        self.econ_hp4.side_1_inlet.enth_mol[0].unfix()
-        self.econ_hp4.side_1_inlet.pressure[0].unfix()
-        self.econ_hp5.side_1_inlet.flow_mol[0].unfix()
-        self.econ_hp5.side_1_inlet.enth_mol[0].unfix()
-        self.econ_hp5.side_1_inlet.pressure[0].unfix()
-        self.evap_hp.tube_inlet.flow_mol[0].unfix()
-        self.evap_hp.tube_inlet.enth_mol[0].unfix()
-        self.evap_hp.tube_inlet.pressure[0].unfix()
-        self.sh_hp1.side_1_inlet.flow_mol[0].unfix()
-        self.sh_hp1.side_1_inlet.enth_mol[0].unfix()
-        self.sh_hp1.side_1_inlet.pressure[0].unfix()
-        self.sh_hp2.side_1_inlet.flow_mol[0].unfix()
-        self.sh_hp2.side_1_inlet.enth_mol[0].unfix()
-        self.sh_hp2.side_1_inlet.pressure[0].unfix()
-        self.sh_hp3.side_1_inlet.flow_mol[0].unfix()
-        self.sh_hp3.side_1_inlet.enth_mol[0].unfix()
-        self.sh_hp3.side_1_inlet.pressure[0].unfix()
-        self.sh_hp4.side_1_inlet.flow_mol[0].unfix()
-        self.sh_hp4.side_1_inlet.enth_mol[0].unfix()
-        self.sh_hp4.side_1_inlet.pressure[0].unfix()
-        self.sh_ip3.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.sh_ip3.side_2_inlet.pressure[0].unfix()
-        self.sh_ip3.side_2_inlet.temperature[0].unfix()
-        self.sh_hp3.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.sh_hp3.side_2_inlet.pressure[0].unfix()
-        self.sh_hp3.side_2_inlet.temperature[0].unfix()
-        self.sh_hp2.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.sh_hp2.side_2_inlet.pressure[0].unfix()
-        self.sh_hp2.side_2_inlet.temperature[0].unfix()
-        self.sh_ip2.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.sh_ip2.side_2_inlet.pressure[0].unfix()
-        self.sh_ip2.side_2_inlet.temperature[0].unfix()
-        self.sh_hp1.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.sh_hp1.side_2_inlet.pressure[0].unfix()
-        self.sh_hp1.side_2_inlet.temperature[0].unfix()
-        self.evap_hp.shell_inlet.flow_mol_comp[:, :].unfix()
-        self.evap_hp.shell_inlet.pressure[0].unfix()
-        self.evap_hp.shell_inlet.temperature[0].unfix()
-        self.econ_hp5.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.econ_hp5.side_2_inlet.pressure[0].unfix()
-        self.econ_hp5.side_2_inlet.temperature[0].unfix()
-        self.sh_ip1.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.sh_ip1.side_2_inlet.pressure[0].unfix()
-        self.sh_ip1.side_2_inlet.temperature[0].unfix()
-        self.econ_hp4.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.econ_hp4.side_2_inlet.pressure[0].unfix()
-        self.econ_hp4.side_2_inlet.temperature[0].unfix()
-        self.econ_hp3.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.econ_hp3.side_2_inlet.pressure[0].unfix()
-        self.econ_hp3.side_2_inlet.temperature[0].unfix()
         self.split_fg_lp.inlet.flow_mol_comp[:, :].unfix()
         self.split_fg_lp.inlet.pressure[0].unfix()
         self.split_fg_lp.inlet.temperature[0].unfix()
-        self.sh_lp.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.sh_lp.side_2_inlet.pressure[0].unfix()
-        self.sh_lp.side_2_inlet.temperature[0].unfix()
         self.split_fg_lp.inlet.flow_mol_comp[:, :].unfix()
         self.split_fg_lp.inlet.pressure[0].unfix()
         self.split_fg_lp.inlet.temperature[0].unfix()
-        self.evap_ip.shell_inlet.flow_mol_comp[:, :].unfix()
-        self.evap_ip.shell_inlet.pressure[0].unfix()
-        self.evap_ip.shell_inlet.temperature[0].unfix()
-        self.econ_ip2.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.econ_ip2.side_2_inlet.pressure[0].unfix()
-        self.econ_ip2.side_2_inlet.temperature[0].unfix()
-        self.econ_hp2.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.econ_hp2.side_2_inlet.pressure[0].unfix()
-        self.econ_hp2.side_2_inlet.temperature[0].unfix()
-        self.econ_ip1.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.econ_ip1.side_2_inlet.pressure[0].unfix()
-        self.econ_ip1.side_2_inlet.temperature[0].unfix()
-        self.econ_hp1.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.econ_hp1.side_2_inlet.pressure[0].unfix()
-        self.econ_hp1.side_2_inlet.temperature[0].unfix()
-        self.evap_lp.shell_inlet.flow_mol_comp[:, :].unfix()
-        self.evap_lp.shell_inlet.pressure[0].unfix()
-        self.evap_lp.shell_inlet.temperature[0].unfix()
-        self.econ_lp.side_2_inlet.flow_mol_comp[:, :].unfix()
-        self.econ_lp.side_2_inlet.pressure[0].unfix()
-        self.econ_lp.side_2_inlet.temperature[0].unfix()
 
         gas_streams = [
             #self.g09,
-            self.g10,
-            self.g11,
+            #self.g10,
+            #self.g11,
             self.g12,
             self.g13,
             self.g14,
@@ -1357,12 +1279,11 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             self.g25,
             self.g26,
             self.g27,
-            self.g28,
+            #self.g28,
             #self.g29,
         ]
         #res = solver_obj.solve(self, tee=True)
         for g in gas_streams:
-            #propagate_state(g, overwrite_fixed=True)
             g.destination.fix()
             g.expanded_block.deactivate()
         res = solver_obj.solve(self, tee=True)
@@ -1375,7 +1296,6 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.splitter1.split_fraction[0, "toIP"].unfix()
 
         for g in gas_streams:
-            #propagate_state(g, overwrite_fixed=True)
             g.destination.fix()
             g.expanded_block.deactivate()
         res = solver_obj.solve(self, tee=True)
@@ -1389,6 +1309,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             iutil.to_json(self, fname=save_to)
             init_log.info_low(f"Initialization saved to {save_to}")
         init_log.info("High pressure system initialization - Completed")
+
 
     def _stream_tags(self):
         tag_stm = iutil.ModelTagGroup()
@@ -1487,7 +1408,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         Returns: (None or Str)
         """
-        infilename = os.path.join(this_file_dir(), "hrsg_template.svg")
+        infilename = os.path.join(this_file_dir(), "templates/hrsg_template.svg")
         with open(infilename, "r") as f:
             s = svg_tag(svg=f, tag_group=self.tags_steam_streams)
         s = svg_tag(svg=s, tag_group=self.tags_flue_gas_streams, outfile=fname)
@@ -1517,7 +1438,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         return df
 
     def steam_streams_dataframe(self):
+        """Get stream table for steam streams"""
         return self._stream_table(self.tags_steam_streams)
 
     def flue_gas_streams_dataframe(self):
+        """Get stream table for flue gas streams"""
         return self._stream_table(self.tags_flue_gas_streams)
