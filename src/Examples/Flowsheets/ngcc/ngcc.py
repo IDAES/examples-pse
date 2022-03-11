@@ -25,41 +25,8 @@ import hrsg
 import steam_turbine
 import idaes.core.util as iutil
 from idaes.core.util.initialization import propagate_state
-from idaes.power_generation.costing.power_plant_costing import (
-    get_fixed_OM_costs,
-    get_variable_OM_costs,
-    initialize_fixed_OM_costs,
-    initialize_variable_OM_costs,
-)
 
-def _build_ngcc_OM_costs(m):
-    """Cost evaluation using IDAES Costing Framework for EMRE NGCC Model
-    Base Case : B31B - NETL Baseline Report Rev 4
-    Author: A. Deshpande, Alex Noring, M. Zamarripa
-    """
-    get_fixed_OM_costs(
-        m, 650, operators_per_shift=5, tech=6, fixed_TPC=555.35  # MW
-    )  # MW
-    initialize_fixed_OM_costs(m)
-
-    m.net_power_cost = pyo.Var(m.time, initialize=650, units=pyo.units.MW)
-    m.net_power_cost.fix()
-    m.natural_gas = pyo.Var(
-        m.time, initialize={0: 7239}, units=pyo.units.MBtu / pyo.units.day
-    )
-    m.natural_gas.fix(110955)
-    m.water_use = pyo.Var(
-        m.time, initialize={0: 2090 * 1000}, units=pyo.units.gallon / pyo.units.day
-    )
-    m.water_use.fix()
-    #
-    get_variable_OM_costs(
-        m,
-        m.net_power_cost,
-        ["natural gas", "water"],
-        [m.natural_gas, m.water_use],
-    )
-    initialize_variable_OM_costs(m)
+pyo.units.load_definitions_from_strings(['USD = [currency]'])
 
 @declare_process_block_class(
     "NgccFlowsheet",
@@ -154,6 +121,24 @@ class NgccFlowsheetData(FlowsheetBlockData):
             expr=st.throttle_valve[1].control_volume.properties_out[0].temperature,
             format_string="{:.2f}",
             display_units=pyo.units.K,
+        )
+        tag_group["fuel_cost_rate"] = iutil.ModelTag(
+            doc=f"Fuel cost currency per time",
+            expr=self.fuel_cost_rate[0],
+            format_string="{:.0f}",
+            display_units=pyo.units.USD/pyo.units.hr,
+        )
+        tag_group["other_variable_cost_rate"] = iutil.ModelTag(
+            doc=f"Non-fuel variable costs currency per time",
+            expr=self.other_variable_cost_rate[0],
+            format_string="{:.0f}",
+            display_units=pyo.units.USD/pyo.units.hr,
+        )
+        tag_group["total_variable_cost_rate"] = iutil.ModelTag(
+            doc=f"Total variable costs currency per time",
+            expr=self.total_variable_cost_rate[0],
+            format_string="{:.0f}",
+            display_units=pyo.units.USD/pyo.units.hr,
         )
 
 
@@ -269,6 +254,10 @@ class NgccFlowsheetData(FlowsheetBlockData):
             initialize=52.3e6,
             units=pyo.units.J/pyo.units.kg
         )
+        self.fuel_cost = pyo.Var(
+            initialize=4.42,
+            units=pyo.units.USD/pyo.units.MBtu
+        )
         self.lp_steam_temperature = pyo.Var(
             self.config.time,
             initialize=554.0,
@@ -381,6 +370,29 @@ class NgccFlowsheetData(FlowsheetBlockData):
         def lp_steam_temperature_eqn(b, t):
             return (b.lp_steam_temperature[t] ==
                 b.hrsg.sh_lp.tube.properties_out[t].temperature)
+
+        @self.Expression(self.config.time)
+        def natural_gas_hhv_energy(b, t):
+            return b.gt.inject1.gas_state[t].flow_mass * b.fuel_hhv
+
+        @self.Expression(self.config.time, doc="Fuel cost")
+        def fuel_cost_rate(b, t):
+            return pyo.units.convert(
+                b.natural_gas_hhv_energy[t] * pyo.units.convert(
+                    b.fuel_cost, pyo.units.USD/pyo.units.J),
+                    pyo.units.USD/pyo.units.hr
+            )
+
+        @self.Expression(self.config.time, doc="Variable O&M cost including fuel")
+        def other_variable_cost_rate(b, t):
+            return pyo.units.convert(
+                7.457044934107763e-10*pyo.units.USD/pyo.units.J *
+                b.natural_gas_hhv_energy[t], pyo.units.USD/pyo.units.hr
+            )
+
+        @self.Expression(self.config.time, doc="Variable O&M cost including fuel")
+        def total_variable_cost_rate(b, t):
+            return b.fuel_cost_rate[t] + b.other_variable_cost_rate[t]
 
     def _scaling_guess(self):
         for i, c in self.fg_translate.mol_frac_eqn.items():
@@ -537,36 +549,3 @@ class NgccFlowsheetData(FlowsheetBlockData):
         for v, sv in iscale.badly_scaled_var_generator(m, large=1e2, small=1e-2, zero=1e-12):
             print(f"    {v} -- {sv} -- {iscale.get_scaling_factor(v)}")
         print(f"Jacobian Condition Number: {iscale.jacobian_cond(jac=jac):.2e}")
-
-    def add_costing(self):
-        _build_ngcc_OM_costs(self)
-        self.tags_output["variable_om_cost_per_time"] = iutil.ModelTag(
-            doc=f"Variable OM cost currency per time",
-            expr=self.costing.total_variable_OM_cost[0]*(-self.net_power[0]),
-            format_string="{:.2f}",
-            display_units=pyo.units.USD/pyo.units.hour,
-        )
-        self.tags_output["variable_om_cost_per_energy"] = iutil.ModelTag(
-            doc=f"Variable OM cost currency per time",
-            expr=self.costing.total_variable_OM_cost[0],
-            format_string="{:.2f}",
-            display_units=pyo.units.USD/pyo.units.MWh,
-        )
-        @self.Constraint(self.config.time)
-        def cost_eq1(c, t):
-            return self.natural_gas[t] == pyo.units.convert(
-                self.gt.inject1.gas_state[t].flow_mass*self.fuel_hhv,
-                pyo.units.MBtu/pyo.units.day)
-
-        self.natural_gas.unfix()
-
-        @self.Constraint(self.config.time)
-        def cost_eq2(c, t):
-            return self.net_power_cost[t] == self.net_power_mw[t]
-
-        self.net_power_cost.unfix()
-
-        for t in self.cost_eq1:
-            iscale.constraint_scaling_transform(self.cost_eq1[t], 1e-4)
-        for t in self.cost_eq2:
-            iscale.constraint_scaling_transform(self.cost_eq2[t], 1e-2)
