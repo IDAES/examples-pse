@@ -11,7 +11,7 @@
 # at the URL "https://github.com/IDAES/idaes-pse".
 ##############################################################################
 
-__author__ "John Eslick"
+__author__ = "John Eslick"
 
 import re
 import os
