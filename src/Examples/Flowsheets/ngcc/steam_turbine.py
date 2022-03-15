@@ -519,7 +519,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             fname: Name of file to save svg.  If None, return the svg string
         Returns: (None or Str)
         """
-        infilename = os.path.join(this_file_dir(), "templates/steam_turbine_template.svg")
+        infilename = os.path.join(this_file_dir(), "steam_turbine_template.svg")
         with open(infilename, "r") as f:
             s = svg_tag(svg=f, tag_group=self.tags_steam_streams, outfile=fname)
         if fname is None:

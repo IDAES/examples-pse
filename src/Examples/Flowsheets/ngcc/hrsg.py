@@ -1408,7 +1408,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
 
         Returns: (None or Str)
         """
-        infilename = os.path.join(this_file_dir(), "templates/hrsg_template.svg")
+        infilename = os.path.join(this_file_dir(), "hrsg_template.svg")
         with open(infilename, "r") as f:
             s = svg_tag(svg=f, tag_group=self.tags_steam_streams)
         s = svg_tag(svg=s, tag_group=self.tags_flue_gas_streams, outfile=fname)
