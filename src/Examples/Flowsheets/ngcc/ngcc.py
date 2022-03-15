@@ -26,7 +26,10 @@ import steam_turbine
 import idaes.core.util as iutil
 from idaes.core.util.initialization import propagate_state
 
-pyo.units.load_definitions_from_strings(['USD = [currency]'])
+try:
+    pyo.units.load_definitions_from_strings(['USD = [currency]'])
+except DefinitionSyntaxError:
+    pass
 
 @declare_process_block_class(
     "NgccFlowsheet",
@@ -140,7 +143,6 @@ class NgccFlowsheetData(FlowsheetBlockData):
             format_string="{:.0f}",
             display_units=pyo.units.USD/pyo.units.hr,
         )
-
 
     def _add_flowsheets(self):
         self.gt = gas_turbine.GasTurbineFlowsheet(
@@ -438,21 +440,21 @@ class NgccFlowsheetData(FlowsheetBlockData):
             self.fuel_hhv.fix()
 
             self.gt.initialize(
-                load_from="data_init/gas_turbine_init.json.gz",
-                save_to="data_init/gas_turbine_init.json.gz",
+                load_from="gas_turbine_init.json.gz",
+                save_to="gas_turbine_init.json.gz",
             )
             propagate_state(self.g08a)
             self.fg_translate.initialize()
             propagate_state(self.g08b, overwrite_fixed=True)
             self.hrsg.initialize(
-                load_from="data_init/hrsg_init.json.gz",
-                save_to="data_init/hrsg_init.json.gz",
+                load_from="hrsg_init.json.gz",
+                save_to="hrsg_init.json.gz",
             )
             self.hrsg.sh_hp4.shell_inlet.unfix()
             propagate_state(self.t05a, overwrite_fixed=True)
             self.st.initialize(
-                load_from="data_init/steam_turbine_init.json.gz",
-                save_to="data_init/steam_turbine_init.json.gz",
+                load_from="steam_turbine_init.json.gz",
+                save_to="steam_turbine_init.json.gz",
             )
 
             init_log.info(f"Open tears")

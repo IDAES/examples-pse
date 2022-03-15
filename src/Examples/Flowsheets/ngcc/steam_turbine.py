@@ -104,7 +104,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             },
         )
         self.hotwell = helm.HelmMixer(
-            doc="Hotwell is a mixed to add makeup water.",
+            doc="Hotwell is a mixer to add makeup water.",
             default={
                 "momentum_mixing_type": helm.MomentumMixingType.none,
                 "inlet_list": ["condensate", "makeup"],
