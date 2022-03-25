@@ -148,7 +148,8 @@ contents:
             notebooks:
               - custom_physical_property_packages: "Introduction to writing custom physical property packages"
               - custom_reaction_property_packages: "Introduction to writing custom reaction property packages"
-              - air_separation_case_study: "Property packages for air separation units (N2, O2, Ar mixture)"
+              # currently in _skip - see #96 for details
+              # - air_separation_case_study: "Property packages for air separation units (N2, O2, Ar mixture)"
           -
             name: DataRecon
             title: "Data reconciliation"
@@ -168,11 +169,6 @@ contents:
         title: Surrogate Modeling
         description: Surrogate modeling examples, broken down into packages
         subfolders:
-          -
-            name: ALAMO
-            description: "Automated Learning of Algebraic Models, see https://www.minlp.com/alamo"
-            notebooks:
-              - ALAMO_six_hump_camel: Use ALAMO to create a surrogate model for the "six hump camel" function
           -
             name: PySMO
             description: Python Surrogate Modeling Objects
@@ -205,3 +201,11 @@ contents:
           Examples of Pecos interface for data quality control and fault detection
         notebooks:
           - data_quality_control:  Simple data quality control example
+      -
+        name: DAE
+        title: Differential Algebraic Equation (DAE) Tools
+        description: >-
+          Examples of IDAES DAE tools
+        notebooks:
+          - petsc_chem_example:  Example of using the PETSc DAE solver with chemical reactions
+          - petsc_pid_example: Example of using the PETSc DAE solver with a PID controller
