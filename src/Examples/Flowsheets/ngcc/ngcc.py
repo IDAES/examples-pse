@@ -285,16 +285,16 @@ class NgccFlowsheetData(FlowsheetBlockData):
 
         @self.Expression(self.config.time)
         def aux_cooling_fans(b, t):
-            return 1e3 * (2370) * pyo.units.MW
+            return 1e3 * (2370) * pyo.units.W
 
         @self.Expression(self.config.time)
         def aux_cooling_pumps(b, t):
-            return 1e3 * (4580) * pyo.units.MW
+            return 1e3 * (4580) * pyo.units.W
 
         # Aux power expressions
         @self.Expression(self.config.time)
         def aux_combustion(b, t):
-            return 1e3 * 1020.0 * pyo.units.MW
+            return 1e3 * 1020.0 * pyo.units.W
 
         @self.Expression(self.config.time)
         def aux_capture(b, t): #scale to flue gas flow
@@ -319,7 +319,7 @@ class NgccFlowsheetData(FlowsheetBlockData):
         @self.Expression(self.config.time)
         def aux_misc(b, t):
             # turbine, scr, gw pumps, bop
-            return 1e3 * 1202.0 * pyo.units.MW
+            return 1e3 * 1202.0 * pyo.units.W
 
         @self.Expression(self.config.time)
         def net_power(b, t):

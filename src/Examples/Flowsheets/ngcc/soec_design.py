@@ -385,6 +385,18 @@ class SoecDesignFlowsheetData(FlowsheetBlockData):
         pyo.TransformationFactory("network.expand_arcs").apply_to(self)
 
     def _add_constraints(self):
+        self.hydrogen_product_rate = pyo.Var(
+            self.config.time,
+            initialize=5,
+            units=pyo.units.kg/pyo.units.s,
+            doc="Hyrogen mass product rate.",
+        )
+        @self.Constraint(m.fs.time)
+        def hydrogen_product_rate_eqn(b, t):
+            return (
+                b.hydrogen_product_rate[t] ==
+                b.cmp06.control_volume.properties_out[0].flow_mass
+            )
         @self.makeup_mix.Constraint(self.config.time, doc="Mixed state pressure eqn.")
         def mixer1_pressure_eqn(b, t):
             return b.mixed_state[t].pressure == b.w1_state[t].pressure
@@ -525,19 +537,19 @@ class SoecDesignFlowsheetData(FlowsheetBlockData):
 
     def _set_initial_inputs(self):
         self.feed_hx01.tube.properties_in[0].pressure.fix(6e5)
-        self.feed_hx01.tube.properties_in[0].flow_mol.fix(1200)
+        self.feed_hx01.tube.properties_in[0].flow_mol.fix(3360)
         self.feed_hx01.tube.properties_in[0].enth_mol.fix(
             iapws95.htpx(T=520*pyo.units.K, P=6e5*pyo.units.Pa))
 
         self.water_pump.control_volume.properties_in[0].pressure.fix(101000)
-        self.water_pump.control_volume.properties_in[0].flow_mol.fix(1200)
+        self.water_pump.control_volume.properties_in[0].flow_mol.fix(3360)
         self.water_pump.control_volume.properties_in[0].enth_mol.fix(
             iapws95.htpx(T=288.15*pyo.units.K, P=101000*pyo.units.Pa))
 
         self._set_gas_port(
-            self.sweep_compressor.inlet, F=1500, T=288.15, P=101000, y=self.sweep_comp)
+            self.sweep_compressor.inlet, F=3500, T=288.15, P=101000, y=self.sweep_comp)
         self._set_gas_port(
-            self.feed_recycle_mix.feed, F=1200, T=1023, P=6e5,  y=self.feed_comp)
+            self.feed_recycle_mix.feed, F=3360, T=1023, P=6e5,  y=self.feed_comp)
         self._set_gas_port(
             self.feed_recycle_mix.recycle, F=12, T=1023, P=6e5,  y={"H2":0.7, "H2O":0.3}, fix=False)
         self._set_gas_port(
@@ -556,20 +568,20 @@ class SoecDesignFlowsheetData(FlowsheetBlockData):
         #self.soec.hydrogen_side_inlet.mole_frac_comp[:, "H2"].fix(0.01)
         self.sweep_compressor.efficiency_isentropic.fix(0.85)
         self.sweep_compressor.control_volume.properties_out[:].pressure.fix(6e5)
-        self.sweep_hx.area.fix(1500)
+        self.sweep_hx.area.fix(4000)
         self.sweep_hx.overall_heat_transfer_coefficient.fix(100)
         self.sweep_turbine.efficiency_isentropic.fix(0.85)
         self.sweep_turbine.ratioP.fix(0.5)
-        self.feed_hx01.area.fix(2500)
+        self.feed_hx01.area.fix(4000)
         self.feed_hx01.overall_heat_transfer_coefficient.fix(100)
         self.feed_heater.control_volume.properties_out[:].temperature.fix(1000)
         self.sweep_heater.control_volume.properties_out[:].temperature.fix(1000)
         self.water_split.split_fraction[:, "outlet1"].fix(0.5)
         self.water_pump.control_volume.properties_out[:].pressure.fix(8e5)
         self.water_pump.efficiency_isentropic[:].fix(0.8)
-        self.water_heater01.area.fix(1200)
+        self.water_heater01.area.fix(6000)
         self.water_heater01.overall_heat_transfer_coefficient.fix(100)
-        self.water_heater02.area.fix(1500)
+        self.water_heater02.area.fix(4000)
         self.water_heater02.overall_heat_transfer_coefficient.fix(100)
         self.h2_precooler.control_volume.properties_out[:].temperature.fix(300)
         self.cmp01.ratioP.fix(1.94)
