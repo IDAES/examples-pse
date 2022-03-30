@@ -32,9 +32,10 @@ from idaes.core import FlowsheetBlockData, declare_process_block_class
 import idaes.core.util as iutil
 import idaes.core.util.scaling as iscale
 from idaes.generic_models.properties import iapws95
-from idaes.power_generation.properties import FlueGasParameterBlock
-from idaes.power_generation.unit_models.helm.phase_separator import HelmPhaseSeparator
-from idaes.power_generation.unit_models.helm import (
+from idaes.models_extra.power_generation.properties import FlueGasParameterBlock
+from idaes.models_extra.power_generation.unit_models.helm.phase_separator import (
+    HelmPhaseSeparator)
+from idaes.models_extra.power_generation.unit_models.helm import (
     HelmMixer,
     MomentumMixingType,
     HelmSplitter,
@@ -48,7 +49,7 @@ from idaes.generic_models.unit_models.heat_exchanger import (
     delta_temperature_lmtd_callback as delta_temp_cb,
     delta_temperature_lmtd_callback,
 )
-from idaes.power_generation.unit_models.boiler_heat_exchanger import (
+from idaes.models_extra.power_generation.unit_models.boiler_heat_exchanger import (
     BoilerHeatExchanger,
     TubeArrangement,
 )

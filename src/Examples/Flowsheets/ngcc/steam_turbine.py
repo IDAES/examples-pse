@@ -26,7 +26,7 @@ import idaes
 from idaes.core.solvers import use_idaes_solver_configuration_defaults
 from idaes.core import FlowsheetBlockData, declare_process_block_class
 from idaes.core.util.model_statistics import degrees_of_freedom
-import idaes.power_generation.unit_models.helm as helm
+import idaes.models_extra.power_generation.unit_models.helm as helm
 import idaes.generic_models.unit_models as gum
 from idaes.generic_models.properties import iapws95
 import idaes.core.util.initialization as iinit
