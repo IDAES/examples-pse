@@ -67,7 +67,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
                 "num_hp": 7,  # full load ave P ratio about 0.8238 with inlet
                 "num_ip": 10,  # full load ave P ratio about 0.8264
                 "num_lp": 11,  # full load ave P ratio about 0.7194 with outlet
-                "hp_disconnect": [7],  # disconected for reheater
+                "hp_disconnect": [7],  # disconnected for reheater
                 "ip_disconnect": [10],  # disconnected for HRSG LP steam mix
             },
         )

@@ -25,11 +25,7 @@ import hrsg
 import steam_turbine
 import idaes.core.util as iutil
 from idaes.core.util.initialization import propagate_state
-
-try:
-    pyo.units.load_definitions_from_strings(['USD = [currency]'])
-except DefinitionSyntaxError:
-    pass
+import idaes.generic_models.costing.costing_base as cost_base
 
 @declare_process_block_class(
     "NgccFlowsheet",
@@ -216,6 +212,9 @@ class NgccFlowsheetData(FlowsheetBlockData):
         pyo.TransformationFactory("network.expand_arcs").apply_to(self)
 
     def _add_constraints(self):
+        cost_base.register_idaes_currency_units()
+        pyo.units.load_definitions_from_strings(['USD = USD_2018'])
+
         self.net_power_mw = pyo.Var(
             self.time,
             initialize=600,
