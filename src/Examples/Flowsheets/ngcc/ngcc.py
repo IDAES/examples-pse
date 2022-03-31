@@ -125,19 +125,19 @@ class NgccFlowsheetData(FlowsheetBlockData):
             doc=f"Fuel cost currency per time",
             expr=self.fuel_cost_rate[0],
             format_string="{:.0f}",
-            display_units=pyo.units.USD/pyo.units.hr,
+            display_units=pyo.units.USD_2018/pyo.units.hr,
         )
         tag_group["other_variable_cost_rate"] = iutil.ModelTag(
             doc=f"Non-fuel variable costs currency per time",
             expr=self.other_variable_cost_rate[0],
             format_string="{:.0f}",
-            display_units=pyo.units.USD/pyo.units.hr,
+            display_units=pyo.units.USD_2018/pyo.units.hr,
         )
         tag_group["total_variable_cost_rate"] = iutil.ModelTag(
             doc=f"Total variable costs currency per time",
             expr=self.total_variable_cost_rate[0],
             format_string="{:.0f}",
-            display_units=pyo.units.USD/pyo.units.hr,
+            display_units=pyo.units.USD_2018/pyo.units.hr,
         )
 
     def _add_flowsheets(self):
@@ -213,7 +213,6 @@ class NgccFlowsheetData(FlowsheetBlockData):
 
     def _add_constraints(self):
         cost_base.register_idaes_currency_units()
-        pyo.units.load_definitions_from_strings(['USD = USD_2018'])
 
         self.net_power_mw = pyo.Var(
             self.time,
@@ -257,7 +256,7 @@ class NgccFlowsheetData(FlowsheetBlockData):
         )
         self.fuel_cost = pyo.Var(
             initialize=4.42,
-            units=pyo.units.USD/pyo.units.MBtu
+            units=pyo.units.USD_2018/pyo.units.MBtu
         )
         self.lp_steam_temperature = pyo.Var(
             self.config.time,
@@ -380,15 +379,15 @@ class NgccFlowsheetData(FlowsheetBlockData):
         def fuel_cost_rate(b, t):
             return pyo.units.convert(
                 b.natural_gas_hhv_energy[t] * pyo.units.convert(
-                    b.fuel_cost, pyo.units.USD/pyo.units.J),
-                    pyo.units.USD/pyo.units.hr
+                    b.fuel_cost, pyo.units.USD_2018/pyo.units.J),
+                    pyo.units.USD_2018/pyo.units.hr
             )
 
         @self.Expression(self.config.time, doc="Variable O&M cost including fuel")
         def other_variable_cost_rate(b, t):
             return pyo.units.convert(
-                7.457044934107763e-10*pyo.units.USD/pyo.units.J *
-                b.natural_gas_hhv_energy[t], pyo.units.USD/pyo.units.hr
+                7.457044934107763e-10*pyo.units.USD_2018/pyo.units.J *
+                b.natural_gas_hhv_energy[t], pyo.units.USD_2018/pyo.units.hr
             )
 
         @self.Expression(self.config.time, doc="Variable O&M cost including fuel")
