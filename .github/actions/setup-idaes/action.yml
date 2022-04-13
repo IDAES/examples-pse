@@ -24,6 +24,9 @@ runs:
     - name: Install idaes and dependencies
       shell: bash -l {0}
       run: |
+        echo '::group::Contents of requirements.txt'
+        cat requirements.txt
+        echo '::endgroup::'
         echo '::group::Output of "pip install" command'
         ${{ inputs.install-command }} ${{ inputs.install-target}}
         echo '::endgroup::'
