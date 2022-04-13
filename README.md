@@ -15,7 +15,7 @@ in this directory for instructions.*
 
 First, you need to download and install the examples locally, on your own computer.
 Instructions for doing this are in the
-[install instructions](https://idaes-pse.readthedocs.io/en/stable/install/index.html)
+[install instructions](https://idaes-pse.readthedocs.io/en/stable/tutorials/getting_started/index.html#generic-install)
 in the main IDAES-PSE toolkit documentation -- under the "Generic install"
 section. That page also contains a link to more detailed help on the
 options for choosing a custom installation directory.
