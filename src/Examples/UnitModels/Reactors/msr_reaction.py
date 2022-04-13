@@ -18,16 +18,16 @@ Author: Brandon Paul
 """
 from pyomo.environ import units as pyunits, exp
 
-from idaes.generic_models.properties.core.generic.generic_reaction import (
+from idaes.models.properties.modular_properties.base.generic_reaction import (
         ConcentrationForm)
-from idaes.generic_models.properties.core.reactions.dh_rxn import \
+from idaes.models.properties.modular_properties.reactions.dh_rxn import \
     constant_dh_rxn
 
 from msr_equilibrium_constant import empirical_1, empirical_2
 # custom expressions for the equilibrium constants as functions of temperature
 # Source: Int. J. Hydrogen Energy, 42 (2017), pp. 2889-2903
 
-from idaes.generic_models.properties.core.reactions.equilibrium_forms import \
+from idaes.models.properties.modular_properties.reactions.equilibrium_forms import \
     power_law_equil
 
 #import msr_pr as thermo_props

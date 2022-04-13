@@ -15,9 +15,9 @@ Methods for calculating equilibrium constants
 """
 from pyomo.environ import exp, log, Var, units as pyunits, value
 
-from idaes.generic_models.properties.core.generic.utility import \
+from idaes.models.properties.modular_properties.base.utility import \
     ConcentrationForm
-from idaes.generic_models.properties.core.reactions.dh_rxn import \
+from idaes.models.properties.modular_properties.reactions.dh_rxn import \
     constant_dh_rxn
 from idaes.core.util.misc import set_param_from_config
 from idaes.core.util.constants import Constants as c
