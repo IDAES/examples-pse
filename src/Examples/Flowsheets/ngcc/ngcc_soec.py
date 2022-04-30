@@ -17,7 +17,7 @@ import os
 import copy
 import pyomo.environ as pyo
 from pyomo.network import Arc
-import idaes.generic_models.unit_models as um # um = unit models
+import idaes.models.unit_models as um  # um = unit models
 from idaes.core import FlowsheetBlockData, declare_process_block_class
 import idaes.core.util.scaling as iscale
 import idaes.logger as idaeslog
@@ -25,6 +25,7 @@ import ngcc
 import soec
 import idaes.core.util as iutil
 from idaes.core.util.initialization import propagate_state
+
 
 @declare_process_block_class(
     "NgccSoecFlowsheet",
@@ -44,16 +45,16 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
     def _add_flowsheets(self):
         self.ngcc = ngcc.NgccFlowsheet(
             default={
-                "dynamic":self.config.dynamic,
-                "time":self.time,
-                "time_units": self.config.time_units
+                "dynamic": self.config.dynamic,
+                "time": self.time,
+                "time_units": self.config.time_units,
             }
         )
         self.soec = soec.SoecFlowsheet(
             default={
-                "dynamic":self.config.dynamic,
-                "time":self.time,
-                "time_units": self.config.time_units
+                "dynamic": self.config.dynamic,
+                "time": self.time,
+                "time_units": self.config.time_units,
             }
         )
 
@@ -72,8 +73,8 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
         @self.Constraint(self.config.time)
         def sweep_pressure_eqn(b, t):
             return (
-                b.soec.sweep_compressor.control_volume.properties_out[t].pressure ==
-                b.soec.feed_hx01.tube.properties_in[t].pressure
+                b.soec.sweep_compressor.control_volume.properties_out[t].pressure
+                == b.soec.feed_hx01.tube.properties_in[t].pressure
             )
 
     def _add_tags(self):
@@ -93,19 +94,19 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
         )
         tag_group["sweep_out_frac"] = iutil.ModelTag(
             doc="Sweep recycle out fraction",
-            expr=self.soec.sweep_recycle_split.split_fraction[0, "out"]*100,
+            expr=self.soec.sweep_recycle_split.split_fraction[0, "out"] * 100,
             format_string="{:.3f}",
             display_units="%",
         )
         tag_group["steam_out_frac"] = iutil.ModelTag(
             doc="Sweep recycle out fraction",
-            expr=self.soec.feed_recycle_split.split_fraction[0, "out"]*100,
+            expr=self.soec.feed_recycle_split.split_fraction[0, "out"] * 100,
             format_string="{:.3f}",
             display_units="%",
         )
         tag_group["heater_1_frac"] = iutil.ModelTag(
             doc="Makeup water split to heater 1",
-            expr=self.soec.water_split.split_fraction[0, "outlet1"]*100,
+            expr=self.soec.water_split.split_fraction[0, "outlet1"] * 100,
             format_string="{:.3f}",
             display_units="%",
         )
@@ -113,7 +114,7 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
             doc="Sweep inlet flow",
             expr=self.soec.sweep_compressor.inlet.flow_mol[0],
             format_string="{:.3f}",
-            display_units=pyo.units.mol/pyo.units.s,
+            display_units=pyo.units.mol / pyo.units.s,
         )
         tag_group["sweep_trim_temperature"] = iutil.ModelTag(
             doc="Sweep trim heater temperature",
@@ -200,7 +201,9 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
         self.soec.cmp05.ratioP.fix(2.07)
         self.soec.cmp06.ratioP.fix(2.07)
         self.soec.cmp06.ratioP.unfix()
-        self.soec.cmp06.control_volume.properties_out[:].pressure.fix(320*pyo.units.bar)
+        self.soec.cmp06.control_volume.properties_out[:].pressure.fix(
+            320 * pyo.units.bar
+        )
         solver_obj.solve(self, tee=True)
 
         self.ngcc.st.steam_turbine_lp_split.soec.flow_mol.unfix()
@@ -208,7 +211,9 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
         self.soec.soec_single_pass_water_conversion.unfix()
         self.soec.soec.potential.fix()
         self.soec.sweep_turbine.control_volume.properties_out[0].temperature.unfix()
-        self.soec.sweep_turbine.control_volume.properties_out[0].pressure.fix(1.01*pyo.units.bar)
+        self.soec.sweep_turbine.control_volume.properties_out[0].pressure.fix(
+            1.01 * pyo.units.bar
+        )
         solver_obj.solve(self, tee=True)
 
         if save_to is not None:

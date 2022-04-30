@@ -27,8 +27,8 @@ from idaes.core.solvers import use_idaes_solver_configuration_defaults
 from idaes.core import FlowsheetBlockData, declare_process_block_class
 from idaes.core.util.model_statistics import degrees_of_freedom
 import idaes.models_extra.power_generation.unit_models.helm as helm
-import idaes.generic_models.unit_models as gum
-from idaes.generic_models.properties import iapws95
+import idaes.models.unit_models as gum
+from idaes.models.properties import iapws95
 import idaes.core.util.initialization as iinit
 import idaes.core.util.scaling as iscale
 from idaes.core.solvers import use_idaes_solver_configuration_defaults
@@ -124,7 +124,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         )
         self.reboiler = gum.Heater(
             doc="Carbon capture system reboiler",
-            default={"property_package": self.prop_water}
+            default={"property_package": self.prop_water},
         )
 
     def _add_constraints(self):
@@ -179,8 +179,10 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
 
         @self.reboiler.Constraint(self.time)
         def reboiler_condense_eqn(b, t):
-            return b.control_volume.properties_out[t].enth_mol == \
-                b.control_volume.properties_out[t].enth_mol_sat_phase["Liq"] - 100
+            return (
+                b.control_volume.properties_out[t].enth_mol
+                == b.control_volume.properties_out[t].enth_mol_sat_phase["Liq"] - 100
+            )
 
     def _add_arcs(self):
         self.t02_dummy = Arc(
@@ -230,12 +232,10 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             destination=self.return_mix.pump,
         )
         self.t13 = Arc(
-            source=self.reboiler.outlet,
-            destination=self.return_mix.reboiler
+            source=self.reboiler.outlet, destination=self.return_mix.reboiler
         )
         self.t17 = Arc(
-            source=self.steam_turbine_lp_split.reboiler,
-            destination=self.reboiler.inlet
+            source=self.steam_turbine_lp_split.reboiler, destination=self.reboiler.inlet
         )
         pyo.TransformationFactory("network.expand_arcs").apply_to(self)
 
@@ -328,9 +328,17 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.main_condenser.shell.heat, 1e-6)
         iscale.set_scaling_factor(self.main_condenser.tube.heat, 1e-6)
         iscale.set_scaling_factor(self.cond_pump.control_volume.work, 1e-6)
-        iscale.set_scaling_factor(self.steam_turbine.throttle_valve[1].control_volume.deltaP, 1e-3)
-        iscale.set_scaling_factor(self.steam_turbine.outlet_stage.control_volume.properties_out[0.0].pressure, 1e-3)
-        iscale.set_scaling_factor(self.steam_turbine.outlet_stage.control_volume.properties_out[0.0].pressure, 1e-3)
+        iscale.set_scaling_factor(
+            self.steam_turbine.throttle_valve[1].control_volume.deltaP, 1e-3
+        )
+        iscale.set_scaling_factor(
+            self.steam_turbine.outlet_stage.control_volume.properties_out[0.0].pressure,
+            1e-3,
+        )
+        iscale.set_scaling_factor(
+            self.steam_turbine.outlet_stage.control_volume.properties_out[0.0].pressure,
+            1e-3,
+        )
         iscale.set_scaling_factor(self.reboiler.control_volume.heat, 1e-7)
 
     def initialize(
@@ -341,7 +349,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         load_from="steam_turbine_init.json.gz",
         save_to="steam_turbine_init.json.gz",
     ):
-        """ Initialize the steam turbine flowsheet
+        """Initialize the steam turbine flowsheet
 
         Args:
             outlvl: Logging level for initializtion
@@ -390,10 +398,14 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
 
         iinit.propagate_state(arc=self.t03_dummy)
         iinit.propagate_state(arc=self.t04)
-        self.steam_turbine_lp_mix.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
+        self.steam_turbine_lp_mix.initialize(
+            outlvl=outlvl, solver=solver, optarg=optarg
+        )
 
         iinit.propagate_state(self.t16)
-        self.steam_turbine_lp_split.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
+        self.steam_turbine_lp_split.initialize(
+            outlvl=outlvl, solver=solver, optarg=optarg
+        )
 
         iinit.propagate_state(self.t17)
         self.reboiler.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
@@ -401,7 +413,9 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
 
         iinit.propagate_state(arc=self.t06)
         iinit.propagate_state(arc=self.t07)
-        self.main_condenser.initialize(outlvl=outlvl, solver=solver, optarg=optarg, unfix="pressure")
+        self.main_condenser.initialize(
+            outlvl=outlvl, solver=solver, optarg=optarg, unfix="pressure"
+        )
 
         iinit.propagate_state(arc=self.t08)
         self.hotwell.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
@@ -475,7 +489,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
                 doc=f"{i}: volumetric flow",
                 expr=s.flow_vol,
                 format_string="{:.3f}",
-                display_units=pyo.units.m ** 3 / pyo.units.s,
+                display_units=pyo.units.m**3 / pyo.units.s,
             )
             tag_group[f"{i}_P"] = iutil.ModelTag(
                 doc=f"{i}: pressure",
@@ -509,7 +523,6 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
             format_string="{:.2f}",
             display_units=pyo.units.MW,
         )
-
 
     def write_pfd(self, fname=None):
         """Add model results to the flowsheet template.  If fname is specified,

@@ -8,37 +8,38 @@ from pyomo.common.fileutils import this_file_dir
 
 import idaes
 from idaes.core import FlowsheetBlockData, declare_process_block_class
-from idaes.generic_models.properties.core.generic.generic_property import (
+from idaes.models.properties.modular_properties.base.generic_property import (
     GenericParameterBlock,
-    GenericStateBlockData
- )
+    GenericStateBlockData,
+)
 import idaes.core.util.scaling as iscale
 from idaes.power_generation.properties.natural_gas_PR import get_prop, EosType
-from idaes.power_generation.unit_models.soc_submodels import SolidOxideCell
-import idaes.generic_models.unit_models as gum
-import idaes.power_generation.unit_models.helm  as hum
-from idaes.generic_models.properties import iapws95
+from idaes.models_extra.power_generation.unit_models.soc_submodels import SolidOxideCell
+import idaes.models.unit_models as gum
+import idaes.power_generation.unit_models.helm as hum
+from idaes.models.properties import iapws95
 from idaes.core.util.initialization import propagate_state
 import idaes.logger as idaeslog
 import idaes.core.util as iutil
 import idaes.core.util.tables as tables
 from idaes.core.util.tags import svg_tag
-import idaes.generic_models.costing.costing_base as cost_base
+import idaes.core.base.costing_base as cost_base
 
 
 @declare_process_block_class("SoecFlowsheet")
 class SoecFlowsheetData(FlowsheetBlockData):
     sweep_comp = {
-        "O2":0.2074,
-        "H2O":0.0099,
-        "CO2":0.0003,
-        "N2":0.7732,
-        "Ar":0.0092,
+        "O2": 0.2074,
+        "H2O": 0.0099,
+        "CO2": 0.0003,
+        "N2": 0.7732,
+        "Ar": 0.0092,
     }
     feed_comp = {
         "H2": 1e-19,
         "H2O": 1.0,
     }
+
     def build(self):
         super().build()
         self._add_properties()
@@ -64,27 +65,25 @@ class SoecFlowsheetData(FlowsheetBlockData):
             default=get_prop({"H2"}, {"Vap"}, eos=EosType.PR),
             doc="Pure H2 gas property parameters",
         )
-        generic_prop_packages = [self.o2_side_prop_params,
-                                 self.h2_side_prop_params,
-                                 self.h2_pure_prop_params]
+        generic_prop_packages = [
+            self.o2_side_prop_params,
+            self.h2_side_prop_params,
+            self.h2_pure_prop_params,
+        ]
         for pp in generic_prop_packages:
             pp.set_default_scaling("enth_mol_phase", 1e-3)
             pp.set_default_scaling("pressure", 1e-5)
             pp.set_default_scaling("temperature", 1e-2)
-            pp.set_default_scaling("flow_mol", 1E-3)
+            pp.set_default_scaling("flow_mol", 1e-3)
 
-        _mf_scale = {
-            "Ar":100,
-            "O2":10,
-            "N2":10,
-            "H2":10,
-            "H2O":100,
-            "CO2":1000}
+        _mf_scale = {"Ar": 100, "O2": 10, "N2": 10, "H2": 10, "H2O": 100, "CO2": 1000}
         for comp, s in _mf_scale.items():
             self.o2_side_prop_params.set_default_scaling(
-                "mole_frac_comp", s, index=comp)
+                "mole_frac_comp", s, index=comp
+            )
             self.o2_side_prop_params.set_default_scaling(
-                "mole_frac_phase_comp", s, index=comp)
+                "mole_frac_phase_comp", s, index=comp
+            )
 
         self.h2_side_prop_params.set_default_scaling("mole_frac_comp", 10)
         self.h2_pure_prop_params.set_default_scaling("mole_frac_phase_comp", 10)
@@ -94,30 +93,36 @@ class SoecFlowsheetData(FlowsheetBlockData):
 
     def _define_cell_params(self):
         self.number_cells.fix(1.25e6)
-        self.soec.contact_flow_mesh_fuel_electrode.log_preexponential_factor\
-            .fix(pyo.log(0.01e-4))
-        self.soec.contact_flow_mesh_oxygen_electrode.log_preexponential_factor\
-            .fix(pyo.log(0.01e-4))
+        self.soec.contact_flow_mesh_fuel_electrode.log_preexponential_factor.fix(
+            pyo.log(0.01e-4)
+        )
+        self.soec.contact_flow_mesh_oxygen_electrode.log_preexponential_factor.fix(
+            pyo.log(0.01e-4)
+        )
 
         self.soec.contact_flow_mesh_fuel_electrode.thermal_exponent_dividend.fix(0)
         self.soec.contact_flow_mesh_fuel_electrode.contact_fraction.fix(1)
         self.soec.contact_flow_mesh_oxygen_electrode.thermal_exponent_dividend.fix(0)
         self.soec.contact_flow_mesh_oxygen_electrode.contact_fraction.fix(1)
 
-        self.soec.contact_interconnect_fuel_flow_mesh.log_preexponential_factor.fix(-100)
+        self.soec.contact_interconnect_fuel_flow_mesh.log_preexponential_factor.fix(
+            -100
+        )
         self.soec.contact_interconnect_fuel_flow_mesh.thermal_exponent_dividend.fix(0)
         self.soec.contact_interconnect_fuel_flow_mesh.contact_fraction.fix(1)
-        self.soec.contact_interconnect_oxygen_flow_mesh.log_preexponential_factor.fix(-100)
+        self.soec.contact_interconnect_oxygen_flow_mesh.log_preexponential_factor.fix(
+            -100
+        )
         self.soec.contact_interconnect_oxygen_flow_mesh.thermal_exponent_dividend.fix(0)
         self.soec.contact_interconnect_oxygen_flow_mesh.contact_fraction.fix(1)
 
-        self.soec.fuel_chan.length_x.fix(0.002)
+        self.soec.fuel_channel.length_x.fix(0.002)
         self.soec.length_y.fix(0.2345)
         self.soec.length_z.fix(0.2345)
-        self.soec.fuel_chan.heat_transfer_coefficient.fix(100)
+        self.soec.fuel_channel.heat_transfer_coefficient.fix(100)
 
-        self.soec.oxygen_chan.length_x.fix(0.002)
-        self.soec.oxygen_chan.heat_transfer_coefficient.fix(100)
+        self.soec.oxygen_channel.length_x.fix(0.002)
+        self.soec.oxygen_channel.heat_transfer_coefficient.fix(100)
 
         self.soec.fuel_electrode.length_x.fix(1e-3)
         self.soec.fuel_electrode.porosity.fix(0.48)
@@ -125,8 +130,9 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.soec.fuel_electrode.solid_heat_capacity.fix(450)
         self.soec.fuel_electrode.solid_density.fix(3210.0)
         self.soec.fuel_electrode.solid_thermal_conductivity.fix(1.86)
-        self.soec.fuel_electrode.resistivity_log_preexponential_factor\
-            .fix(pyo.log(2.98e-5))
+        self.soec.fuel_electrode.resistivity_log_preexponential_factor.fix(
+            pyo.log(2.98e-5)
+        )
         self.soec.fuel_electrode.resistivity_thermal_exponent_dividend.fix(-1392.0)
 
         self.soec.oxygen_electrode.length_x.fix(20e-6)
@@ -135,38 +141,42 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.soec.oxygen_electrode.solid_heat_capacity.fix(430)
         self.soec.oxygen_electrode.solid_density.fix(3030)
         self.soec.oxygen_electrode.solid_thermal_conductivity.fix(5.84)
-        self.soec.oxygen_electrode.resistivity_log_preexponential_factor\
-            .fix(pyo.log(8.115e-5))
+        self.soec.oxygen_electrode.resistivity_log_preexponential_factor.fix(
+            pyo.log(8.115e-5)
+        )
         self.soec.oxygen_electrode.resistivity_thermal_exponent_dividend.fix(600.0)
 
         self.soec.electrolyte.length_x.fix(9e-6)
         self.soec.electrolyte.heat_capacity.fix(470)
         self.soec.electrolyte.density.fix(5160)
         self.soec.electrolyte.thermal_conductivity.fix(2.16)
-        self.soec.electrolyte.resistivity_log_preexponential_factor\
-            .fix(pyo.log(2.94e-5))
+        self.soec.electrolyte.resistivity_log_preexponential_factor.fix(
+            pyo.log(2.94e-5)
+        )
         self.soec.electrolyte.resistivity_thermal_exponent_dividend.fix(10350.0)
 
-        self.soec.fuel_tpb.exchange_current_log_preexponential_factor\
-            .fix(pyo.log(1.375e10))
-        self.soec.fuel_tpb.exchange_current_activation_energy.fix(120e3)
-        self.soec.fuel_tpb.activation_potential_alpha1.fix(0.4)
-        self.soec.fuel_tpb.activation_potential_alpha2.fix(0.4)
+        self.soec.fuel_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
+            pyo.log(1.375e10)
+        )
+        self.soec.fuel_triple_phase_boundary.exchange_current_activation_energy.fix(120e3)
+        self.soec.fuel_triple_phase_boundary.activation_potential_alpha1.fix(0.4)
+        self.soec.fuel_triple_phase_boundary.activation_potential_alpha2.fix(0.4)
 
-        self.soec.fuel_tpb.exchange_current_exponent_comp["H2"].fix(1)
-        self.soec.fuel_tpb.exchange_current_exponent_comp["H2O"].fix(1)
+        self.soec.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2"].fix(1)
+        self.soec.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2O"].fix(1)
 
-        self.soec.oxygen_tpb.exchange_current_log_preexponential_factor\
-            .fix(pyo.log(26.1e10/4))
-        self.soec.oxygen_tpb.exchange_current_activation_energy.fix(130e3)
-        self.soec.oxygen_tpb.activation_potential_alpha1.fix(0.5)
-        self.soec.oxygen_tpb.activation_potential_alpha2.fix(0.5)
+        self.soec.oxygen_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
+            pyo.log(26.1e10 / 4)
+        )
+        self.soec.oxygen_triple_phase_boundary.exchange_current_activation_energy.fix(130e3)
+        self.soec.oxygen_triple_phase_boundary.activation_potential_alpha1.fix(0.5)
+        self.soec.oxygen_triple_phase_boundary.activation_potential_alpha2.fix(0.5)
 
-        self.soec.oxygen_tpb.exchange_current_exponent_comp["O2"].fix(0.5)
+        self.soec.oxygen_triple_phase_boundary.exchange_current_exponent_comp["O2"].fix(0.5)
 
         # set_indexed_variable_bounds(cell.temperature_z, (923,1027))
-        # set_indexed_variable_bounds(cell.fuel_chan.Dtemp,(-100,100))
-        # set_indexed_variable_bounds(cell.oxygen_chan.Dtemp,(-100,100))
+        # set_indexed_variable_bounds(cell.fuel_channel.Dtemp,(-100,100))
+        # set_indexed_variable_bounds(cell.oxygen_channel.Dtemp,(-100,100))
 
     def _add_units(self):
         # self.soec = SoecDesign(
@@ -182,125 +192,153 @@ class SoecFlowsheetData(FlowsheetBlockData):
         xfaces_electrolyte = [0.0, 1.0]
 
         air_sweep = True
-        #operating_pressure = 2e5
+        # operating_pressure = 2e5
 
-        fuel_comps = ["H2","H2O"]
-        fuel_stoich_dict = {"H2": -0.5, "H2O": 0.5, "Vac":0.5, "O^2-":-0.5}
+        fuel_comps = ["H2", "H2O"]
+        fuel_stoich_dict = {"H2": -0.5, "H2O": 0.5, "Vac": 0.5, "O^2-": -0.5, "e^-": 1}
         if air_sweep:
-            oxygen_comps = ["Ar","CO2","H2O","O2","N2"]
-            oxygen_stoich_dict = {"Ar":0, "CO2":0, "H2O":0,
-                                  "O2": -0.25, "N2": 0,
-                                  "Vac":-0.5, "O^2-":0.5}
+            oxygen_comps = ["Ar", "CO2", "H2O", "O2", "N2"]
+            oxygen_stoich_dict = {
+                "O2": -0.25,
+                "Vac": -0.5,
+                "O^2-": 0.5,
+                "e^-": -1,
+            }
         else:
-            oxygen_comps = ["O2","H2O"]
-            oxygen_stoich_dict = {"O2": -0.25, "H2O": 0,  "Vac":-0.5, "O^2-":0.5}
+            oxygen_comps = ["O2", "H2O"]
+            oxygen_stoich_dict = {
+                "O2": -0.25,
+                "H2O": 0,
+                "Vac": -0.5,
+                "O^2-": 0.5,
+                "e^-": -1,
+            }
 
         self.soec = SolidOxideCell(
-                default={
-                    "has_holdup": True,
-                    "cv_zfaces": zfaces,
-                    "cv_xfaces_fuel_electrode": xfaces_electrode,
-                    "cv_xfaces_oxygen_electrode": xfaces_electrode,
-                    "cv_xfaces_electrolyte": xfaces_electrolyte,
-                    "fuel_comps": fuel_comps,
-                    "fuel_tpb_stoich_dict": fuel_stoich_dict,
-                    "oxygen_comps": oxygen_comps,
-                    "oxygen_tpb_stoich_dict": oxygen_stoich_dict,
-                    "opposite_flow": True,
-                    "include_temperature_x_thermo": True,
-                }
-            )
-        self.number_cells = pyo.Var(initialize=60e6,
-                                    units=pyo.units.dimensionless)
+            default={
+                "has_holdup": True,
+                "control_volume_zfaces": zfaces,
+                "control_volume_xfaces_fuel_electrode": xfaces_electrode,
+                "control_volume_xfaces_oxygen_electrode": xfaces_electrode,
+                "control_volume_xfaces_electrolyte": xfaces_electrolyte,
+                "fuel_component_list": fuel_comps,
+                "fuel_triple_phase_boundary_stoich_dict": fuel_stoich_dict,
+                "inert_fuel_species_triple_phase_boundary": [],
+                "oxygen_component_list": oxygen_comps,
+                "oxygen_triple_phase_boundary_stoich_dict": oxygen_stoich_dict,
+                "inert_oxygen_species_triple_phase_boundary": ["N2", "Ar", "CO2", "H2O"],
+                "include_temperature_x_thermo": True,
+                "include_contact_resistance":True,
+            }
+        )
+        self.number_cells = pyo.Var(initialize=60e6, units=pyo.units.dimensionless)
 
-        self.fuel_inlet_translator = gum.Translator(default={
-            "inlet_property_package": self.h2_side_prop_params,
-            "outlet_property_package": self.h2_side_prop_params,
-            "outlet_state_defined": True})
+        self.fuel_inlet_translator = gum.Translator(
+            default={
+                "inlet_property_package": self.h2_side_prop_params,
+                "outlet_property_package": self.h2_side_prop_params,
+                "outlet_state_defined": True,
+            }
+        )
 
-        self.fuel_outlet_translator = gum.Translator(default={
-            "inlet_property_package": self.h2_side_prop_params,
-            "outlet_property_package": self.h2_side_prop_params,
-            "outlet_state_defined": True})
+        self.fuel_outlet_translator = gum.Translator(
+            default={
+                "inlet_property_package": self.h2_side_prop_params,
+                "outlet_property_package": self.h2_side_prop_params,
+                "outlet_state_defined": True,
+            }
+        )
 
-        self.oxygen_inlet_translator = gum.Translator(default={
-            "inlet_property_package": self.o2_side_prop_params,
-            "outlet_property_package": self.o2_side_prop_params,
-            "outlet_state_defined": True})
+        self.oxygen_inlet_translator = gum.Translator(
+            default={
+                "inlet_property_package": self.o2_side_prop_params,
+                "outlet_property_package": self.o2_side_prop_params,
+                "outlet_state_defined": True,
+            }
+        )
 
-        self.oxygen_outlet_translator = gum.Translator(default={
-            "inlet_property_package": self.o2_side_prop_params,
-            "outlet_property_package": self.o2_side_prop_params,
-            "outlet_state_defined": True})
+        self.oxygen_outlet_translator = gum.Translator(
+            default={
+                "inlet_property_package": self.o2_side_prop_params,
+                "outlet_property_package": self.o2_side_prop_params,
+                "outlet_state_defined": True,
+            }
+        )
 
         self.sweep_recycle_split = gum.Separator(
             doc="Sweep recycle splitter",
             default={
                 "property_package": self.o2_side_prop_params,
                 "outlet_list": ["out", "recycle"],
-            }
+            },
         )
         self.feed_recycle_split = gum.Separator(
             doc="Feed recycle splitter",
             default={
                 "property_package": self.h2_side_prop_params,
                 "outlet_list": ["out", "recycle"],
-            }
+            },
         )
         self.sweep_recycle_mix = gum.Mixer(
             doc="Sweep recycle mixer",
             default={
                 "property_package": self.o2_side_prop_params,
                 "inlet_list": ["feed", "recycle"],
-                "momentum_mixing_type": gum.MomentumMixingType.none
-            }
+                "momentum_mixing_type": gum.MomentumMixingType.none,
+            },
         )
+
         @self.sweep_recycle_mix.Constraint(self.time)
-        def pressure_equality_eqn(b,t):
+        def pressure_equality_eqn(b, t):
             return b.mixed_state[t].pressure == b.feed_state[t].pressure
+
         self.feed_recycle_mix = gum.Mixer(
             doc="Feed recycle mixer",
             default={
                 "property_package": self.h2_side_prop_params,
                 "inlet_list": ["feed", "recycle"],
-                "momentum_mixing_type": gum.MomentumMixingType.none
-            }
+                "momentum_mixing_type": gum.MomentumMixingType.none,
+            },
         )
+
         @self.feed_recycle_mix.Constraint(self.time)
-        def pressure_equality_eqn(b,t):
+        def pressure_equality_eqn(b, t):
             return b.mixed_state[t].pressure == b.feed_state[t].pressure
+
         self.sweep_compressor = gum.Compressor(
             doc="Sweep air compressor",
-            default={"property_package": self.o2_side_prop_params}
+            default={"property_package": self.o2_side_prop_params},
         )
         self.sweep_hx = gum.HeatExchanger(
             default={
-                "shell":{"property_package":self.o2_side_prop_params},
-                "tube":{"property_package":self.o2_side_prop_params}
+                "shell": {"property_package": self.o2_side_prop_params},
+                "tube": {"property_package": self.o2_side_prop_params},
             }
         )
         self.sweep_turbine = gum.Turbine(
             doc="Sweep air turbine",
-            default={"property_package": self.o2_side_prop_params}
+            default={"property_package": self.o2_side_prop_params},
         )
         self.feed_hx01 = gum.HeatExchanger(
             default={
-                "shell":{"property_package":self.h2_side_prop_params},
-                "tube":{"property_package":self.steam_prop_params},
-                #"delta_temperature_callback":delta_temperature_underwood_callback
+                "shell": {"property_package": self.h2_side_prop_params},
+                "tube": {"property_package": self.steam_prop_params},
+                # "delta_temperature_callback":delta_temperature_underwood_callback
             }
         )
         self.feed_translator = gum.Translator(
             default={
-                "inlet_property_package":self.steam_prop_params,
-                "outlet_property_package":self.h2_side_prop_params,
+                "inlet_property_package": self.steam_prop_params,
+                "outlet_property_package": self.h2_side_prop_params,
                 "outlet_state_defined": False,
             }
         )
         self.feed_heater = gum.Heater(
-            default={"property_package":self.h2_side_prop_params})
+            default={"property_package": self.h2_side_prop_params}
+        )
         self.sweep_heater = gum.Heater(
-            default={"property_package":self.o2_side_prop_params})
+            default={"property_package": self.o2_side_prop_params}
+        )
         self.water_pump = hum.HelmIsentropicCompressor(
             default={"property_package": self.steam_prop_params}
         )
@@ -312,26 +350,28 @@ class SoecFlowsheetData(FlowsheetBlockData):
         )
         self.water_heater01 = gum.HeatExchanger(
             default={
-                "shell":{"property_package":self.h2_side_prop_params},
-                "tube":{"property_package":self.steam_prop_params}
+                "shell": {"property_package": self.h2_side_prop_params},
+                "tube": {"property_package": self.steam_prop_params},
             }
         )
         self.water_heater02 = gum.HeatExchanger(
             default={
-                "shell":{"property_package":self.o2_side_prop_params},
-                "tube":{"property_package":self.steam_prop_params}
+                "shell": {"property_package": self.o2_side_prop_params},
+                "tube": {"property_package": self.steam_prop_params},
             }
         )
         # Magic dryer, just magically drop water out of a port.
         @self.Expression(self.time, {"H2"})
         def waterless_h2_mole_frac_expr(b, t, i):
             return 1
+
         @self.Expression(self.time)
         def waterless_h2_flow_expr(b, t):
             return (
                 b.water_heater01.shell.properties_out[t].flow_mol
                 * b.water_heater01.shell.properties_out[t].mole_frac_comp["H2"]
             )
+
         self.h2_drop_water_port = Port(
             rule=lambda b: {
                 "flow_mol": b.waterless_h2_flow_expr,
@@ -341,29 +381,31 @@ class SoecFlowsheetData(FlowsheetBlockData):
             }
         )
         self.h2_precooler = gum.Heater(
-            default={"property_package":self.h2_pure_prop_params})
+            default={"property_package": self.h2_pure_prop_params}
+        )
         self.cmp01 = gum.Compressor(
-            default={"property_package":self.h2_pure_prop_params})
-        self.ic01 = gum.Heater(
-            default={"property_package":self.h2_pure_prop_params})
+            default={"property_package": self.h2_pure_prop_params}
+        )
+        self.ic01 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
         self.cmp02 = gum.Compressor(
-            default={"property_package":self.h2_pure_prop_params})
-        self.ic02 = gum.Heater(
-            default={"property_package":self.h2_pure_prop_params})
+            default={"property_package": self.h2_pure_prop_params}
+        )
+        self.ic02 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
         self.cmp03 = gum.Compressor(
-            default={"property_package":self.h2_pure_prop_params})
-        self.ic03 = gum.Heater(
-            default={"property_package":self.h2_pure_prop_params})
+            default={"property_package": self.h2_pure_prop_params}
+        )
+        self.ic03 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
         self.cmp04 = gum.Compressor(
-            default={"property_package":self.h2_pure_prop_params})
-        self.ic04 = gum.Heater(
-            default={"property_package":self.h2_pure_prop_params})
+            default={"property_package": self.h2_pure_prop_params}
+        )
+        self.ic04 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
         self.cmp05 = gum.Compressor(
-            default={"property_package":self.h2_pure_prop_params})
-        self.ic05 = gum.Heater(
-            default={"property_package":self.h2_pure_prop_params})
+            default={"property_package": self.h2_pure_prop_params}
+        )
+        self.ic05 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
         self.cmp06 = gum.Compressor(
-            default={"property_package":self.h2_pure_prop_params})
+            default={"property_package": self.h2_pure_prop_params}
+        )
         self.makeup_mix = hum.HelmMixer(
             default={
                 "dynamic": False,
@@ -374,23 +416,29 @@ class SoecFlowsheetData(FlowsheetBlockData):
         )
 
     def _add_arcs(self):
-        for blk in [self.fuel_inlet_translator,self.fuel_outlet_translator,
-                      self.oxygen_inlet_translator,self.oxygen_outlet_translator]:
+        for blk in [
+            self.fuel_inlet_translator,
+            self.fuel_outlet_translator,
+            self.oxygen_inlet_translator,
+            self.oxygen_outlet_translator,
+        ]:
             shortname = blk.name.split(".")[-1]
-            shortname = '_'.join(shortname.split("_")[:2])
+            shortname = "_".join(shortname.split("_")[:2])
 
             if shortname.endswith("inlet"):
-                dest_port = getattr(self.soec,shortname)
-                setattr(self,shortname+"_translator_arc",
-                        Arc(source=blk.outlet,
-                                destination=dest_port)
-                        )
+                dest_port = getattr(self.soec, shortname)
+                setattr(
+                    self,
+                    shortname + "_translator_arc",
+                    Arc(source=blk.outlet, destination=dest_port),
+                )
             else:
-                src_port = getattr(self.soec,shortname)
-                setattr(self,shortname+"_translator_arc",
-                        Arc(source=src_port,
-                                destination=blk.inlet)
-                        )
+                src_port = getattr(self.soec, shortname)
+                setattr(
+                    self,
+                    shortname + "_translator_arc",
+                    Arc(source=src_port, destination=blk.inlet),
+                )
 
         self.ostrm01 = Arc(
             doc="SOEC sweep gas out to recycle splitter",
@@ -568,61 +616,83 @@ class SoecFlowsheetData(FlowsheetBlockData):
         cost_base.register_idaes_currency_units()
         self.water_price = pyo.Var(
             initialize=9.352e-4,
-            units=pyo.units.USD_2018/pyo.units.kg,
-            doc="Price of water including treatment chemicals"
+            units=pyo.units.USD_2018 / pyo.units.kg,
+            doc="Price of water including treatment chemicals",
         )
         self.water_price.fix()
         self.hydrogen_product_rate = pyo.Var(
             self.config.time,
             initialize=5,
-            units=pyo.units.kg/pyo.units.s,
+            units=pyo.units.kg / pyo.units.s,
             doc="Hyrogen mass product rate.",
         )
+
         @self.Constraint(self.config.time)
         def hydrogen_product_rate_eqn(b, t):
             return (
-                b.hydrogen_product_rate[t] ==
-                b.cmp06.control_volume.properties_out[0].flow_mass
+                b.hydrogen_product_rate[t]
+                == b.cmp06.control_volume.properties_out[0].flow_mass
             )
+
         # Translator equations
         @self.makeup_mix.Constraint(self.config.time, doc="Mixed state pressure eqn.")
         def mixer1_pressure_eqn(b, t):
             return b.mixed_state[t].pressure == b.w1_state[t].pressure
-        def rule_flow_mol_scale_down(blk,t):
-            return (blk.properties_in[t].flow_mol
-                    == self.number_cells*blk.properties_out[t].flow_mol)
-        def rule_flow_mol_scale_up(blk,t):
-            return (self.number_cells*blk.properties_in[t].flow_mol
-                    == blk.properties_out[t].flow_mol)
-        def rule_mole_frac(blk,t,j):
-            return blk.properties_in[t].mole_frac_comp[j] == blk.properties_out[t].mole_frac_comp[j]
-        def rule_temperature(blk,t):
+
+        def rule_flow_mol_scale_down(blk, t):
+            return (
+                blk.properties_in[t].flow_mol
+                == self.number_cells * blk.properties_out[t].flow_mol
+            )
+
+        def rule_flow_mol_scale_up(blk, t):
+            return (
+                self.number_cells * blk.properties_in[t].flow_mol
+                == blk.properties_out[t].flow_mol
+            )
+
+        def rule_mole_frac(blk, t, j):
+            return (
+                blk.properties_in[t].mole_frac_comp[j]
+                == blk.properties_out[t].mole_frac_comp[j]
+            )
+
+        def rule_temperature(blk, t):
             return blk.properties_in[t].temperature == blk.properties_out[t].temperature
-        def rule_pressure(blk,t):
+
+        def rule_pressure(blk, t):
             return blk.properties_in[t].pressure == blk.properties_out[t].pressure
 
-        for blk in [self.fuel_inlet_translator,self.fuel_outlet_translator,
-                      self.oxygen_inlet_translator,self.oxygen_outlet_translator]:
+        for blk in [
+            self.fuel_inlet_translator,
+            self.fuel_outlet_translator,
+            self.oxygen_inlet_translator,
+            self.oxygen_outlet_translator,
+        ]:
             shortname = blk.name.split(".")[-1]
-            shortname = '_'.join(shortname.split("_")[:2])
+            shortname = "_".join(shortname.split("_")[:2])
 
             blk.temperature_eqn = pyo.Constraint(self.time, rule=rule_temperature)
             blk.pressure_eqn = pyo.Constraint(self.time, rule=rule_pressure)
 
             if shortname.startswith("fuel"):
-                blk.mole_frac_eqn = pyo.Constraint(self.time,
-                                                   self.soec.config.fuel_comps,
-                                                    rule=rule_mole_frac)
+                blk.mole_frac_eqn = pyo.Constraint(
+                    self.time, self.soec.config.fuel_component_list, rule=rule_mole_frac
+                )
             else:
-                blk.mole_frac_eqn = pyo.Constraint(self.time,
-                                                   self.soec.config.oxygen_comps,
-                                                        rule=rule_mole_frac)
+                blk.mole_frac_eqn = pyo.Constraint(
+                    self.time,
+                    self.soec.config.oxygen_component_list,
+                    rule=rule_mole_frac,
+                )
             if shortname.endswith("inlet"):
-                blk.flow_mol_eqn = pyo.Constraint(self.time,
-                                                  rule=rule_flow_mol_scale_down)
+                blk.flow_mol_eqn = pyo.Constraint(
+                    self.time, rule=rule_flow_mol_scale_down
+                )
             else:
-                blk.flow_mol_eqn = pyo.Constraint(self.time,
-                                                  rule=rule_flow_mol_scale_up)
+                blk.flow_mol_eqn = pyo.Constraint(
+                    self.time, rule=rule_flow_mol_scale_up
+                )
 
         @self.feed_translator.Constraint(self.time)
         def temperature_eqn(b, t):
@@ -640,68 +710,75 @@ class SoecFlowsheetData(FlowsheetBlockData):
         def mole_frac_comp_eqn(b, t):
             return b.properties_out[t].mole_frac_comp["H2"] == 1e-19
 
-        self.h2_mass_production = pyo.Var(self.time, initialize=2,
-                                          units = pyo.units.kg/pyo.units.s)
+        self.h2_mass_production = pyo.Var(
+            self.time, initialize=2, units=pyo.units.kg / pyo.units.s
+        )
 
         @self.Constraint(self.time)
         def h2_mass_production_eqn(b, t):
-            return(
+            return (
                 b.h2_mass_production[t]
-                == 0.002016*(pyo.units.kg/pyo.units.mol)*
-                b.feed_recycle_split.out_state[t].flow_mol*
-                b.feed_recycle_split.out_state[t].mole_frac_comp["H2"]
+                == 0.002016
+                * (pyo.units.kg / pyo.units.mol)
+                * b.feed_recycle_split.out_state[t].flow_mol
+                * b.feed_recycle_split.out_state[t].mole_frac_comp["H2"]
             )
 
         self.soec_single_pass_water_conversion = pyo.Var(self.time, initialize=0.7)
 
         @self.Constraint(self.time)
-        def soec_single_pass_water_conversion_eqn(b,t):
+        def soec_single_pass_water_conversion_eqn(b, t):
             return b.soec_single_pass_water_conversion[t] == (
-                    (b.soec.fuel_chan.flow_mol_comp_outlet[t,"H2"]
-                    - b.soec.fuel_chan.flow_mol_comp_inlet[t,"H2"])
-                    / b.soec.fuel_chan.flow_mol_comp_inlet[t,"H2O"])
+                (
+                    b.soec.fuel_channel.flow_mol_comp_outlet[t, "H2"]
+                    - b.soec.fuel_channel.flow_mol_comp_inlet[t, "H2"]
+                )
+                / b.soec.fuel_channel.flow_mol_comp_inlet[t, "H2O"]
+            )
 
         self.soec_overall_water_conversion = pyo.Var(self.time, initialize=0.75)
 
         @self.Constraint(self.time)
-        def soec_overall_water_conversion_eqn(b,t):
-            return (b.soec_overall_water_conversion[t] ==
-                    1 - b.feed_recycle_split.inlet.mole_frac_comp[t,"H2O"])
+        def soec_overall_water_conversion_eqn(b, t):
+            return (
+                b.soec_overall_water_conversion[t]
+                == 1 - b.feed_recycle_split.inlet.mole_frac_comp[t, "H2O"]
+            )
 
         @self.Expression(self.time)
-        def module_electrical_work(b,t):
-            return b.number_cells*b.soec.electrical_work[t]
+        def module_electrical_work(b, t):
+            return b.number_cells * b.soec.electrical_work[t]
 
         @self.Expression(self.time)
         def soec_power_per_h2(b, t):
-            return b.module_electrical_work[t]/b.h2_mass_production[t]
+            return b.module_electrical_work[t] / b.h2_mass_production[t]
 
         @self.Expression(self.time)
         def total_compressor_power(b, t):
             return (
-                b.cmp01.control_volume.work[t] +
-                b.cmp02.control_volume.work[t] +
-                b.cmp03.control_volume.work[t] +
-                b.cmp04.control_volume.work[t] +
-                b.cmp05.control_volume.work[t] +
-                b.cmp06.control_volume.work[t]
+                b.cmp01.control_volume.work[t]
+                + b.cmp02.control_volume.work[t]
+                + b.cmp03.control_volume.work[t]
+                + b.cmp04.control_volume.work[t]
+                + b.cmp05.control_volume.work[t]
+                + b.cmp06.control_volume.work[t]
             )
 
         @self.Expression(self.time)
         def total_electric_power(b, t):
             return (
-                b.module_electrical_work[t] +
-                b.sweep_turbine.control_volume.work[t] +
-                b.sweep_compressor.control_volume.work[t] +
-                b.sweep_heater.control_volume.heat[t] +
-                b.feed_heater.control_volume.heat[t] +
-                b.water_pump.control_volume.work[t] +
-                b.total_compressor_power[t]
+                b.module_electrical_work[t]
+                + b.sweep_turbine.control_volume.work[t]
+                + b.sweep_compressor.control_volume.work[t]
+                + b.sweep_heater.control_volume.heat[t]
+                + b.feed_heater.control_volume.heat[t]
+                + b.water_pump.control_volume.work[t]
+                + b.total_compressor_power[t]
             )
 
         @self.Expression(self.time)
         def total_electric_power_per_h2(b, t):
-            return b.total_electric_power[t]/b.h2_mass_production[t]
+            return b.total_electric_power[t] / b.h2_mass_production[t]
 
         @self.Expression(self.time)
         def makeup_water_flow(b, t):
@@ -717,10 +794,11 @@ class SoecFlowsheetData(FlowsheetBlockData):
         # @self.Expression(self.time)
         # def estimated_number_of_cells(b, t):
         #     return b.soec.current[t]/b.assumed_current_density/b.assumed_cell_area
+
     def _scaling(self):
-        def scale_indexed_constraint(con,sf):
+        def scale_indexed_constraint(con, sf):
             for idx, c in con.items():
-                iscale.constraint_scaling_transform(c,sf)
+                iscale.constraint_scaling_transform(c, sf)
 
         # for pp in [self.h2_side_prop_params,self.o2_side_prop_params]:
         #     pp.set_default_scaling("mole_frac_comp", 10)
@@ -734,51 +812,65 @@ class SoecFlowsheetData(FlowsheetBlockData):
         #     pp.set_default_scaling(
         #         "enth_mol_phase", 1e-3, index="Vap")
         iscale.set_scaling_factor(self.waterless_h2_flow_expr[0.0], 1e-3)
-        iscale.set_scaling_factor(self.waterless_h2_mole_frac_expr[0.0,"H2"], 1.0)
+        iscale.set_scaling_factor(self.waterless_h2_mole_frac_expr[0.0, "H2"], 1.0)
 
         iscale.set_scaling_factor(
-            self.sweep_recycle_mix.feed_state[0.0].enth_mol_phase["Vap"], 1e-4)
-        iscale.set_scaling_factor(
-            self.sweep_recycle_mix.recycle_state[0.0].enth_mol_phase["Vap"], 1e-4)
-        iscale.set_scaling_factor(
-            self.sweep_recycle_mix.mixed_state[0.0].enth_mol_phase["Vap"], 1e-4)
-        iscale.set_scaling_factor(
-            self.feed_recycle_mix.feed_state[0.0].enth_mol_phase["Vap"], 1e-4)
-        iscale.set_scaling_factor(
-            self.feed_recycle_mix.recycle_state[0.0].enth_mol_phase["Vap"], 1e-4)
-        iscale.set_scaling_factor(
-            self.feed_recycle_mix.mixed_state[0.0].enth_mol_phase["Vap"], 1e-4)
-        iscale.set_scaling_factor(
-            self.sweep_compressor.control_volume.properties_in[0.0].enth_mol_phase["Vap"],
-            1e-4
+            self.sweep_recycle_mix.feed_state[0.0].enth_mol_phase["Vap"], 1e-4
         )
         iscale.set_scaling_factor(
-            self.sweep_compressor.control_volume.properties_out[0.0].enth_mol_phase["Vap"],
-            1e-4
+            self.sweep_recycle_mix.recycle_state[0.0].enth_mol_phase["Vap"], 1e-4
         )
         iscale.set_scaling_factor(
-            self.sweep_compressor.control_volume.work, 1e-6)
-        iscale.set_scaling_factor(
-            self.sweep_compressor.properties_isentropic[0.0].enth_mol_phase["Vap"],
-            1e-4
+            self.sweep_recycle_mix.mixed_state[0.0].enth_mol_phase["Vap"], 1e-4
         )
         iscale.set_scaling_factor(
-            self.sweep_hx.shell.properties_in[0.0].enth_mol_phase["Vap"],  1e-4)
+            self.feed_recycle_mix.feed_state[0.0].enth_mol_phase["Vap"], 1e-4
+        )
         iscale.set_scaling_factor(
-            self.sweep_hx.shell.properties_out[0.0].enth_mol_phase["Vap"], 1e-4)
+            self.feed_recycle_mix.recycle_state[0.0].enth_mol_phase["Vap"], 1e-4
+        )
+        iscale.set_scaling_factor(
+            self.feed_recycle_mix.mixed_state[0.0].enth_mol_phase["Vap"], 1e-4
+        )
+        iscale.set_scaling_factor(
+            self.sweep_compressor.control_volume.properties_in[0.0].enth_mol_phase[
+                "Vap"
+            ],
+            1e-4,
+        )
+        iscale.set_scaling_factor(
+            self.sweep_compressor.control_volume.properties_out[0.0].enth_mol_phase[
+                "Vap"
+            ],
+            1e-4,
+        )
+        iscale.set_scaling_factor(self.sweep_compressor.control_volume.work, 1e-6)
+        iscale.set_scaling_factor(
+            self.sweep_compressor.properties_isentropic[0.0].enth_mol_phase["Vap"], 1e-4
+        )
+        iscale.set_scaling_factor(
+            self.sweep_hx.shell.properties_in[0.0].enth_mol_phase["Vap"], 1e-4
+        )
+        iscale.set_scaling_factor(
+            self.sweep_hx.shell.properties_out[0.0].enth_mol_phase["Vap"], 1e-4
+        )
         iscale.set_scaling_factor(self.sweep_hx.shell.heat, 1e-6)
         iscale.set_scaling_factor(
-            self.sweep_hx.tube.properties_in[0.0].enth_mol_phase["Vap"], 1e-4)
+            self.sweep_hx.tube.properties_in[0.0].enth_mol_phase["Vap"], 1e-4
+        )
         iscale.set_scaling_factor(
-            self.sweep_hx.tube.properties_out[0.0].enth_mol_phase["Vap"], 1e-4)
+            self.sweep_hx.tube.properties_out[0.0].enth_mol_phase["Vap"], 1e-4
+        )
         iscale.set_scaling_factor(self.sweep_hx.tube.heat, 1e-6)
         iscale.set_scaling_factor(
-            self.sweep_hx.overall_heat_transfer_coefficient[0.0], 1e-2)
+            self.sweep_hx.overall_heat_transfer_coefficient[0.0], 1e-2
+        )
         iscale.set_scaling_factor(self.sweep_hx.area, 1e-3)
         iscale.set_scaling_factor(self.feed_hx01.shell.heat, 1e-6)
         iscale.set_scaling_factor(self.feed_hx01.tube.heat, 1e-6)
         iscale.set_scaling_factor(
-            self.feed_hx01.overall_heat_transfer_coefficient[0.0], 1e-2)
+            self.feed_hx01.overall_heat_transfer_coefficient[0.0], 1e-2
+        )
         iscale.set_scaling_factor(self.feed_hx01.area, 1e-3)
         iscale.set_scaling_factor(self.sweep_turbine.control_volume.work, 1e-6)
         iscale.set_scaling_factor(self.feed_heater.control_volume.heat, 1e-6)
@@ -786,12 +878,14 @@ class SoecFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.water_heater01.shell.heat, 1e-6)
         iscale.set_scaling_factor(self.water_heater01.tube.heat, 1e-6)
         iscale.set_scaling_factor(
-            self.water_heater01.overall_heat_transfer_coefficient[0.0], 1e-2)
+            self.water_heater01.overall_heat_transfer_coefficient[0.0], 1e-2
+        )
         iscale.set_scaling_factor(self.water_heater01.area, 1e-3)
         iscale.set_scaling_factor(self.water_heater02.shell.heat, 1e-6)
         iscale.set_scaling_factor(self.water_heater02.tube.heat, 1e-6)
         iscale.set_scaling_factor(
-            self.water_heater02.overall_heat_transfer_coefficient[0.0], 1e-2)
+            self.water_heater02.overall_heat_transfer_coefficient[0.0], 1e-2
+        )
         iscale.set_scaling_factor(self.water_heater02.area, 1e-3)
         iscale.set_scaling_factor(self.water_pump.control_volume.work[0.0], 1e-4)
         iscale.set_scaling_factor(self.h2_precooler.control_volume.heat, 1e-5)
@@ -805,104 +899,112 @@ class SoecFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.ic04.control_volume.heat, 1e-5)
         iscale.set_scaling_factor(self.cmp05.control_volume.work, 1e-6)
         iscale.set_scaling_factor(self.ic05.control_volume.heat, 1e-5)
-        iscale.set_scaling_factor(self.cmp06.control_volume.work,1e-6)
+        iscale.set_scaling_factor(self.cmp06.control_volume.work, 1e-6)
 
-        #iscale.constraint_scaling_transform(self.soec_outlet_temperature_eqn[0], 1e-2)
-
+        # iscale.constraint_scaling_transform(self.soec_outlet_temperature_eqn[0], 1e-2)
 
         for t in self.time:
             iscale.constraint_scaling_transform(
-                self.sweep_recycle_mix.pressure_equality_eqn[t],1e-5)
+                self.sweep_recycle_mix.pressure_equality_eqn[t], 1e-5
+            )
             iscale.constraint_scaling_transform(
-                self.feed_recycle_mix.pressure_equality_eqn[t],1e-5)
+                self.feed_recycle_mix.pressure_equality_eqn[t], 1e-5
+            )
 
-            iscale.constraint_scaling_transform(self.feed_translator.temperature_eqn[t], 1e-2)
-            iscale.constraint_scaling_transform(self.feed_translator.pressure_eqn[t], 1e-5)
-            iscale.constraint_scaling_transform(self.feed_translator.flow_mol_eqn[t], 1e-3)
-            iscale.constraint_scaling_transform(self.feed_translator.mole_frac_comp_eqn[t], 10)
-            iscale.constraint_scaling_transform(self.feed_translator.mole_frac_comp_eqn[t], 10)
+            iscale.constraint_scaling_transform(
+                self.feed_translator.temperature_eqn[t], 1e-2
+            )
+            iscale.constraint_scaling_transform(
+                self.feed_translator.pressure_eqn[t], 1e-5
+            )
+            iscale.constraint_scaling_transform(
+                self.feed_translator.flow_mol_eqn[t], 1e-3
+            )
+            iscale.constraint_scaling_transform(
+                self.feed_translator.mole_frac_comp_eqn[t], 10
+            )
+            iscale.constraint_scaling_transform(
+                self.feed_translator.mole_frac_comp_eqn[t], 10
+            )
 
+            iscale.set_scaling_factor(self.soec.fuel_inlet.temperature[t], 1e-2)
+            iscale.set_scaling_factor(self.soec.fuel_outlet.temperature[t], 1e-2)
+            iscale.set_scaling_factor(self.soec.oxygen_inlet.temperature[t], 1e-2)
+            iscale.set_scaling_factor(self.soec.oxygen_outlet.temperature[t], 1e-2)
+            iscale.set_scaling_factor(self.soec.fuel_inlet.pressure[t], 1e-5)
+            iscale.set_scaling_factor(self.soec.fuel_outlet.pressure[t], 1e-5)
+            iscale.set_scaling_factor(self.soec.oxygen_inlet.pressure[t], 1e-5)
+            iscale.set_scaling_factor(self.soec.oxygen_outlet.pressure[t], 1e-5)
+            iscale.set_scaling_factor(self.soec.fuel_inlet.mole_frac_comp[t, "H2"], 10)
+            iscale.set_scaling_factor(self.soec.fuel_inlet.mole_frac_comp[t, "H2O"], 10)
+            iscale.set_scaling_factor(self.soec.fuel_outlet.mole_frac_comp[t, "H2"], 10)
             iscale.set_scaling_factor(
-                self.soec.fuel_inlet.temperature[t],1e-2)
+                self.soec.fuel_outlet.mole_frac_comp[t, "H2O"], 10
+            )
             iscale.set_scaling_factor(
-                self.soec.fuel_outlet.temperature[t],1e-2)
+                self.soec.oxygen_inlet.mole_frac_comp[t, "CO2"], 1e4
+            )
             iscale.set_scaling_factor(
-                self.soec.oxygen_inlet.temperature[t],1e-2)
+                self.soec.oxygen_inlet.mole_frac_comp[t, "H2O"], 1e2
+            )
             iscale.set_scaling_factor(
-                self.soec.oxygen_outlet.temperature[t],1e-2)
+                self.soec.oxygen_inlet.mole_frac_comp[t, "Ar"], 1e2
+            )
             iscale.set_scaling_factor(
-                self.soec.fuel_inlet.pressure[t],1e-5)
+                self.soec.oxygen_inlet.mole_frac_comp[t, "N2"], 10
+            )
             iscale.set_scaling_factor(
-                self.soec.fuel_outlet.pressure[t],1e-5)
+                self.soec.oxygen_inlet.mole_frac_comp[t, "O2"], 10
+            )
             iscale.set_scaling_factor(
-                self.soec.oxygen_inlet.pressure[t],1e-5)
+                self.soec.oxygen_outlet.mole_frac_comp[t, "CO2"], 1e4
+            )
             iscale.set_scaling_factor(
-                self.soec.oxygen_outlet.pressure[t],1e-5)
+                self.soec.oxygen_outlet.mole_frac_comp[t, "H2O"], 1e2
+            )
             iscale.set_scaling_factor(
-                self.soec.fuel_inlet.mole_frac_comp[t,"H2"],10)
+                self.soec.oxygen_outlet.mole_frac_comp[t, "Ar"], 1e2
+            )
             iscale.set_scaling_factor(
-                self.soec.fuel_inlet.mole_frac_comp[t,"H2O"],10)
+                self.soec.oxygen_outlet.mole_frac_comp[t, "N2"], 10
+            )
             iscale.set_scaling_factor(
-                self.soec.fuel_outlet.mole_frac_comp[t,"H2"],10)
-            iscale.set_scaling_factor(
-                self.soec.fuel_outlet.mole_frac_comp[t,"H2O"],10)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_inlet.mole_frac_comp[t,"CO2"],1e4)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_inlet.mole_frac_comp[t,"H2O"],1e2)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_inlet.mole_frac_comp[t,"Ar"],1e2)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_inlet.mole_frac_comp[t,"N2"],10)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_inlet.mole_frac_comp[t,"O2"],10)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_outlet.mole_frac_comp[t,"CO2"],1e4)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_outlet.mole_frac_comp[t,"H2O"],1e2)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_outlet.mole_frac_comp[t,"Ar"],1e2)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_outlet.mole_frac_comp[t,"N2"],10)
-            iscale.set_scaling_factor(
-                self.soec.oxygen_outlet.mole_frac_comp[t,"O2"],10)
-            # for iz in self.soec.oxygen_tpb.iznodes:
-            #     iscale.set_scaling_factor(
-            #         self.soec.oxygen_tpb.mole_frac_comp[t,iz,"CO2"],1e6)
-            #     iscale.set_scaling_factor(
-            #         self.soec.oxygen_tpb.mole_frac_comp[t,iz,"H2O"],1e2)
-            #     iscale.set_scaling_factor(
-            #         self.soec.oxygen_tpb.mole_frac_comp[t,iz,"Ar"],1e2)
-            #     iscale.set_scaling_factor(
-            #         self.soec.oxygen_tpb.mole_frac_comp[t,iz,"N2"],10)
-            #     iscale.set_scaling_factor(
-            #         self.soec.oxygen_tpb.mole_frac_comp[t,iz,"O2"],10)
+                self.soec.oxygen_outlet.mole_frac_comp[t, "O2"], 10
+            )
 
         self.soec.recursive_scaling()
 
-        for blk in [self.fuel_inlet_translator,self.fuel_outlet_translator,
-                      self.oxygen_inlet_translator,self.oxygen_outlet_translator]:
+        for blk in [
+            self.fuel_inlet_translator,
+            self.fuel_outlet_translator,
+            self.oxygen_inlet_translator,
+            self.oxygen_outlet_translator,
+        ]:
             shortname = blk.name.split(".")[-1]
-            shortname = '_'.join(shortname.split("_")[:2])
+            shortname = "_".join(shortname.split("_")[:2])
 
             if shortname.endswith("inlet"):
                 props = blk.config.inlet_property_package
-                dest_port = getattr(self.soec,shortname)
+                dest_port = getattr(self.soec, shortname)
                 sflow = props.get_default_scaling("flow_mol")
                 for t in self.time:
-                    iscale.set_scaling_factor(blk.properties_out[t].flow_mol,
-                                              sflow*self.number_cells.value)
-                    iscale.set_scaling_factor(dest_port.flow_mol[t],
-                                          sflow*self.number_cells.value)
+                    iscale.set_scaling_factor(
+                        blk.properties_out[t].flow_mol, sflow * self.number_cells.value
+                    )
+                    iscale.set_scaling_factor(
+                        dest_port.flow_mol[t], sflow * self.number_cells.value
+                    )
             else:
                 props = blk.config.outlet_property_package
                 sflow = props.get_default_scaling("flow_mol")
-                src_port = getattr(self.soec,shortname)
+                src_port = getattr(self.soec, shortname)
                 for t in self.time:
-                    iscale.set_scaling_factor(blk.properties_in[t].flow_mol,
-                                              sflow*self.number_cells.value)
-                    iscale.set_scaling_factor(src_port.flow_mol[t],
-                                          sflow*self.number_cells.value)
+                    iscale.set_scaling_factor(
+                        blk.properties_in[t].flow_mol, sflow * self.number_cells.value
+                    )
+                    iscale.set_scaling_factor(
+                        src_port.flow_mol[t], sflow * self.number_cells.value
+                    )
 
             scale_indexed_constraint(blk.flow_mol_eqn, sflow)
 
@@ -914,7 +1016,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
 
             sP = props.get_default_scaling("pressure")
             scale_indexed_constraint(blk.pressure_eqn, sP)
-
 
     @staticmethod
     def _set_gas_port(port, F, T, P, y, fix=True):
@@ -933,24 +1034,40 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.feed_hx01.tube.properties_in[0].pressure.fix(6e5)
         self.feed_hx01.tube.properties_in[0].flow_mol.fix(3360)
         self.feed_hx01.tube.properties_in[0].enth_mol.fix(
-            iapws95.htpx(T=520*pyo.units.K, P=6e5*pyo.units.Pa))
+            iapws95.htpx(T=520 * pyo.units.K, P=6e5 * pyo.units.Pa)
+        )
 
         self.water_pump.control_volume.properties_in[0].pressure.fix(101000)
         self.water_pump.control_volume.properties_in[0].flow_mol.fix(3360)
         self.water_pump.control_volume.properties_in[0].enth_mol.fix(
-            iapws95.htpx(T=288.15*pyo.units.K, P=101000*pyo.units.Pa))
+            iapws95.htpx(T=288.15 * pyo.units.K, P=101000 * pyo.units.Pa)
+        )
 
         self._set_gas_port(
-            self.sweep_compressor.inlet, F=5000, T=288.15, P=101000, y=self.sweep_comp)
+            self.sweep_compressor.inlet, F=5000, T=288.15, P=101000, y=self.sweep_comp
+        )
         self._set_gas_port(
-            self.feed_recycle_mix.feed, F=3500, T=1023, P=6e5,  y=self.feed_comp)
+            self.feed_recycle_mix.feed, F=3500, T=1023, P=6e5, y=self.feed_comp
+        )
         self._set_gas_port(
-            self.feed_recycle_mix.recycle, F=340, T=1023, P=6e5,  y={"H2":0.7, "H2O":0.3}, fix=False)
+            self.feed_recycle_mix.recycle,
+            F=340,
+            T=1023,
+            P=6e5,
+            y={"H2": 0.7, "H2O": 0.3},
+            fix=False,
+        )
         self._set_gas_port(
-            self.sweep_recycle_mix.feed, F=5200, T=1023, P=6e5, y=self.sweep_comp)
+            self.sweep_recycle_mix.feed, F=5200, T=1023, P=6e5, y=self.sweep_comp
+        )
         self._set_gas_port(
-            self.sweep_recycle_mix.recycle, F=2250, T=1023, P=6e5, y=self.sweep_comp, fix=False)
-
+            self.sweep_recycle_mix.recycle,
+            F=2250,
+            T=1023,
+            P=6e5,
+            y=self.sweep_comp,
+            fix=False,
+        )
 
         # SOEC outlet temperatures
         # self.soec.fuel_outlet.temperature.fix(1023)
@@ -960,8 +1077,8 @@ class SoecFlowsheetData(FlowsheetBlockData):
         # Recycle splits
         self.sweep_recycle_split.split_fraction[:, "out"].fix(0.90)
         self.feed_recycle_split.split_fraction[:, "out"].fix(0.95)
-        #self.soec.oxygen_side_inlet.mole_frac_comp[:, "H2"].fix(0.23)
-        #self.soec.hydrogen_side_inlet.mole_frac_comp[:, "H2"].fix(0.01)
+        # self.soec.oxygen_side_inlet.mole_frac_comp[:, "H2"].fix(0.23)
+        # self.soec.hydrogen_side_inlet.mole_frac_comp[:, "H2"].fix(0.01)
         self.sweep_compressor.efficiency_isentropic.fix(0.85)
         self.sweep_compressor.control_volume.properties_out[:].pressure.fix(6e5)
         self.sweep_hx.area.fix(4000)
@@ -1004,7 +1121,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         solver=None,
         optarg=None,
         load_from="soec_init.json.gz",
-        save_to="soec_init.json.gz"
+        save_to="soec_init.json.gz",
     ):
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
@@ -1021,7 +1138,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
         init_log.info("SOEC Initialization Starting")
         solver_obj = iutil.get_solver(solver, optarg)
 
-
         self.sweep_compressor.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         propagate_state(self.sweep03)
         self.feed_recycle_mix.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
@@ -1034,8 +1150,12 @@ class SoecFlowsheetData(FlowsheetBlockData):
         propagate_state(self.feed01b)
         propagate_state(self.sweep01b)
 
-        self.fuel_inlet_translator.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
-        self.oxygen_inlet_translator.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
+        self.fuel_inlet_translator.initialize(
+            outlvl=outlvl, solver=solver, optarg=optarg
+        )
+        self.oxygen_inlet_translator.initialize(
+            outlvl=outlvl, solver=solver, optarg=optarg
+        )
 
         propagate_state(self.fuel_inlet_translator_arc)
         propagate_state(self.oxygen_inlet_translator_arc)
@@ -1046,14 +1166,18 @@ class SoecFlowsheetData(FlowsheetBlockData):
             solver=solver,
             optarg=optarg,
             current_density_guess=-5000,
-            temperature_guess=1023.15
+            temperature_guess=1023.15,
         )
         self.soec.potential.unfix()
         propagate_state(self.fuel_outlet_translator_arc)
         propagate_state(self.oxygen_outlet_translator_arc)
 
-        self.fuel_outlet_translator.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
-        self.oxygen_outlet_translator.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
+        self.fuel_outlet_translator.initialize(
+            outlvl=outlvl, solver=solver, optarg=optarg
+        )
+        self.oxygen_outlet_translator.initialize(
+            outlvl=outlvl, solver=solver, optarg=optarg
+        )
 
         propagate_state(self.ostrm01)
         self.sweep_recycle_split.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
@@ -1178,7 +1302,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
                 doc=f"{i}: volumetric flow",
                 expr=s.flow_vol,
                 format_string="{:.3f}",
-                display_units=pyo.units.m ** 3 / pyo.units.s,
+                display_units=pyo.units.m**3 / pyo.units.s,
             )
             tag_group[f"{i}_P"] = iutil.ModelTag(
                 doc=f"{i}: pressure",
@@ -1195,18 +1319,18 @@ class SoecFlowsheetData(FlowsheetBlockData):
             try:
                 tag_group[f"{i}_vf"] = iutil.ModelTag(
                     doc=f"{i}: vapor fraction",
-                    expr=100*s.vapor_frac,
+                    expr=100 * s.vapor_frac,
                     format_string="{:.2f}",
                     display_units="%",
                 )
-            except AttributeError: # If there is no vapor fraction it's not steam
+            except AttributeError:  # If there is no vapor fraction it's not steam
                 tag_group[f"{i}_yH2O"] = iutil.ModelTag(
                     doc=f"{i}: mole percent H2O",
                     expr=100,
                     format_string="{:.3f}",
                     display_units="%",
                 )
-            try: # gas (not steam) properties have mole fractions
+            try:  # gas (not steam) properties have mole fractions
                 for c in s.mole_frac_comp:
                     tag_group[f"{i}_y{c}"] = iutil.ModelTag(
                         doc=f"{i}: mole percent {c}",
@@ -1214,7 +1338,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
                         format_string="{:.3f}",
                         display_units="%",
                     )
-            except AttributeError: # If there is no mole fraction it's steam
+            except AttributeError:  # If there is no mole fraction it's steam
                 tag_group[f"{i}_yH2O"] = iutil.ModelTag(
                     doc=f"{i}: mole percent H2O",
                     expr=100,
@@ -1234,19 +1358,22 @@ class SoecFlowsheetData(FlowsheetBlockData):
             doc="SOEC Makeup Water",
             expr=self.makeup_water_flow[0],
             format_string="{:.3f}",
-            display_units=pyo.units.kg/pyo.units.s,
+            display_units=pyo.units.kg / pyo.units.s,
         )
         tag_group["variable_makeup_water_cost"] = iutil.ModelTag(
             doc="SOEC Makeup Water",
             expr=self.variable_makeup_water_cost[0],
             format_string="{:.3f}",
-            display_units=pyo.units.USD_2018/pyo.units.hr,
+            display_units=pyo.units.USD_2018 / pyo.units.hr,
         )
         tag_group["soec_current"] = iutil.ModelTag(
             doc="SOEC electrical current",
-            expr=self.number_cells*sum(self.soec.current_density[0,iz]
-                     * self.soec.fuel_electrode.xface_area[iz]
-                     for iz in self.soec.iznodes),
+            expr=self.number_cells
+            * sum(
+                self.soec.current_density[0, iz]
+                * self.soec.fuel_electrode.xface_area[iz]
+                for iz in self.soec.iznodes
+            ),
             format_string="{:.3f}",
             display_units=pyo.units.MA,
         )
@@ -1272,13 +1399,13 @@ class SoecFlowsheetData(FlowsheetBlockData):
             doc="H2 mass production rate",
             expr=self.h2_mass_production[0],
             format_string="{:.3f}",
-            display_units=pyo.units.kg/pyo.units.s,
+            display_units=pyo.units.kg / pyo.units.s,
         )
         tag_group["soec_power_per_h2"] = iutil.ModelTag(
             doc="H2 mass production rate",
             expr=self.soec_power_per_h2[0],
             format_string="{:.3f}",
-            display_units=pyo.units.MJ/pyo.units.kg,
+            display_units=pyo.units.MJ / pyo.units.kg,
         )
         tag_group["feed_heater_power"] = iutil.ModelTag(
             doc="Feed heater power",
@@ -1302,7 +1429,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
             doc="Total electric power for SOEC and auxilaries per H2 produced",
             expr=self.total_electric_power_per_h2[0],
             format_string="{:.3f}",
-            display_units=pyo.units.MJ/pyo.units.kg,
+            display_units=pyo.units.MJ / pyo.units.kg,
         )
         tag_group["pump_power"] = iutil.ModelTag(
             doc="Makeup water pump power",
@@ -1332,7 +1459,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.tags_input = tag_group
         tag_group["water_utilization"] = iutil.ModelTag(
             doc="Single pass water conversion",
-            expr=self.soec_single_pass_water_conversion[0]*100,
+            expr=self.soec_single_pass_water_conversion[0] * 100,
             format_string="{:.1f}",
             display_units="%",
         )
