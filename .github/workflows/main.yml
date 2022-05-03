@@ -14,6 +14,7 @@ on:
 
 env:
   IDAES_CONDA_ENV_NAME_DEV: examples-pse-dev
+  IDAES_PSE_REQUIREMENT: idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/main.zip
 
 defaults:
   run:
@@ -40,6 +41,7 @@ jobs:
             os-runner: ubuntu-18.04
           - os: windows
             os-runner: windows-2019
+            skip-wsl-only: true
     steps:
     - name: Set up Conda environment
       uses: conda-incubator/setup-miniconda@v2.1.1
@@ -47,6 +49,13 @@ jobs:
         activate-environment: ${{ env.IDAES_CONDA_ENV_NAME_DEV }}
         python-version: ${{ matrix.python-version }}
     - uses: actions/checkout@v2
+    - name: Skip notebooks that require WSL to run on Windows
+      if: matrix.skip-wsl-only
+      run: |
+        rm -r src/Examples/DAE/petsc*.ipynb
+    - name: Add configured version of idaes-pse to requirements
+      run: |
+        echo "$IDAES_PSE_REQUIREMENT" >> requirements.txt
     - name: Set up IDAES
       uses: ./.github/actions/setup-idaes
       with:
@@ -81,6 +90,9 @@ jobs:
         activate-environment: ${{ env.IDAES_CONDA_ENV_NAME_DEV }}
         python-version: ${{ matrix.python-version }}
     - uses: actions/checkout@v2
+    - name: Add configured version of idaes-pse to requirements
+      run: |
+        echo "$IDAES_PSE_REQUIREMENT" >> requirements.txt
     - name: Set up IDAES
       uses: ./.github/actions/setup-idaes
       with:
@@ -101,12 +113,14 @@ jobs:
         mkdir ./docs_test && cp -r ./docs/{conf.py,index.rst,_images,_static,_templates} ./docs_test/
         ls -lah ./docs_test
         python build.py -v --config ./build-ci.yml -cd
-    - name: Save Sphinx build error logs
+    - name: Save build outputs
       uses: actions/upload-artifact@v2
-      if: failure()
+      if: always()
       with:
-        name: sphinx-error-logs
-        path: sphinx-errors.txt
+        name: examples-pse-build-docs-${{ matrix.python-version }}
+        path: |
+          sphinx-errors.txt
+          docs_test/_build/html/
     - name: Check for broken links in HTML docs
       run: |
         # linkchecker refuses to load files from its own installation directory if they are world-writable
