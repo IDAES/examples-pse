@@ -13,7 +13,7 @@
 # stdlib
 import os
 # package
-from idaes.surrogate.helmet import Helmet
+from idaes.apps.helmet import Helmet
 
 
 def main():
