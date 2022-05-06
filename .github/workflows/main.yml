@@ -55,7 +55,7 @@ jobs:
         rm -r src/Examples/DAE/petsc*.ipynb
     - name: Skip notebooks that require Alamo
       run: |
-        rm -r src/Examples/SurrMod/FlowsheetOptimization/ALAMO_flowsheet_optimization.ipynb
+        rm src/Examples/SurrMod/FlowsheetOptimization/ALAMO_flowsheet_optimization.ipynb
     - name: Add configured version of idaes-pse to requirements
       run: |
         echo "$IDAES_PSE_REQUIREMENT" >> requirements.txt
@@ -95,7 +95,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Skip notebooks that require Alamo
       run: |
-        rm -r src/Examples/SurrMod/FlowsheetOptimization/ALAMO_flowsheet_optimization.ipynb
+        rm src/Examples/SurrMod/FlowsheetOptimization/ALAMO_flowsheet_optimization.ipynb
     - name: Add configured version of idaes-pse to requirements
       run: |
         echo "$IDAES_PSE_REQUIREMENT" >> requirements.txt
