@@ -174,25 +174,12 @@ class SoecFlowsheetData(FlowsheetBlockData):
 
         self.soec.oxygen_triple_phase_boundary.exchange_current_exponent_comp["O2"].fix(0.5)
 
-        # set_indexed_variable_bounds(cell.temperature_z, (923,1027))
-        # set_indexed_variable_bounds(cell.fuel_channel.Dtemp,(-100,100))
-        # set_indexed_variable_bounds(cell.oxygen_channel.Dtemp,(-100,100))
-
     def _add_units(self):
-        # self.soec = SoecDesign(
-        #     doc="Design point SOEC",
-        #     default={
-        #         "oxygen_side_package": self.o2_side_prop_params,
-        #         "hydrogen_side_package": self.h2_side_prop_params,
-        #         "reaction_eos": EosType.PR
-        #     }
-        # )
         zfaces = np.linspace(0, 1, 11).tolist()
         xfaces_electrode = [0.0, 1.0]
         xfaces_electrolyte = [0.0, 1.0]
 
         air_sweep = True
-        # operating_pressure = 2e5
 
         fuel_comps = ["H2", "H2O"]
         fuel_stoich_dict = {"H2": -0.5, "H2O": 0.5, "Vac": 0.5, "O^2-": -0.5, "e^-": 1}
@@ -800,17 +787,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
             for idx, c in con.items():
                 iscale.constraint_scaling_transform(c, sf)
 
-        # for pp in [self.h2_side_prop_params,self.o2_side_prop_params]:
-        #     pp.set_default_scaling("mole_frac_comp", 10)
-        #     pp.set_default_scaling("mole_frac_phase_comp", 10)
-        #     pp.set_default_scaling("phase_frac", 1)
-        #     pp.set_default_scaling("flow_mol", 1E-3)
-        #     pp.set_default_scaling("flow_mol_comp", 1E-3)
-        #     pp.set_default_scaling("flow_mol_phase_comp", 1E-3)
-        #     pp.set_default_scaling("temperature", 1E-2)
-        #     pp.set_default_scaling("pressure", 1E-5)
-        #     pp.set_default_scaling(
-        #         "enth_mol_phase", 1e-3, index="Vap")
         iscale.set_scaling_factor(self.waterless_h2_flow_expr[0.0], 1e-3)
         iscale.set_scaling_factor(self.waterless_h2_mole_frac_expr[0.0, "H2"], 1.0)
 
@@ -900,8 +876,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.cmp05.control_volume.work, 1e-6)
         iscale.set_scaling_factor(self.ic05.control_volume.heat, 1e-5)
         iscale.set_scaling_factor(self.cmp06.control_volume.work, 1e-6)
-
-        # iscale.constraint_scaling_transform(self.soec_outlet_temperature_eqn[0], 1e-2)
 
         for t in self.time:
             iscale.constraint_scaling_transform(
@@ -1069,16 +1043,11 @@ class SoecFlowsheetData(FlowsheetBlockData):
             fix=False,
         )
 
-        # SOEC outlet temperatures
-        # self.soec.fuel_outlet.temperature.fix(1023)
-        # self.soec.oxygen_outlet.temperature.fix(1023)
         # SOEC water utilization
         self.soec_single_pass_water_conversion.fix(0.7)
         # Recycle splits
         self.sweep_recycle_split.split_fraction[:, "out"].fix(0.90)
         self.feed_recycle_split.split_fraction[:, "out"].fix(0.95)
-        # self.soec.oxygen_side_inlet.mole_frac_comp[:, "H2"].fix(0.23)
-        # self.soec.hydrogen_side_inlet.mole_frac_comp[:, "H2"].fix(0.01)
         self.sweep_compressor.efficiency_isentropic.fix(0.85)
         self.sweep_compressor.control_volume.properties_out[:].pressure.fix(6e5)
         self.sweep_hx.area.fix(4000)

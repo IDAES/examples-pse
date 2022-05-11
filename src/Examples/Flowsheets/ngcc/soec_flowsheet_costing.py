@@ -227,9 +227,6 @@ def get_soec_OM_costing(m, design_h2_production=2.5 * pyo.units.kg / pyo.units.s
     m.costing.other_fixed_costs.unfix()
 
     # initialize fixed costs
-    # for t in m.time:
-    #    calculate_variable_from_constraint(m.H2_product[t],
-    #                                       m.H2_product_rule[t])
     calculate_variable_from_constraint(
         m.costing.other_fixed_costs, m.stack_replacement_cost
     )

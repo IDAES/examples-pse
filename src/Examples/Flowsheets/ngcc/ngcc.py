@@ -463,7 +463,6 @@ class NgccFlowsheetData(FlowsheetBlockData):
             self.t03a_expanded.deactivate()  # hot reheat
             self.st.steam_turbine_lp_mix.hrsg.unfix()
             self.t11a_expanded.deactivate()
-            # self.hrsg.econ_lp.tube_inlet.unfix()
             self.st.steam_turbine_lp_split.reboiler.flow_mol.unfix()
             solver_obj.solve(self, tee=True)
 
@@ -478,7 +477,6 @@ class NgccFlowsheetData(FlowsheetBlockData):
             self.st01a_expanded.activate()  # steam to ng preheat
             self.gt.ng_preheat.shell_inlet.unfix()
             self.hrsg.mixer1.Preheater.unfix()
-            # propagate_state(self.t01a, overwrite_fixed=True)
             propagate_state(self.t02a, overwrite_fixed=True)
             propagate_state(self.t03a, overwrite_fixed=True)
             self.hrsg.splitter_ip2.inlet.unfix()
@@ -492,7 +490,6 @@ class NgccFlowsheetData(FlowsheetBlockData):
             # hook main steam
             init_log.info(f"Finish turbine sizing/connect main steam")
             self.t01a_expanded.activate()
-            # propagate_state(self.t01a, overwrite_fixed=True)
             self.st.steam_turbine.outlet_stage.flow_coeff.unfix()
             self.st.steam_turbine.inlet_split.inlet.unfix()
             solver_obj.solve(self, tee=True)

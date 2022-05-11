@@ -31,7 +31,7 @@ from idaes.core.util.initialization import propagate_state
     "NgccSoecFlowsheet",
     doc=(
         "This flowsheet combines an NGCC and SOEC that uses steam from the HRSG."
-        "This is a desing point only model."
+        "This is a design point only model."
     ),
 )
 class NgccSoecFlowsheetData(FlowsheetBlockData):

@@ -1273,9 +1273,6 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.split_fg_lp.inlet.temperature[0].unfix()
 
         gas_streams = [
-            # self.g09,
-            # self.g10,
-            # self.g11,
             self.g12,
             self.g13,
             self.g14,
@@ -1292,10 +1289,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             self.g25,
             self.g26,
             self.g27,
-            # self.g28,
-            # self.g29,
         ]
-        # res = solver_obj.solve(self, tee=True)
         for g in gas_streams:
             g.destination.fix()
             g.expanded_block.deactivate()
