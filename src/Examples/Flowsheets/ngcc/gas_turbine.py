@@ -34,7 +34,7 @@ import idaes.core.util as iutil
 from idaes.core.util.initialization import propagate_state
 import idaes.core.util.tables as tables
 import idaes.core.util.scaling as iscale
-from idaes.core.util.misc import get_solver
+from idaes.core.solvers import get_solver
 from idaes.models_extra.power_generation.properties.natural_gas_PR import (
     get_prop,
     get_rxn,
@@ -917,7 +917,7 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
                 return
 
         init_log.info_high("Gas Turbine Initialization Starting")
-        solver_obj = iutil.get_solver(solver, optarg)
+        solver_obj = get_solver(solver, optarg)
 
         self.cmbout_o2_mol_frac.fix()
 

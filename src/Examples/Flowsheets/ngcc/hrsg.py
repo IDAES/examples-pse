@@ -30,6 +30,7 @@ from idaes.core.util.tags import svg_tag
 from idaes.core.util.initialization import propagate_state
 from idaes.core import FlowsheetBlockData, declare_process_block_class
 import idaes.core.util as iutil
+from idaes.core.solvers import get_solver
 import idaes.core.util.scaling as iscale
 from idaes.models.properties import iapws95
 from idaes.models_extra.power_generation.properties import FlueGasParameterBlock
@@ -1077,7 +1078,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
 
-        solver_obj = iutil.get_solver(solver, optarg)
+        solver_obj = get_solver(solver, optarg)
 
         init_log.info_high("HRSG Initialization Starting")
 
@@ -1282,11 +1283,6 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             self.g18,
             self.g19,
             self.g20,
-            self.g21,
-            self.g22,
-            self.g23,
-            self.g24,
-            self.g25,
             self.g26,
             self.g27,
         ]
@@ -1309,6 +1305,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         for g in gas_streams:
             g.destination.unfix()
             g.expanded_block.activate()
+
         res = solver_obj.solve(self, tee=True)
 
         if save_to is not None:

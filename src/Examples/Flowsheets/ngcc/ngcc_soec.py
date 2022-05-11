@@ -24,6 +24,7 @@ import idaes.logger as idaeslog
 import ngcc
 import soec
 import idaes.core.util as iutil
+from idaes.core.solvers import get_solver
 from idaes.core.util.initialization import propagate_state
 
 
@@ -149,7 +150,7 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
                     self, fname=load_from, wts=iutil.StoreSpec(suffix=False)
                 )
                 return
-        solver_obj = iutil.get_solver(solver, optarg)
+        solver_obj = get_solver(solver, optarg)
         self.ngcc.initialize(
             outlvl=outlvl,
             solver=solver,

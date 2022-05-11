@@ -24,6 +24,7 @@ import gas_turbine
 import hrsg
 import steam_turbine
 import idaes.core.util as iutil
+from idaes.core.solvers import get_solver
 from idaes.core.util.initialization import propagate_state
 import idaes.core.base.costing_base as cost_base
 
@@ -422,7 +423,7 @@ class NgccFlowsheetData(FlowsheetBlockData):
 
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
-        solver_obj = iutil.get_solver(solver, optarg)
+        solver_obj = get_solver(solver, optarg)
 
         if load_from is not None and os.path.exists(load_from):
             init_log.info(f"NGCC load initial from {load_from}")

@@ -21,6 +21,7 @@ from idaes.models.properties import iapws95
 from idaes.core.util.initialization import propagate_state
 import idaes.logger as idaeslog
 import idaes.core.util as iutil
+from idaes.core.solvers import get_solver
 import idaes.core.util.tables as tables
 from idaes.core.util.tags import svg_tag
 import idaes.core.base.costing_base as cost_base
@@ -1105,7 +1106,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
                 return
 
         init_log.info("SOEC Initialization Starting")
-        solver_obj = iutil.get_solver(solver, optarg)
+        solver_obj = get_solver(solver, optarg)
 
         self.sweep_compressor.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         propagate_state(self.sweep03)

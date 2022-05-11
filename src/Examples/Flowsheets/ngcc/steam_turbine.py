@@ -23,7 +23,7 @@ from pyomo.network import Arc
 from pyomo.common.fileutils import this_file_dir
 
 import idaes
-from idaes.core.solvers import use_idaes_solver_configuration_defaults
+from idaes.core.solvers import use_idaes_solver_configuration_defaults, get_solver
 from idaes.core import FlowsheetBlockData, declare_process_block_class
 from idaes.core.util.model_statistics import degrees_of_freedom
 import idaes.models_extra.power_generation.unit_models.helm as helm
@@ -31,7 +31,6 @@ import idaes.models.unit_models as gum
 from idaes.models.properties import iapws95
 import idaes.core.util.initialization as iinit
 import idaes.core.util.scaling as iscale
-from idaes.core.solvers import use_idaes_solver_configuration_defaults
 import idaes.core.util.tables as tables
 from idaes.core.util.tags import svg_tag
 import idaes.core.util as iutil
@@ -365,7 +364,7 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
 
         init_log.info_high("Steam Turbine Initialization Starting")
-        solver_obj = iutil.get_solver(solver, optarg)
+        solver_obj = get_solver(solver, optarg)
 
         if load_from is not None:
             if os.path.exists(load_from):
