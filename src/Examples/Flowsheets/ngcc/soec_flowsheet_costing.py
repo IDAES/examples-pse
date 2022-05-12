@@ -49,15 +49,15 @@ def get_solo_soec_capital_costing(m):
         doc="total plant cost in $MM",
     )
 
-    m.soec.costing = pyo.Block()
-    m.soec.costing.total_plant_cost = pyo.Var(
+    m.soec_stack.solid_oxide_cell.costing = pyo.Block()
+    m.soec_stack.solid_oxide_cell.costing.total_plant_cost = pyo.Var(
         initialize=130,
         # bounds=(0, 1e4),
         doc="total plant cost in $MM",
     )
-    @m.soec.costing.Constraint()
+    @m.soec_stack.solid_oxide_cell.costing.Constraint()
     def soec_cost(c):
-        return c.total_plant_cost * 1e6 == 60.87 * m.number_cells
+        return c.total_plant_cost * 1e6 == 60.87 * m.soec_stack.number_cells
 
     # water heaters - U-tube HXs
     # costed with IDAES generic heat exchanger correlation
@@ -177,7 +177,7 @@ def get_solo_soec_capital_costing(m):
 
     # costing initialization
     variables = [
-        m.soec.costing.total_plant_cost,
+        m.soec_stack.solid_oxide_cell.costing.total_plant_cost,
         m.cmp01.costing.total_plant_cost,
         m.sweep_hx.costing.total_plant_cost,
         m.feed_hx01.costing.total_plant_cost,
@@ -185,7 +185,7 @@ def get_solo_soec_capital_costing(m):
     ]
 
     constraints = [
-        m.soec.costing.soec_cost,
+        m.soec_stack.solid_oxide_cell.costing.soec_cost,
         m.cmp01.costing.h2_comp_cost,
         m.sweep_hx.costing.sweep_hx_cost,
         m.feed_hx01.costing.feed_hx01_cost,
@@ -222,7 +222,7 @@ def get_soec_OM_costing(m, design_h2_production=2.5 * pyo.units.kg / pyo.units.s
 
     @m.Constraint()
     def stack_replacement_cost(fs):
-        return fs.costing.other_fixed_costs*1e6 == 4.425*m.number_cells
+        return fs.costing.other_fixed_costs*1e6 == 4.425*m.soec_stack.number_cells
 
     m.costing.other_fixed_costs.unfix()
 

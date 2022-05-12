@@ -210,7 +210,7 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
         self.ngcc.st.steam_turbine_lp_split.soec.flow_mol.unfix()
         self.soec.hydrogen_product_rate.fix(5.0)
         self.soec.soec_single_pass_water_conversion.unfix()
-        self.soec.soec.potential.fix()
+        self.soec.soec_stack.solid_oxide_cell.potential.fix()
         self.soec.sweep_turbine.control_volume.properties_out[0].temperature.unfix()
         self.soec.sweep_turbine.control_volume.properties_out[0].pressure.fix(
             1.01 * pyo.units.bar
