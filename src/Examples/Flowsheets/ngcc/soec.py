@@ -93,87 +93,65 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.h2_pure_prop_params.set_default_scaling("mole_frac_phase_comp", 1)
 
     def _define_cell_params(self):
-        self.soec_stack.number_cells.fix(1.25e6)
-        self.soec_stack.solid_oxide_cell.contact_flow_mesh_fuel_electrode.log_preexponential_factor.fix(
-            pyo.log(0.01e-4)
-        )
-        self.soec_stack.solid_oxide_cell.contact_flow_mesh_oxygen_electrode.log_preexponential_factor.fix(
-            pyo.log(0.01e-4)
-        )
+        self.soec_module.number_cells.fix(1.25e6)
 
-        self.soec_stack.solid_oxide_cell.contact_flow_mesh_fuel_electrode.thermal_exponent_dividend.fix(0)
-        self.soec_stack.solid_oxide_cell.contact_flow_mesh_fuel_electrode.contact_fraction.fix(1)
-        self.soec_stack.solid_oxide_cell.contact_flow_mesh_oxygen_electrode.thermal_exponent_dividend.fix(0)
-        self.soec_stack.solid_oxide_cell.contact_flow_mesh_oxygen_electrode.contact_fraction.fix(1)
+        self.soec_module.solid_oxide_cell.fuel_channel.length_x.fix(0.002)
+        self.soec_module.solid_oxide_cell.length_y.fix(0.2345)
+        self.soec_module.solid_oxide_cell.length_z.fix(0.2345)
+        self.soec_module.solid_oxide_cell.fuel_channel.heat_transfer_coefficient.fix(100)
 
-        self.soec_stack.solid_oxide_cell.contact_interconnect_fuel_flow_mesh.log_preexponential_factor.fix(
-            -100
-        )
-        self.soec_stack.solid_oxide_cell.contact_interconnect_fuel_flow_mesh.thermal_exponent_dividend.fix(0)
-        self.soec_stack.solid_oxide_cell.contact_interconnect_fuel_flow_mesh.contact_fraction.fix(1)
-        self.soec_stack.solid_oxide_cell.contact_interconnect_oxygen_flow_mesh.log_preexponential_factor.fix(
-            -100
-        )
-        self.soec_stack.solid_oxide_cell.contact_interconnect_oxygen_flow_mesh.thermal_exponent_dividend.fix(0)
-        self.soec_stack.solid_oxide_cell.contact_interconnect_oxygen_flow_mesh.contact_fraction.fix(1)
+        self.soec_module.solid_oxide_cell.oxygen_channel.length_x.fix(0.002)
+        self.soec_module.solid_oxide_cell.oxygen_channel.heat_transfer_coefficient.fix(100)
 
-        self.soec_stack.solid_oxide_cell.fuel_channel.length_x.fix(0.002)
-        self.soec_stack.solid_oxide_cell.length_y.fix(0.2345)
-        self.soec_stack.solid_oxide_cell.length_z.fix(0.2345)
-        self.soec_stack.solid_oxide_cell.fuel_channel.heat_transfer_coefficient.fix(100)
-
-        self.soec_stack.solid_oxide_cell.oxygen_channel.length_x.fix(0.002)
-        self.soec_stack.solid_oxide_cell.oxygen_channel.heat_transfer_coefficient.fix(100)
-
-        self.soec_stack.solid_oxide_cell.fuel_electrode.length_x.fix(1e-3)
-        self.soec_stack.solid_oxide_cell.fuel_electrode.porosity.fix(0.48)
-        self.soec_stack.solid_oxide_cell.fuel_electrode.tortuosity.fix(5.4)
-        self.soec_stack.solid_oxide_cell.fuel_electrode.solid_heat_capacity.fix(450)
-        self.soec_stack.solid_oxide_cell.fuel_electrode.solid_density.fix(3210.0)
-        self.soec_stack.solid_oxide_cell.fuel_electrode.solid_thermal_conductivity.fix(1.86)
-        self.soec_stack.solid_oxide_cell.fuel_electrode.resistivity_log_preexponential_factor.fix(
+        self.soec_module.solid_oxide_cell.fuel_electrode.length_x.fix(1e-3)
+        self.soec_module.solid_oxide_cell.fuel_electrode.porosity.fix(0.48)
+        self.soec_module.solid_oxide_cell.fuel_electrode.tortuosity.fix(5.4)
+        self.soec_module.solid_oxide_cell.fuel_electrode.solid_heat_capacity.fix(450)
+        self.soec_module.solid_oxide_cell.fuel_electrode.solid_density.fix(3210.0)
+        self.soec_module.solid_oxide_cell.fuel_electrode.solid_thermal_conductivity.fix(1.86)
+        self.soec_module.solid_oxide_cell.fuel_electrode.resistivity_log_preexponential_factor.fix(
             pyo.log(2.98e-5)
         )
-        self.soec_stack.solid_oxide_cell.fuel_electrode.resistivity_thermal_exponent_dividend.fix(-1392.0)
+        self.soec_module.solid_oxide_cell.fuel_electrode.resistivity_thermal_exponent_dividend.fix(-1392.0)
 
-        self.soec_stack.solid_oxide_cell.oxygen_electrode.length_x.fix(20e-6)
-        self.soec_stack.solid_oxide_cell.oxygen_electrode.porosity.fix(0.35)
-        self.soec_stack.solid_oxide_cell.oxygen_electrode.tortuosity.fix(3.0)
-        self.soec_stack.solid_oxide_cell.oxygen_electrode.solid_heat_capacity.fix(430)
-        self.soec_stack.solid_oxide_cell.oxygen_electrode.solid_density.fix(3030)
-        self.soec_stack.solid_oxide_cell.oxygen_electrode.solid_thermal_conductivity.fix(5.84)
-        self.soec_stack.solid_oxide_cell.oxygen_electrode.resistivity_log_preexponential_factor.fix(
+        self.soec_module.solid_oxide_cell.oxygen_electrode.length_x.fix(20e-6)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.porosity.fix(0.35)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.tortuosity.fix(3.0)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.solid_heat_capacity.fix(430)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.solid_density.fix(3030)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.solid_thermal_conductivity.fix(5.84)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.resistivity_log_preexponential_factor.fix(
             pyo.log(8.115e-5)
         )
-        self.soec_stack.solid_oxide_cell.oxygen_electrode.resistivity_thermal_exponent_dividend.fix(600.0)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.resistivity_thermal_exponent_dividend.fix(600.0)
 
-        self.soec_stack.solid_oxide_cell.electrolyte.length_x.fix(9e-6)
-        self.soec_stack.solid_oxide_cell.electrolyte.heat_capacity.fix(470)
-        self.soec_stack.solid_oxide_cell.electrolyte.density.fix(5160)
-        self.soec_stack.solid_oxide_cell.electrolyte.thermal_conductivity.fix(2.16)
-        self.soec_stack.solid_oxide_cell.electrolyte.resistivity_log_preexponential_factor.fix(
+        self.soec_module.solid_oxide_cell.electrolyte.length_x.fix(9e-6)
+        self.soec_module.solid_oxide_cell.electrolyte.heat_capacity.fix(470)
+        self.soec_module.solid_oxide_cell.electrolyte.density.fix(5160)
+        self.soec_module.solid_oxide_cell.electrolyte.thermal_conductivity.fix(2.16)
+        self.soec_module.solid_oxide_cell.electrolyte.resistivity_log_preexponential_factor.fix(
             pyo.log(2.94e-5)
         )
-        self.soec_stack.solid_oxide_cell.electrolyte.resistivity_thermal_exponent_dividend.fix(10350.0)
+        self.soec_module.solid_oxide_cell.electrolyte.resistivity_thermal_exponent_dividend.fix(10350.0)
 
-        self.soec_stack.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
             pyo.log(1.375e10)
         )
-        self.soec_stack.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_activation_energy.fix(120e3)
-        self.soec_stack.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha1.fix(0.4)
-        self.soec_stack.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha2.fix(0.4)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_activation_energy.fix(120e3)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha1.fix(0.4)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha2.fix(0.4)
 
-        self.soec_stack.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2"].fix(1)
-        self.soec_stack.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2O"].fix(1)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2"].fix(1)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2O"].fix(1)
 
-        self.soec_stack.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
+        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
             pyo.log(26.1e10 / 4)
         )
-        self.soec_stack.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_activation_energy.fix(130e3)
-        self.soec_stack.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha1.fix(0.5)
-        self.soec_stack.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha2.fix(0.5)
+        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_activation_energy.fix(130e3)
+        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha1.fix(0.5)
+        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha2.fix(0.5)
 
-        self.soec_stack.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_exponent_comp["O2"].fix(0.5)
+        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_exponent_comp["O2"].fix(0.5)
 
     def _add_units(self):
         zfaces = np.linspace(0, 1, 11).tolist()
@@ -202,7 +180,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
                 "e^-": -1,
             }
 
-        self.soec_stack = soc.SolidOxideModuleSimple(
+        self.soec_module = soc.SolidOxideModuleSimple(
             default={
                 "solid_oxide_cell_config": {
                     "has_holdup": True,
@@ -217,13 +195,13 @@ class SoecFlowsheetData(FlowsheetBlockData):
                     "oxygen_triple_phase_boundary_stoich_dict": oxygen_stoich_dict,
                     "inert_oxygen_species_triple_phase_boundary": ["N2", "Ar", "CO2", "H2O"],
                     "include_temperature_x_thermo": True,
-                    "include_contact_resistance":True,
+                    "include_contact_resistance":False,
                 },
                 "fuel_property_package": self.h2_side_prop_params,
                 "oxygen_property_package": self.o2_side_prop_params,
             }
         )
-        self.soec_stack.number_cells.fix(60e6)
+        self.soec_module.number_cells.fix(60e6)
 
         self.sweep_recycle_split = gum.Separator(
             doc="Sweep recycle splitter",
@@ -378,12 +356,12 @@ class SoecFlowsheetData(FlowsheetBlockData):
     def _add_arcs(self):
         self.ostrm01 = Arc(
             doc="SOEC sweep gas out to recycle splitter",
-            source=self.soec_stack.oxygen_outlet,
+            source=self.soec_module.oxygen_outlet,
             destination=self.sweep_recycle_split.inlet,
         )
         self.hstrm01 = Arc(
             doc="SOEC hydrogen stream out to recycle splitter",
-            source=self.soec_stack.fuel_outlet,
+            source=self.soec_module.fuel_outlet,
             destination=self.feed_recycle_split.inlet,
         )
         self.ostrm02 = Arc(
@@ -409,12 +387,12 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.sweep01b = Arc(
             doc="Sweep heater to SOEC",
             source=self.sweep_heater.outlet,
-            destination=self.soec_stack.oxygen_inlet,
+            destination=self.soec_module.oxygen_inlet,
         )
         self.feed01b = Arc(
             doc="Feed heater to SOEC",
             source=self.feed_heater.outlet,
-            destination=self.soec_stack.fuel_inlet,
+            destination=self.soec_module.fuel_inlet,
         )
         self.ostrm03 = Arc(
             doc="Sweep to sweep heat recovery hx",
@@ -575,30 +553,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
         def mixer1_pressure_eqn(b, t):
             return b.mixed_state[t].pressure == b.w1_state[t].pressure
 
-        def rule_flow_mol_scale_down(blk, t):
-            return (
-                blk.properties_in[t].flow_mol
-                == self.soec_stack.number_cells * blk.properties_out[t].flow_mol
-            )
-
-        def rule_flow_mol_scale_up(blk, t):
-            return (
-                self.soec_stack.number_cells * blk.properties_in[t].flow_mol
-                == blk.properties_out[t].flow_mol
-            )
-
-        def rule_mole_frac(blk, t, j):
-            return (
-                blk.properties_in[t].mole_frac_comp[j]
-                == blk.properties_out[t].mole_frac_comp[j]
-            )
-
-        def rule_temperature(blk, t):
-            return blk.properties_in[t].temperature == blk.properties_out[t].temperature
-
-        def rule_pressure(blk, t):
-            return blk.properties_in[t].pressure == blk.properties_out[t].pressure
-
         @self.feed_translator.Constraint(self.time)
         def temperature_eqn(b, t):
             return b.properties_out[t].temperature == b.properties_in[t].temperature
@@ -635,10 +589,10 @@ class SoecFlowsheetData(FlowsheetBlockData):
         def soec_single_pass_water_conversion_eqn(b, t):
             return b.soec_single_pass_water_conversion[t] == (
                 (
-                    b.soec_stack.solid_oxide_cell.fuel_channel.flow_mol_comp_outlet[t, "H2"]
-                    - b.soec_stack.solid_oxide_cell.fuel_channel.flow_mol_comp_inlet[t, "H2"]
+                    b.soec_module.solid_oxide_cell.fuel_channel.flow_mol_comp_outlet[t, "H2"]
+                    - b.soec_module.solid_oxide_cell.fuel_channel.flow_mol_comp_inlet[t, "H2"]
                 )
-                / b.soec_stack.solid_oxide_cell.fuel_channel.flow_mol_comp_inlet[t, "H2O"]
+                / b.soec_module.solid_oxide_cell.fuel_channel.flow_mol_comp_inlet[t, "H2O"]
             )
 
         self.soec_overall_water_conversion = pyo.Var(self.time, initialize=0.75)
@@ -651,12 +605,8 @@ class SoecFlowsheetData(FlowsheetBlockData):
             )
 
         @self.Expression(self.time)
-        def module_electrical_work(b, t):
-            return b.soec_stack.number_cells * b.soec_stack.solid_oxide_cell.electrical_work[t]
-
-        @self.Expression(self.time)
         def soec_power_per_h2(b, t):
-            return b.module_electrical_work[t] / b.h2_mass_production[t]
+            return b.soec_module.electrical_work[t] / b.h2_mass_production[t]
 
         @self.Expression(self.time)
         def total_compressor_power(b, t):
@@ -672,7 +622,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         @self.Expression(self.time)
         def total_electric_power(b, t):
             return (
-                b.module_electrical_work[t]
+                b.soec_module.electrical_work[t]
                 + b.sweep_turbine.control_volume.work[t]
                 + b.sweep_compressor.control_volume.work[t]
                 + b.sweep_heater.control_volume.heat[t]
@@ -692,13 +642,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
         @self.Expression(self.time)
         def variable_makeup_water_cost(b, t):
             return b.makeup_water_flow[t] * b.water_price
-
-        # self.assumed_cell_area = pyo.Var(initialize=0.0550, units=pyo.units.m**2)
-        # self.assumed_current_density = pyo.Var(
-        #     initialize=5000, units=pyo.units.ampere/pyo.units.m**2)
-        # @self.Expression(self.time)
-        # def estimated_number_of_cells(b, t):
-        #     return b.soec_stack.solid_oxide_cell.current[t]/b.assumed_current_density/b.assumed_cell_area
 
     def _scaling(self):
         def scale_indexed_constraint(con, sf):
@@ -818,54 +761,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
             iscale.constraint_scaling_transform(
                 self.feed_translator.mole_frac_comp_eqn[t], 10
             )
-
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.fuel_inlet.temperature[t], 1e-2)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.fuel_outlet.temperature[t], 1e-2)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.oxygen_inlet.temperature[t], 1e-2)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.oxygen_outlet.temperature[t], 1e-2)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.fuel_inlet.pressure[t], 1e-5)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.fuel_outlet.pressure[t], 1e-5)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.oxygen_inlet.pressure[t], 1e-5)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.oxygen_outlet.pressure[t], 1e-5)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.fuel_inlet.mole_frac_comp[t, "H2"], 10)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.fuel_inlet.mole_frac_comp[t, "H2O"], 10)
-            iscale.set_scaling_factor(self.soec_stack.solid_oxide_cell.fuel_outlet.mole_frac_comp[t, "H2"], 10)
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.fuel_outlet.mole_frac_comp[t, "H2O"], 10
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_inlet.mole_frac_comp[t, "CO2"], 1e4
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_inlet.mole_frac_comp[t, "H2O"], 1e2
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_inlet.mole_frac_comp[t, "Ar"], 1e2
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_inlet.mole_frac_comp[t, "N2"], 10
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_inlet.mole_frac_comp[t, "O2"], 10
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_outlet.mole_frac_comp[t, "CO2"], 1e4
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_outlet.mole_frac_comp[t, "H2O"], 1e2
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_outlet.mole_frac_comp[t, "Ar"], 1e2
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_outlet.mole_frac_comp[t, "N2"], 10
-            )
-            iscale.set_scaling_factor(
-                self.soec_stack.solid_oxide_cell.oxygen_outlet.mole_frac_comp[t, "O2"], 10
-            )
-
-        self.soec_stack.solid_oxide_cell.recursive_scaling()
-
+ 
     @staticmethod
     def _set_gas_port(port, F, T, P, y, fix=True):
         port.temperature[:] = T
@@ -994,15 +890,15 @@ class SoecFlowsheetData(FlowsheetBlockData):
         propagate_state(self.feed01b)
         propagate_state(self.sweep01b)
 
-        self.soec_stack.solid_oxide_cell.potential.fix(1.29)
-        self.soec_stack.initialize(
+        self.soec_module.potential_cell.fix(1.29)
+        self.soec_module.initialize(
             outlvl=outlvl,
             solver=solver,
             optarg=optarg,
             current_density_guess=-5000,
             temperature_guess=1023.15,
         )
-        self.soec_stack.solid_oxide_cell.potential.unfix()
+        self.soec_module.potential_cell.unfix()
 
         propagate_state(self.ostrm01)
         self.sweep_recycle_split.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
@@ -1059,8 +955,8 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.sweep02_expanded.deactivate()
         self.feed02b_expanded.deactivate()
         self.sweep01b_expanded.deactivate()
-        self.soec_stack.solid_oxide_cell.fuel_inlet.fix()
-        self.soec_stack.solid_oxide_cell.oxygen_inlet.fix()
+        self.soec_module.solid_oxide_cell.fuel_inlet.fix()
+        self.soec_module.solid_oxide_cell.oxygen_inlet.fix()
         res = solver_obj.solve(self, tee=True)
         propagate_state(self.feed01b, overwrite_fixed=True)
         propagate_state(self.sweep01b, overwrite_fixed=True)
@@ -1071,9 +967,9 @@ class SoecFlowsheetData(FlowsheetBlockData):
 
         # solve with sweep recycle connected
         self.sweep01b_expanded.activate()
-        self.soec_stack.solid_oxide_cell.oxygen_inlet.unfix()
+        self.soec_module.solid_oxide_cell.oxygen_inlet.unfix()
         self.feed01b_expanded.activate()
-        self.soec_stack.solid_oxide_cell.fuel_inlet.unfix()
+        self.soec_module.solid_oxide_cell.fuel_inlet.unfix()
         # self.sweep_recycle_mix.feed.pressure.unfix()
         res = solver_obj.solve(self, tee=True)
 
@@ -1175,7 +1071,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.tags_output = tag_group
         tag_group["cell_potential"] = iutil.ModelTag(
             doc="Cell potential",
-            expr=self.soec_stack.solid_oxide_cell.potential[0],
+            expr=self.soec_module.potential_cell[0],
             format_string="{:.3f}",
             display_units=pyo.units.volts,
         )
@@ -1193,18 +1089,18 @@ class SoecFlowsheetData(FlowsheetBlockData):
         )
         tag_group["soec_current"] = iutil.ModelTag(
             doc="SOEC electrical current",
-            expr=self.soec_stack.number_cells
+            expr=self.soec_module.number_cells
             * sum(
-                self.soec_stack.solid_oxide_cell.current_density[0, iz]
-                * self.soec_stack.solid_oxide_cell.fuel_electrode.xface_area[iz]
-                for iz in self.soec_stack.solid_oxide_cell.iznodes
+                self.soec_module.solid_oxide_cell.current_density[0, iz]
+                * self.soec_module.solid_oxide_cell.fuel_electrode.xface_area[iz]
+                for iz in self.soec_module.solid_oxide_cell.iznodes
             ),
             format_string="{:.3f}",
             display_units=pyo.units.MA,
         )
         tag_group["soec_power"] = iutil.ModelTag(
             doc="SOEC electric power",
-            expr=self.module_electrical_work[0],
+            expr=self.soec_module.electrical_work[0],
             format_string="{:.3f}",
             display_units=pyo.units.MW,
         )
@@ -1270,13 +1166,13 @@ class SoecFlowsheetData(FlowsheetBlockData):
         )
         tag_group["Number_of_cells"] = iutil.ModelTag(
             doc="Number of cells",
-            expr=self.soec_stack.number_cells,
+            expr=self.soec_module.number_cells,
             format_string="{:.4e}",
             display_units="cells",
         )
         tag_group["estimated_number_of_cells"] = iutil.ModelTag(
             doc="Estimated number of cells",
-            expr=self.soec_stack.number_cells,
+            expr=self.soec_module.number_cells,
             format_string="{:.4e}",
             display_units="cells",
         )
