@@ -1,2 +1,8 @@
 set -e
 idaes get-extensions --verbose --distro ubuntu1804
+python -c '
+from pathlib import Path
+from idaes.commands import examples as ex
+
+ex.strip_special_cells(Path("src/"))
+'
