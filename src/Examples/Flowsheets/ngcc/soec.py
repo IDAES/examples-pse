@@ -761,7 +761,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
             iscale.constraint_scaling_transform(
                 self.feed_translator.mole_frac_comp_eqn[t], 10
             )
- 
+
     @staticmethod
     def _set_gas_port(port, F, T, P, y, fix=True):
         port.temperature[:] = T
@@ -1175,6 +1175,12 @@ class SoecFlowsheetData(FlowsheetBlockData):
             expr=self.soec_module.number_cells,
             format_string="{:.4e}",
             display_units="cells",
+        )
+        tag_group["current_density"] = iutil.ModelTag(
+            doc="Average current density of SOEC",
+            expr=self.soec_module.solid_oxide_cell.average_current_density[0],
+            format_string="{:.0f}",
+            display_units=pyo.units.A / pyo.units.m**2,
         )
         tag_group = iutil.ModelTagGroup()
         self.tags_input = tag_group
