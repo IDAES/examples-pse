@@ -21,6 +21,7 @@ from pyomo.environ import (Constraint,
                            Objective,
                            Var,
                            Expression,
+                           Param,
                            ConcreteModel,
                            TransformationFactory,
                            value,
@@ -59,7 +60,8 @@ from idaes.models.unit_models import (
     Product)
 from idaes.models.unit_models.mixer import MomentumMixingType
 from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
-import idaes.core.util.unit_costing as costing
+from idaes.core import UnitModelCostingBlock
+from idaes.models.costing.SSLW import SSLWCosting
 import idaes.logger as idaeslog
 
 
@@ -596,8 +598,9 @@ def initialize_flowsheet(m):
 
 def add_costing(m):
 
-    from idaes.core.util.unit_costing import initialize as init_costing
     assert degrees_of_freedom(m) == 0
+
+    m.fs.costing = SSLWCosting()
 
     # Expression to compute the total cooling cost (F/R cooling not assumed)
     m.fs.cooling_cost = Expression(
@@ -620,39 +623,45 @@ def add_costing(m):
                                  + m.fs.electricity_cost)))
 
     # Computing reactor capital cost
-    m.fs.R101.get_costing()
-    m.fs.R101.diameter.fix(2)
-    m.fs.R101.length.fix(4)  # for initial problem at 75% conversion
-    init_costing(m.fs.R101.costing)
+    m.fs.R101.diameter = Param(initialize=2, units=pyunits.m)
+    m.fs.R101.length = Var(initialize=4, units=pyunits.m)
+    m.fs.R101.diameter = 2 * pyunits.m
+    m.fs.R101.length.fix(4*pyunits.m)  # for initial problem at 75% conversion
+    m.fs.R101.costing = UnitModelCostingBlock(
+        default={"flowsheet_costing_block": m.fs.costing})
     # Reactor length (size, and capital cost) is adjusted based on conversion
     # surrogate model which scales length linearly with conversion
     m.fs.R101.length.unfix()
     m.fs.R101.L_eq = Constraint(expr=m.fs.R101.length ==
-                                13.2000*m.fs.R101.conversion - 5.9200)
+                                13.2000*pyunits.m*m.fs.R101.conversion -
+                                5.9200*pyunits.m)
 
     # Computing flash capital cost
-    m.fs.F101.get_costing()
-    m.fs.F101.diameter.fix(2)
-    m.fs.F101.length.fix(4)
-    init_costing(m.fs.F101.costing)
+    m.fs.F101.diameter = Param(initialize=2, units=pyunits.m)
+    m.fs.F101.length = Param(initialize=4, units=pyunits.m)
+    m.fs.F101.diameter = 2 * pyunits.m
+    m.fs.F101.length = 4 * pyunits.m
+    m.fs.F101.costing = UnitModelCostingBlock(
+        default={
+            "flowsheet_costing_block": m.fs.costing})
 
     # Computing heater/cooler capital costs
     # Surrogates prepared with IDAES shell and tube hx considering IP steam and
     # assuming steam outlet is condensed
     m.fs.H101.cost_heater = Expression(
-        expr=0.036158*m.fs.H101.heat_duty[0] + 63931.475,
+        expr=0.036158*m.fs.H101.heat_duty[0] + 63931.475*pyunits.W,
         doc='capital cost of heater in $')
 
     # Surrogates prepared with IDAES shell and tube hx considering cooling
     # water assuming that water inlet T is 25 deg C and outlet T is 40 deg C
     m.fs.H102.cost_heater = Expression(
-        expr=0.10230*(-m.fs.H102.heat_duty[0]) + 100421.572,
+        expr=0.10230*(-m.fs.H102.heat_duty[0]) + 100421.572*pyunits.W,
         doc='capital cost of cooler in $')
 
     # Annualizing capital cost to same scale as operating costs (per year)
     m.fs.annualized_capital_cost = Expression(
-        expr=(m.fs.R101.costing.purchase_cost
-              + m.fs.F101.costing.purchase_cost
+        expr=(m.fs.R101.costing.capital_cost
+              + m.fs.F101.costing.capital_cost
               + m.fs.H101.cost_heater
               + m.fs.H102.cost_heater)*5.4/15)
 
@@ -662,15 +671,15 @@ def add_costing(m):
     # CO $62.00 per kilogram - 28.01 g/mol
     m.fs.sales = Expression(
         expr=(3600 * 24 * 365
-              * m.fs.F101.liq_outlet.flow_mol[0]
-              * m.fs.F101.liq_outlet.mole_frac_comp[0, "CH3OH"]
+              * m.fs.CH3OH.inlet.flow_mol[0]
+              * m.fs.CH3OH.inlet.mole_frac_comp[0, "CH3OH"]
               * 32.042 * 1e-6 * 449 * 1000
               )
         )
     m.fs.raw_mat_cost = Expression(
-        expr=(3600 * 24 * 365 * m.fs.M101.CO_WGS.flow_mol[0] *
+        expr=(3600 * 24 * 365 * m.fs.CO.outlet.flow_mol[0] *
               16.51 * 2.016 / 1000
-              + 3600 * 24 * 365 * m.fs.M101.H2_WGS.flow_mol[0] *
+              + 3600 * 24 * 365 * m.fs.H2.outlet.flow_mol[0] *
               62.00 * 28.01 / 1000
               )
         )
@@ -681,8 +690,6 @@ def add_costing(m):
                                      - m.fs.raw_mat_cost)/1e3,
                                sense=maximize)
     assert degrees_of_freedom(m) == 0
-    costing.calculate_scaling_factors(m.fs.F101.costing)
-    costing.calculate_scaling_factors(m.fs.R101.costing)
 
 
 def report(m):
@@ -775,7 +782,6 @@ def main(m):
     results2 = solver.solve(m, tee=True)
     assert results2.solver.termination_condition == \
         TerminationCondition.optimal
-    m.fs.R101.costing.purchase_cost.display()
     print('Initial solution process results:')
     report(m)  # display initial solution results
 
