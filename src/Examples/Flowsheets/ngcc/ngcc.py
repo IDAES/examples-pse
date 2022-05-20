@@ -239,6 +239,7 @@ class NgccFlowsheetData(FlowsheetBlockData):
         self.fuel_cost = pyo.Var(
             initialize=4.42, units=pyo.units.USD_2018 / pyo.units.MBtu
         )
+        self.fuel_cost.fix()
         self.lp_steam_temperature = pyo.Var(
             self.config.time, initialize=554.0, units=pyo.units.K
         )

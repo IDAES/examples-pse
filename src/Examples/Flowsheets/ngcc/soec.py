@@ -93,7 +93,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.h2_pure_prop_params.set_default_scaling("mole_frac_phase_comp", 1)
 
     def _define_cell_params(self):
-        self.soec_module.number_cells.fix(1.25e6)
+        self.soec_module.number_cells.fix(1e6)#1.8*4.4e5)
 
         self.soec_module.solid_oxide_cell.fuel_channel.length_x.fix(0.002)
         self.soec_module.solid_oxide_cell.length_y.fix(0.2345)
@@ -104,52 +104,54 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.soec_module.solid_oxide_cell.oxygen_channel.heat_transfer_coefficient.fix(100)
 
         self.soec_module.solid_oxide_cell.fuel_electrode.length_x.fix(1e-3)
-        self.soec_module.solid_oxide_cell.fuel_electrode.porosity.fix(0.48)
-        self.soec_module.solid_oxide_cell.fuel_electrode.tortuosity.fix(5.4)
-        self.soec_module.solid_oxide_cell.fuel_electrode.solid_heat_capacity.fix(450)
-        self.soec_module.solid_oxide_cell.fuel_electrode.solid_density.fix(3210.0)
-        self.soec_module.solid_oxide_cell.fuel_electrode.solid_thermal_conductivity.fix(1.86)
+        self.soec_module.solid_oxide_cell.fuel_electrode.porosity.fix(0.326)
+        self.soec_module.solid_oxide_cell.fuel_electrode.tortuosity.fix(3)  # Revisit
+        self.soec_module.solid_oxide_cell.fuel_electrode.solid_heat_capacity.fix(595)
+        self.soec_module.solid_oxide_cell.fuel_electrode.solid_density.fix(7740.0)
+        self.soec_module.solid_oxide_cell.fuel_electrode.solid_thermal_conductivity.fix(6.23)
         self.soec_module.solid_oxide_cell.fuel_electrode.resistivity_log_preexponential_factor.fix(
-            pyo.log(2.98e-5)
+            pyo.log(2.5e-5)
         )
-        self.soec_module.solid_oxide_cell.fuel_electrode.resistivity_thermal_exponent_dividend.fix(-1392.0)
+        self.soec_module.solid_oxide_cell.fuel_electrode.resistivity_thermal_exponent_dividend.fix(0)
 
-        self.soec_module.solid_oxide_cell.oxygen_electrode.length_x.fix(20e-6)
-        self.soec_module.solid_oxide_cell.oxygen_electrode.porosity.fix(0.35)
-        self.soec_module.solid_oxide_cell.oxygen_electrode.tortuosity.fix(3.0)
-        self.soec_module.solid_oxide_cell.oxygen_electrode.solid_heat_capacity.fix(430)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.length_x.fix(40e-6)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.porosity.fix(0.30717)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.tortuosity.fix(3.0)  # Revisit
+        # Heat capacity and heat transfer coefficients of oxygen electrode aren't well known but probably don't matter
+        # because the electrode is extremely thin
+        self.soec_module.solid_oxide_cell.oxygen_electrode.solid_heat_capacity.fix(142.3)
         self.soec_module.solid_oxide_cell.oxygen_electrode.solid_density.fix(3030)
         self.soec_module.solid_oxide_cell.oxygen_electrode.solid_thermal_conductivity.fix(5.84)
+        # Also unknown but probably insignificant
         self.soec_module.solid_oxide_cell.oxygen_electrode.resistivity_log_preexponential_factor.fix(
-            pyo.log(8.115e-5)
+            pyo.log(7.8125e-05)
         )
-        self.soec_module.solid_oxide_cell.oxygen_electrode.resistivity_thermal_exponent_dividend.fix(600.0)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.resistivity_thermal_exponent_dividend.fix(0)
 
-        self.soec_module.solid_oxide_cell.electrolyte.length_x.fix(9e-6)
-        self.soec_module.solid_oxide_cell.electrolyte.heat_capacity.fix(470)
-        self.soec_module.solid_oxide_cell.electrolyte.density.fix(5160)
-        self.soec_module.solid_oxide_cell.electrolyte.thermal_conductivity.fix(2.16)
-        self.soec_module.solid_oxide_cell.electrolyte.resistivity_log_preexponential_factor.fix(
-            pyo.log(2.94e-5)
-        )
-        self.soec_module.solid_oxide_cell.electrolyte.resistivity_thermal_exponent_dividend.fix(10350.0)
+        self.soec_module.solid_oxide_cell.electrolyte.length_x.fix(10.5e-6)
+        self.soec_module.solid_oxide_cell.electrolyte.heat_capacity.fix(400)
+        self.soec_module.solid_oxide_cell.electrolyte.density.fix(6000)
+        self.soec_module.solid_oxide_cell.electrolyte.thermal_conductivity.fix(2.17)
+        # Lumping all stack ohmic resistance into electrolyte because isolating it at contacts is hard
+        self.soec_module.solid_oxide_cell.electrolyte.resistivity_log_preexponential_factor.fix(-9.001)
+        self.soec_module.solid_oxide_cell.electrolyte.resistivity_thermal_exponent_dividend.fix(8988.134)
 
         self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
-            pyo.log(1.375e10)
+            22.5
         )
-        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_activation_energy.fix(120e3)
-        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha1.fix(0.4)
-        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha2.fix(0.4)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_activation_energy.fix(110.802e3)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha1.fix(0.647816)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha2.fix(0.352184)
 
         self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2"].fix(1)
         self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2O"].fix(1)
 
         self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
-            pyo.log(26.1e10 / 4)
+            25.5
         )
-        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_activation_energy.fix(130e3)
-        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha1.fix(0.5)
-        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha2.fix(0.5)
+        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_activation_energy.fix(112.066e3)
+        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha1.fix(0.503)
+        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha2.fix(0.497)
 
         self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_exponent_comp["O2"].fix(0.5)
 
@@ -183,7 +185,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.soec_module = soc.SolidOxideModuleSimple(
             default={
                 "solid_oxide_cell_config": {
-                    "has_holdup": True,
+                    "has_holdup": False,
                     "control_volume_zfaces": zfaces,
                     "control_volume_xfaces_fuel_electrode": xfaces_electrode,
                     "control_volume_xfaces_oxygen_electrode": xfaces_electrode,
@@ -195,7 +197,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
                     "oxygen_triple_phase_boundary_stoich_dict": oxygen_stoich_dict,
                     "inert_oxygen_species_triple_phase_boundary": ["N2", "Ar", "CO2", "H2O"],
                     "include_temperature_x_thermo": True,
-                    "include_contact_resistance":False,
+                    "include_contact_resistance": False,
                 },
                 "fuel_property_package": self.h2_side_prop_params,
                 "oxygen_property_package": self.o2_side_prop_params,
@@ -890,12 +892,12 @@ class SoecFlowsheetData(FlowsheetBlockData):
         propagate_state(self.feed01b)
         propagate_state(self.sweep01b)
 
-        self.soec_module.potential_cell.fix(1.29)
+        self.soec_module.potential_cell.fix(1.288)
         self.soec_module.initialize(
             outlvl=outlvl,
             solver=solver,
             optarg=optarg,
-            current_density_guess=-5000,
+            current_density_guess=-10000,
             temperature_guess=1023.15,
         )
         self.soec_module.potential_cell.unfix()
@@ -1231,3 +1233,33 @@ class SoecFlowsheetData(FlowsheetBlockData):
         s = svg_tag(svg=s, tag_group=self.tags_input, outfile=fname)
         if fname is None:
             return s
+
+if __name__ == "__main__":
+    import os
+    import math
+    import numpy as np
+    import pytest
+    from IPython.core.display import SVG
+    import pyomo.environ as pyo
+    from idaes.core.solvers import use_idaes_solver_configuration_defaults
+    import idaes
+    import idaes.logger as idaeslog
+    import idaes.core.util.scaling as iscale
+    import idaes.core.util as iutil
+    import idaes.core.util.exceptions as idaes_except
+    import idaes.core.util.model_statistics as mstat
+    from idaes.core.util.model_statistics import degrees_of_freedom as dof
+    import soec_flowsheet_costing
+    import soec
+
+    use_idaes_solver_configuration_defaults()
+    idaes.cfg.ipopt.options.nlp_scaling_method = "user-scaling"
+    idaes.cfg.ipopt["options"]["linear_solver"] = "ma57"
+    idaes.cfg.ipopt["options"]["max_iter"] = 300
+    idaes.cfg.ipopt["options"]["halt_on_ampl_error"] = "no"
+
+    m = pyo.ConcreteModel()
+    m.fs = soec.SoecFlowsheet(default={"dynamic": False})
+    iscale.calculate_scaling_factors(m)
+
+    m.fs.initialize(load_from=None, outlvl=idaeslog.INFO_HIGH)
