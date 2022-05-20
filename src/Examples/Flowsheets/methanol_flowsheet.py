@@ -43,20 +43,19 @@ from idaes.models.properties.modular_properties.base.generic_property import \
 from idaes.models.properties.modular_properties.base.generic_reaction import \
     GenericReactionParameterBlock
 
-from idaes.models.properties.examples import \
-    methanol_ideal_VLE as thermo_props_VLE
-from idaes.models.properties.examples import \
-    methanol_ideal_vapor as thermo_props_vapor
-from idaes.models.properties.examples import \
-    methanol_reactions as reaction_props
+import methanol_ideal_VLE as thermo_props_VLE
+import methanol_ideal_vapor as thermo_props_vapor
+import methanol_reactions as reaction_props
 
 from idaes.models.unit_models import (
+    Feed,
     Mixer,
     Heater,
     Compressor,
     Turbine,
     StoichiometricReactor,
-    Flash)
+    Flash,
+    Product)
 from idaes.models.unit_models.mixer import MomentumMixingType
 from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 import idaes.core.util.unit_costing as costing
@@ -114,6 +113,12 @@ def build_model(m):
         default={"property_package": m.fs.thermo_params_vapor,
                  **reaction_props.config_dict})
 
+    # feed blocks
+    m.fs.H2 = Feed(
+        default={"property_package": m.fs.thermo_params_vapor})
+    m.fs.CO = Feed(
+        default={"property_package": m.fs.thermo_params_vapor})
+
     # mixing feed streams
     m.fs.M101 = Mixer(
         default={"property_package": m.fs.thermo_params_vapor,
@@ -161,14 +166,27 @@ def build_model(m):
                  "has_heat_transfer": True,
                  "has_pressure_change": True})
 
+    # product blocks
+    m.fs.EXHAUST = Product(
+        default={"property_package": m.fs.thermo_params_vapor})
+    m.fs.CH3OH = Product(
+        default={"property_package": m.fs.thermo_params_VLE})
+
     # Build the flowsheet
+    # print degrees of freedom for each unit model
+    # (DOF unit) = (DOF internal) - (DOF feeds)
+    # since inlet is specified by state properties of feed streams
     print('Unit degrees of freedom')
     for unit in ('M101', 'C101', 'H101', 'R101', 'T101', 'H102', 'F101'):
         if unit == 'M101':
-            spec = 14
+            spec = 14  # (FTP + 4 mole fractions) for both feed streams
         else:
-            spec = 7
+            spec = 7  # (FTP + 4 mole fractions) for feed stream
         print(str(unit)+' '+str(degrees_of_freedom(getattr(m.fs, unit))-spec))
+
+    # feed streams
+    m.fs.H2_FEED = Arc(source=m.fs.H2.outlet, destination=m.fs.M101.H2_WGS)
+    m.fs.CO_FEED = Arc(source=m.fs.CO.outlet, destination=m.fs.M101.CO_WGS)
 
     # pre-compression
     m.fs.s02 = Arc(source=m.fs.M101.outlet, destination=m.fs.C101.inlet)
@@ -188,6 +206,10 @@ def build_model(m):
     # product recovery
     m.fs.s07 = Arc(source=m.fs.H102.outlet, destination=m.fs.F101.inlet)
 
+    # product streams
+    m.fs.gas = Arc(source=m.fs.F101.vap_outlet, destination=m.fs.EXHAUST.inlet)
+    m.fs.prod = Arc(source=m.fs.F101.liq_outlet, destination=m.fs.CH3OH.inlet)
+
     # connecting unit models
     TransformationFactory("network.expand_arcs").apply_to(m)
 
@@ -199,25 +221,25 @@ def build_model(m):
 def set_inputs(m):
 
     #  feed streams, post WGS
-    m.fs.M101.H2_WGS.flow_mol[0].fix(637.2)  # mol/s, relative to 177 kmol/h
-    m.fs.M101.H2_WGS.mole_frac_comp[0, "H2"].fix(1)
-    m.fs.M101.H2_WGS.mole_frac_comp[0, "CO"].fix(1e-6)
-    m.fs.M101.H2_WGS.mole_frac_comp[0, "CH3OH"].fix(1e-6)
-    m.fs.M101.H2_WGS.mole_frac_comp[0, "CH4"].fix(1e-6)
-    m.fs.M101.H2_WGS.enth_mol[0].fix(-142.4)  # J/mol
-    m.fs.M101.H2_WGS.pressure.fix(30e5)  # Pa
+    m.fs.H2.outlet.flow_mol[0].fix(637.2*pyunits.mol/pyunits.s)
+    m.fs.H2.outlet.mole_frac_comp[0, "H2"].fix(1*pyunits.dimensionless)
+    m.fs.H2.outlet.mole_frac_comp[0, "CO"].fix(1e-6*pyunits.dimensionless)
+    m.fs.H2.outlet.mole_frac_comp[0, "CH3OH"].fix(1e-6*pyunits.dimensionless)
+    m.fs.H2.outlet.mole_frac_comp[0, "CH4"].fix(1e-6*pyunits.dimensionless)
+    m.fs.H2.outlet.enth_mol[0].fix(-142.4*pyunits.J/pyunits.mol)
+    m.fs.H2.outlet.pressure.fix(30e5*pyunits.Pa)
 
-    m.fs.M101.CO_WGS.flow_mol[0].fix(316.8)  # mol/s, relative to 88 kmol/h
-    m.fs.M101.CO_WGS.mole_frac_comp[0, "H2"].fix(1e-6)
-    m.fs.M101.CO_WGS.mole_frac_comp[0, "CO"].fix(1)
-    m.fs.M101.CO_WGS.mole_frac_comp[0, "CH3OH"].fix(1e-6)
-    m.fs.M101.CO_WGS.mole_frac_comp[0, "CH4"].fix(1e-6)
-    m.fs.M101.CO_WGS.enth_mol[0].fix(-110676.4)  # J/mol
-    m.fs.M101.CO_WGS.pressure.fix(30e5)  # Pa
+    m.fs.CO.outlet.flow_mol[0].fix(316.8*pyunits.mol/pyunits.s)
+    m.fs.CO.outlet.mole_frac_comp[0, "H2"].fix(1e-6*pyunits.dimensionless)
+    m.fs.CO.outlet.mole_frac_comp[0, "CO"].fix(1*pyunits.dimensionless)
+    m.fs.CO.outlet.mole_frac_comp[0, "CH3OH"].fix(1e-6*pyunits.dimensionless)
+    m.fs.CO.outlet.mole_frac_comp[0, "CH4"].fix(1e-6*pyunits.dimensionless)
+    m.fs.CO.outlet.enth_mol[0].fix(-110676.4*pyunits.J/pyunits.mol)
+    m.fs.CO.outlet.pressure.fix(30e5*pyunits.Pa)
     print('DOF after streams specified: ', degrees_of_freedom(m))
 
     # units specifications
-    m.fs.C101.outlet.pressure.fix(51e5)  # Pa
+    m.fs.C101.outlet.pressure.fix(51e5*pyunits.Pa)
 
     m.fs.H101.outlet_temp = Constraint(
         expr=m.fs.H101.control_volume.properties_out[0].temperature ==
@@ -231,14 +253,15 @@ def set_inputs(m):
               m.fs.R101.inlet.mole_frac_comp[0, "CO"]
               - m.fs.R101.outlet.flow_mol[0] *
               m.fs.R101.outlet.mole_frac_comp[0, "CO"]))
-    m.fs.R101.conversion.fix(0.75)
+    m.fs.R101.conversion.fix(0.75*pyunits.dimensionless)
     m.fs.R101.outlet_temp = Constraint(
         expr=m.fs.R101.control_volume.properties_out[0].temperature ==
         507.15 * pyunits.K)
-    m.fs.R101.heat_duty.setub(0)  # rxn is exothermic, so duty is cooling only
+    # rxn is exothermic, so duty is cooling only
+    m.fs.R101.heat_duty.setub(0*pyunits.W)
 
-    m.fs.T101.deltaP.fix(-2e6)
-    m.fs.T101.efficiency_isentropic.fix(0.9)
+    m.fs.T101.deltaP.fix(-2e6*pyunits.Pa)
+    m.fs.T101.efficiency_isentropic.fix(0.9*pyunits.dimensionless)
 
     m.fs.H102.outlet_temp = Constraint(
         expr=m.fs.H102.control_volume.properties_out[0].temperature ==
@@ -250,7 +273,7 @@ def set_inputs(m):
               m.fs.F101.liq_outlet.mole_frac_comp[0, "CH3OH"] /
               (m.fs.F101.inlet.flow_mol[0] *
                m.fs.F101.inlet.mole_frac_comp[0, "CH3OH"])))
-    m.fs.F101.deltaP.fix(0)  # Pa
+    m.fs.F101.deltaP.fix(0*pyunits.Pa)
     m.fs.F101.outlet_temp = Constraint(
         expr=m.fs.F101.control_volume.properties_out[0].temperature ==
         407.15 * pyunits.K)
@@ -495,6 +518,12 @@ def initialize_flowsheet(m):
     # Initialize and solve flowsheet
 
     print('')
+    m.fs.H2.initialize()
+    propagate_state(arc=m.fs.H2_FEED)
+
+    m.fs.CO.initialize()
+    propagate_state(arc=m.fs.CO_FEED)
+
     m.fs.M101.initialize()
     propagate_state(arc=m.fs.s02)  # mixer to compressor
 
@@ -514,6 +543,11 @@ def initialize_flowsheet(m):
     propagate_state(arc=m.fs.s07)  # cooler to flash
 
     m.fs.F101.initialize()
+    propagate_state(arc=m.fs.gas)
+    propagate_state(arc=m.fs.prod)
+
+    m.fs.EXHAUST.initialize()
+    m.fs.CH3OH.initialize()
 
 
 def add_costing(m):
@@ -667,25 +701,32 @@ def report(m):
     print('revenue (1000$/year)= ', value(m.fs.objective))
 
     print()
-    m.fs.M101.report()
-    m.fs.F101.report()
+    m.fs.H2.report()
+    m.fs.CO.report()
+    m.fs.EXHAUST.report()
+    m.fs.CH3OH.report()
 
 
 def main(m):
-    solver = get_solver()
+    solver = get_solver()  # IPOPT
     optarg = {'tol': 1e-6,
-              'max_iter': 5000}
+              'max_iter': 500}
     solver.options = optarg
     build_model(m)  # build flowsheet
     set_inputs(m)  # unit and stream specifications
     scale_flowsheet(m)
     initialize_flowsheet(m)  # rigorous initialization scheme
     print('DOF before solve: ', degrees_of_freedom(m))
+    print()
+    print('Solving initial problem...')
     results = solver.solve(m, tee=True)
     assert results.solver.termination_condition == TerminationCondition.optimal
 
     add_costing(m)  # re-solve with costing equations
+    print()
     results2 = solver.solve(m, tee=True)
+    assert results2.solver.termination_condition == \
+        TerminationCondition.optimal
     m.fs.R101.costing.purchase_cost.display()
     print('Initial solution process results:')
     report(m)  # display initial solution results
@@ -697,25 +738,27 @@ def main(m):
     m.fs.R101.conversion_ub = Constraint(expr=m.fs.R101.conversion <= 0.85)
     m.fs.R101.outlet_temp.deactivate()
     m.fs.R101.outlet_t_lb = Constraint(
-        expr=m.fs.R101.control_volume.properties_out[0.0].temperature >= 405)
+        expr=m.fs.R101.control_volume.properties_out[0.0].temperature
+        >= 405*pyunits.K)
     m.fs.R101.outlet_t_ub = Constraint(
-        expr=m.fs.R101.control_volume.properties_out[0.0].temperature <= 505)
+        expr=m.fs.R101.control_volume.properties_out[0.0].temperature
+        <= 505*pyunits.K)
 
     # Optimize turbine work (or delta P)
     m.fs.T101.deltaP.unfix()  # optimize turbine work recovery/pressure drop
     m.fs.T101.outlet_p_lb = Constraint(
-        expr=m.fs.T101.outlet.pressure[0] >= 10E5)
+        expr=m.fs.T101.outlet.pressure[0] >= 10E5*pyunits.Pa)
     m.fs.T101.outlet_p_ub = Constraint(
-        expr=m.fs.T101.outlet.pressure[0] <= 51E5*0.8)
+        expr=m.fs.T101.outlet.pressure[0] <= 51E5*0.8*pyunits.Pa)
 
     # Optimize Cooler outlet temperature - unfix cooler outlet temperature
     m.fs.H102.outlet_temp.deactivate()
     m.fs.H102.outlet_t_lb = Constraint(
         expr=m.fs.H102.control_volume.properties_out[0.0].temperature
-        >= 407.15*0.8)
+        >= 407.15*0.8*pyunits.K)
     m.fs.H102.outlet_t_ub = Constraint(
         expr=m.fs.H102.control_volume.properties_out[0.0].temperature
-        <= 480)
+        <= 480*pyunits.K)
 
     m.fs.F101.deltaP.unfix()  # allow pressure change in streams
 
@@ -723,6 +766,8 @@ def main(m):
         expr=m.fs.F101.control_volume.properties_out[0].temperature ==
         m.fs.F101.control_volume.properties_in[0].temperature)
 
+    print()
+    print('Solving optimization problem...')
     opt_res = solver.solve(m, tee=True)
     assert opt_res.solver.termination_condition == TerminationCondition.optimal
     print('Optimal solution process results:')
