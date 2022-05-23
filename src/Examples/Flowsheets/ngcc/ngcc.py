@@ -16,7 +16,7 @@ __author__ = "John Eslick"
 import os
 import pyomo.environ as pyo
 from pyomo.network import Arc
-import idaes.generic_models.unit_models as um # um = unit models
+import idaes.models.unit_models as um  # um = unit models
 from idaes.core import FlowsheetBlockData, declare_process_block_class
 import idaes.core.util.scaling as iscale
 import idaes.logger as idaeslog
@@ -24,8 +24,10 @@ import gas_turbine
 import hrsg
 import steam_turbine
 import idaes.core.util as iutil
+from idaes.core.solvers import get_solver
 from idaes.core.util.initialization import propagate_state
-import idaes.generic_models.costing.costing_base as cost_base
+import idaes.core.base.costing_base as cost_base
+
 
 @declare_process_block_class(
     "NgccFlowsheet",
@@ -74,7 +76,7 @@ class NgccFlowsheetData(FlowsheetBlockData):
         )
         tag_group["lhv_efficiency"] = iutil.ModelTag(
             doc=f"Overall LHV efficiency",
-            expr=100*self.lhv_efficiency[0],
+            expr=100 * self.lhv_efficiency[0],
             format_string="{:.2f}",
             display_units="%",
         )
@@ -125,41 +127,41 @@ class NgccFlowsheetData(FlowsheetBlockData):
             doc=f"Fuel cost currency per time",
             expr=self.fuel_cost_rate[0],
             format_string="{:.0f}",
-            display_units=pyo.units.USD_2018/pyo.units.hr,
+            display_units=pyo.units.USD_2018 / pyo.units.hr,
         )
         tag_group["other_variable_cost_rate"] = iutil.ModelTag(
             doc=f"Non-fuel variable costs currency per time",
             expr=self.other_variable_cost_rate[0],
             format_string="{:.0f}",
-            display_units=pyo.units.USD_2018/pyo.units.hr,
+            display_units=pyo.units.USD_2018 / pyo.units.hr,
         )
         tag_group["total_variable_cost_rate"] = iutil.ModelTag(
             doc=f"Total variable costs currency per time",
             expr=self.total_variable_cost_rate[0],
             format_string="{:.0f}",
-            display_units=pyo.units.USD_2018/pyo.units.hr,
+            display_units=pyo.units.USD_2018 / pyo.units.hr,
         )
 
     def _add_flowsheets(self):
         self.gt = gas_turbine.GasTurbineFlowsheet(
             default={
-                "dynamic":self.config.dynamic,
-                "time":self.time,
-                "time_units": self.config.time_units
+                "dynamic": self.config.dynamic,
+                "time": self.time,
+                "time_units": self.config.time_units,
             }
         )
         self.hrsg = hrsg.HrsgFlowsheet(
             default={
-                "dynamic":self.config.dynamic,
-                "time":self.time,
-                "time_units": self.config.time_units
+                "dynamic": self.config.dynamic,
+                "time": self.time,
+                "time_units": self.config.time_units,
             }
         )
         self.st = steam_turbine.SteamTurbineFlowsheet(
             default={
-                "dynamic":self.config.dynamic,
-                "time":self.time,
-                "time_units": self.config.time_units
+                "dynamic": self.config.dynamic,
+                "time": self.time,
+                "time_units": self.config.time_units,
             }
         )
 
@@ -168,8 +170,8 @@ class NgccFlowsheetData(FlowsheetBlockData):
             doc="Translate from generic to flue gas prop and drop Ar.",
             default={
                 "inlet_property_package": self.gt.flue_prop_params,
-                "outlet_property_package": self.hrsg.prop_gas
-            }
+                "outlet_property_package": self.hrsg.prop_gas,
+            },
         )
 
     def _add_arcs(self):
@@ -183,96 +185,75 @@ class NgccFlowsheetData(FlowsheetBlockData):
         )
         self.t05a = Arc(
             source=self.hrsg.sh_lp.tube_outlet,
-            destination=self.st.steam_turbine_lp_mix.hrsg
+            destination=self.st.steam_turbine_lp_mix.hrsg,
         )
         self.t02a = Arc(
             source=self.st.steam_turbine.hp_stages[7].outlet,
-            destination=self.hrsg.splitter_ip2.inlet
+            destination=self.hrsg.splitter_ip2.inlet,
         )
         self.t03a = Arc(
             source=self.hrsg.sh_ip3.tube_outlet,
-            destination=self.st.steam_turbine.ip_stages[1].inlet
+            destination=self.st.steam_turbine.ip_stages[1].inlet,
         )
         self.t11a = Arc(
-            source=self.st.return_mix.outlet,
-            destination=self.hrsg.econ_lp.tube_inlet
+            source=self.st.return_mix.outlet, destination=self.hrsg.econ_lp.tube_inlet
         )
         self.t01a = Arc(
             source=self.hrsg.sh_hp4.tube_outlet,
-            destination=self.st.steam_turbine.inlet_split.inlet
+            destination=self.st.steam_turbine.inlet_split.inlet,
         )
         self.st01a = Arc(
             source=self.hrsg.splitter_ip1.toNGPH,
-            destination=self.gt.ng_preheat.shell_inlet
+            destination=self.gt.ng_preheat.shell_inlet,
         )
         self.st02a = Arc(
             source=self.gt.ng_preheat.shell_outlet,
-            destination=self.hrsg.mixer1.Preheater
+            destination=self.hrsg.mixer1.Preheater,
         )
         pyo.TransformationFactory("network.expand_arcs").apply_to(self)
 
     def _add_constraints(self):
         cost_base.register_idaes_currency_units()
 
-        self.net_power_mw = pyo.Var(
-            self.time,
-            initialize=600,
-            units=pyo.units.MW
-        )
+        self.net_power_mw = pyo.Var(self.time, initialize=600, units=pyo.units.MW)
         # default to 90% to compare to baseline
-        self.cap_fraction = pyo.Var(
-            initialize=0.90,
-            units=pyo.units.dimensionless
-        )
+        self.cap_fraction = pyo.Var(initialize=0.90, units=pyo.units.dimensionless)
         # Specific Reboiler Duty (SRD)
         # From baseline with 90% capture 2.7 MJ/kg
         # For PZ and 97% capture 3.6 MJ/kg
         # For PZAS as 97% capture 2.4 MJ/kg
         self.cap_specific_reboiler_duty = pyo.Var(
-            initialize=2.7e6,
-            units=pyo.units.J/pyo.units.kg
+            initialize=2.7e6, units=pyo.units.J / pyo.units.kg
         )
         self.cap_addtional_co2 = pyo.Var(
-            self.config.time,
-            initialize=0.0,
-            units=pyo.units.kg/pyo.units.s
+            self.config.time, initialize=0.0, units=pyo.units.kg / pyo.units.s
         )
         self.cap_specific_compression_power = pyo.Var(
-            initialize=0.2748e6,
-            units=pyo.units.J/pyo.units.kg
+            initialize=0.2748e6, units=pyo.units.J / pyo.units.kg
         )
         self.cap_additional_reboiler_duty = pyo.Var(
-            self.config.time,
-            initialize=0.0,
-            units=pyo.units.W
+            self.config.time, initialize=0.0, units=pyo.units.W
         )
-        self.fuel_lhv = pyo.Var(
-            initialize=47.2e6,
-            units=pyo.units.J/pyo.units.kg
-        )
-        self.fuel_hhv = pyo.Var(
-            initialize=52.3e6,
-            units=pyo.units.J/pyo.units.kg
-        )
+        self.fuel_lhv = pyo.Var(initialize=47.2e6, units=pyo.units.J / pyo.units.kg)
+        self.fuel_hhv = pyo.Var(initialize=52.3e6, units=pyo.units.J / pyo.units.kg)
         self.fuel_cost = pyo.Var(
-            initialize=4.42,
-            units=pyo.units.USD_2018/pyo.units.MBtu
+            initialize=4.42, units=pyo.units.USD_2018 / pyo.units.MBtu
         )
         self.lp_steam_temperature = pyo.Var(
-            self.config.time,
-            initialize=554.0,
-            units=pyo.units.K
+            self.config.time, initialize=554.0, units=pyo.units.K
         )
 
         @self.fg_translate.Constraint(self.time, self.hrsg.prop_gas.component_list)
         def mol_frac_eqn(b, t, i):
             return (
-                b.outlet.flow_mol_comp[t, i] ==
-                b.inlet.flow_mol[t] * b.inlet.mole_frac_comp[t, i]
+                b.outlet.flow_mol_comp[t, i]
+                == b.inlet.flow_mol[t] * b.inlet.mole_frac_comp[t, i]
             )
+
         @self.fg_translate.Constraint(self.time)
         def temperature_eqn(b, t):
             return b.outlet.temperature[t] == b.inlet.temperature[t]
+
         @self.fg_translate.Constraint(self.time)
         def pressure_eqn(b, t):
             return b.outlet.pressure[t] == b.inlet.pressure[t]
@@ -295,24 +276,34 @@ class NgccFlowsheetData(FlowsheetBlockData):
             return 1e3 * 1020.0 * pyo.units.W
 
         @self.Expression(self.config.time)
-        def aux_capture(b, t): #scale to flue gas flow
+        def aux_capture(b, t):  # scale to flue gas flow
             return (
-                10600000*pyo.units.W/62.1/pyo.units.kg*pyo.units.s * b.cap_fraction *
-                b.gt.gts2.control_volume.properties_out[t].flow_mol_comp["CO2"] *
-                0.04401 * pyo.units.kg / pyo.units.mol
+                10600000
+                * pyo.units.W
+                / 62.1
+                / pyo.units.kg
+                * pyo.units.s
+                * b.cap_fraction
+                * b.gt.gts2.control_volume.properties_out[t].flow_mol_comp["CO2"]
+                * 0.04401
+                * pyo.units.kg
+                / pyo.units.mol
             )
 
         @self.Expression(self.config.time)
         def aux_compression(b, t):
             return (
-                b.cap_specific_compression_power * b.cap_fraction *
-                b.gt.gts2.control_volume.properties_out[t].flow_mol_comp["CO2"] *
-                0.04401 * pyo.units.kg / pyo.units.mol
+                b.cap_specific_compression_power
+                * b.cap_fraction
+                * b.gt.gts2.control_volume.properties_out[t].flow_mol_comp["CO2"]
+                * 0.04401
+                * pyo.units.kg
+                / pyo.units.mol
             )
 
         @self.Expression(self.config.time)
-        def aux_transformer(b, t): # scale to gross power
-            return - 1e3 * 2200 * b.gross_power[t] / 687.0e6
+        def aux_transformer(b, t):  # scale to gross power
+            return -1e3 * 2200 * b.gross_power[t] / 687.0e6
 
         @self.Expression(self.config.time)
         def aux_misc(b, t):
@@ -322,25 +313,25 @@ class NgccFlowsheetData(FlowsheetBlockData):
         @self.Expression(self.config.time)
         def net_power(b, t):
             return (
-                b.gt.gt_power[t] +
-                b.st.steam_turbine.power[t] +
-                b.st.cond_pump.work[t] +
-                b.hrsg.pump_hp.work[t] +
-                b.hrsg.pump_ip.work[t] +
-                b.aux_cooling_pumps[t] +
-                b.aux_cooling_fans[t] +
-                b.aux_combustion[t] +
-                b.aux_capture[t] +
-                b.aux_compression[t] +
-                b.aux_transformer[t] +
-                b.aux_misc[t]
+                b.gt.gt_power[t]
+                + b.st.steam_turbine.power[t]
+                + b.st.cond_pump.work[t]
+                + b.hrsg.pump_hp.work[t]
+                + b.hrsg.pump_ip.work[t]
+                + b.aux_cooling_pumps[t]
+                + b.aux_cooling_fans[t]
+                + b.aux_combustion[t]
+                + b.aux_capture[t]
+                + b.aux_compression[t]
+                + b.aux_transformer[t]
+                + b.aux_misc[t]
             )
 
         @self.Expression(self.config.time)
         def fuel_thermal_in_mbtu(b, t):
             return pyo.units.convert(
                 b.fuel_lhv * b.gt.inject1.gas_state[t].flow_mass,
-                pyo.units.MBtu/pyo.units.hr
+                pyo.units.MBtu / pyo.units.hr,
             )
 
         @self.Expression(self.config.time)
@@ -348,14 +339,18 @@ class NgccFlowsheetData(FlowsheetBlockData):
             return -b.net_power[t] / b.gt.inject1.gas_state[t].flow_mass / b.fuel_lhv
 
         @self.Expression(self.config.time)
-        def reboiler_duty_expr(b, t): #scale to flue gas flow
+        def reboiler_duty_expr(b, t):  # scale to flue gas flow
             return (
-                -b.cap_specific_reboiler_duty * b.cap_fraction *
-                (
-                    b.gt.gts2.control_volume.properties_out[0].flow_mol_comp["CO2"] *
-                    0.04401 * pyo.units.kg/pyo.units.mol + b.cap_addtional_co2[t]
-                ) +
-                b.cap_additional_reboiler_duty[t]
+                -b.cap_specific_reboiler_duty
+                * b.cap_fraction
+                * (
+                    b.gt.gts2.control_volume.properties_out[0].flow_mol_comp["CO2"]
+                    * 0.04401
+                    * pyo.units.kg
+                    / pyo.units.mol
+                    + b.cap_addtional_co2[t]
+                )
+                + b.cap_additional_reboiler_duty[t]
             )
 
         @self.Constraint(self.config.time)
@@ -364,12 +359,14 @@ class NgccFlowsheetData(FlowsheetBlockData):
 
         @self.Constraint(self.config.time)
         def net_power_constraint(b, t):
-            return b.net_power_mw[t]/100.0 == -b.net_power[t]/1e6/100.0
+            return b.net_power_mw[t] / 100.0 == -b.net_power[t] / 1e6 / 100.0
 
         @self.Constraint(self.config.time)
         def lp_steam_temperature_eqn(b, t):
-            return (b.lp_steam_temperature[t] ==
-                b.hrsg.sh_lp.tube.properties_out[t].temperature)
+            return (
+                b.lp_steam_temperature[t]
+                == b.hrsg.sh_lp.tube.properties_out[t].temperature
+            )
 
         @self.Expression(self.config.time)
         def natural_gas_hhv_energy(b, t):
@@ -378,16 +375,19 @@ class NgccFlowsheetData(FlowsheetBlockData):
         @self.Expression(self.config.time, doc="Fuel cost")
         def fuel_cost_rate(b, t):
             return pyo.units.convert(
-                b.natural_gas_hhv_energy[t] * pyo.units.convert(
-                    b.fuel_cost, pyo.units.USD_2018/pyo.units.J),
-                    pyo.units.USD_2018/pyo.units.hr
+                b.natural_gas_hhv_energy[t]
+                * pyo.units.convert(b.fuel_cost, pyo.units.USD_2018 / pyo.units.J),
+                pyo.units.USD_2018 / pyo.units.hr,
             )
 
         @self.Expression(self.config.time, doc="Variable O&M cost including fuel")
         def other_variable_cost_rate(b, t):
             return pyo.units.convert(
-                7.457044934107763e-10*pyo.units.USD_2018/pyo.units.J *
-                b.natural_gas_hhv_energy[t], pyo.units.USD_2018/pyo.units.hr
+                7.457044934107763e-10
+                * pyo.units.USD_2018
+                / pyo.units.J
+                * b.natural_gas_hhv_energy[t],
+                pyo.units.USD_2018 / pyo.units.hr,
             )
 
         @self.Expression(self.config.time, doc="Variable O&M cost including fuel")
@@ -404,9 +404,11 @@ class NgccFlowsheetData(FlowsheetBlockData):
         for t, c in self.reboiler_duty_eqn.items():
             iscale.constraint_scaling_transform(c, 1e-7)
         iscale.set_scaling_factor(
-            self.st.steam_turbine.throttle_valve[1].control_volume.deltaP, 1e-6)
+            self.st.steam_turbine.throttle_valve[1].control_volume.deltaP, 1e-6
+        )
         iscale.set_scaling_factor(
-            self.st.steam_turbine.hp_stages[1].control_volume.deltaP, 1e-6)
+            self.st.steam_turbine.hp_stages[1].control_volume.deltaP, 1e-6
+        )
         iscale.set_scaling_factor(self.st.main_condenser.tube.heat, 1e-8)
         iscale.set_scaling_factor(self.st.main_condenser.shell.heat, 1e-8)
 
@@ -421,13 +423,12 @@ class NgccFlowsheetData(FlowsheetBlockData):
 
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
-        solver_obj = iutil.get_solver(solver, optarg)
+        solver_obj = get_solver(solver, optarg)
 
         if load_from is not None and os.path.exists(load_from):
             init_log.info(f"NGCC load initial from {load_from}")
             # here suffix=False avoids loading scaling factors
-            iutil.from_json(
-                self, fname=load_from, wts=iutil.StoreSpec(suffix=False))
+            iutil.from_json(self, fname=load_from, wts=iutil.StoreSpec(suffix=False))
         else:
             self.cap_addtional_co2.fix()
             self.cap_fraction.fix()
@@ -456,14 +457,13 @@ class NgccFlowsheetData(FlowsheetBlockData):
             )
 
             init_log.info(f"Open tears")
-            self.st02a_expanded.deactivate() # steam from ng preheat
-            self.st01a_expanded.deactivate() # steam to ng preheat
-            self.t01a_expanded.deactivate() # main steam to turbine
-            self.t02a_expanded.deactivate() # cold reheat
-            self.t03a_expanded.deactivate() # hot reheat
+            self.st02a_expanded.deactivate()  # steam from ng preheat
+            self.st01a_expanded.deactivate()  # steam to ng preheat
+            self.t01a_expanded.deactivate()  # main steam to turbine
+            self.t02a_expanded.deactivate()  # cold reheat
+            self.t03a_expanded.deactivate()  # hot reheat
             self.st.steam_turbine_lp_mix.hrsg.unfix()
             self.t11a_expanded.deactivate()
-            #self.hrsg.econ_lp.tube_inlet.unfix()
             self.st.steam_turbine_lp_split.reboiler.flow_mol.unfix()
             solver_obj.solve(self, tee=True)
 
@@ -474,25 +474,23 @@ class NgccFlowsheetData(FlowsheetBlockData):
 
             # hook in preheater
             init_log.info(f"Connect preheater and reheater")
-            self.st02a_expanded.activate() # steam from ng preheat
-            self.st01a_expanded.activate() # steam to ng preheat
+            self.st02a_expanded.activate()  # steam from ng preheat
+            self.st01a_expanded.activate()  # steam to ng preheat
             self.gt.ng_preheat.shell_inlet.unfix()
             self.hrsg.mixer1.Preheater.unfix()
-            #propagate_state(self.t01a, overwrite_fixed=True)
             propagate_state(self.t02a, overwrite_fixed=True)
             propagate_state(self.t03a, overwrite_fixed=True)
             self.hrsg.splitter_ip2.inlet.unfix()
             self.st.t02_dummy.deactivate()
             self.st.t03_dummy.deactivate()
             self.st.dummy_reheat.deactivate()
-            self.t02a_expanded.activate() # hot reheat
-            self.t03a_expanded.activate() # cold reheat
+            self.t02a_expanded.activate()  # hot reheat
+            self.t03a_expanded.activate()  # cold reheat
             solver_obj.solve(self, tee=True)
 
             # hook main steam
             init_log.info(f"Finish turbine sizing/connect main steam")
             self.t01a_expanded.activate()
-            #propagate_state(self.t01a, overwrite_fixed=True)
             self.st.steam_turbine.outlet_stage.flow_coeff.unfix()
             self.st.steam_turbine.inlet_split.inlet.unfix()
             solver_obj.solve(self, tee=True)
@@ -546,6 +544,8 @@ class NgccFlowsheetData(FlowsheetBlockData):
         for i in iscale.extreme_jacobian_entries(jac=jac, nlp=nlp, large=100):
             print(f"    {i[0]:.2e}, [{i[1]}, {i[2]}]")
         print("Badly scaled variables:")
-        for v, sv in iscale.badly_scaled_var_generator(m, large=1e2, small=1e-2, zero=1e-12):
+        for v, sv in iscale.badly_scaled_var_generator(
+            m, large=1e2, small=1e-2, zero=1e-12
+        ):
             print(f"    {v} -- {sv} -- {iscale.get_scaling_factor(v)}")
         print(f"Jacobian Condition Number: {iscale.jacobian_cond(jac=jac):.2e}")
