@@ -39,16 +39,19 @@ from idaes.core.util import model_serializer as ms
 from idaes.core.util.tags import svg_tag
 from idaes.core.util.model_statistics import degrees_of_freedom
 from idaes.core.util.tables import create_stream_table_dataframe
+from idaes.core.util.exceptions import InitializationError
 import idaes.core.util as iutil
 
 import idaes.core.util.scaling as iscale
 
-from idaes.generic_models.properties.core.generic.generic_property import (
-    GenericParameterBlock)
-from idaes.generic_models.properties.core.generic.generic_reaction import (
-    GenericReactionParameterBlock)
+from idaes.models.properties.modular_properties.base.generic_property import (
+    GenericParameterBlock,
+)
+from idaes.models.properties.modular_properties.base.generic_reaction import (
+    GenericReactionParameterBlock,
+)
 
-from idaes.generic_models.unit_models import (
+from idaes.models.unit_models import (
     Mixer,
     Heater,
     HeatExchanger,
@@ -58,27 +61,25 @@ from idaes.generic_models.unit_models import (
     Flash,
     Separator,
     Translator)
-from idaes.generic_models.unit_models.heat_exchanger import \
+from idaes.models.unit_models.heat_exchanger import \
     delta_temperature_underwood_callback
-from idaes.generic_models.unit_models.pressure_changer import \
+from idaes.models.unit_models.pressure_changer import \
     ThermodynamicAssumption
-from idaes.generic_models.unit_models.separator import SplittingType
-from idaes.generic_models.unit_models.mixer import MomentumMixingType
+from idaes.models.unit_models.separator import SplittingType
+from idaes.models.unit_models.mixer import MomentumMixingType
 
-from idaes.power_generation.flowsheets.sofc.properties.CO2_H2O_Ideal_VLE_scaled import \
-    configuration as CO2_H2O_VLE_config
-from idaes.power_generation.flowsheets.rsofc.properties.natural_gas_PR_scaled_units  import (
+from properties.CO2_H2O_Ideal_VLE_scaled import configuration as CO2_H2O_VLE_config
+from idaes.models_extra.power_generation.properties.natural_gas_PR import (
     get_prop,
-    rxn_configuration,
-    EosType)
+    get_rxn,
+    EosType
+)
 
-from idaes.power_generation.flowsheets.sofc.surrogates.cpu import CPU
-# from idaes.power_generation.flowsheets.sofc.surrogates.sofc_rom_builder \
-#     import build_SOFC_ROM, initialize_SOFC_ROM
-from idaes.power_generation.flowsheets.sofc.surrogates.sofc_surrogate \
+from surrogates.cpu import CPU
+from surrogates.sofc_surrogate \
     import build_SOFC_SM, initialize_SOFC_SM
 
-from idaes.power_generation.costing.power_plant_costing import \
+from idaes.models_extra.power_generation.costing.power_plant_costing import \
     get_fixed_OM_costs, get_variable_OM_costs, initialize_fixed_OM_costs, \
     initialize_variable_OM_costs
 
@@ -89,31 +90,69 @@ def build_NGFC(m):
     m.sofc_fs = FlowsheetBlock(default={"dynamic": False})
 
     # create property packages - 4 property packages and 1 reaction
-    ng_comps=['H2', 'CO', "H2O", 'CO2', 'CH4', "C2H6", "C3H8", "C4H10",
-              'N2', 'O2', 'Ar']
-    # m.sofc_fs.NG_props = GenericParameterBlock(default=NG_config)
-    m.sofc_fs.NG_props = GenericParameterBlock(
-        default=get_prop(components=ng_comps, phases=["Vap"],
-                         eos=EosType.IDEAL)
-        )
+    NG_config = get_prop(
+        components=[
+            "H2",
+            "CO",
+            "H2O",
+            "CO2",
+            "CH4",
+            "C2H6",
+            "C3H8",
+            "C4H10",
+            "N2",
+            "O2",
+            "Ar",
+        ], phases=["Vap"],
+        eos=EosType.IDEAL)
+    
+    m.sofc_fs.NG_props = GenericParameterBlock(default=NG_config)
 
-    syn_comps=["H2", "CO", "H2O", "CO2", "CH4", "N2", "O2", "Ar"]
-    m.sofc_fs.syn_props = GenericParameterBlock(
-        default=get_prop(components=syn_comps, phases=["Vap"],
-                         eos=EosType.IDEAL)
-        )
+    syn_config = get_prop(
+        components=["H2", "CO", "H2O", "CO2", "CH4", "N2", "O2", "Ar"], phases=["Vap"],
+                              eos=EosType.IDEAL)
+    
+    m.sofc_fs.syn_props = GenericParameterBlock(default=syn_config)
 
-    air_comps=['H2O', 'CO2', 'N2', 'O2', 'Ar']
+    air_config = get_prop(components=["H2O", "CO2", "N2", "O2", "Ar"],
+                          phases=["Vap"], eos=EosType.IDEAL)
+    m.sofc_fs.air_props = GenericParameterBlock(default=air_config)
+    #     default=get_prop(components=air_comps, phases=["Vap"],
+    #                      eos=EosType.IDEAL)
+    #     )
+    m.sofc_fs.rxn_props = GenericReactionParameterBlock(
+        default=get_rxn(m.sofc_fs.syn_props,
+                        reactions=["h2_cmb", "co_cmb", "ch4_cmb"])
+    )
+    
+    
+    
+    # # create property packages - 4 property packages and 1 reaction
+    # ng_comps=['H2', 'CO', "H2O", 'CO2', 'CH4', "C2H6", "C3H8", "C4H10",
+    #           'N2', 'O2', 'Ar']
+    # # m.sofc_fs.NG_props = GenericParameterBlock(default=NG_config)
+    # m.sofc_fs.NG_props = GenericParameterBlock(
+    #     default=get_prop(components=ng_comps, phases=["Vap"],
+    #                      eos=EosType.IDEAL)
+    #     )
 
-    m.sofc_fs.air_props = GenericParameterBlock(
-        default=get_prop(components=air_comps, phases=["Vap"],
-                         eos=EosType.IDEAL)
-        )
+    # syn_comps=["H2", "CO", "H2O", "CO2", "CH4", "N2", "O2", "Ar"]
+    # m.sofc_fs.syn_props = GenericParameterBlock(
+    #     default=get_prop(components=syn_comps, phases=["Vap"],
+    #                      eos=EosType.IDEAL)
+    #     )
+
+    # air_comps=['H2O', 'CO2', 'N2', 'O2', 'Ar']
+
+    # m.sofc_fs.air_props = GenericParameterBlock(
+    #     default=get_prop(components=air_comps, phases=["Vap"],
+    #                      eos=EosType.IDEAL)
+    #     )
 
     m.sofc_fs.CO2_H2O_VLE = GenericParameterBlock(default=CO2_H2O_VLE_config)
 
-    m.sofc_fs.rxn_props = GenericReactionParameterBlock(
-        default={"property_package": m.sofc_fs.syn_props, **rxn_configuration})
+    # m.sofc_fs.rxn_props = GenericReactionParameterBlock(
+    #     default={"property_package": m.sofc_fs.syn_props, **rxn_configuration})
 
     # build anode side units
     m.sofc_fs.anode_mix = Mixer(
@@ -547,7 +586,7 @@ def build_NGFC(m):
     # converting from kmol/s to mol/s
     @m.sofc_fs.Constraint(m.sofc_fs.time)
     def CPU_inlet_F(sofc_fs, t):
-        return sofc_fs.CPU.inlet.flow_mol[t] == sofc_fs.flash.vap_outlet.flow_mol[t]*1000
+        return sofc_fs.CPU.inlet.flow_mol[t] == sofc_fs.flash.vap_outlet.flow_mol[t]
 
     @m.sofc_fs.Constraint(m.sofc_fs.time)
     def CPU_inlet_T(sofc_fs, t):
@@ -556,7 +595,7 @@ def build_NGFC(m):
 
     @m.sofc_fs.Constraint(m.sofc_fs.time)
     def CPU_inlet_P(sofc_fs, t):
-        return sofc_fs.CPU.inlet.pressure[t] == sofc_fs.flash.vap_outlet.pressure[t]*1000
+        return sofc_fs.CPU.inlet.pressure[t] == sofc_fs.flash.vap_outlet.pressure[t]
 
     @m.sofc_fs.Constraint(m.sofc_fs.time, m.sofc_fs.CO2_H2O_VLE.component_list)
     def CPU_inlet_x(sofc_fs, t, j):
@@ -571,9 +610,9 @@ def set_NGFC_inputs(m):
     # anode side inputs
     ###################
     # natural gas feed conditions
-    m.sofc_fs.anode_mix.feed_inlet.flow_mol.fix(1.0946)  # kmol/s
+    m.sofc_fs.anode_mix.feed_inlet.flow_mol.fix(1094.6)  # mol/s
     m.sofc_fs.anode_mix.feed_inlet.temperature.fix(288.15)  # K
-    m.sofc_fs.anode_mix.feed_inlet.pressure.fix(137.895)  # kPa (20 psia)
+    m.sofc_fs.anode_mix.feed_inlet.pressure.fix(137895)  # Pa (20 psia)
     m.sofc_fs.anode_mix.feed_inlet.mole_frac_comp[0, 'CH4'].fix(0.931)
     m.sofc_fs.anode_mix.feed_inlet.mole_frac_comp[0, 'C2H6'].fix(0.032)
     m.sofc_fs.anode_mix.feed_inlet.mole_frac_comp[0, 'C3H8'].fix(0.007)
@@ -587,21 +626,21 @@ def set_NGFC_inputs(m):
     m.sofc_fs.anode_mix.feed_inlet.mole_frac_comp[0, 'Ar'].fix(0)
 
     # anode heat exchanger
-    m.sofc_fs.anode_hx.tube.deltaP.fix(-.1379)  # kPa (-0.02 psi)
-    m.sofc_fs.anode_hx.shell.deltaP.fix(-.1379)  # kPa (-0.02 psi)
+    m.sofc_fs.anode_hx.tube.deltaP.fix(-137.9)  # Pa (-0.02 psi)
+    m.sofc_fs.anode_hx.shell.deltaP.fix(-137.9)  # Pa (-0.02 psi)
     m.sofc_fs.anode_hx.area.fix(12664)  # m2
     m.sofc_fs.anode_hx.overall_heat_transfer_coefficient.fix(80e-3)  # mW/m^2K
 
     # prereformer and anode
-    m.sofc_fs.prereformer.deltaP.fix(-.1379)  # kPa (-0.02 psi)
+    m.sofc_fs.prereformer.deltaP.fix(-137.9)  # Pa (-0.02 psi)
 
     m.sofc_fs.anode.outlet.temperature.fix(1001.5)  # K, unfixed by ROM
-    m.sofc_fs.anode.outlet.pressure.fix(137.137)  # kPa (19.89 psia)
+    m.sofc_fs.anode.outlet.pressure.fix(137137)  # Pa (19.89 psia)
 
     # anode recycle and blower
     m.sofc_fs.anode_recycle.split_fraction[0, 'recycle_outlet'].fix(0.627)  # unfixed by ROM
 
-    m.sofc_fs.anode_blower.outlet.pressure.fix(137.888)  # kPa (20 psia)
+    m.sofc_fs.anode_blower.outlet.pressure.fix(137888)  # Pa (20 psia)
     m.sofc_fs.anode_blower.efficiency_isentropic.fix(0.8)
 
     #####################
@@ -609,9 +648,9 @@ def set_NGFC_inputs(m):
     #####################
 
     # air feed conditions
-    m.sofc_fs.air_blower.inlet.flow_mol.fix(11.444)  # kmol/s, unfixed by ROM
+    m.sofc_fs.air_blower.inlet.flow_mol.fix(11444)  # mol/s, unfixed by ROM
     m.sofc_fs.air_blower.inlet.temperature.fix(288.15)  # K (59 F)
-    m.sofc_fs.air_blower.inlet.pressure.fix(101.353)  # kPa (14.7 psia)
+    m.sofc_fs.air_blower.inlet.pressure.fix(101353)  # Pa (14.7 psia)
     m.sofc_fs.air_blower.inlet.mole_frac_comp[0, 'H2O'].fix(0.0104)
     m.sofc_fs.air_blower.inlet.mole_frac_comp[0, 'CO2'].fix(0.0003)
     m.sofc_fs.air_blower.inlet.mole_frac_comp[0, 'N2'].fix(0.7722)
@@ -619,37 +658,37 @@ def set_NGFC_inputs(m):
     m.sofc_fs.air_blower.inlet.mole_frac_comp[0, 'Ar'].fix(0.0094)
 
     # air blower
-    m.sofc_fs.air_blower.outlet.pressure.fix(111.006)  # kPa (16.1 psia)
+    m.sofc_fs.air_blower.outlet.pressure.fix(111006)  # Pa (16.1 psia)
     m.sofc_fs.air_blower.efficiency_isentropic.fix(0.82)
 
     # cathode heat exchanger
-    m.sofc_fs.cathode_hx.tube_outlet.pressure.fix(105.490)  # kPa (15.3 psia)
-    m.sofc_fs.cathode_hx.shell.deltaP.fix(-1.379)  # kPa (-0.2 psi)
+    m.sofc_fs.cathode_hx.tube_outlet.pressure.fix(105490)  # Pa (15.3 psia)
+    m.sofc_fs.cathode_hx.shell.deltaP.fix(-1379)  # Pa (-0.2 psi)
     m.sofc_fs.cathode_hx.area.fix(14098)  # m2, unfixed by ROM
     m.sofc_fs.cathode_hx.overall_heat_transfer_coefficient.fix(80e-3)  # mW/m2K
 
     # cathode
-    m.sofc_fs.cathode.ion_outlet.flow_mol.fix(1.893)  # kmol/s, unfixed by ROM
+    m.sofc_fs.cathode.ion_outlet.flow_mol.fix(1893)  # mol/s, unfixed by ROM
 
     m.sofc_fs.cathode_heat.outlet.temperature.fix(972.5)  # K, unfixed by ROM
-    m.sofc_fs.cathode_heat.outlet.pressure.fix(104.111)  # kPa (15.1 psia)
+    m.sofc_fs.cathode_heat.outlet.pressure.fix(104111)  # Pa (15.1 psia)
 
     # cathode recycle and blower
     m.sofc_fs.cathode_recycle.split_fraction[0, 'recycle_outlet'].fix(0.5)
 
-    m.sofc_fs.cathode_blower.outlet.pressure.fix(105.490)  # kPa (15.3 psi)
+    m.sofc_fs.cathode_blower.outlet.pressure.fix(105490)  # Pa (15.3 psi)
     m.sofc_fs.cathode_blower.efficiency_isentropic.fix(0.8)
 
     m.sofc_fs.cathode_HRSG.outlet.temperature.fix(405.7)  # K (270 F)
-    m.sofc_fs.cathode_HRSG.deltaP.fix(-1.379)  # kPa (-0.2 psi)
+    m.sofc_fs.cathode_HRSG.deltaP.fix(-1379)  # Pa (-0.2 psi)
 
     #####################################
     # ASU, oxycombustor, and CPU inputs #
     #####################################
     # air to ASU
-    m.sofc_fs.air_compressor_s1.inlet.flow_mol[0] = 1.809  # kmol/s
+    m.sofc_fs.air_compressor_s1.inlet.flow_mol[0] = 1809  # mol/s
     m.sofc_fs.air_compressor_s1.inlet.temperature.fix(288.15)  # K
-    m.sofc_fs.air_compressor_s1.inlet.pressure.fix(101.353)  # kPa (14.7 psia)
+    m.sofc_fs.air_compressor_s1.inlet.pressure.fix(101353)  # Pa (14.7 psia)
     m.sofc_fs.air_compressor_s1.inlet.mole_frac_comp[0, 'CO2'].fix(0.0003)
     m.sofc_fs.air_compressor_s1.inlet.mole_frac_comp[0, 'H2O'].fix(0.0104)
     m.sofc_fs.air_compressor_s1.inlet.mole_frac_comp[0, 'N2'].fix(0.7722)
@@ -657,17 +696,17 @@ def set_NGFC_inputs(m):
     m.sofc_fs.air_compressor_s1.inlet.mole_frac_comp[0, 'Ar'].fix(0.0094)
 
     # air compressors and intercoolers
-    m.sofc_fs.air_compressor_s1.outlet.pressure.fix(234.422)  # kPa (34 psia)
+    m.sofc_fs.air_compressor_s1.outlet.pressure.fix(234422)  # Pa (34 psia)
     m.sofc_fs.air_compressor_s1.efficiency_isentropic.fix(0.84)
 
     m.sofc_fs.intercooler_s1.outlet.temperature.fix(310.93)  # K (100 F)
-    m.sofc_fs.intercooler_s1.deltaP.fix(-3.447)  # kPa (-0.5 psi)
+    m.sofc_fs.intercooler_s1.deltaP.fix(-3447)  # Pa (-0.5 psi)
 
-    m.sofc_fs.air_compressor_s2.outlet.pressure.fix(544.686)  # kPa (79 psia)
+    m.sofc_fs.air_compressor_s2.outlet.pressure.fix(544686)  # Pa (79 psia)
     m.sofc_fs.air_compressor_s2.efficiency_isentropic.fix(0.84)
 
     m.sofc_fs.intercooler_s2.outlet.temperature.fix(310.93)  # K (100 F)
-    m.sofc_fs.intercooler_s2.deltaP.fix(-3.447)  # kPa (-0.5 psi)
+    m.sofc_fs.intercooler_s2.deltaP.fix(-3447)  # Pa (-0.5 psi)
 
     # air seperation unit
     m.sofc_fs.ASU.split_fraction[0, "O2_outlet", "CO2"].fix(0)
@@ -677,10 +716,10 @@ def set_NGFC_inputs(m):
     m.sofc_fs.ASU.split_fraction[0, "O2_outlet", "Ar"].fix(0.0673)
 
     m.sofc_fs.ASU_O2_outlet.outlet.temperature.fix(299.82)  # K (80 F)
-    m.sofc_fs.ASU_O2_outlet.outlet.pressure.fix(158.579)  # kPa (23 psia)
+    m.sofc_fs.ASU_O2_outlet.outlet.pressure.fix(158579)  # Pa (23 psia)
 
     m.sofc_fs.oxycombustor.outlet.temperature.setub(2000)
-    m.sofc_fs.oxycombustor.deltaP.fix(-6.895)  # kPa (-1 psi)
+    m.sofc_fs.oxycombustor.deltaP.fix(-6895)  # Pa (-1 psi)
 
     m.sofc_fs.oxycombustor.outlet.mole_frac_comp[0, "H2"].fix(0)
     m.sofc_fs.oxycombustor.outlet.mole_frac_comp[0, "CO"].fix(0)
@@ -688,21 +727,21 @@ def set_NGFC_inputs(m):
 
     m.sofc_fs.anode_HRSG.inlet.temperature.setub(2000)
     m.sofc_fs.anode_HRSG.outlet.temperature.fix(405)  # K
-    m.sofc_fs.anode_HRSG.deltaP.fix(-6.895)  # kPa (-1 psi)
+    m.sofc_fs.anode_HRSG.deltaP.fix(-6895)  # Pa (-1 psi)
 
     m.sofc_fs.condenser.outlet.temperature.fix(310.9)  # K (100 F)
-    m.sofc_fs.condenser.deltaP.fix(-6.895)  # kPa (-1 psi)
+    m.sofc_fs.condenser.deltaP.fix(-6895)  # Pa (-1 psi)
 
     m.sofc_fs.flash.control_volume.properties_out[0].temperature.fix(310.9)  # K
-    m.sofc_fs.flash.control_volume.properties_out[0].pressure.fix(101.3529)  # kPa (14.7 psia)
+    m.sofc_fs.flash.control_volume.properties_out[0].pressure.fix(101353)  # Pa (14.7 psia)
 
 
 def scale_NGFC(m):
     # NG_props
-    m.sofc_fs.NG_props.set_default_scaling("flow_mol", 1)
-    m.sofc_fs.NG_props.set_default_scaling("flow_mol_phase", 1)
+    m.sofc_fs.NG_props.set_default_scaling("flow_mol", 1e-3)
+    m.sofc_fs.NG_props.set_default_scaling("flow_mol_phase", 1e-3)
     m.sofc_fs.NG_props.set_default_scaling("temperature", 1e-2)
-    m.sofc_fs.NG_props.set_default_scaling("pressure", 1e-2)
+    m.sofc_fs.NG_props.set_default_scaling("pressure", 1e-5)
     m.sofc_fs.NG_props.set_default_scaling("mole_frac_comp", 1e2)
     m.sofc_fs.NG_props.set_default_scaling("mole_frac_phase_comp", 1e2)
 
@@ -710,10 +749,10 @@ def scale_NGFC(m):
     m.sofc_fs.NG_props.set_default_scaling("entr_mol_phase", 1e-1)
 
     # syn_props
-    m.sofc_fs.syn_props.set_default_scaling("flow_mol", 1)
-    m.sofc_fs.syn_props.set_default_scaling("flow_mol_phase", 1)
+    m.sofc_fs.syn_props.set_default_scaling("flow_mol", 1e-3)
+    m.sofc_fs.syn_props.set_default_scaling("flow_mol_phase", 1e-3)
     m.sofc_fs.syn_props.set_default_scaling("temperature", 1e-2)
-    m.sofc_fs.syn_props.set_default_scaling("pressure", 1e-2)
+    m.sofc_fs.syn_props.set_default_scaling("pressure", 1e-5)
     m.sofc_fs.syn_props.set_default_scaling("mole_frac_comp", 1e2)
     m.sofc_fs.syn_props.set_default_scaling("mole_frac_phase_comp", 1e2)
 
@@ -721,10 +760,10 @@ def scale_NGFC(m):
     m.sofc_fs.syn_props.set_default_scaling("entr_mol_phase", 1e-1)
 
     # air_props
-    m.sofc_fs.air_props.set_default_scaling("flow_mol", 1)
-    m.sofc_fs.air_props.set_default_scaling("flow_mol_phase", 1)
+    m.sofc_fs.air_props.set_default_scaling("flow_mol", 1e-3)
+    m.sofc_fs.air_props.set_default_scaling("flow_mol_phase", 1e-3)
     m.sofc_fs.air_props.set_default_scaling("temperature", 1e-2)
-    m.sofc_fs.air_props.set_default_scaling("pressure", 1e-2)
+    m.sofc_fs.air_props.set_default_scaling("pressure", 1e-5)
     m.sofc_fs.air_props.set_default_scaling("mole_frac_comp", 1e2)
     m.sofc_fs.air_props.set_default_scaling("mole_frac_phase_comp", 1e2)
 
@@ -732,10 +771,10 @@ def scale_NGFC(m):
     m.sofc_fs.air_props.set_default_scaling("entr_mol_phase", 1e-1)
 
     # CO2_H2O_VLE
-    m.sofc_fs.CO2_H2O_VLE.set_default_scaling("flow_mol", 1)
-    m.sofc_fs.CO2_H2O_VLE.set_default_scaling("flow_mol_phase", 1)
+    m.sofc_fs.CO2_H2O_VLE.set_default_scaling("flow_mol", 1e-3)
+    m.sofc_fs.CO2_H2O_VLE.set_default_scaling("flow_mol_phase", 1e-3)
     m.sofc_fs.CO2_H2O_VLE.set_default_scaling("temperature", 1e-2)
-    m.sofc_fs.CO2_H2O_VLE.set_default_scaling("pressure", 1e-2)
+    m.sofc_fs.CO2_H2O_VLE.set_default_scaling("pressure", 1e-5)
     m.sofc_fs.CO2_H2O_VLE.set_default_scaling("mole_frac_comp", 1e2)
     m.sofc_fs.CO2_H2O_VLE.set_default_scaling("mole_frac_phase_comp", 1e2)
 
@@ -770,25 +809,31 @@ def scale_NGFC(m):
     iscale.set_scaling_factor(m.sofc_fs.air_compressor_s1.control_volume.work, 1e-3)
     iscale.set_scaling_factor(m.sofc_fs.air_compressor_s2.control_volume.work, 1e-3)
 
-    # reaction extents
-    iscale.set_scaling_factor(m.sofc_fs.oxycombustor.control_volume.rate_reaction_extent[0, "R1"], 1e2)
-    iscale.set_scaling_factor(m.sofc_fs.oxycombustor.control_volume.rate_reaction_extent[0, "R2"], 1e2)
-    iscale.set_scaling_factor(m.sofc_fs.oxycombustor.control_volume.rate_reaction_extent[0, "R3"], 1e5)
+    # # reaction extents
+    # iscale.set_scaling_factor(m.sofc_fs.oxycombustor.control_volume.rate_reaction_extent[0, "R1"], 1e2)
+    # iscale.set_scaling_factor(m.sofc_fs.oxycombustor.control_volume.rate_reaction_extent[0, "R2"], 1e2)
+    # iscale.set_scaling_factor(m.sofc_fs.oxycombustor.control_volume.rate_reaction_extent[0, "R3"], 1e5)
+    
+    # scale lagrange multipliers in gibbs reactor
+    iscale.set_scaling_factor(m.sofc_fs.prereformer.lagrange_mult, 1e-8)
+    iscale.set_scaling_factor(m.sofc_fs.anode.lagrange_mult, 1e-8)
 
     iscale.calculate_scaling_factors(m)
 
 
 def initialize_NGFC(m):
     # cathode side
-    m.sofc_fs.air_blower.initialize()
+    m.sofc_fs.air_blower.initialize(outlvl=idaeslog.DEBUG)
 
     copy_port_values(source=m.sofc_fs.air_blower.outlet,
                      destination=m.sofc_fs.cathode_hx.tube_inlet)
+    # m.sofc_fs.cathode_hx.tube_inlet.display()
+    # assert False
 
     # fix cathode inlet to initial guess
-    m.sofc_fs.cathode.inlet.flow_mol[0] = 20.995  # kmol/s
+    m.sofc_fs.cathode.inlet.flow_mol[0] = 15444  # mol/s
     m.sofc_fs.cathode.inlet.temperature[0] = 869.55  # K
-    m.sofc_fs.cathode.inlet.pressure[0] = 105.4895  # kPa
+    m.sofc_fs.cathode.inlet.pressure[0] = 105489.5  # Pa
     m.sofc_fs.cathode.inlet.mole_frac_comp[0, 'H2O'] = 0.0113
     m.sofc_fs.cathode.inlet.mole_frac_comp[0, 'CO2'] = 0.0003
     m.sofc_fs.cathode.inlet.mole_frac_comp[0, 'N2'] = 0.8418
@@ -839,9 +884,9 @@ def initialize_NGFC(m):
 
     # anode side
     # prereformer outlet tear stream
-    m.sofc_fs.fuel_cell_mix.fuel_inlet.flow_mol[0] = 7.207  # kmol/s
+    m.sofc_fs.fuel_cell_mix.fuel_inlet.flow_mol[0] = 7207  # mol/s
     m.sofc_fs.fuel_cell_mix.fuel_inlet.temperature[0] = 795.6  # K
-    m.sofc_fs.fuel_cell_mix.fuel_inlet.pressure[0] = 137.6  # kPa
+    m.sofc_fs.fuel_cell_mix.fuel_inlet.pressure[0] = 137.6e3  # Pa
     m.sofc_fs.fuel_cell_mix.fuel_inlet.mole_frac_comp[0, 'CH4'] = 0.1234
     m.sofc_fs.fuel_cell_mix.fuel_inlet.mole_frac_comp[0, 'CO'] = 0.0425
     m.sofc_fs.fuel_cell_mix.fuel_inlet.mole_frac_comp[0, 'CO2'] = 0.2581
@@ -859,11 +904,15 @@ def initialize_NGFC(m):
     copy_port_values(source=m.sofc_fs.fuel_cell_mix.outlet,
                      destination=m.sofc_fs.anode.inlet)
 
-    m.sofc_fs.anode.lagrange_mult[0, "C"] = 48722
-    m.sofc_fs.anode.lagrange_mult[0, "H"] = 77156
-    m.sofc_fs.anode.lagrange_mult[0, "O"] = 291729
-    m.sofc_fs.anode.outlet.mole_frac_comp[0, "O2"] = 0
     m.sofc_fs.anode.gibbs_scaling = 1e-4
+    m.sofc_fs.anode.lagrange_mult[0, "C"] = 510920
+    m.sofc_fs.anode.lagrange_mult[0, "H"] = 782960
+    m.sofc_fs.anode.lagrange_mult[0, "O"] = 2917840
+    # m.sofc_fs.anode.lagrange_mult[0, "C"] = 48722
+    # m.sofc_fs.anode.lagrange_mult[0, "H"] = 77156
+    # m.sofc_fs.anode.lagrange_mult[0, "O"] = 291729
+    m.sofc_fs.anode.outlet.mole_frac_comp[0, "O2"] = 0
+    
 
     m.sofc_fs.anode.initialize()
 
@@ -901,11 +950,12 @@ def initialize_NGFC(m):
     copy_port_values(source=m.sofc_fs.prereformer.inlet,
                      destination=m.sofc_fs.prereformer.outlet)
 
-    m.sofc_fs.prereformer.lagrange_mult[0, "C"] = 9910
-    m.sofc_fs.prereformer.lagrange_mult[0, "H"] = 62556
-    m.sofc_fs.prereformer.lagrange_mult[0, "O"] = 293466
+    m.sofc_fs.prereformer.gibbs_scaling = 1e-4
+    m.sofc_fs.prereformer.lagrange_mult[0, "C"] = 97070
+    m.sofc_fs.prereformer.lagrange_mult[0, "H"] = 627440
+    m.sofc_fs.prereformer.lagrange_mult[0, "O"] = 2935690
     m.sofc_fs.prereformer.outlet.mole_frac_comp[0, "O2"] = 0
-    m.sofc_fs.prereformer.outlet.mole_frac_comp[0, "Ar"] = 0
+    m.sofc_fs.prereformer.outlet.mole_frac_comp[0, "Ar"] = 0.003
     m.sofc_fs.prereformer.outlet.mole_frac_comp[0, "C2H6"] = 0
     m.sofc_fs.prereformer.outlet.mole_frac_comp[0, "C3H8"] = 0
     m.sofc_fs.prereformer.outlet.mole_frac_comp[0, "C4H10"] = 0
@@ -964,11 +1014,21 @@ def initialize_NGFC(m):
 
     copy_port_values(source=m.sofc_fs.combustor_mix.outlet,
                      destination=m.sofc_fs.oxycombustor.inlet)
-
+    m.sofc_fs.oxycombustor.inlet.display()
+    # print()
+    # # m.sofc_fs.oxycombustor.outlet.display()
+    # # print()
+    # assert False
     m.sofc_fs.oxycombustor.initialize()
+    # m.sofc_fs.oxycombustor.initialize(outlvl=idaeslog.DEBUG,optarg={"max_iter": 20})
+    m.sofc_fs.oxycombustor.inlet.display()
+    # print()
+    # m.sofc_fs.oxycombustor.outlet.display()
+    # print()
+    # assert False
 
     copy_port_values(source=m.sofc_fs.oxycombustor.outlet,
-                     destination=m.sofc_fs.anode_HRSG.inlet)
+                      destination=m.sofc_fs.anode_HRSG.inlet)
 
     m.sofc_fs.anode_HRSG.initialize()
 
@@ -1569,8 +1629,8 @@ def add_costing(fs):
              fs.desulfur_adsorbent_use,
              fs.methanation_catalyst_use]
 
-    prices = {"desulfur adsorbent": 6.0297*pyunits.USD/pyunits.lb,
-              "methanation catalyst": 601.765*pyunits.USD/pyunits.m**3}
+    prices = {"desulfur adsorbent": 6.0297*pyunits.USD_2018/pyunits.lb,
+              "methanation catalyst": 601.765*pyunits.USD_2018/pyunits.m**3}
 
     get_variable_OM_costs(fs, fs.net_power, resources, rates, prices)
 
@@ -1652,17 +1712,17 @@ def pfd_result(outfile, m, df):
     # set up tags
     tags = {}
     for i in df.index:
-        tags[i + "_F"] = sofc_fstr(df.loc[i, "Total Molar Flowrate"], 2, ' kmol/s')
+        tags[i + "_F"] = sofc_fstr(df.loc[i, "Total Molar Flowrate"]/1000, 2, ' kmol/s')
         tags[i + "_T"] = sofc_fstr(df.loc[i, "Temperature"], 0, ' K')
-        tags[i + "_P"] = sofc_fstr(df.loc[i, "Pressure"], 0, ' kPa')
+        tags[i + "_P"] = sofc_fstr(df.loc[i, "Pressure"]/1000, 0, ' kPa')
 
     streams = {"WATER_1": m.sofc_fs.flash.liq_outlet,
                "VAP_OUT": m.sofc_fs.flash.vap_outlet}
 
     for i in streams.keys():
-        tags[i + "_F"] = sofc_fstr(pyo.value(streams[i].flow_mol[0]), 2, ' kmol/s')
+        tags[i + "_F"] = sofc_fstr(pyo.value(streams[i].flow_mol[0])/1000, 2, ' kmol/s')
         tags[i + "_T"] = sofc_fstr(pyo.value(streams[i].temperature[0]), 0, ' K')
-        tags[i + "_P"] = sofc_fstr(pyo.value(streams[i].pressure[0]), 0, ' kPa')
+        tags[i + "_P"] = sofc_fstr(pyo.value(streams[i].pressure[0])/1000, 0, ' kPa')
 
     CPU_streams = {"WATER_2": m.sofc_fs.CPU.water,
                    "CO2_PURE": m.sofc_fs.CPU.pureco2}
@@ -1690,7 +1750,7 @@ def pfd_result(outfile, m, df):
 def report_results(m, outfile="rsofc_sofc_results.svg"):
     make_stream_dict(m)
     df = create_stream_table_dataframe(streams=m._streams, orient="index")
-    pfd_result(outfile, m, df)
+    # pfd_result(outfile, m, df)
 
 
 def partial_load_setup(m):
@@ -1746,6 +1806,17 @@ def check_scaling(m):
     sourceFile.close()
     print(f"Jacobian Condition Number: {iscale.jacobian_cond(jac=jac):.2e}")
 
+def residual_checker(m):
+    # Print model constraints - residual checker
+    with open('model_residuals.txt','w') as f:
+        for v in m.component_data_objects(pyo.Constraint, descend_into=True, active=True):
+            residual_value = abs(v.body() - v.lower())
+            if residual_value >= 1e-6:
+                a = " FAIL"
+            else:
+                a = " PASS"
+            residual_print = [str(v.name), ": value = ", str(residual_value), a, " \n"]
+            f.writelines(residual_print)
 
 def get_model(m):
     # create model and flowsheet
@@ -1769,17 +1840,30 @@ def get_model(m):
         initialize_NGFC(m)
         SOFC_ROM_setup(m)
         add_SOFC_energy_balance(m)
-    
+        # strip_bounds = pyo.TransformationFactory("contrib.strip_var_bounds")
+        # strip_bounds.apply_to(m, reversible=False)
         # solve model
         solver = pyo.SolverFactory("ipopt")
         solver.options = {
-            "max_iter": 100,
-            "tol": 1e-7,
-            "bound_push": 1e-12,
-            "linear_solver": "ma27",
-            "ma27_pivtol": 1e-3,
-              }
+            "max_iter": 150,
+            "tol": 1e-4,
+            "bound_push": 1e-5,
+            # "linear_solver": "ma27",
+            # "ma27_pivtol": 1e-3,
+            "linear_solver": "ma57",
+            "ma57_pivtol": 1e-5,        
+            "ma57_pivtolmax": 0.1,
+            "OF_ma57_automatic_scaling": "yes"
+                  }
+        # solver.options = {
+        #     "max_iter": 100,
+        #     "tol": 1e-7,
+        #     "bound_push": 1e-12,
+        #     "linear_solver": "ma27",
+        #     "ma27_pivtol": 1e-3,
+        #       }
         solver.solve(m.sofc_fs, tee=True)
+        residual_checker(m)
     
         # and results and costing
         add_result_constraints(m)
@@ -1787,8 +1871,8 @@ def get_model(m):
         # add_costing(m.sofc_fs)
         # initialize_costing(m.sofc_fs)
 
-        # save model
-        ms.to_json(m, fname=init_fname)
+        # # save model
+        # ms.to_json(m, fname=init_fname)
 
 
     return m
@@ -1820,7 +1904,7 @@ def partial_load_operation(m):
     m.sofc_fs.tag_pfd["total_variable_OM_cost"] = iutil.ModelTag(
         expr=m.sofc_fs.costing.total_variable_OM_cost[0],
         format_string="{:.3f}",
-        display_units=pyo.units.USD / pyo.units.MWh,
+        display_units=pyo.units.USD_2018 / pyo.units.MWh,
         doc="Total variable O&M cost",
     )
     m.sofc_fs.tag_pfd["net_power"] = iutil.ModelTag(
@@ -1834,8 +1918,8 @@ def partial_load_operation(m):
             "max_iter": 100,
             "tol": 1e-7,
             "bound_push": 1e-12,  # Set bound push to 1e-6 for optimization
-            "linear_solver": "ma27",
-            "ma27_pivtol": 1e-3,
+            "linear_solver": "ma57",
+            "ma57_pivtol": 1e-3,
               }
     # cols_input = ("net_power",)
     cols_pfd = (
@@ -1880,4 +1964,4 @@ if __name__ == "__main__":
     # partial_load_operation(m)
     # add_costing(m)
     # initialize_costing(m.sofc_fs)
-    # check_scaling(m)
+    check_scaling(m)

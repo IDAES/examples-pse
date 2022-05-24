@@ -442,7 +442,7 @@ def add_aux_boiler_steam(fs):
     fs.bhx1.delta_temperature_out.fix(10)  # fix DT for pinch side
 
     fs.aux_boiler_feed_pump.outlet.pressure.fix(1.1e5)
-    fs.aux_boiler_feed_pump.efficiency_isentropic.fix(0.85)
+    fs.aux_boiler_feed_pump.efficiency_isentropic.fix(0.8)
 
     fs.main_steam_split.split_fraction[:, "h_side"].fix(0.9999)
 
@@ -628,7 +628,7 @@ def _define_cell_params(self):
     self.soec_stack.solid_oxide_cell.fuel_electrode.resistivity_log_preexponential_factor.fix(
         pyo.log(2.5e-5)
     )
-    self.soec_stack.solid_oxide_cell.fuel_electrode.resistivity_thermal_exponent_dividend.fix(1e-8)
+    self.soec_stack.solid_oxide_cell.fuel_electrode.resistivity_thermal_exponent_dividend.fix(0)
 
     self.soec_stack.solid_oxide_cell.oxygen_electrode.length_x.fix(40e-6)
     self.soec_stack.solid_oxide_cell.oxygen_electrode.porosity.fix(0.30717)
@@ -642,7 +642,7 @@ def _define_cell_params(self):
     self.soec_stack.solid_oxide_cell.oxygen_electrode.resistivity_log_preexponential_factor.fix(
         pyo.log(7.8125e-05)
     )
-    self.soec_stack.solid_oxide_cell.oxygen_electrode.resistivity_thermal_exponent_dividend.fix(1e-8)
+    self.soec_stack.solid_oxide_cell.oxygen_electrode.resistivity_thermal_exponent_dividend.fix(0)
 
     self.soec_stack.solid_oxide_cell.electrolyte.length_x.fix(10.5e-6)
     self.soec_stack.solid_oxide_cell.electrolyte.heat_capacity.fix(400)
@@ -881,21 +881,21 @@ def add_h2_compressor(fs):
         }
     )
 
-    fs.hcmp_ic01.outlet.temperature.fix(320)
+    fs.hcmp_ic01.outlet.temperature.fix(300)
     fs.hcmp01.outlet.pressure.fix(40e5)
-    fs.hcmp01.efficiency_isentropic.fix(0.9)
+    fs.hcmp01.efficiency_isentropic.fix(0.85)
 
-    fs.hcmp_ic02.outlet.temperature.fix(320)
+    fs.hcmp_ic02.outlet.temperature.fix(300)
     fs.hcmp02.outlet.pressure.fix(80e5)
-    fs.hcmp02.efficiency_isentropic.fix(0.9)
+    fs.hcmp02.efficiency_isentropic.fix(0.85)
 
-    fs.hcmp_ic03.outlet.temperature.fix(320)
+    fs.hcmp_ic03.outlet.temperature.fix(300)
     fs.hcmp03.outlet.pressure.fix(160e5)
-    fs.hcmp03.efficiency_isentropic.fix(0.9)
+    fs.hcmp03.efficiency_isentropic.fix(0.85)
 
-    fs.hcmp_ic04.outlet.temperature.fix(320)
+    fs.hcmp_ic04.outlet.temperature.fix(300)
     fs.hcmp04.outlet.pressure.fix(320e5)
-    fs.hcmp04.efficiency_isentropic.fix(0.9)
+    fs.hcmp04.efficiency_isentropic.fix(0.85)
 
     ###########################################################################
     #  Add stream connections
@@ -1061,9 +1061,12 @@ def add_design_constraints(fs):
         return (fs.bhx2.control_volume.properties_out[t].temperature ==
                 fs.soec_steam_temperature[t])
 
+    fs.excess_oxygen = pyo.Var(fs.time, initialize=1.09,
+                                        units=pyo.units.dimensionless)
+    fs.excess_oxygen.fix(1.09)
     @fs.Constraint(fs.time)
     def air_to_combustor(b, t):
-        XS = 1.09  # excess oxygen
+        # XS = 1.09  # excess oxygen
 
         F_CH4 = (fs.ng_preheater.tube_inlet.flow_mol[t] *
                  fs.ng_preheater.tube_inlet.mole_frac_comp[(t, "CH4")])
@@ -1077,7 +1080,7 @@ def add_design_constraints(fs):
 
         O2_fed = (fs.air_compressor_s1.inlet.flow_mol[t] *
                   fs.air_compressor_s1.inlet.mole_frac_comp[(t, "O2")])
-        return 1e-1*O2_fed == 1e-1*XS*O2_required
+        return 1e-1*O2_fed == 1e-1*fs.excess_oxygen[0]*O2_required
 
     # TODO - add constraint for cmb Q to in-bed heat exchanger (produces steam)
     @fs.Constraint(fs.time)
@@ -1528,11 +1531,11 @@ def set_inputs(fs):
     # aux_boiler_feed_pump.inlet, and fs.ng_preheater.tube_inlet are dof or
     # design specs that will be unfixed at final solve
     air_comp = {
-        "O2": 0.2074,
-        "H2O": 0.0099,
-        "CO2": 0.0003,
-        "N2": 0.7732,
-        "Ar": 0.0092,
+        "O2": 0.22998,
+        "H2O": 0.00616,
+        "CO2": 0.0005,
+        "N2": 0.75055,
+        "Ar": 0.01280,
     }
     ng_comp = {
         "CH4": 0.931,
@@ -1559,13 +1562,13 @@ def set_inputs(fs):
     )
     _set_port(  # TODO - remove alongside mxa1 as recycle is no longer spec'd
         fs.mxa1.recycle, F=1e-3, T=1023.15, P=1.04e5,  # Flow set to tiny val
-        comp={"O2": 0.2074, "H2O": 0.0099, "CO2": 0.0003,
-              "N2": 0.7732, "Ar": 0.0092}, fix=True
+        comp={"O2": 0.22998, "H2O": 0.00616, "CO2": 0.0005,
+              "N2": 0.75055, "Ar": 0.0128}, fix=True
     )
 
     fs.aux_boiler_feed_pump.inlet.flow_mol.fix(5600)
     fs.aux_boiler_feed_pump.inlet.enth_mol.fix(
-        iapws95.htpx(T=288.15*pyo.units.K, P=101325*pyo.units.Pa)
+        iapws95.htpx(T=288.75*pyo.units.K, P=101325*pyo.units.Pa)
     )
     fs.aux_boiler_feed_pump.inlet.pressure.fix(101325)
 
@@ -2180,6 +2183,12 @@ def tag_for_pfd_and_tables(fs):
         format_string="{:.4f}",
         display_units=pyo.units.volts
     )
+    tag_group["current_density"] = iutil.ModelTag(
+        doc="Average current density of SOEC",
+        expr=fs.soec_stack.solid_oxide_cell.average_current_density[0],
+        format_string="{:.0f}",
+        display_units=pyo.units.A / pyo.units.m**2,
+    )
     tag_group["h2_product_rate_mass"] = iutil.ModelTag(
         expr=fs.h2_product_rate_mass[0],
         format_string="{:.3f}",
@@ -2408,36 +2417,55 @@ def optimize_model(m):
     # m.soec_fs.air_preheater_2.shell_inlet.mole_frac_comp.fix()
     # m.soec_fs.air_preheater_2.shell_outlet.temperature.setlb(1200)
     
-    # # Deactivate outlet combustor temperature and set bounds
-    # m.soec_fs.cmb_temperature_eqn.deactivate()
-    # m.soec_fs.cmb.outlet.temperature.setlb(1100)
-    # m.soec_fs.cmb.outlet.temperature.setub(2000)
+    # Deactivate outlet combustor temperature and set bounds
+    m.soec_fs.cmb_temperature_eqn.deactivate()
+    m.soec_fs.cmb.outlet.temperature.setlb(1100)
+    m.soec_fs.cmb.outlet.temperature.setub(2000)
     
     # # Unfix delta_temperature at heat exchanger pinch points and set bounds
     # # m.soec_fs.bhx1.delta_temperature_out.unfix()
     # # m.soec_fs.bhx1.delta_temperature_out.setlb(10)
     # # m.soec_fs.bhx1.delta_temperature_out.setub(100)
 
-    # m.soec_fs.air_preheater_1.delta_temperature_in.unfix()
-    # m.soec_fs.air_preheater_1.delta_temperature_in.setlb(10)
-    # # m.soec_fs.air_preheater_1.delta_temperature_in.setub(100)
+    m.soec_fs.air_preheater_1.delta_temperature_in.unfix()
+    m.soec_fs.air_preheater_1.delta_temperature_in.setlb(10)
+    # m.soec_fs.air_preheater_1.delta_temperature_in.setub(100)
 
-    # m.soec_fs.air_preheater_2.delta_temperature_out.unfix()  # This isn't fixed in the simulation but spec to avoid violation
-    # m.soec_fs.air_preheater_2.delta_temperature_out.setlb(10)
-    # # m.soec_fs.air_preheater_2.delta_temperature_in.setub(100)
+    m.soec_fs.air_preheater_2.delta_temperature_out.unfix()  # This isn't fixed in the simulation but spec to avoid violation
+    m.soec_fs.air_preheater_2.delta_temperature_out.setlb(10)
+    # m.soec_fs.air_preheater_2.delta_temperature_in.setub(100)
 
-    # m.soec_fs.oxygen_preheater.delta_temperature_in.unfix()  # fixed in initialize
-    # m.soec_fs.oxygen_preheater.delta_temperature_in.setlb(10)
-    # # m.soec_fs.oxygen_preheater.delta_temperature_in.setub(100)
-    # # m.soec_fs.oxygen_preheater.delta_temperature_out.setlb(10)
-    # # m.soec_fs.oxygen_preheater.delta_temperature_out.setub(100)
+    m.soec_fs.oxygen_preheater.delta_temperature_in.unfix()  # fixed in initialize
+    m.soec_fs.oxygen_preheater.delta_temperature_in.setlb(10)
+    # m.soec_fs.oxygen_preheater.delta_temperature_in.setub(100)
+    # m.soec_fs.oxygen_preheater.delta_temperature_out.setlb(10)
+    # m.soec_fs.oxygen_preheater.delta_temperature_out.setub(100)
 
-    # m.soec_fs.ng_preheater.delta_temperature_in.unfix()  # fixed in initialize
-    # m.soec_fs.ng_preheater.delta_temperature_in.setlb(10)
-    # # m.soec_fs.ng_preheater.delta_temperature_in.setub(100)
-    # # m.soec_fs.ng_preheater.delta_temperature_out.setlb(10)
-    # # m.soec_fs.ng_preheater.delta_temperature_out.setub(100)
+    m.soec_fs.ng_preheater.delta_temperature_in.unfix()  # fixed in initialize
+    m.soec_fs.ng_preheater.delta_temperature_in.setlb(10)
+    # m.soec_fs.ng_preheater.delta_temperature_in.setub(100)
+    # m.soec_fs.ng_preheater.delta_temperature_out.setlb(10)
+    # m.soec_fs.ng_preheater.delta_temperature_out.setub(100)
 
+
+    # Unfix tube outlet temp of air_preheater 2 but keep it below 1023.15 K
+    m.soec_fs.air_preheater_2.tube_outlet.temperature.unfix()
+    m.soec_fs.air_preheater_2.tube_outlet.temperature.setub(1023.15)
+    
+    # Unfix fuel inlet temperature related constraints and set upper bounds
+    m.soec_fs.fuel_recycle_heater.outlet.temperature.unfix()
+    @m.soec_fs.Constraint(m.soec_fs.time)
+    def fuel_recycle_heater_temperature_eqn(b, t):
+        return (b.fuel_recycle_heater.outlet.temperature[t] ==
+                b.soec_steam_temperature[t])
+    m.soec_fs.soec_steam_temperature.unfix()
+    m.soec_fs.soec_steam_temperature.setub(1023.15)
+    
+    
+    # excess oxygen constraint
+    m.soec_fs.excess_oxygen.unfix()
+    m.soec_fs.excess_oxygen.setlb(1.09)
+    m.soec_fs.excess_oxygen.setub(3)
 
     #############################
     # Optimization #
@@ -2459,21 +2487,21 @@ def optimize_model(m):
     m.soec_fs.air_blower.inlet.flow_mol.setub(7000)
     m.soec_fs.soec_stack.oxygen_outlet.mole_frac_comp[0, "O2"].unfix
     m.soec_fs.sweep_constraint = pyo.Constraint(
-        expr=1e3*m.soec_fs.soec_stack.oxygen_outlet.mole_frac_comp[0, "O2"]
+        expr=1e2*m.soec_fs.soec_stack.oxygen_outlet.mole_frac_comp[0, "O2"]
         <=
-        1e3*0.35
+        1e2*0.35
     )
     
     # TODO - confirm this constraint
     # Allow fuel recycle flowrate to vary
-    # Single pass conversion should be > 0.65
+    # Single pass conversion set to be > 0.50
     m.soec_fs.spltf1.split_fraction[:, "out"].unfix()
     m.soec_fs.spltf1.split_fraction[:, "out"].setlb(0.5)
-    m.soec_fs.spltf1.split_fraction[:, "out"].setub(0.97)
+    m.soec_fs.spltf1.split_fraction[:, "out"].setub(0.98)
     m.soec_fs.single_pass_water_conversion_constraint = pyo.Constraint(
-        expr=1e3*m.soec_fs.soec_single_pass_water_conversion[0]
+        expr=1e2*m.soec_fs.soec_single_pass_water_conversion[0]
         >=
-        1e3*0.50
+        1e2*0.50
     )
 
     # # Limit overall water conversion to < 80 % (spec this or mol_frac H2O)   
@@ -2483,6 +2511,21 @@ def optimize_model(m):
     #     1e3*0.80
     # )
 
+    # # Add slack variables
+    # m.soec_fs.slack_h2o_comp = pyo.Var(  # Var range is same as mole frac
+    #     domain=pyo.NonNegativeReals,
+    #     initialize = 0.01,
+    #     doc = 'slack var for h2o mole frac in soec fuel outlet')
+    # # set bounds
+    # m.soec_fs.slack_h2o_comp.setlb(1e-8)
+    # m.soec_fs.slack_h2o_comp.setub(1)
+    # m.soec_fs.soec_outlet_h2o_constraint = pyo.Constraint(
+    #     expr=1e2*m.soec_fs.spltf1.inlet.mole_frac_comp[0, "H2O"] +
+    #     1e2*m.soec_fs.slack_h2o_comp
+    #     >=
+    #     1e2*0.20
+    # )    
+    
     # TODO - is this contraint correct? Might not be feasible at lower flows
     # because the conversion will increase as the steam flowrate reduces
     # Outlet H2O mole fraction from the fuel side should be > 0.20    
@@ -2507,13 +2550,18 @@ def optimize_model(m):
     #     <=
     #     800
     # )
-    m.soec_fs.soec_stack.solid_oxide_cell.current_density.setlb(-8000)
+    
+    
+    # Average current density limitation constraint
+    @m.soec_fs.Constraint(m.soec_fs.time)
+    def average_current_density_constraint(b, t):
+        return m.soec_fs.soec_stack.solid_oxide_cell.average_current_density[0]/1000 >= -8
 
     # Unfix cell potential [cell voltage] (optimization dof)
     # However ensure that it doesn't stray too far above the thermoneutral
     # point by constraining the outlet fuel/sweep temp from the soec < 1030 K
     m.soec_fs.soec_stack.solid_oxide_cell.potential.unfix()
-    m.soec_fs.soec_stack.solid_oxide_cell.potential.setlb(1.25)
+    m.soec_fs.soec_stack.solid_oxide_cell.potential.setlb(1.00)
     m.soec_fs.soec_stack.solid_oxide_cell.potential.setub(1.40)    
     m.soec_fs.oxygen_outlet_temperature_constraint = pyo.Constraint(
         expr=m.soec_fs.soec_stack.oxygen_outlet.temperature[0]
@@ -2529,28 +2577,28 @@ def optimize_model(m):
     # Ensure that the temperature gradient across the soec is less than 40K
     # This is set for the outlets and inlets, and air/fuel side
     m.soec_fs.soec_outlet_temperature_constraint = pyo.Constraint(
-        expr= abs(m.soec_fs.soec_stack.oxygen_outlet.temperature[0] -
-        m.soec_fs.soec_stack.fuel_outlet.temperature[0])
+        expr= ((m.soec_fs.soec_stack.oxygen_outlet.temperature[0] -
+        m.soec_fs.soec_stack.fuel_outlet.temperature[0])**2/100
         <=
-        40
+        16)
     )
     m.soec_fs.soec_inlet_temperature_constraint = pyo.Constraint(
-        expr= abs(m.soec_fs.soec_stack.oxygen_inlet.temperature[0] -
-        m.soec_fs.soec_stack.fuel_inlet.temperature[0])
+        expr= ((m.soec_fs.soec_stack.oxygen_inlet.temperature[0] -
+        m.soec_fs.soec_stack.fuel_inlet.temperature[0])**2/100
         <=
-        40
+        16)
     )
     m.soec_fs.soec_oxygen_side_DT_constraint = pyo.Constraint(
-        expr= abs(m.soec_fs.soec_stack.oxygen_outlet.temperature[0] -
-        m.soec_fs.soec_stack.oxygen_inlet.temperature[0])
+        expr= ((m.soec_fs.soec_stack.oxygen_outlet.temperature[0] -
+        m.soec_fs.soec_stack.oxygen_inlet.temperature[0])**2/100
         <=
-        40
+        16)
     )
     m.soec_fs.soec_fuel_side_DT_constraint = pyo.Constraint(
-        expr= abs(m.soec_fs.soec_stack.fuel_outlet.temperature[0] -
-        m.soec_fs.soec_stack.fuel_inlet.temperature[0])
+        expr= ((m.soec_fs.soec_stack.fuel_outlet.temperature[0] -
+        m.soec_fs.soec_stack.fuel_inlet.temperature[0])**2/100
         <=
-        40
+        16)
     )
 
     # Objective function
@@ -2563,14 +2611,11 @@ def optimize_model(m):
     #     m.soec_fs.net_power_per_mass_h2[0])
 
     m.soec_fs.obj = pyo.Objective(
-        expr=m.soec_fs.H2_costing.total_variable_OM_cost[0])
-    # rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
-    m.soec_fs.tag_pfd["total_variable_OM_cost"] = iutil.ModelTag(
-        expr=m.soec_fs.H2_costing.total_variable_OM_cost[0],
-        format_string="{:.3f}",
-        display_units=pyo.units.USD_2018 / pyo.units.kg,
-        doc="Total variable O&M cost",
-    )
+        expr=1e2*m.soec_fs.H2_costing.total_variable_OM_cost[0]
+        # +
+        # 1e4*m.soec_fs.slack_h2o_comp**2
+        )
+
 
     options = {
         "max_iter": 150,
@@ -2586,14 +2631,56 @@ def optimize_model(m):
     solver.solve(m.soec_fs, tee=True,
                   options=options,
                   symbolic_solver_labels=True)
+    
+    # rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
+    
+    # Additional tags for variable O&M costs
+    m.soec_fs.tag_pfd["total_variable_OM_cost"] = iutil.ModelTag(
+        expr=m.soec_fs.H2_costing.total_variable_OM_cost[0],
+        format_string="{:.3f}",
+        display_units=pyo.units.USD_2018 / pyo.units.kg,
+        doc="Total variable O&M cost",
+    )
+
+    m.soec_fs.tag_pfd["electricity_variable_OM_costs"] = iutil.ModelTag(
+        expr=m.soec_fs.H2_costing.variable_operating_costs[0, "electricity"],
+        format_string="{:.3f}",
+        display_units=pyo.units.USD_2018 / pyo.units.kg,
+        doc="Electricity variable O&M cost",
+    )
+
+    m.soec_fs.tag_pfd["natural_gas_variable_OM_costs"] = iutil.ModelTag(
+        expr=m.soec_fs.H2_costing.variable_operating_costs[0, "natural gas"],
+        format_string="{:.3f}",
+        display_units=pyo.units.USD_2018 / pyo.units.kg,
+        doc="Natural gas variable O&M cost",
+    )
+
+    m.soec_fs.tag_pfd["water_variable_OM_costs"] = iutil.ModelTag(
+        expr=m.soec_fs.H2_costing.variable_operating_costs[0, "water"],
+        format_string="{:.3f}",
+        display_units=pyo.units.USD_2018 / pyo.units.kg,
+        doc="Water variable O&M cost",
+    )
+
+    m.soec_fs.tag_pfd["water_treatment_chemicals_OM_costs"] = iutil.ModelTag(
+        expr=m.soec_fs.H2_costing.variable_operating_costs[0, "water treatment chemicals"],
+        format_string="{:.3f}",
+        display_units=pyo.units.USD_2018 / pyo.units.kg,
+        doc="Water treatment chemicals O&M cost",
+    )
 
     print(f"Hydrogen product rate {m.soec_fs.tag_input['hydrogen_product_rate']}.")
     print('mole_frac H2 in fuel outlet = ', pyo.value(m.soec_fs.spltf1.inlet.mole_frac_comp[0, "H2O"]))
     print('H2 recycle fraction = ', pyo.value(m.soec_fs.spltf1.split_fraction[0, "recycle"]))
+    print('single_pass_water_conversion = ', pyo.value(m.soec_fs.soec_single_pass_water_conversion[0]))
     print("preheat_fg_split_to_oxygen = ", m.soec_fs.tag_input["preheat_fg_split_to_oxygen"])
     print('cmb outlet temperature = ', pyo.value(m.soec_fs.cmb.outlet.temperature[0]))
     print('cell potential = ', pyo.value(m.soec_fs.soec_stack.solid_oxide_cell.potential[0]))
-        
+    # print('H2o_comp_slack = ', pyo.value(m.soec_fs.slack_h2o_comp))
+    print('average_current_density = ', pyo.value(m.soec_fs.soec_stack.solid_oxide_cell.average_current_density[0]))
+    print('excess oxygen = ', pyo.value(m.soec_fs.excess_oxygen[0]))        
+
     # m.soec_fs.tag_input["hydrogen_product_rate"].fix(
     #         float(2.5) * pyo.units.kmol / pyo.units.s
     #     )
@@ -2611,6 +2698,10 @@ def optimize_model(m):
     cols_pfd = (
         "status",
         "total_variable_OM_cost",
+        "electricity_variable_OM_costs",
+        "natural_gas_variable_OM_costs",
+        "water_variable_OM_costs",
+        "water_treatment_chemicals_OM_costs",
         "soec_n_cells",
         "h2_product_rate_mass",
         "fuel_rate",
@@ -2637,8 +2728,8 @@ def optimize_model(m):
     #     m.soec_fs.tag_input["n_cells"].fix(
     #         float(h)
     #     )
-    # for h in np.linspace(2.5, 0.5, 17):
-    for h in np.linspace(2.5, 2.25, 3):        
+    for h in np.linspace(2.5, 0.625, 16):
+    # for h in np.linspace(2.5, 0.875, 14):        
         m.soec_fs.tag_input["hydrogen_product_rate"].fix(
             float(h) * pyo.units.kmol / pyo.units.s
         )
@@ -2661,9 +2752,13 @@ def optimize_model(m):
         print(f"Hydrogen product rate {m.soec_fs.tag_input['hydrogen_product_rate']}.")
         print('mole_frac H2 in fuel outlet = ', pyo.value(m.soec_fs.spltf1.inlet.mole_frac_comp[0, "H2O"]))
         print('H2 recycle fraction = ', pyo.value(m.soec_fs.spltf1.split_fraction[0, "recycle"]))
+        print('single_pass_water_conversion = ', pyo.value(m.soec_fs.soec_single_pass_water_conversion[0]))
         print("preheat_fg_split_to_oxygen = ", m.soec_fs.tag_input["preheat_fg_split_to_oxygen"])
         print('cmb outlet temperature = ', pyo.value(m.soec_fs.cmb.outlet.temperature[0]))
         print('cell potential = ', pyo.value(m.soec_fs.soec_stack.solid_oxide_cell.potential[0]))
+        # print('H2o_comp_slack = ', pyo.value(m.soec_fs.slack_h2o_comp))
+        print('average_current_density = ', pyo.value(m.soec_fs.soec_stack.solid_oxide_cell.average_current_density[0]))
+        print('excess oxygen = ', pyo.value(m.soec_fs.excess_oxygen[0]))
 
         # write_pfd_results(
         #     m, f"rsofc_soec_{m.soec_fs.tag_input['hydrogen_product_rate'].display(units=False)}.svg"

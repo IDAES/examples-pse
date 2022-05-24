@@ -20,7 +20,7 @@ __author__ = "Chinedu Okoli", "Alex Noring"
 import pyomo.environ as pyo
 from pyomo.util.calc_var_value import calculate_variable_from_constraint
 
-from idaes.power_generation.costing.power_plant_costing import (
+from idaes.models_extra.power_generation.costing.power_plant_costing import (
     get_PP_costing,
     get_total_TPC,
     costing_initialization,
@@ -255,7 +255,7 @@ def get_rsofc_soec_variable_OM_costing(fs):
         fs.water_withdrawal,
         fs.water_treatment_use,
     ]
-    prices = {"electricity": 30 * pyo.units.USD / pyo.units.MWh}
+    prices = {"electricity": 30 * pyo.units.USD_2018 / pyo.units.MWh}
 
     print(pyo.units.convert(fs.h2_product_rate_mass[0],
                             pyo.units.g / pyo.units.s))
@@ -406,8 +406,8 @@ def get_rsofc_sofc_variable_OM_costing(fs):
              fs.desulfur_adsorbent_use,
              fs.methanation_catalyst_use]
 
-    prices = {"desulfur adsorbent": 6.0297*pyo.units.USD/pyo.units.lb,
-              "methanation catalyst": 601.765*pyo.units.USD/pyo.units.m**3}
+    prices = {"desulfur adsorbent": 6.0297*pyo.units.USD_2018/pyo.units.lb,
+              "methanation catalyst": 601.765*pyo.units.USD_2018/pyo.units.m**3}
 
     get_variable_OM_costs(fs, fs.net_power, resources, rates, prices)
 
