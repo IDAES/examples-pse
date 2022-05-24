@@ -116,6 +116,14 @@ def get_rsofc_soec_capital_cost(fs):
     )
     add_total_plant_cost(fs.bhx2, 1.15, 1.15)
 
+    fs.fuel_recycle_heater.costing = pyo.Block()
+    fired_heater_costing(
+        fs.fuel_recycle_heater.costing,
+        fired_type="steam_boiler",
+        ref_parameter_pressure=fs.fuel_recycle_heater.inlet.pressure[0],
+    )
+    add_total_plant_cost(fs.fuel_recycle_heater, 1.15, 1.15)
+
     # H2 compressor
     # costed with IDAES generic compressor correlations
     # TODO - this is a placeholder until H2 compressor scaling is released
@@ -131,6 +139,7 @@ def get_rsofc_soec_capital_cost(fs):
     fs.generic_costing_units = [
         fs.bhx1,
         fs.bhx2,
+        fs.fuel_recycle_heater,
         fs.hcmp01,
         fs.hcmp02,
         fs.hcmp03,

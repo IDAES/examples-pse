@@ -34,11 +34,9 @@ from pyomo.util.calc_var_value import calculate_variable_from_constraint
 import idaes.core.plugins
 from idaes.core.solvers import use_idaes_solver_configuration_defaults
 
-from idaes.power_generation.flowsheets.rsofc import (
-    rsofc_costing as rsofc_cost,
-    rsofc_sofc_flowsheet as rsofc_sofc,
-    rsofc_soec_flowsheet as rsofc_soec
-    )
+import rsofc_costing as rsofc_cost
+import rsofc_sofc_flowsheet as rsofc_sofc
+import rsofc_soec_flowsheet_2 as rsofc_soec
 
 
 def add_sofc_mode_flowsheet(m, name="sofc_mode_flowsheet"):
