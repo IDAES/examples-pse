@@ -11,7 +11,7 @@
 # license information.
 #################################################################################
 """
-Property package for Methane Steam Reforming in Syngas to Hydrogen
+Property package for Methane Steam Reforming and Water Gas Shift
 using Peng-Robinson equation of state.
 
 Author: Brandon Paul
