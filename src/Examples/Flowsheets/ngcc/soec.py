@@ -338,14 +338,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.cmp04 = gum.Compressor(
             default={"property_package": self.h2_pure_prop_params}
         )
-        self.ic04 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
-        self.cmp05 = gum.Compressor(
-            default={"property_package": self.h2_pure_prop_params}
-        )
-        self.ic05 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
-        self.cmp06 = gum.Compressor(
-            default={"property_package": self.h2_pure_prop_params}
-        )
         self.makeup_mix = hum.HelmMixer(
             default={
                 "dynamic": False,
@@ -506,26 +498,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
             source=self.ic03.outlet,
             destination=self.cmp04.inlet,
         )
-        self.hstrm14 = Arc(
-            doc="",
-            source=self.cmp04.outlet,
-            destination=self.ic04.inlet,
-        )
-        self.hstrm15 = Arc(
-            doc="",
-            source=self.ic04.outlet,
-            destination=self.cmp05.inlet,
-        )
-        self.hstrm16 = Arc(
-            doc="",
-            source=self.cmp05.outlet,
-            destination=self.ic05.inlet,
-        )
-        self.hstrm17 = Arc(
-            doc="",
-            source=self.ic05.outlet,
-            destination=self.cmp06.inlet,
-        )
         pyo.TransformationFactory("network.expand_arcs").apply_to(self)
 
     def _add_constraints(self):
@@ -547,7 +519,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         def hydrogen_product_rate_eqn(b, t):
             return (
                 b.hydrogen_product_rate[t]
-                == b.cmp06.control_volume.properties_out[0].flow_mass
+                == b.cmp04.control_volume.properties_out[0].flow_mass
             )
 
         # Translator equations
@@ -617,8 +589,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
                 + b.cmp02.control_volume.work[t]
                 + b.cmp03.control_volume.work[t]
                 + b.cmp04.control_volume.work[t]
-                + b.cmp05.control_volume.work[t]
-                + b.cmp06.control_volume.work[t]
             )
 
         @self.Expression(self.time)
@@ -735,10 +705,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.cmp03.control_volume.work, 1e-6)
         iscale.set_scaling_factor(self.ic03.control_volume.heat, 1e-5)
         iscale.set_scaling_factor(self.cmp04.control_volume.work, 1e-6)
-        iscale.set_scaling_factor(self.ic04.control_volume.heat, 1e-5)
-        iscale.set_scaling_factor(self.cmp05.control_volume.work, 1e-6)
-        iscale.set_scaling_factor(self.ic05.control_volume.heat, 1e-5)
-        iscale.set_scaling_factor(self.cmp06.control_volume.work, 1e-6)
 
         for t in self.time:
             iscale.constraint_scaling_transform(
@@ -850,12 +816,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.ic03.control_volume.properties_out[:].temperature.fix(300)
         self.cmp04.ratioP.fix(1.94)
         self.cmp04.efficiency_isentropic.fix(0.85)
-        self.ic04.control_volume.properties_out[:].temperature.fix(300)
-        self.cmp05.ratioP.fix(1.94)
-        self.cmp05.efficiency_isentropic.fix(0.85)
-        self.ic05.control_volume.properties_out[:].temperature.fix(300)
-        self.cmp06.ratioP.fix(1.94)
-        self.cmp06.efficiency_isentropic.fix(0.85)
 
     def initialize(
         self,
@@ -943,14 +903,6 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.ic03.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         propagate_state(self.hstrm13)
         self.cmp04.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
-        propagate_state(self.hstrm14)
-        self.ic04.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
-        propagate_state(self.hstrm15)
-        self.cmp05.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
-        propagate_state(self.hstrm16)
-        self.ic05.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
-        propagate_state(self.hstrm17)
-        self.cmp06.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
 
         # solve with hydrogen side recycle first
         self.feed01b_expanded.deactivate()
@@ -1004,7 +956,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
                     "hstrm05": self.water_heater01.shell_outlet,
                     "ostrm06": self.water_heater02.shell_outlet,
                     "water00": self.water_pump.inlet,
-                    "hstrm18": self.cmp06.outlet,
+                    "hstrm15": self.cmp04.outlet,
                 },
             )
         )

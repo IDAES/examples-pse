@@ -188,44 +188,6 @@ def get_solo_soec_capital_costing(m):
         return c.total_plant_cost == (
             ref_cost*(h2_comp_process_param/ref_param)**alpha)
 
-    m.cmp05.costing = pyo.Block()
-    m.cmp05.costing.total_plant_cost = pyo.Var(
-        initialize=1,
-        bounds=(0, 1e4),
-        doc='total plant cost in $MM')
-
-    h2_comp_process_param = pyo.units.convert(
-        m.cmp05.control_volume.properties_out[0].flow_mass,
-        pyo.units.lb/pyo.units.hr)
-
-    @m.cmp05.costing.Constraint()
-    def h2_comp_cost(c):
-        ref_cost = 11.408  # MM$ 2018
-        ref_param = 44369*pyo.units.lb/pyo.units.hr
-        alpha = 0.7
-        return c.total_plant_cost == (
-            ref_cost*(h2_comp_process_param/ref_param)**alpha)
-
-    m.cmp06.costing = pyo.Block()
-    m.cmp06.costing.total_plant_cost = pyo.Var(
-        initialize=1,
-        bounds=(0, 1e4),
-        doc='total plant cost in $MM')
-
-    h2_comp_process_param = pyo.units.convert(
-        m.cmp06.control_volume.properties_out[0].flow_mass,
-        pyo.units.lb/pyo.units.hr)
-
-    @m.cmp06.costing.Constraint()
-    def h2_comp_cost(c):
-        ref_cost = 11.408  # MM$ 2018
-        ref_param = 44369*pyo.units.lb/pyo.units.hr
-        alpha = 0.7
-        return c.total_plant_cost == (
-            ref_cost*(h2_comp_process_param/ref_param)**alpha)
-
-
-
     # build constraint summing total plant costs
     get_total_TPC(m)
 
@@ -236,8 +198,6 @@ def get_solo_soec_capital_costing(m):
         m.cmp02.costing.total_plant_cost,
         m.cmp03.costing.total_plant_cost,
         m.cmp04.costing.total_plant_cost,
-        m.cmp05.costing.total_plant_cost,
-        m.cmp06.costing.total_plant_cost,
         m.sweep_hx.costing.total_plant_cost,
         m.feed_hx01.costing.total_plant_cost,
         m.sweep_compressor.costing.total_plant_cost,
@@ -249,8 +209,6 @@ def get_solo_soec_capital_costing(m):
         m.cmp02.costing.h2_comp_cost,
         m.cmp03.costing.h2_comp_cost,
         m.cmp04.costing.h2_comp_cost,
-        m.cmp05.costing.h2_comp_cost,
-        m.cmp06.costing.h2_comp_cost,
         m.sweep_hx.costing.sweep_hx_cost,
         m.feed_hx01.costing.feed_hx01_cost,
         m.sweep_compressor.costing.sweep_compressor_cost,
