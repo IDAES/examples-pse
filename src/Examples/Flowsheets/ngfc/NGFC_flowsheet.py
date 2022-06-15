@@ -1708,7 +1708,7 @@ def pfd_result(outfile, m, df):
         svg_tag(tags=None, svg=f, tag_group=tag_group, outfile=outfile)
 
 
-def main(resultsdir="", jsontestdir=""):
+def main():
     # create model and flowsheet
     m = pyo.ConcreteModel(name="NGFC without carbon capture")
     m.fs = FlowsheetBlock(default={"dynamic": False})
@@ -1716,10 +1716,7 @@ def main(resultsdir="", jsontestdir=""):
     reinit = False  # switch to True to re-initialize and re-solve
     resolve = False  # switch to True to re-solve only (for debugging)
 
-    initpath = os.path.join(jsontestdir, "NGFC_flowsheet_init.json.gz")
-    solnpath = os.path.join(jsontestdir, "NGFC_flowsheet_solution.json.gz")
-
-    if os.path.exists(initpath) and reinit is False:
+    if os.path.exists("NGFC_flowsheet_init.json.gz") and reinit is False:
         # already initialized, can build model and load results from json
         build_power_island(m)
         build_reformer(m)
@@ -1728,15 +1725,15 @@ def main(resultsdir="", jsontestdir=""):
         SOFC_ROM_setup(m)
         add_SOFC_energy_balance(m)
         add_result_constraints(m)
-        if os.path.exists(solnpath) and resolve is False:
+        if os.path.exists("NGFC_flowsheet_solution.json.gz") and resolve is False:
             # don't need to solve, can load results from json
             print('Loading solved model')
-            ms.from_json(m, fname=solnpath)
+            ms.from_json(m, fname="NGFC_flowsheet_solution.json.gz")
         else:
             # need to solve the model using loaded initialization point
             # and then serialize solved model results
             print('Loading initialized model')
-            ms.from_json(m, fname=initpath)
+            ms.from_json(m, fname="NGFC_flowsheet_init.json.gz")
             # solver and options
             solver = pyo.SolverFactory("ipopt")
             solver.options = {
@@ -1755,7 +1752,7 @@ def main(resultsdir="", jsontestdir=""):
                 res = solver.solve(m, tee=True)
                 if 'Optimal Solution Found' in res.solver.message:
                     break
-            ms.to_json(m, fname=solnpath)
+            ms.to_json(m, fname="NGFC_flowsheet_solution.json.gz")
     else:
         # need to initialize model, serialize, and try to solve/serialize
         build_power_island(m)
@@ -1769,7 +1766,7 @@ def main(resultsdir="", jsontestdir=""):
         SOFC_ROM_setup(m)
         add_SOFC_energy_balance(m)
         add_result_constraints(m)
-        ms.to_json(m, fname=initpath)
+        ms.to_json(m, fname="NGFC_flowsheet_init.json.gz")
         solver = pyo.SolverFactory("ipopt")
         solver.options = {
             "max_iter": 100,
@@ -1788,12 +1785,12 @@ def main(resultsdir="", jsontestdir=""):
             if 'Optimal Solution Found' in res.solver.message:
                 break
 
-        ms.to_json(m, fname=solnpath)
+        ms.to_json(m, fname="NGFC_flowsheet_solution.json.gz")
 
     # uncomment to report results
     make_stream_dict(m)
     df = create_stream_table_dataframe(streams=m._streams, orient="index")
-    pfd_result(os.path.join(resultsdir, "NGFC_results.svg"), m, df)
+    pfd_result("NGFC_results.svg", m, df)
     print('PFD Results Created')
 
     return m
