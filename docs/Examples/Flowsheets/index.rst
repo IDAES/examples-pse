@@ -4,3 +4,5 @@ This folder contains files that illustrate simulation and optimization of flowsh
 
 .. toctree::
     Optimize a hydrodealkylation process with a distillation column <HDA_flowsheet_with_distillation_solution_doc>
+    ngcc/index
+    ngfc/index
