@@ -1,5 +1,5 @@
 Flowsheets
-======
+==========
 This folder contains files that illustrate simulation and optimization of flowsheets.
 
 .. toctree::
