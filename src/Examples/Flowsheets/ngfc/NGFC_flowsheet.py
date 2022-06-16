@@ -61,12 +61,12 @@ from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 from idaes.models.unit_models.separator import SplittingType
 from idaes.models.unit_models.mixer import MomentumMixingType
 
-from properties.natural_gas_PR import (
+from natural_gas_PR import (
     get_prop,
     get_rxn,
 )
 
-from ROM.SOFC_ROM import (
+from SOFC_ROM import (
     build_SOFC_ROM,
     initialize_SOFC_ROM,
 )
