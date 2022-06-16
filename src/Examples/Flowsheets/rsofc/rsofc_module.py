@@ -36,7 +36,7 @@ from idaes.core.solvers import use_idaes_solver_configuration_defaults
 
 import rsofc_costing as rsofc_cost
 import rsofc_sofc_flowsheet as rsofc_sofc
-import rsofc_soec_flowsheet_2 as rsofc_soec
+import rsofc_soec_flowsheet_3 as rsofc_soec
 
 
 def add_sofc_mode_flowsheet(m, name="sofc_mode_flowsheet"):
@@ -131,6 +131,7 @@ def cost_rsofc(m):
     # Display results
     # m.fs.costing.display()
     m.sofc_fs.costing.display()
+    m.soec_fs.costing.display()
     m.soec_fs.H2_costing.display()
 
     return m

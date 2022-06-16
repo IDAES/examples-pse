@@ -881,20 +881,21 @@ def add_h2_compressor(fs):
         }
     )
 
-    fs.hcmp_ic01.outlet.temperature.fix(300)
-    fs.hcmp01.outlet.pressure.fix(40e5)
+    compressor_ratio = 2.828
+    fs.hcmp_ic01.outlet.temperature.fix(298.15)
+    fs.hcmp01.ratioP.fix(compressor_ratio)
     fs.hcmp01.efficiency_isentropic.fix(0.85)
 
-    fs.hcmp_ic02.outlet.temperature.fix(300)
-    fs.hcmp02.outlet.pressure.fix(80e5)
+    fs.hcmp_ic02.outlet.temperature.fix(303.15)
+    fs.hcmp02.ratioP.fix(compressor_ratio)
     fs.hcmp02.efficiency_isentropic.fix(0.85)
 
-    fs.hcmp_ic03.outlet.temperature.fix(300)
-    fs.hcmp03.outlet.pressure.fix(160e5)
+    fs.hcmp_ic03.outlet.temperature.fix(303.15)
+    fs.hcmp03.ratioP.fix(compressor_ratio)
     fs.hcmp03.efficiency_isentropic.fix(0.85)
 
-    fs.hcmp_ic04.outlet.temperature.fix(300)
-    fs.hcmp04.outlet.pressure.fix(320e5)
+    fs.hcmp_ic04.outlet.temperature.fix(303.15)
+    fs.hcmp04.outlet.pressure.fix(64.79e5)
     fs.hcmp04.efficiency_isentropic.fix(0.85)
 
     ###########################################################################
@@ -913,11 +914,11 @@ def add_h2_compressor(fs):
     fs.h07 = Arc(source=fs.hcmp02.outlet,
                  destination=fs.hcmp_ic03.inlet)
     fs.h08 = Arc(source=fs.hcmp_ic03.outlet,
-                 destination=fs.hcmp03.inlet)
+                  destination=fs.hcmp03.inlet)
     fs.h09 = Arc(source=fs.hcmp03.outlet,
-                 destination=fs.hcmp_ic04.inlet)
+                  destination=fs.hcmp_ic04.inlet)
     fs.h10 = Arc(source=fs.hcmp_ic04.outlet,
-                 destination=fs.hcmp04.inlet)
+                  destination=fs.hcmp04.inlet)
 
 
 def add_hrsg_and_cpu(fs):
@@ -3082,7 +3083,7 @@ def get_model(m=None, name="SOEC Module"):
         add_result_constraints(m.soec_fs)
         initialize_results(m.soec_fs)
         tag_inputs_opt_vars(m.soec_fs)
-        tag_for_pfd_and_tables(m.soec_fs)
+        # tag_for_pfd_and_tables(m.soec_fs)
         rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
         # base_case_solve(m.soec_fs, solver)  # solve for H2 prod. of 5 kg/s (2.5 kmol/s)
         base_case_optimization(m, solver)  # 5 kg/s
@@ -3281,7 +3282,7 @@ if __name__ == "__main__":
 
     # rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
 
-    optimize_model(m.soec_fs)
+    # optimize_model(m.soec_fs)
 
     # strip_bounds = pyo.TransformationFactory("contrib.strip_var_bounds")
     # strip_bounds.apply_to(m, reversible=False)
