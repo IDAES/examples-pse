@@ -80,6 +80,12 @@ class NgccFlowsheetData(FlowsheetBlockData):
             format_string="{:.2f}",
             display_units="%",
         )
+        tag_group["hhv_efficiency"] = iutil.ModelTag(
+            doc=f"Overall LHV efficiency",
+            expr=100 * self.hhv_efficiency[0],
+            format_string="{:.2f}",
+            display_units="%",
+        )
         tag_group["combustor_temperature"] = iutil.ModelTag(
             doc=f"Overall LHV efficiency",
             expr=self.gt.cmb1.control_volume.properties_out[0].temperature,
@@ -338,6 +344,10 @@ class NgccFlowsheetData(FlowsheetBlockData):
         @self.Expression(self.config.time)
         def lhv_efficiency(b, t):
             return -b.net_power[t] / b.gt.inject1.gas_state[t].flow_mass / b.fuel_lhv
+
+        @self.Expression(self.config.time)
+        def hhv_efficiency(b, t):
+            return -b.net_power[t] / b.gt.inject1.gas_state[t].flow_mass / b.fuel_hhv
 
         @self.Expression(self.config.time)
         def reboiler_duty_expr(b, t):  # scale to flue gas flow
