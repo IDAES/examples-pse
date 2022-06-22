@@ -48,16 +48,22 @@ def get_solo_soec_capital_costing(m):
         # bounds=(0, 1e4),
         doc="total plant cost in $MM",
     )
-
     m.soec_module.costing = pyo.Block()
-    m.soec_module.costing.total_plant_cost = pyo.Var(
-        initialize=130,
-        # bounds=(0, 1e4),
-        doc="total plant cost in $MM",
-    )
-    @m.soec_module.costing.Constraint()
-    def soec_cost(c):
-        return c.total_plant_cost * 1e6 == 60.87 * m.soec_module.number_cells
+    @m.soec_module.costing.Expression()
+    def purchase_cost(c):
+        return 60.87 * m.soec_module.number_cells
+    add_total_plant_cost(m.soec_module, 1.15, 1.15)
+
+    for heater in [m.feed_heater, m.sweep_heater]:
+        heater.costing = pyo.Block()
+        @heater.costing.Expression()
+        def purchase_cost(b):
+            U = 100 * pyo.units.W / pyo.units.m ** 2 / pyo.units.K
+            DT = 50 * pyo.units.K
+            area = heater.heat_duty[0] / U / DT
+            # Add factor of two to pathways cost to account for corrosion-resistant materials for trim heaters
+            return 2*81.88*pyo.units.convert(area, pyo.units.ft**2)
+        add_total_plant_cost(heater, 1.15, 1.15)
 
     # water heaters - U-tube HXs
     # costed with IDAES generic heat exchanger correlation
@@ -70,45 +76,31 @@ def get_solo_soec_capital_costing(m):
     # sweep hx and the two feed hx's
     # costed with price/ft^2 from NGFC Pathways study
     m.sweep_hx.costing = pyo.Block()
-    m.sweep_hx.costing.total_plant_cost = pyo.Var(
-        initialize=20,
-        bounds=(0, 1e4),
-        doc='total plant cost in $MM')
-    @m.sweep_hx.costing.Constraint()
-    def sweep_hx_cost(c):
-        return c.total_plant_cost*1e6 == (
-            81.88*pyo.units.convert(m.sweep_hx.area, pyo.units.ft**2))
+    @m.sweep_hx.costing.Expression()
+    def purchase_cost(c):
+        return 81.88*pyo.units.convert(m.sweep_hx.area, pyo.units.ft**2)
+    add_total_plant_cost(m.sweep_hx, 1.15, 1.15)
 
     m.feed_hx01.costing = pyo.Block()
-    m.feed_hx01.costing.total_plant_cost = pyo.Var(
-        initialize=20,
-        bounds=(0, 1e4),
-        doc='total plant cost in $MM')
-    @m.feed_hx01.costing.Constraint()
-    def feed_hx01_cost(c):
-        return c.total_plant_cost*1e6 == (
-            81.88*pyo.units.convert(m.feed_hx01.area, pyo.units.ft**2))
+    @m.feed_hx01.costing.Expression()
+    def purchase_cost(c):
+        return 81.88*pyo.units.convert(m.feed_hx01.area, pyo.units.ft**2)
+    add_total_plant_cost(m.feed_hx01, 1.15, 1.15)
 
     # sweep compressor
     m.sweep_compressor.costing = pyo.Block()
-    m.sweep_compressor.costing.total_plant_cost = pyo.Var(
-        initialize=2,
-        bounds=(0, 1e4),
-        doc='total plant cost in $MM')
-
     # air is coming in at standard conditions
     sweep_compressor_scfm = pyo.units.convert(
         m.sweep_compressor.control_volume.properties_in[0].flow_vol,
         pyo.units.ft**3/pyo.units.min)
-
     n_sections = 5
-
-    @m.sweep_compressor.costing.Constraint()
-    def sweep_compressor_cost(c):  # in 2018 $
-        return c.total_plant_cost == n_sections * 10.9995 * pyo.exp(
+    @m.sweep_compressor.costing.Expression()
+    def purchase_cost(c):  # in 2018 $
+        return n_sections * 10.9995 * pyo.exp(
             0.4692 +
             0.1203*pyo.log(sweep_compressor_scfm/1000/n_sections) +
-            0.0931*pyo.log(sweep_compressor_scfm/1000/n_sections)**2) * 1e-3
+            0.0931*pyo.log(sweep_compressor_scfm/1000/n_sections)**2) * 1e3
+    add_total_plant_cost(m.sweep_compressor, 1.15, 1.15)
 
     # sweep turbine
     # costed with IDAES generic turbine correlation
@@ -117,108 +109,19 @@ def get_solo_soec_capital_costing(m):
 
     # H2 compressor
     m.cmp01.costing = pyo.Block()
-    m.cmp01.costing.total_plant_cost = pyo.Var(
-        initialize=1,
-        bounds=(0, 1e4),
-        doc='total plant cost in $MM')
-
     h2_comp_process_param = pyo.units.convert(
         m.cmp01.control_volume.properties_out[0].flow_mass,
         pyo.units.lb/pyo.units.hr)
-
-    @m.cmp01.costing.Constraint()
-    def h2_comp_cost(c):
-        ref_cost = 11.408  # MM$ 2018
+    @m.cmp01.costing.Expression()
+    def purchase_cost(c):
+        ref_cost = 11.408 * 1e6  # $ 2018
         ref_param = 44369*pyo.units.lb/pyo.units.hr
         alpha = 0.7
-        return c.total_plant_cost == (
-            ref_cost*(h2_comp_process_param/ref_param)**alpha)
-
-    m.cmp02.costing = pyo.Block()
-    m.cmp02.costing.total_plant_cost = pyo.Var(
-        initialize=1,
-        bounds=(0, 1e4),
-        doc='total plant cost in $MM')
-
-    h2_comp_process_param = pyo.units.convert(
-        m.cmp02.control_volume.properties_out[0].flow_mass,
-        pyo.units.lb/pyo.units.hr)
-
-    @m.cmp02.costing.Constraint()
-    def h2_comp_cost(c):
-        ref_cost = 11.408  # MM$ 2018
-        ref_param = 44369*pyo.units.lb/pyo.units.hr
-        alpha = 0.7
-        return c.total_plant_cost == (
-            ref_cost*(h2_comp_process_param/ref_param)**alpha)
-
-    m.cmp03.costing = pyo.Block()
-    m.cmp03.costing.total_plant_cost = pyo.Var(
-        initialize=1,
-        bounds=(0, 1e4),
-        doc='total plant cost in $MM')
-
-    h2_comp_process_param = pyo.units.convert(
-        m.cmp03.control_volume.properties_out[0].flow_mass,
-        pyo.units.lb/pyo.units.hr)
-
-    @m.cmp03.costing.Constraint()
-    def h2_comp_cost(c):
-        ref_cost = 11.408  # MM$ 2018
-        ref_param = 44369*pyo.units.lb/pyo.units.hr
-        alpha = 0.7
-        return c.total_plant_cost == (
-            ref_cost*(h2_comp_process_param/ref_param)**alpha)
-
-    m.cmp04.costing = pyo.Block()
-    m.cmp04.costing.total_plant_cost = pyo.Var(
-        initialize=1,
-        bounds=(0, 1e4),
-        doc='total plant cost in $MM')
-
-    h2_comp_process_param = pyo.units.convert(
-        m.cmp04.control_volume.properties_out[0].flow_mass,
-        pyo.units.lb/pyo.units.hr)
-
-    @m.cmp04.costing.Constraint()
-    def h2_comp_cost(c):
-        ref_cost = 11.408  # MM$ 2018
-        ref_param = 44369*pyo.units.lb/pyo.units.hr
-        alpha = 0.7
-        return c.total_plant_cost == (
-            ref_cost*(h2_comp_process_param/ref_param)**alpha)
+        return ref_cost*(h2_comp_process_param/ref_param)**alpha
+    add_total_plant_cost(m.cmp01, 1.15, 1.15)
 
     # build constraint summing total plant costs
     get_total_TPC(m)
-
-    # costing initialization
-    variables = [
-        m.soec_module.costing.total_plant_cost,
-        m.cmp01.costing.total_plant_cost,
-        m.cmp02.costing.total_plant_cost,
-        m.cmp03.costing.total_plant_cost,
-        m.cmp04.costing.total_plant_cost,
-        m.sweep_hx.costing.total_plant_cost,
-        m.feed_hx01.costing.total_plant_cost,
-        m.sweep_compressor.costing.total_plant_cost,
-    ]
-
-    constraints = [
-        m.soec_module.costing.soec_cost,
-        m.cmp01.costing.h2_comp_cost,
-        m.cmp02.costing.h2_comp_cost,
-        m.cmp03.costing.h2_comp_cost,
-        m.cmp04.costing.h2_comp_cost,
-        m.sweep_hx.costing.sweep_hx_cost,
-        m.feed_hx01.costing.feed_hx01_cost,
-        m.sweep_compressor.costing.sweep_compressor_cost,
-    ]
-
-    for v, c in zip(variables, constraints):
-        print(v.name)
-        for i in v.keys():
-            calculate_variable_from_constraint(v[i], c[i])
-
 
     costing_initialization(m)
     calculate_variable_from_constraint(
