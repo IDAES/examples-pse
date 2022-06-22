@@ -51,7 +51,7 @@ def get_solo_soec_capital_costing(m):
     m.soec_module.costing = pyo.Block()
     @m.soec_module.costing.Expression()
     def purchase_cost(c):
-        return 60.87 * m.soec_module.number_cells
+        return 60.87 * m.soec_module.number_cells/1.15/1.15
     add_total_plant_cost(m.soec_module, 1.15, 1.15)
 
     for heater in [m.feed_heater, m.sweep_heater]:
@@ -62,7 +62,7 @@ def get_solo_soec_capital_costing(m):
             DT = 50 * pyo.units.K
             area = heater.heat_duty[0] / U / DT
             # Add factor of two to pathways cost to account for corrosion-resistant materials for trim heaters
-            return 2*81.88*pyo.units.convert(area, pyo.units.ft**2)
+            return 2*81.88*pyo.units.convert(area, pyo.units.ft**2)/1.15/1.15
         add_total_plant_cost(heater, 1.15, 1.15)
 
     # water heaters - U-tube HXs
@@ -78,13 +78,13 @@ def get_solo_soec_capital_costing(m):
     m.sweep_hx.costing = pyo.Block()
     @m.sweep_hx.costing.Expression()
     def purchase_cost(c):
-        return 81.88*pyo.units.convert(m.sweep_hx.area, pyo.units.ft**2)
+        return 81.88*pyo.units.convert(m.sweep_hx.area, pyo.units.ft**2)/1.15/1.15
     add_total_plant_cost(m.sweep_hx, 1.15, 1.15)
 
     m.feed_hx01.costing = pyo.Block()
     @m.feed_hx01.costing.Expression()
     def purchase_cost(c):
-        return 81.88*pyo.units.convert(m.feed_hx01.area, pyo.units.ft**2)
+        return 81.88*pyo.units.convert(m.feed_hx01.area, pyo.units.ft**2)/1.15/1.15
     add_total_plant_cost(m.feed_hx01, 1.15, 1.15)
 
     # sweep compressor
@@ -99,7 +99,7 @@ def get_solo_soec_capital_costing(m):
         return n_sections * 10.9995 * pyo.exp(
             0.4692 +
             0.1203*pyo.log(sweep_compressor_scfm/1000/n_sections) +
-            0.0931*pyo.log(sweep_compressor_scfm/1000/n_sections)**2) * 1e3
+            0.0931*pyo.log(sweep_compressor_scfm/1000/n_sections)**2) * 1e3/1.15/1.15
     add_total_plant_cost(m.sweep_compressor, 1.15, 1.15)
 
     # sweep turbine
@@ -117,7 +117,7 @@ def get_solo_soec_capital_costing(m):
         ref_cost = 11.408 * 1e6  # $ 2018
         ref_param = 44369*pyo.units.lb/pyo.units.hr
         alpha = 0.7
-        return ref_cost*(h2_comp_process_param/ref_param)**alpha
+        return ref_cost*(h2_comp_process_param/ref_param)**alpha/1.15/1.15
     add_total_plant_cost(m.cmp01, 1.15, 1.15)
 
     # build constraint summing total plant costs
@@ -141,7 +141,7 @@ def lock_capital_cost(m):
     m.costing.total_TPC.fix()
 
 
-def get_soec_OM_costing(m, design_h2_production=2.5 * pyo.units.kg / pyo.units.s):
+def get_soec_OM_costing(m, design_h2_production=5.0 * pyo.units.kg / pyo.units.s):
     # fixed O&M costs
     get_fixed_OM_costs(m.fs, design_h2_production, tech=6)
 
