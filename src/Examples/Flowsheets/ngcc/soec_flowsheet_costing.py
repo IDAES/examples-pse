@@ -114,10 +114,11 @@ def get_solo_soec_capital_costing(m):
         pyo.units.lb/pyo.units.hr)
     @m.cmp01.costing.Expression()
     def purchase_cost(c):
+        # This is for 4 stages.  The original was for 2 hence the multiply by 2.
         ref_cost = 11.408 * 1e6  # $ 2018
         ref_param = 44369*pyo.units.lb/pyo.units.hr
         alpha = 0.7
-        return ref_cost*(h2_comp_process_param/ref_param)**alpha/1.15/1.15
+        return 2*ref_cost*(h2_comp_process_param/ref_param)**alpha/1.15/1.15
     add_total_plant_cost(m.cmp01, 1.15, 1.15)
 
     # build constraint summing total plant costs
