@@ -26,25 +26,25 @@ from pyomo.network import Arc, SequentialDecomposition
 from idaes.core import FlowsheetBlock
 
 # Import IDAES generic unit models
-from idaes.generic_models.unit_models import (PressureChanger,
-                                              Mixer,
-                                              Separator as Splitter,
-                                              Heater,
-                                              StoichiometricReactor,
-                                              CSTR,
-                                              Flash,
-                                              Translator)
-from idaes.generic_models.unit_models.pressure_changer import \
+from idaes.models.unit_models import (PressureChanger,
+                                      Mixer,
+                                      Separator as Splitter,
+                                      Heater,
+                                      StoichiometricReactor,
+                                      CSTR,
+                                      Flash,
+                                      Translator)
+from idaes.models.unit_models.pressure_changer import \
     ThermodynamicAssumption
 
 # Import IDAES distillation unit models
-from idaes.generic_models.unit_models.column_models import TrayColumn
-from idaes.generic_models.unit_models.column_models.condenser import \
+from idaes.models_extra.column_models.tray_column import TrayColumn
+from idaes.models_extra.column_models.condenser import \
     CondenserType, TemperatureSpec
 
 # Import IDAES core utilities
 from idaes.core.util.initialization import propagate_state
-from idaes.core.util.misc import get_solver
+from idaes.core.solvers import get_solver
 import idaes.core.util.scaling as iscale
 
 # Import idaes logger to set output levels
@@ -199,8 +199,8 @@ def hda_with_flash():
 def hda_with_distillation():
 
     # Import thermodynamic and reaction property packages
-    import hda_reaction_kinetic as reaction_props
-    from idaes.generic_models.properties.activity_coeff_models.\
+    import hda_reaction as reaction_props
+    from idaes.models.properties.activity_coeff_models.\
         BTX_activity_coeff_VLE import BTXParameterBlock
     from hda_ideal_VLE import HDAParameterBlock
 

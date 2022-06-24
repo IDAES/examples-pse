@@ -41,7 +41,8 @@ from idaes.core.util.initialization import (fix_state_vars,
 from idaes.core.util.misc import add_object_reference
 from idaes.core.util.model_statistics import degrees_of_freedom, \
                                              number_unfixed_variables
-from idaes.core.util.misc import extract_data, get_solver
+from idaes.core.util.misc import extract_data
+from idaes.core.solvers import get_solver
 import idaes.core.util.scaling as iscale
 import idaes.logger as idaeslog
 
@@ -293,7 +294,7 @@ class HDAParameterData(PhysicalParameterBlock):
         self.set_default_scaling("flow_mol_phase", 1e3)
         self.set_default_scaling("material_flow_terms", 1e3)
         self.set_default_scaling("enthalpy_flow_terms", 1e-2)
-        self.set_default_scaling("mole_frac_comp", 10)
+        self.set_default_scaling("mole_frac_comp", 1e1)
         self.set_default_scaling("temperature", 1e-2)
         self.set_default_scaling("temperature_dew", 1e-2)
         self.set_default_scaling("temperature_bubble", 1e-2)
@@ -301,7 +302,7 @@ class HDAParameterData(PhysicalParameterBlock):
         self.set_default_scaling("pressure_sat", 1e-5)
         self.set_default_scaling("pressure_dew", 1e-5)
         self.set_default_scaling("pressure_bubble", 1e-5)
-        self.set_default_scaling("mole_frac_phase_comp", 10)
+        self.set_default_scaling("mole_frac_phase_comp", 1e1)
         self.set_default_scaling("enth_mol_phase", 1e-3, index="Liq")
         self.set_default_scaling("enth_mol_phase", 1e-4, index="Vap")
         self.set_default_scaling("enth_mol", 1e-3)
@@ -526,15 +527,15 @@ class IdealStateBlockData(StateBlockData):
                 self._params.phase_list,
                 self._params.component_list,
                 initialize=0.5,
-                bounds=(1e-8, 100),
+                bounds=(1e-12, 100),
                 doc='Phase-component molar flow rates [mol/s]')
 
         self.pressure = Var(initialize=101325,
-                            bounds=(101325, 400000),
+                            bounds=(100000, 400000),
                             domain=NonNegativeReals,
                             doc='State pressure [Pa]')
         self.temperature = Var(initialize=298.15,
-                               bounds=(298.15, 1000),
+                               bounds=(298, 1000),
                                domain=NonNegativeReals,
                                doc='State temperature [K]')
 
@@ -1090,7 +1091,7 @@ class IdealStateBlockData(StateBlockData):
         # Get default scale factors
         super().calculate_scaling_factors()
 
-        is_two_phase = len(self._params.phase_list) == 2  
+        is_two_phase = len(self._params.phase_list) == 2
         sf_flow = iscale.get_scaling_factor(
             self.flow_mol, default=1, warning=True)
         sf_T = iscale.get_scaling_factor(
@@ -1172,4 +1173,3 @@ class IdealStateBlockData(StateBlockData):
                 sf = iscale.get_scaling_factor(
                     self.gibbs_mol_phase[p], default=1, warning=True)
                 iscale.constraint_scaling_transform(c, sf, overwrite=False)
-
