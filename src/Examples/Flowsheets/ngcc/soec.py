@@ -1158,7 +1158,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         rows = set()
         cols = set()
         tags = []
-        for tag, stream, col in SoecStandaloneFlowsheetData._stream_col_gen(tag_group):
+        for tag, stream, col in SoecFlowsheetData._stream_col_gen(tag_group):
             rows.add(stream)
             cols.add(col)
             tags.append((tag, stream, col))
