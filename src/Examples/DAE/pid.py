@@ -27,17 +27,16 @@ import pytest
 import pyomo.environ as pyo
 from pyomo.network import Arc
 from idaes.core import FlowsheetBlock, MaterialBalanceType
-from idaes.generic_models.unit_models import Heater, Valve
-from idaes.generic_models.properties import iapws95
+from idaes.models.unit_models import Heater, Valve
+from idaes.models.properties import iapws95
 from idaes.core.util.initialization import propagate_state
-from idaes.generic_models.control.controller import (
+from idaes.models.control.controller import (
     PIDController,
     ControllerType,
     ControllerMVBoundType,
 )
 import idaes.core.util.scaling as iscale
-from idaes.core.util import get_solver
-from idaes.core.solvers import petsc
+from idaes.core.solvers import get_solver, petsc
 
 
 def _valve_pressure_flow_cb(b):
