@@ -30,11 +30,13 @@ from idaes.core.util.tags import svg_tag
 from idaes.core.util.initialization import propagate_state
 from idaes.core import FlowsheetBlockData, declare_process_block_class
 import idaes.core.util as iutil
+from idaes.core.solvers import get_solver
 import idaes.core.util.scaling as iscale
-from idaes.generic_models.properties import iapws95
+from idaes.models.properties import iapws95
 from idaes.models_extra.power_generation.properties import FlueGasParameterBlock
 from idaes.models_extra.power_generation.unit_models.helm.phase_separator import (
-    HelmPhaseSeparator)
+    HelmPhaseSeparator,
+)
 from idaes.models_extra.power_generation.unit_models.helm import (
     HelmMixer,
     MomentumMixingType,
@@ -42,8 +44,8 @@ from idaes.models_extra.power_generation.unit_models.helm import (
     HelmValve,
     HelmIsentropicCompressor as WaterPump,
 )
-from idaes.generic_models.unit_models import Mixer, Separator as Splitter
-from idaes.generic_models.unit_models.heat_exchanger import (
+from idaes.models.unit_models import Mixer, Separator as Splitter
+from idaes.models.unit_models.heat_exchanger import (
     HeatExchanger,
     HeatExchangerFlowPattern,
     delta_temperature_lmtd_callback as delta_temp_cb,
@@ -85,8 +87,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         )
 
     def _add_unit_models(self):
-        """Add process unit models
-        """
+        """Add process unit models"""
         # short refernce to property parameter blocks
         prop_water = self.prop_water
         prop_gas = self.prop_gas
@@ -429,17 +430,20 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         )
 
     def _add_flowsheet_constraints(self):
-        """Add additional flowsheet constraints.
-        """
+        """Add additional flowsheet constraints."""
+
         @self.evap_ip.Constraint(
-            self.config.time, doc="Everything evaporates in IP evaporator")
+            self.config.time, doc="Everything evaporates in IP evaporator"
+        )
         def ip_sat_vap_eqn(b, t):
             return (
                 b.tube.properties_out[t].enth_mol / 1e4
                 == (b.tube.properties_out[t].enth_mol_sat_phase["Vap"] + 30) / 1e4
             )
+
         @self.evap_hp.Constraint(
-            self.config.time, doc="Everything evaporates in HP evaporator")
+            self.config.time, doc="Everything evaporates in HP evaporator"
+        )
         def hp_sat_vap_eqn(b, t):
             return (
                 b.tube.properties_out[t].enth_mol / 1e4
@@ -737,9 +741,10 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.evap_lp.overall_heat_transfer_coefficient.fix(212)
 
         self.mixer_soec.soec_makeup.flow_mol.fix(0)
-        self.mixer_soec.soec_makeup.pressure.fix(8*pyo.units.bar)
+        self.mixer_soec.soec_makeup.pressure.fix(8 * pyo.units.bar)
         self.mixer_soec.soec_makeup.enth_mol.fix(
-            iapws95.htpx(P=8*pyo.units.bar, x=0.2))
+            iapws95.htpx(P=8 * pyo.units.bar, x=0.2)
+        )
 
         self.sh_lp.tube_di.fix(0.051)
         self.sh_lp.tube_thickness.fix(0.003)
@@ -978,9 +983,8 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp4.fcorrection_dp_shell.fix(0.52)
 
     def _set_scaling_factors(self):
-        """ Set flowsheet scaling factors
-        """
-        hx_list = [ # list of boiler heat exchangers
+        """Set flowsheet scaling factors"""
+        hx_list = [  # list of boiler heat exchangers
             self.econ_lp,
             self.sh_lp,
             self.econ_ip1,
@@ -998,7 +1002,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             self.sh_hp3,
             self.sh_hp4,
         ]
-        for unit in hx_list: # set boiler hx scaling factors
+        for unit in hx_list:  # set boiler hx scaling factors
             iscale.set_scaling_factor(unit.side_1.heat, 1e-6)
             iscale.set_scaling_factor(unit.side_2.heat, 1e-6)
             iscale.set_scaling_factor(unit.overall_heat_transfer_coefficient, 1e-2)
@@ -1041,9 +1045,15 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         iscale.set_scaling_factor(self.evap_hp.overall_heat_transfer_coefficient, 1e-2)
 
         for t in self.config.time:
-            iscale.constraint_scaling_transform(self.mixer1.mixer1_pressure_eqn[t], 1e-6)
-            iscale.constraint_scaling_transform(self.mixer_soec.mixer_soec_pressure_eqn[t], 1e-6)
-            iscale.constraint_scaling_transform(self.mixer_ip1.mixer_ip1_pressure_eqn[t], 1e-6)
+            iscale.constraint_scaling_transform(
+                self.mixer1.mixer1_pressure_eqn[t], 1e-6
+            )
+            iscale.constraint_scaling_transform(
+                self.mixer_soec.mixer_soec_pressure_eqn[t], 1e-6
+            )
+            iscale.constraint_scaling_transform(
+                self.mixer_ip1.mixer_ip1_pressure_eqn[t], 1e-6
+            )
 
     def initialize(
         self,
@@ -1053,7 +1063,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         load_from="hrsg_init.json.gz",
         save_to="hrsg_init.json.gz",
     ):
-        """ Initialize the HRSG flowsheet
+        """Initialize the HRSG flowsheet
 
         Args:
             outlvl: Logging level for initializtion
@@ -1068,7 +1078,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         init_log = idaeslog.getInitLogger(self.name, outlvl, tag="flowsheet")
         solve_log = idaeslog.getSolveLogger(self.name, outlvl, tag="flowsheet")
 
-        solver_obj = iutil.get_solver(solver, optarg)
+        solver_obj = get_solver(solver, optarg)
 
         init_log.info_high("HRSG Initialization Starting")
 
@@ -1090,6 +1100,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             "N2": 0.75,
             "O2": 0.1217,
         }
+
         def _set_fg_port(port, temperature, pressure, flow=fg_rate, fix=False):
             port.temperature[:].set_value(temperature)
             port.pressure[:].set_value(pressure)
@@ -1128,13 +1139,14 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         propagate_state(self.lp06)
         propagate_state(self.lp10)
 
-
         self.splitter1.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
         propagate_state(self.lp08)
         propagate_state(self.lp09)
 
         self.split_fg_lp.split_fraction[0, "toLP_SH"].fix(0.16779)
-        _set_fg_port(self.split_fg_lp.inlet, temperature=640.15, pressure=103421, fix=True)
+        _set_fg_port(
+            self.split_fg_lp.inlet, temperature=640.15, pressure=103421, fix=True
+        )
         self.split_fg_lp.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
         propagate_state(self.g20)
         propagate_state(self.g22)
@@ -1242,7 +1254,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.sh_hp3.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
         propagate_state(self.hp10)
 
-        _set_fg_port(self.sh_hp4.shell_inlet, temperature=898.15, pressure=103421, fix=True)
+        _set_fg_port(
+            self.sh_hp4.shell_inlet, temperature=898.15, pressure=103421, fix=True
+        )
         self.sh_hp4.initialize(solver=solver, outlvl=outlvl, optarg=optarg)
 
         # unfix inlets that were fixed for initialization
@@ -1260,9 +1274,6 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.split_fg_lp.inlet.temperature[0].unfix()
 
         gas_streams = [
-            #self.g09,
-            #self.g10,
-            #self.g11,
             self.g12,
             self.g13,
             self.g14,
@@ -1272,17 +1283,9 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             self.g18,
             self.g19,
             self.g20,
-            self.g21,
-            self.g22,
-            self.g23,
-            self.g24,
-            self.g25,
             self.g26,
             self.g27,
-            #self.g28,
-            #self.g29,
         ]
-        #res = solver_obj.solve(self, tee=True)
         for g in gas_streams:
             g.destination.fix()
             g.expanded_block.deactivate()
@@ -1302,14 +1305,13 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         for g in gas_streams:
             g.destination.unfix()
             g.expanded_block.activate()
-        res = solver_obj.solve(self, tee=True)
 
+        res = solver_obj.solve(self, tee=True)
 
         if save_to is not None:
             iutil.to_json(self, fname=save_to)
             init_log.info_low(f"Initialization saved to {save_to}")
         init_log.info("High pressure system initialization - Completed")
-
 
     def _stream_tags(self):
         tag_stm = iutil.ModelTagGroup()
@@ -1362,7 +1364,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
                 doc=f"{i}: volumetric flow",
                 expr=s.flow_vol,
                 format_string="{:.3f}",
-                display_units=pyo.units.m ** 3 / pyo.units.s,
+                display_units=pyo.units.m**3 / pyo.units.s,
             )
             tag_group[f"{i}_P"] = iutil.ModelTag(
                 doc=f"{i}: pressure",
