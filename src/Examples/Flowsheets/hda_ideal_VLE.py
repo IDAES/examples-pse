@@ -66,6 +66,7 @@ class HDAParameterData(PhysicalParameterBlock):
         self.toluene = Component()
         self.methane = Component()
         self.hydrogen = Component()
+#        self.diphenyl = Component()
 
         self.Liq = LiquidPhase()
         self.Vap = VaporPhase()
@@ -75,21 +76,23 @@ class HDAParameterData(PhysicalParameterBlock):
                            "Vap": self.component_list}
 
         # List of phase equilibrium index
-        self.phase_equilibrium_idx = Set(initialize=[1, 2, 3, 4, 5])
+        self.phase_equilibrium_idx = Set(initialize=[1, 2, 3, 4])  #, 5])
 
         self.phase_equilibrium_list = \
             {1: ["benzene", ("Vap", "Liq")],
              2: ["toluene", ("Vap", "Liq")],
              3: ["hydrogen", ("Vap", "Liq")],
-             4: ["methane", ("Vap", "Liq")],
-             5: ["diphenyl", ("Vap", "Liq")]}
+             4: ["methane", ("Vap", "Liq")]}
+#             5: ["diphenyl", ("Vap", "Liq")]}
 
         # Thermodynamic reference state
         self.pressure_ref = Param(mutable=True,
                                   default=101325,
+                                  units=pyunits.Pa,
                                   doc='Reference pressure [Pa]')
         self.temperature_ref = Param(mutable=True,
                                      default=298.15,
+                                     units=pyunits.K,
                                      doc='Reference temperature [K]')
 
         # Source: The Properties of Gases and Liquids (1987)
@@ -97,14 +100,15 @@ class HDAParameterData(PhysicalParameterBlock):
         pressure_crit_data = {'benzene': 48.9e5,
                               'toluene': 41e5,
                               'hydrogen': 12.9e5,
-                              'methane': 46e5,
-                              'diphenyl': 38.5e5
+                              'methane': 46e5
+#                              'diphenyl': 38.5e5
                               }
 
         self.pressure_crit = Param(
             self.component_list,
             within=NonNegativeReals,
             mutable=False,
+            units=pyunits.Pa,
             initialize=extract_data(pressure_crit_data),
             doc='Critical pressure [Pa]')
 
@@ -113,14 +117,15 @@ class HDAParameterData(PhysicalParameterBlock):
         temperature_crit_data = {'benzene': 562.2,
                                  'toluene': 591.8,
                                  'hydrogen': 33.0,
-                                 'methane': 190.4,
-                                 'diphenyl': 789
+                                 'methane': 190.4
+#                                 'diphenyl': 789
                                  }
 
         self.temperature_crit = Param(
             self.component_list,
             within=NonNegativeReals,
             mutable=False,
+            units=pyunits.K,
             initialize=extract_data(temperature_crit_data),
             doc='Critical temperature [K]')
 
@@ -128,6 +133,7 @@ class HDAParameterData(PhysicalParameterBlock):
         self.gas_const = Param(within=NonNegativeReals,
                                mutable=False,
                                default=8.314,
+                               units=pyunits.J/pyunits.mol/pyunits.K,
                                doc='Gas Constant [J/mol.K]')
 
         # Source: The Properties of Gases and Liquids (1987)
@@ -135,11 +141,12 @@ class HDAParameterData(PhysicalParameterBlock):
         mw_comp_data = {'benzene': 78.1136E-3,
                         'toluene': 92.1405E-3,
                         'hydrogen': 2.016e-3,
-                        'methane': 16.043e-3,
-                        'diphenyl': 154.212e-4}
+                        'methane': 16.043e-3}
+#                        'diphenyl': 154.212e-4}
 
         self.mw_comp = Param(self.component_list,
                              mutable=False,
+                             units=pyunits.kg/pyunits.mol,
                              initialize=extract_data(mw_comp_data),
                              doc="molecular weight Kg/mol")
 
@@ -161,18 +168,43 @@ class HDAParameterData(PhysicalParameterBlock):
                          ('methane', '1'): 2.9214,
                          ('methane', '2'): 0.28976,
                          ('methane', '3'): 190.56,
-                         ('methane', '4'): 0.28881,
-                         ('diphenyl', '1'): 0.5039,
-                         ('diphenyl', '2'): 0.25273,
-                         ('diphenyl', '3'): 789.26,
-                         ('diphenyl', '4'): 0.281}
+                         ('methane', '4'): 0.28881}
+#                         ('diphenyl', '1'): 0.5039,
+#                         ('diphenyl', '2'): 0.25273,
+#                         ('diphenyl', '3'): 789.26,
+#                         ('diphenyl', '4'): 0.281}
 
-        self.dens_liq_params = Param(
-                self.component_list,
-                ['1', '2', '3', '4'],
-                mutable=False,
-                initialize=extract_data(dens_liq_data),
-                doc="Parameters to compute liquid densities")
+        self.dens_liq_param_1 = Param(
+            self.component_list,
+            mutable=False,
+            initialize={c: v for (c, j), v in dens_liq_data.items() if j == '1'},
+            doc="Parameter 1 to compute liquid densities",
+            units=pyunits.kmol*pyunits.m**-3
+        )
+
+        self.dens_liq_param_2 = Param(
+            self.component_list,
+            mutable=False,
+            initialize={c: v for (c, j), v in dens_liq_data.items() if j == '2'},
+            doc="Parameter 2 to compute liquid densities",
+            units=pyunits.dimensionless
+        )
+
+        self.dens_liq_param_3 = Param(
+            self.component_list,
+            mutable=False,
+            initialize={c: v for (c, j), v in dens_liq_data.items() if j == '3'},
+            doc="Parameter 3 to compute liquid densities",
+            units=pyunits.K
+        )
+
+        self.dens_liq_param_4 = Param(
+            self.component_list,
+            mutable=False,
+            initialize={c: v for (c, j), v in dens_liq_data.items() if j == '4'},
+            doc="Parameter 4 to compute liquid densities",
+            units=pyunits.dimensionless
+        )
 
         # Boiling point at standard pressure
         # Source: Perry's Chemical Engineers Handbook
@@ -180,12 +212,13 @@ class HDAParameterData(PhysicalParameterBlock):
         bp_data = {('benzene'): 353.25,
                    ('toluene'): 383.95,
                    ('hydrogen'): 20.45,
-                   ('methane'): 111.75,
-                   ('diphenyl'): 528.05}
+                   ('methane'): 111.75}
+#                   ('diphenyl'): 528.05}
 
         self.temperature_boil = Param(
                 self.component_list,
                 mutable=False,
+                units=pyunits.K,
                 initialize=extract_data(bp_data),
                 doc="Pure component boiling points at standard pressure [K]")
 
@@ -233,23 +266,62 @@ class HDAParameterData(PhysicalParameterBlock):
                       ('Vap', 'methane', '2'): 5.213e-2,
                       ('Vap', 'methane', '3'): 1.197e-5,
                       ('Vap', 'methane', '4'): -1.132e-8,
-                      ('Vap', 'methane', '5'): 0,
-                      ('Liq', 'diphenyl', '1'): 1.2177e5,
-                      ('Liq', 'diphenyl', '2'): 4.2930e2,
-                      ('Liq', 'diphenyl', '3'): 0,
-                      ('Liq', 'diphenyl', '4'): 0,
-                      ('Liq', 'diphenyl', '5'): 0,
-                      ('Vap', 'diphenyl', '1'): -9.707e1,
-                      ('Vap', 'diphenyl', '2'): 1.106e0,
-                      ('Vap', 'diphenyl', '3'): -8.855e-4,
-                      ('Vap', 'diphenyl', '4'): 2.790e-7,
-                      ('Vap', 'diphenyl', '5'): 0}
+                      ('Vap', 'methane', '5'): 0}
+#                      ('Liq', 'diphenyl', '1'): 1.2177e5,
+#                      ('Liq', 'diphenyl', '2'): 4.2930e2,
+#                      ('Liq', 'diphenyl', '3'): 0,
+#                      ('Liq', 'diphenyl', '4'): 0,
+#                      ('Liq', 'diphenyl', '5'): 0,
+#                      ('Vap', 'diphenyl', '1'): -9.707e1,
+#                      ('Vap', 'diphenyl', '2'): 1.106e0,
+#                      ('Vap', 'diphenyl', '3'): -8.855e-4,
+#                      ('Vap', 'diphenyl', '4'): 2.790e-7,
+#                      ('Vap', 'diphenyl', '5'): 0}
 
-        self.cp_ig = Param(self.phase_list, self.component_list,
-                           ['1', '2', '3', '4', '5'],
-                           mutable=False,
-                           initialize=extract_data(cp_ig_data),
-                           doc="parameters to compute Cp_comp")
+        self.cp_ig_1 = Param(
+            self.phase_list,
+            self.component_list,
+            mutable=False,
+            initialize={(p, c): v for (p, c, j), v in cp_ig_data.items() if j == '1'},
+            doc="Parameter 1 to compute Cp_comp",
+            units=pyunits.J/pyunits.mol/pyunits.K
+        )
+
+        self.cp_ig_2 = Param(
+            self.phase_list,
+            self.component_list,
+            mutable=False,
+            initialize={(p, c): v for (p, c, j), v in cp_ig_data.items() if j == '2'},
+            doc="Parameter 2 to compute Cp_comp",
+            units=pyunits.J/pyunits.mol/pyunits.K**2
+        )
+
+        self.cp_ig_3 = Param(
+            self.phase_list,
+            self.component_list,
+            mutable=False,
+            initialize={(p, c): v for (p, c, j), v in cp_ig_data.items() if j == '3'},
+            doc="Parameter 3 to compute Cp_comp",
+            units=pyunits.J/pyunits.mol/pyunits.K**3
+        )
+
+        self.cp_ig_4 = Param(
+            self.phase_list,
+            self.component_list,
+            mutable=False,
+            initialize={(p, c): v for (p, c, j), v in cp_ig_data.items() if j == '4'},
+            doc="Parameter 4 to compute Cp_comp",
+            units=pyunits.J/pyunits.mol/pyunits.K**4
+        )
+
+        self.cp_ig_5 = Param(
+            self.phase_list,
+            self.component_list,
+            mutable=False,
+            initialize={(p, c): v for (p, c, j), v in cp_ig_data.items() if j == '5'},
+            doc="Parameter 5 to compute Cp_comp",
+            units=pyunits.J/pyunits.mol/pyunits.K**5
+        )
 
         # Source: The Properties of Gases and Liquids (1987)
         # 4th edition, Chemical Engineering Series - Robert C. Reid
@@ -266,25 +338,46 @@ class HDAParameterData(PhysicalParameterBlock):
                                    ('hydrogen', 'C'): 7.726,
                                    ('methane', 'A'): 3.990,
                                    ('methane', 'B'): 443.0,
-                                   ('methane', 'C'): -0.49,
-                                   ('diphenyl', 'A'): 4.345,
-                                   ('diphenyl', 'B'): 1988,
-                                   ('diphenyl', 'C'): -70.82}
+                                   ('methane', 'C'): -0.49}
+#                                   ('diphenyl', 'A'): 4.345,
+#                                   ('diphenyl', 'B'): 1988,
+#                                   ('diphenyl', 'C'): -70.82}
 
-        self.pressure_sat_coeff = Param(
+        self.pressure_sat_coeff_A = Param(
             self.component_list,
-            ['A', 'B', 'C'],
             mutable=False,
-            initialize=extract_data(pressure_sat_coeff_data),
-            doc="parameters to compute Cp_comp")
+            initialize={c: v for (c, j), v in pressure_sat_coeff_data.items() if j == 'A'},
+            doc="Parameter A to compute saturated pressure",
+            units=pyunits.dimensionless
+        )
+
+        self.pressure_sat_coeff_B = Param(
+            self.component_list,
+            mutable=False,
+            initialize={c: v for (c, j), v in pressure_sat_coeff_data.items() if j == 'B'},
+            doc="Parameter B to compute saturated pressure",
+            units=pyunits.K
+        )
+
+        self.pressure_sat_coeff_C = Param(
+            self.component_list,
+            mutable=False,
+            initialize={c: v for (c, j), v in pressure_sat_coeff_data.items() if j == 'C'},
+            doc="Parameter C to compute saturated pressure",
+            units=pyunits.K
+        )
 
         # Source: The Properties of Gases and Liquids (1987)
         # 4th edition, Chemical Engineering Series - Robert C. Reid
-        dh_vap = {'benzene': 3.387e4, 'toluene': 3.8262e4,
-                  'hydrogen': 0, 'methane': 0, "diphenyl": 6.271e4}
+        dh_vap = {'benzene': 3.387e4,
+                  'toluene': 3.8262e4,
+                  'hydrogen': 0,
+                  'methane': 0}
+#                  "diphenyl": 6.271e4}
 
         self.dh_vap = Param(self.component_list,
                             mutable=False,
+                            units=pyunits.J/pyunits.mol,
                             initialize=extract_data(dh_vap),
                             doc="heat of vaporization")
 
@@ -527,14 +620,17 @@ class IdealStateBlockData(StateBlockData):
                 self._params.phase_list,
                 self._params.component_list,
                 initialize=0.5,
+                units=pyunits.mol/pyunits.s,
                 bounds=(1e-12, 100),
                 doc='Phase-component molar flow rates [mol/s]')
 
         self.pressure = Var(initialize=101325,
-                            bounds=(100000, 400000),
+                            bounds=(100000, 1000000),
+                            units=pyunits.Pa,
                             domain=NonNegativeReals,
                             doc='State pressure [Pa]')
         self.temperature = Var(initialize=298.15,
+                               units=pyunits.K,
                                bounds=(298, 1000),
                                domain=NonNegativeReals,
                                doc='State temperature [K]')
@@ -578,14 +674,18 @@ class IdealStateBlockData(StateBlockData):
             # Definition of equilibrium temperature for smooth VLE
             self._teq = Var(
                     initialize=self.temperature.value,
+                    units=pyunits.K,
                     doc='Temperature for calculating phase equilibrium')
             self._t1 = Var(initialize=self.temperature.value,
+                           units=pyunits.K,
                            doc='Intermediate temperature for calculating Teq')
 
             self.eps_1 = Param(default=0.01,
+                               units=pyunits.K,
                                mutable=True,
                                doc='Smoothing parameter for Teq')
             self.eps_2 = Param(default=0.0005,
+                               units=pyunits.K,
                                mutable=True,
                                doc='Smoothing parameter for Teq')
 
@@ -622,6 +722,7 @@ class IdealStateBlockData(StateBlockData):
     def _dens_mol_phase(self):
         self.dens_mol_phase = Var(self._params.phase_list,
                                   initialize=1.0,
+                                  units=pyunits.mol*pyunits.m**-3,
                                   doc="Molar density [mol/m^3]")
 
         def rule_dens_mol_phase(b, p):
@@ -636,6 +737,7 @@ class IdealStateBlockData(StateBlockData):
         self.energy_internal_mol_phase_comp = Var(
                 self._params.phase_list,
                 self._params.component_list,
+                units=pyunits.J/pyunits.mol,
                 doc="Phase-component molar specific internal energies [J/mol]")
 
         def rule_energy_internal_mol_phase_comp(b, p, j):
@@ -655,6 +757,7 @@ class IdealStateBlockData(StateBlockData):
     def _energy_internal_mol_phase(self):
         self.energy_internal_mol_phase = Var(
             self._params.phase_list,
+            units=pyunits.J/pyunits.mol,
             doc='Phase molar specific internal energies [J/mol]')
 
         def rule_energy_internal_mol_phase(b, p):
@@ -671,6 +774,7 @@ class IdealStateBlockData(StateBlockData):
                 self._params.phase_list,
                 self._params.component_list,
                 initialize=7e5,
+                units=pyunits.J/pyunits.mol,
                 doc='Phase-component molar specific enthalpies [J/mol]')
 
         def rule_enth_mol_phase_comp(b, p, j):
@@ -687,6 +791,7 @@ class IdealStateBlockData(StateBlockData):
         self.enth_mol_phase = Var(
                 self._params.phase_list,
                 initialize=7e5,
+                units=pyunits.J/pyunits.mol,
                 doc='Phase molar specific enthalpies [J/mol]')
 
         def rule_enth_mol_phase(b, p):
@@ -701,6 +806,7 @@ class IdealStateBlockData(StateBlockData):
         self.entr_mol_phase_comp = Var(
                 self._params.phase_list,
                 self._params.component_list,
+                units=pyunits.J/pyunits.mol/pyunits.K,
                 doc='Phase-component molar specific entropies [J/mol.K]')
 
         def rule_entr_mol_phase_comp(b, p, j):
@@ -716,6 +822,7 @@ class IdealStateBlockData(StateBlockData):
     def _entr_mol_phase(self):
         self.entr_mol_phase = Var(
                 self._params.phase_list,
+                units=pyunits.J/pyunits.mol/pyunits.K,
                 doc='Phase molar specific enthropies [J/mol.K]')
 
         def rule_entr_mol_phase(b, p):
@@ -897,18 +1004,20 @@ class IdealStateBlockData(StateBlockData):
 # as needed
     def _temperature_bubble(self):
         self.temperature_bubble = Param(initialize=33.0,
+                                        units=pyunits.K,
                                         doc="Bubble point temperature (K)")
 
     def _temperature_dew(self):
 
         self.temperature_dew = Var(initialize=298.15,
+                                   units=pyunits.K,
                                    doc="Dew point temperature (K)")
 
         def rule_psat_dew(b, j):
-            return 1e5*10**(b._params.pressure_sat_coeff[j, 'A'] -
-                            b._params.pressure_sat_coeff[j, 'B'] /
+            return 1e5*10**(b._params.pressure_sat_coeff_A[j] -
+                            b._params.pressure_sat_coeff_B[j] /
                             (b.temperature_dew +
-                             b._params.pressure_sat_coeff[j, 'C']))
+                             b._params.pressure_sat_coeff_C[j]))
 
         try:
             # Try to build expression
@@ -919,7 +1028,7 @@ class IdealStateBlockData(StateBlockData):
                 return b.pressure * sum(b.mole_frac_comp[i] /
                                         b._p_sat_dewT[i]
                                         for i in ['toluene', 'benzene']) \
-                    - 1 == 0
+                    - 1*pyunits.Pa == 0
             self.eq_temperature_dew = Constraint(rule=rule_temp_dew)
         except AttributeError:
             # If expression fails, clean up so that DAE can try again later
@@ -930,17 +1039,19 @@ class IdealStateBlockData(StateBlockData):
 
     def _pressure_bubble(self):
         self.pressure_bubble = Param(initialize=1e8,
+                                     units=pyunits.Pa,
                                      doc="Bubble point pressure (Pa)")
 
     def _pressure_dew(self):
         self.pressure_dew = Var(initialize=298.15,
+                                units=pyunits.Pa,
                                 doc="Dew point pressure (Pa)")
 
         def rule_psat_dew(b, j):
-            return 1e5*10**(b._params.pressure_sat_coeff[j, 'A'] -
-                            b._params.pressure_sat_coeff[j, 'B'] /
+            return 1e5*10**(b._params.pressure_sat_coeff_A[j] -
+                            b._params.pressure_sat_coeff_B[j] /
                             (b.temperature +
-                             b._params.pressure_sat_coeff[j, 'C']))
+                             b._params.pressure_sat_coeff_C[j]))
 
         try:
             # Try to build expression
@@ -951,7 +1062,7 @@ class IdealStateBlockData(StateBlockData):
                 return b.pressure_dew * \
                     sum(b.mole_frac_comp[i] / b._p_sat_dewP[i]
                         for i in ['toluene', 'benzene']) \
-                    - 1 == 0
+                    - 1*pyunits.Pa == 0
             self.eq_pressure_dew = Constraint(rule=rule_pressure_dew)
         except AttributeError:
             # If expression fails, clean up so that DAE can try again later
@@ -965,11 +1076,11 @@ class IdealStateBlockData(StateBlockData):
     def _dens_mol_liq(b):
         return b.dens_mol_phase['Liq'] == 1e3*sum(
                 b.mole_frac_phase_comp['Liq', j] *
-                b._params.dens_liq_params[j, '1'] /
-                b._params.dens_liq_params[j, '2'] **
+                b._params.dens_liq_param_1[j] /
+                b._params.dens_liq_param_2[j] **
                 (1 + (1-b.temperature /
-                      b._params.dens_liq_params[j, '3']) **
-                 b._params.dens_liq_params[j, '4'])
+                      b._params.dens_liq_param_3[j]) **
+                 b._params.dens_liq_param_4[j])
                 for j in ['benzene', 'toluene'])                                # TODO: Need to include diphenyl here later
 
     def _fug_liq(self):
@@ -984,40 +1095,41 @@ class IdealStateBlockData(StateBlockData):
     def _pressure_sat(self):
         self.pressure_sat = Var(self._params.component_list,
                                 initialize=101325,
+                                units=pyunits.Pa,
                                 doc="Vapor pressure [Pa]")
 
         def rule_P_sat(b, j):
-            return ((log10(b.pressure_sat[j]*1e-5) -
-                     b._params.pressure_sat_coeff[j, 'A']) *
-                    (b._teq + b._params.pressure_sat_coeff[j, 'C'])) == \
-                   -b._params.pressure_sat_coeff[j, 'B']
+            return ((log10(b.pressure_sat[j]/pyunits.Pa*1e-5) -
+                     b._params.pressure_sat_coeff_A[j]) *
+                    (b._teq + b._params.pressure_sat_coeff_C[j])) == \
+                   -b._params.pressure_sat_coeff_B[j]
         self.eq_pressure_sat = Constraint(self._params.component_list,
                                           rule=rule_P_sat)
 
     def _enth_mol_comp_liq(b, j):
         return b.enth_mol_phase_comp['Liq', j] * 1E3 == \
-                ((b._params.cp_ig['Liq', j, '5'] / 5) *
+                ((b._params.cp_ig_5['Liq', j] / 5) *
                     (b.temperature**5 - b._params.temperature_ref**5)
-                    + (b._params.cp_ig['Liq', j, '4'] / 4) *
+                    + (b._params.cp_ig_4['Liq', j] / 4) *
                       (b.temperature**4 - b._params.temperature_ref**4)
-                    + (b._params.cp_ig['Liq', j, '3'] / 3) *
+                    + (b._params.cp_ig_3['Liq', j] / 3) *
                       (b.temperature**3 - b._params.temperature_ref**3)
-                    + (b._params.cp_ig['Liq', j, '2'] / 2) *
+                    + (b._params.cp_ig_2['Liq', j] / 2) *
                       (b.temperature**2 - b._params.temperature_ref**2)
-                    + b._params.cp_ig['Liq', j, '1'] *
+                    + b._params.cp_ig_1['Liq', j] *
                       (b.temperature - b._params.temperature_ref))
 
     def _entr_mol_comp_liq(b, j):
         return b.entr_mol_phase_comp['Liq', j] * 1E3 == (
-                ((b._params.cp_ig['Liq', j, '5'] / 4) *
+                ((b._params.cp_ig_5['Liq', j] / 4) *
                     (b.temperature**4 - b._params.temperature_ref**4)
-                    + (b._params.cp_ig['Liq', j, '4'] / 3) *
+                    + (b._params.cp_ig_4['Liq', j] / 3) *
                       (b.temperature**3 - b._params.temperature_ref**3)
-                    + (b._params.cp_ig['Liq', j, '3'] / 2) *
+                    + (b._params.cp_ig_3['Liq', j] / 2) *
                       (b.temperature**2 - b._params.temperature_ref**2)
-                    + b._params.cp_ig['Liq', j, '2'] *
+                    + b._params.cp_ig_2['Liq', j] *
                       (b.temperature - b._params.temperature_ref)
-                    + b._params.cp_ig['Liq', j, '1'] *
+                    + b._params.cp_ig_1['Liq', j] *
                       log(b.temperature / b._params.temperature_ref)) -
                 b._params.gas_const *
                 log(b.mole_frac_phase_comp['Liq', j]*b.pressure /
@@ -1049,6 +1161,7 @@ class IdealStateBlockData(StateBlockData):
         # TODO : something more rigorous would be nice
         self.ds_vap = Var(self._params.component_list,
                           initialize=86,
+                          units=pyunits.J/pyunits.mol/pyunits.K,
                           doc="Entropy of vaporization [J/mol.K]")
 
         def rule_ds_vap(b, j):
@@ -1059,29 +1172,29 @@ class IdealStateBlockData(StateBlockData):
 
     def _enth_mol_comp_vap(b, j):
         return b.enth_mol_phase_comp['Vap', j] == b.dh_vap[j] + \
-                ((b._params.cp_ig['Vap', j, '5'] / 5) *
+                ((b._params.cp_ig_5['Vap', j] / 5) *
                     (b.temperature**5 - b._params.temperature_ref**5)
-                    + (b._params.cp_ig['Vap', j, '4'] / 4) *
+                    + (b._params.cp_ig_4['Vap', j] / 4) *
                       (b.temperature**4 - b._params.temperature_ref**4)
-                    + (b._params.cp_ig['Vap', j, '3'] / 3) *
+                    + (b._params.cp_ig_3['Vap', j] / 3) *
                       (b.temperature**3 - b._params.temperature_ref**3)
-                    + (b._params.cp_ig['Vap', j, '2'] / 2) *
+                    + (b._params.cp_ig_2['Vap', j] / 2) *
                       (b.temperature**2 - b._params.temperature_ref**2)
-                    + b._params.cp_ig['Vap', j, '1'] *
+                    + b._params.cp_ig_1['Vap', j] *
                       (b.temperature - b._params.temperature_ref))
 
     def _entr_mol_comp_vap(b, j):
         return b.entr_mol_phase_comp['Vap', j] == (
                 b.ds_vap[j] +
-                ((b._params.cp_ig['Vap', j, '5'] / 4) *
+                ((b._params.cp_ig_5['Vap', j] / 4) *
                     (b.temperature**4 - b._params.temperature_ref**4)
-                    + (b._params.cp_ig['Vap', j, '4'] / 3) *
+                    + (b._params.cp_ig_4['Vap', j] / 3) *
                       (b.temperature**3 - b._params.temperature_ref**3)
-                    + (b._params.cp_ig['Vap', j, '3'] / 2) *
+                    + (b._params.cp_ig_3['Vap', j] / 2) *
                       (b.temperature**2 - b._params.temperature_ref**2)
-                    + b._params.cp_ig['Vap', j, '2'] *
+                    + b._params.cp_ig_2['Vap', j] *
                       (b.temperature - b._params.temperature_ref)
-                    + b._params.cp_ig['Vap', j, '1'] *
+                    + b._params.cp_ig_1['Vap', j] *
                       log(b.temperature / b._params.temperature_ref)) -
                 b._params.gas_const *
                 log(b.mole_frac_phase_comp['Vap', j]*b.pressure /
