@@ -17,8 +17,14 @@ This runs the same code as the Jupyter notebook by the same name.
 See that notebook for details.
 """
 # stdlib
+from io import StringIO
+import logging
 import sys
-# Pyomo
+import warnings
+# NGCC
+import pyomo.environ as pyo
+import idaes
+from idaes.core.util.model_statistics import degrees_of_freedom
 from pyomo.environ import (Constraint,
                            Var,
                            ConcreteModel,
@@ -28,7 +34,6 @@ from pyomo.environ import (Constraint,
                            TransformationFactory,
                            value)
 from pyomo.network import Arc, SequentialDecomposition
-# IDAES
 from idaes.core import FlowsheetBlock
 from idaes.generic_models.unit_models import (PressureChanger,
                                         Mixer,
@@ -36,29 +41,223 @@ from idaes.generic_models.unit_models import (PressureChanger,
                                         Heater,
                                         StoichiometricReactor)
 from idaes.generic_models.unit_models import Flash
+try:
+    # importing from same directory
+    import hda_ideal_VLE as thermo_props
+    import hda_reaction as reaction_props
+except ModuleNotFoundError:
+    # importing from installed examples_pse package
+    from idaes_examples.Tutorials.Basics import hda_ideal_VLE as thermo_props
+    from idaes_examples.Tutorials.Basics import hda_reaction as reaction_props
 from idaes.generic_models.unit_models.pressure_changer import ThermodynamicAssumption
 from idaes.core.util.model_statistics import degrees_of_freedom
 
+# Import idaes logger to set output levels
+import idaes.logger as idaeslog
+
+_log = logging.getLogger(__name__)
 
 __author__ = "Dan Gunter"  # GH: dangunter, email: dkgunter@lbl.gov
 
 
-def create_flowsheet() -> FlowsheetBlock:
-    """Create an IDAES flowsheet.
-
-    {description of the flowsheet created}
+def quiet():
+    """Make sure we don't get any spurious output.
+    This should not really be this hard(?).
     """
-    m = ConcreteModel()
+    def remove_handlers(g):
+        for h in g.handlers:
+            g.removeHandler(h)
+
+    for logname in "idaes", "idaes.solve", "idaes.solve.fs", \
+            "idaes.init", "idaes.init.fs", "pyomo":
+        logger = logging.getLogger(logname)
+        remove_handlers(logger)
+        logger.addHandler(logging.NullHandler())
+        logger.propagate = False
+
+    warnings.simplefilter("ignore")
+
+
+def create_model() -> pyo.ConcreteModel:
+    """## Create an IDAES flowsheet for hydrodealkylation (HDA)
+
+### About HDA
+
+Hydrodealkylation (HDA) is a chemical reaction that often involves reacting
+an aromatic hydrocarbon in the presence of hydrogen gas to form a
+simpler aromatic hydrocarbon devoid of functional groups. In this
+example, toluene will be reacted with hydrogen gas at high temperatures
+ to form benzene via the following reaction:
+
+**C<sub>6</sub>H<sub>5</sub>CH<sub>3</sub> + H<sub>2</sub> → C<sub>6</sub>H<sub>6</sub> + CH<sub>4</sub>**
+
+This reaction is often accompanied by an equilibrium side reaction
+which forms diphenyl, which we will not cover in this example.
+
+### References
+
+This example is based on the 1967 AIChE Student Contest problem as
+present by Douglas, J.M., Chemical  Design of Chemical Processes, 1988,
+McGraw-Hill.
+    """
+    m = pyo.ConcreteModel()
     m.fs = FlowsheetBlock(default={"dynamic": False})
-    return m.fs
+    m.fs.thermo_params = thermo_props.HDAParameterBlock()
+    m.fs.reaction_params = reaction_props.HDAReactionParameterBlock(
+        default={"property_package": m.fs.thermo_params})
+    m.fs.M101 = Mixer(default={"property_package": m.fs.thermo_params,
+                               "inlet_list": ["toluene_feed", "hydrogen_feed",
+                                              "vapor_recycle"]})
+
+    m.fs.H101 = Heater(default={"property_package": m.fs.thermo_params,
+                                "has_pressure_change": False,
+                                "has_phase_equilibrium": True})
+    m.fs.R101 = StoichiometricReactor(
+        default={"property_package": m.fs.thermo_params,
+                 "reaction_package": m.fs.reaction_params,
+                 "has_heat_of_reaction": True,
+                 "has_heat_transfer": True,
+                 "has_pressure_change": False})
+    m.fs.F101 = Flash(default={"property_package": m.fs.thermo_params,
+                               "has_heat_transfer": True,
+                               "has_pressure_change": True})
+    m.fs.S101 = Splitter(default={"property_package": m.fs.thermo_params,
+                                  "ideal_separation": False,
+                                  "outlet_list": ["purge", "recycle"]})
+
+    m.fs.C101 = PressureChanger(default={
+        "property_package": m.fs.thermo_params,
+        "compressor": True,
+        "thermodynamic_assumption": ThermodynamicAssumption.isothermal})
+
+    m.fs.F102 = Flash(default={"property_package": m.fs.thermo_params,
+                               "has_heat_transfer": True,
+                               "has_pressure_change": True})
+    m.fs.s03 = Arc(source=m.fs.M101.outlet, destination=m.fs.H101.inlet)
+    m.fs.s04 = Arc(source=m.fs.H101.outlet, destination=m.fs.R101.inlet)
+    m.fs.s05 = Arc(source=m.fs.R101.outlet, destination=m.fs.F101.inlet)
+    m.fs.s06 = Arc(source=m.fs.F101.vap_outlet, destination=m.fs.S101.inlet)
+    m.fs.s08 = Arc(source=m.fs.S101.recycle, destination=m.fs.C101.inlet)
+    m.fs.s09 = Arc(source=m.fs.C101.outlet,
+                   destination=m.fs.M101.vapor_recycle)
+    m.fs.s10 = Arc(source=m.fs.F101.liq_outlet, destination=m.fs.F102.inlet)
+    TransformationFactory("network.expand_arcs").apply_to(m)
+    m.fs.purity = Expression(
+        expr=m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"] /
+             (m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"]
+              + m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "toluene"]))
+    m.fs.cooling_cost = Expression(expr=0.212e-7 * (-m.fs.F101.heat_duty[0]) +
+                                        0.212e-7 * (-m.fs.R101.heat_duty[0]))
+    m.fs.heating_cost = Expression(expr=2.2e-7 * m.fs.H101.heat_duty[0] +
+                                        1.9e-7 * m.fs.F102.heat_duty[0])
+    m.fs.operating_cost = Expression(expr=(3600 * 24 * 365 *
+                                           (m.fs.heating_cost +
+                                            m.fs.cooling_cost)))
+    return fix_initial_values(m)
 
 
-def initialize_flowsheet(fs: FlowsheetBlock):
+def fix_initial_values(m: ConcreteModel) -> ConcreteModel:
+    quiet()
+    # fix toluene feed stream conditions
+    m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Vap", "benzene"].fix(1e-5)
+    m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Vap", "toluene"].fix(1e-5)
+    m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Vap", "hydrogen"].fix(1e-5)
+    m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Vap", "methane"].fix(1e-5)
+    m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Liq", "benzene"].fix(1e-5)
+    m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Liq", "toluene"].fix(0.30)
+    m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Liq", "hydrogen"].fix(1e-5)
+    m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Liq", "methane"].fix(1e-5)
+    m.fs.M101.toluene_feed.temperature.fix(303.2)
+    m.fs.M101.toluene_feed.pressure.fix(350000)
+    # fix H2 feed conditions
+    m.fs.M101.hydrogen_feed.flow_mol_phase_comp[0, "Vap", "benzene"].fix(1e-5)
+    m.fs.M101.hydrogen_feed.flow_mol_phase_comp[0, "Vap", "toluene"].fix(1e-5)
+    m.fs.M101.hydrogen_feed.flow_mol_phase_comp[0, "Vap", "hydrogen"].fix(0.30)
+    m.fs.M101.hydrogen_feed.flow_mol_phase_comp[0, "Vap", "methane"].fix(0.02)
+    m.fs.M101.hydrogen_feed.flow_mol_phase_comp[0, "Liq", "benzene"].fix(1e-5)
+    m.fs.M101.hydrogen_feed.flow_mol_phase_comp[0, "Liq", "toluene"].fix(1e-5)
+    m.fs.M101.hydrogen_feed.flow_mol_phase_comp[0, "Liq", "hydrogen"].fix(1e-5)
+    m.fs.M101.hydrogen_feed.flow_mol_phase_comp[0, "Liq", "methane"].fix(1e-5)
+    m.fs.M101.hydrogen_feed.temperature.fix(303.2)
+    m.fs.M101.hydrogen_feed.pressure.fix(350000)
+    # H101 outlet temp
+    m.fs.H101.outlet.temperature.fix(600)
+    # Stoichiometric reactor
+    m.fs.R101.conversion = Var(initialize=0.75, bounds=(0, 1))
+
+    m.fs.R101.conv_constraint = Constraint(
+        expr=m.fs.R101.conversion * m.fs.R101.inlet.
+            flow_mol_phase_comp[0, "Vap", "toluene"] ==
+             (m.fs.R101.inlet.flow_mol_phase_comp[0, "Vap", "toluene"] -
+              m.fs.R101.outlet.flow_mol_phase_comp[0, "Vap", "toluene"]))
+
+    m.fs.R101.conversion.fix(0.75)
+    m.fs.R101.heat_duty.fix(0)
+    # Flash F101
+    m.fs.F101.vap_outlet.temperature.fix(325.0)
+    m.fs.F101.deltaP.fix(0)
+    # Flash F102
+    m.fs.F102.vap_outlet.temperature.fix(375)
+    m.fs.F102.deltaP.fix(-200000)
+    # Purge split fraction and compressor outlet
+    m.fs.S101.split_fraction[0, "purge"].fix(0.2)
+    m.fs.C101.outlet.pressure.fix(350000)
+
+    # return model object
+    return m
+
+
+def initialize_model(m: ConcreteModel) -> ConcreteModel:
+    # Use sequential decomposition
+    seq = SequentialDecomposition()
+    seq.options.select_tear_method = "heuristic"
+    seq.options.tear_method = "Wegstein"
+    seq.options.iterLim = 5
+    # Using the SD tool
+    G = seq.create_graph(m)
+    heuristic_tear_set = seq.tear_set_arcs(G, method="heuristic")
+    order = seq.calculation_order(G)
+    # guesses
+    tear_guesses = {
+        "flow_mol_phase_comp": {
+            (0, "Vap", "benzene"): 1e-5,
+            (0, "Vap", "toluene"): 1e-5,
+            (0, "Vap", "hydrogen"): 0.30,
+            (0, "Vap", "methane"): 0.02,
+            (0, "Liq", "benzene"): 1e-5,
+            (0, "Liq", "toluene"): 0.30,
+            (0, "Liq", "hydrogen"): 1e-5,
+            (0, "Liq", "methane"): 1e-5},
+        "temperature": {0: 303},
+        "pressure": {0: 350000}}
+
+    # Pass the tear_guess to the SD tool
+    seq.set_guesses_for(m.fs.H101.inlet, tear_guesses)
+
+    def initialize_unit(unit):
+        unit.initialize(outlvl=idaeslog.DEBUG)
+
+    seq.run(m, initialize_unit)
+    return m
+
+
+def solve_model(m: ConcreteModel):
+    # Get solver
+    solver = SolverFactory('ipopt')
+    solver.options = {'tol': 1e-6, 'max_iter': 5000}
+    # Solve the model
+    results = solver.solve(m, tee=False)
+    return results
+
+
+def optimize_model(m: ConcreteModel):
     pass
 
 
 def main():
-    print("This script doesn't do anything yet!")
+    m = create_model()
+    result = solve_model(initialize_model(m))
+    print(f"Solver result: {result}")
     return 0
 
 
