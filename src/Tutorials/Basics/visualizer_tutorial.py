@@ -130,9 +130,9 @@ McGraw-Hill.
         "compressor": True,
         "thermodynamic_assumption": ThermodynamicAssumption.isothermal})
 
-    m.fs.F102 = Flash(default={"property_package": m.fs.thermo_params,
-                               "has_heat_transfer": True,
-                               "has_pressure_change": True})
+    # m.fs.F102 = Flash(default={"property_package": m.fs.thermo_params,
+    #                            "has_heat_transfer": True,
+    #                            "has_pressure_change": True})
     m.fs.s03 = Arc(source=m.fs.M101.outlet, destination=m.fs.H101.inlet)
     m.fs.s04 = Arc(source=m.fs.H101.outlet, destination=m.fs.R101.inlet)
     m.fs.s05 = Arc(source=m.fs.R101.outlet, destination=m.fs.F101.inlet)
@@ -140,16 +140,22 @@ McGraw-Hill.
     m.fs.s08 = Arc(source=m.fs.S101.recycle, destination=m.fs.C101.inlet)
     m.fs.s09 = Arc(source=m.fs.C101.outlet,
                    destination=m.fs.M101.vapor_recycle)
-    m.fs.s10 = Arc(source=m.fs.F101.liq_outlet, destination=m.fs.F102.inlet)
+    #m.fs.s10 = Arc(source=m.fs.F101.liq_outlet, destination=m.fs.F102.inlet)
     TransformationFactory("network.expand_arcs").apply_to(m)
+    # m.fs.purity = Expression(
+    #     expr=m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"] /
+    #          (m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"]
+    #           + m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "toluene"]))
     m.fs.purity = Expression(
-        expr=m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"] /
-             (m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"]
-              + m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "toluene"]))
+        expr=m.fs.F101.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"] /
+             (m.fs.F101.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"]
+              + m.fs.F101.vap_outlet.flow_mol_phase_comp[0, "Vap", "toluene"]))
     m.fs.cooling_cost = Expression(expr=0.212e-7 * (-m.fs.F101.heat_duty[0]) +
                                         0.212e-7 * (-m.fs.R101.heat_duty[0]))
+    # m.fs.heating_cost = Expression(expr=2.2e-7 * m.fs.H101.heat_duty[0] +
+    #                                      1.9e-7 * m.fs.F102.heat_duty[0])
     m.fs.heating_cost = Expression(expr=2.2e-7 * m.fs.H101.heat_duty[0] +
-                                        1.9e-7 * m.fs.F102.heat_duty[0])
+                                         1.9e-7 * m.fs.F101.heat_duty[0])
     m.fs.operating_cost = Expression(expr=(3600 * 24 * 365 *
                                            (m.fs.heating_cost +
                                             m.fs.cooling_cost)))
@@ -197,8 +203,8 @@ def fix_initial_values(m: ConcreteModel) -> ConcreteModel:
     m.fs.F101.vap_outlet.temperature.fix(325.0)
     m.fs.F101.deltaP.fix(0)
     # Flash F102
-    m.fs.F102.vap_outlet.temperature.fix(375)
-    m.fs.F102.deltaP.fix(-200000)
+    # m.fs.F102.vap_outlet.temperature.fix(375)
+    # m.fs.F102.deltaP.fix(-200000)
     # Purge split fraction and compressor outlet
     m.fs.S101.split_fraction[0, "purge"].fix(0.2)
     m.fs.C101.outlet.pressure.fix(350000)
