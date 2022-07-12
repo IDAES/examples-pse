@@ -19,6 +19,7 @@ See that notebook for details.
 # stdlib
 from io import StringIO
 import logging
+import re
 import sys
 import warnings
 # NGCC
@@ -77,8 +78,57 @@ def quiet():
 
     warnings.simplefilter("ignore")
 
+def function_markdown(f):
+    
+    def find_indent(s):
+        for i, c in enumerate(s):
+            if c != " ":
+                return i
+        return -1
 
-def create_model() -> pyo.ConcreteModel:
+    def fixup(s):
+        s = re.sub(r":\w+:(`.*`)", r"\1", s)
+        return s
+    
+    raw_docstr = f.__doc__
+    lines = raw_docstr.split("\n")
+    state = "desc"
+    rlines = []
+
+    for i, line in enumerate(lines):
+        sline = fixup(line.strip())
+        if state == "desc":
+            if sline:
+                rlines.append(sline)
+            else:
+                state = "ext"
+        elif  state == "ext":
+            m = re.match(r"([a-zA-Z]+):", sline)
+            if m:
+                rlines.append(f"{m.group(1)}:")
+                rlines.append("")
+                state = "args0"
+            else:
+                rlines.append(sline)
+        elif state == "args0":
+            indent = find_indent(line)
+            indent_spc = "  "
+            rlines.append(indent_spc + "* " + sline)
+            state = "args"
+        elif state == "args":
+            if not sline:
+                state = "ext"
+                rlines.append("")
+            else:
+                ind = find_indent(line)
+                if ind == indent:
+                    rlines.append(indent_spc + "* " + sline)
+                else:
+                    rlines.append(indent_spc + "  " + sline)
+    body = "\n".join(rlines)
+    return body
+
+def create_model(second_flash=False) -> pyo.ConcreteModel:
     """## Create an IDAES flowsheet for hydrodealkylation (HDA)
 
 ### About HDA
@@ -130,9 +180,10 @@ McGraw-Hill.
         "compressor": True,
         "thermodynamic_assumption": ThermodynamicAssumption.isothermal})
 
-    # m.fs.F102 = Flash(default={"property_package": m.fs.thermo_params,
-    #                            "has_heat_transfer": True,
-    #                            "has_pressure_change": True})
+    if second_flash:
+        m.fs.F102 = Flash(default={"property_package": m.fs.thermo_params,
+                                 "has_heat_transfer": True,
+                                 "has_pressure_change": True})
     m.fs.s03 = Arc(source=m.fs.M101.outlet, destination=m.fs.H101.inlet)
     m.fs.s04 = Arc(source=m.fs.H101.outlet, destination=m.fs.R101.inlet)
     m.fs.s05 = Arc(source=m.fs.R101.outlet, destination=m.fs.F101.inlet)
@@ -140,30 +191,34 @@ McGraw-Hill.
     m.fs.s08 = Arc(source=m.fs.S101.recycle, destination=m.fs.C101.inlet)
     m.fs.s09 = Arc(source=m.fs.C101.outlet,
                    destination=m.fs.M101.vapor_recycle)
-    #m.fs.s10 = Arc(source=m.fs.F101.liq_outlet, destination=m.fs.F102.inlet)
+    if second_flash:
+        m.fs.s10 = Arc(source=m.fs.F101.liq_outlet, destination=m.fs.F102.inlet)
     TransformationFactory("network.expand_arcs").apply_to(m)
-    # m.fs.purity = Expression(
-    #     expr=m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"] /
-    #          (m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"]
-    #           + m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "toluene"]))
-    m.fs.purity = Expression(
+    if second_flash:
+        m.fs.purity = Expression(
+         expr=m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"] /
+              (m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"]
+               + m.fs.F102.vap_outlet.flow_mol_phase_comp[0, "Vap", "toluene"]))
+    else:
+        m.fs.purity = Expression(
         expr=m.fs.F101.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"] /
              (m.fs.F101.vap_outlet.flow_mol_phase_comp[0, "Vap", "benzene"]
               + m.fs.F101.vap_outlet.flow_mol_phase_comp[0, "Vap", "toluene"]))
     m.fs.cooling_cost = Expression(expr=0.212e-7 * (-m.fs.F101.heat_duty[0]) +
                                         0.212e-7 * (-m.fs.R101.heat_duty[0]))
-    # m.fs.heating_cost = Expression(expr=2.2e-7 * m.fs.H101.heat_duty[0] +
-    #                                      1.9e-7 * m.fs.F102.heat_duty[0])
-    m.fs.heating_cost = Expression(expr=2.2e-7 * m.fs.H101.heat_duty[0] +
+    if second_flash:
+        m.fs.heating_cost = Expression(expr=2.2e-7 * m.fs.H101.heat_duty[0] +
+                                          1.9e-7 * m.fs.F102.heat_duty[0])
+    else:
+        m.fs.heating_cost = Expression(expr=2.2e-7 * m.fs.H101.heat_duty[0] +
                                          1.9e-7 * m.fs.F101.heat_duty[0])
     m.fs.operating_cost = Expression(expr=(3600 * 24 * 365 *
                                            (m.fs.heating_cost +
                                             m.fs.cooling_cost)))
-    return fix_initial_values(m)
+    return fix_initial_values(m, second_flash=second_flash)
 
 
-def fix_initial_values(m: ConcreteModel) -> ConcreteModel:
-    quiet()
+def fix_initial_values(m: ConcreteModel, second_flash: bool = False) -> ConcreteModel:
     # fix toluene feed stream conditions
     m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Vap", "benzene"].fix(1e-5)
     m.fs.M101.toluene_feed.flow_mol_phase_comp[0, "Vap", "toluene"].fix(1e-5)
@@ -203,8 +258,9 @@ def fix_initial_values(m: ConcreteModel) -> ConcreteModel:
     m.fs.F101.vap_outlet.temperature.fix(325.0)
     m.fs.F101.deltaP.fix(0)
     # Flash F102
-    # m.fs.F102.vap_outlet.temperature.fix(375)
-    # m.fs.F102.deltaP.fix(-200000)
+    if second_flash:
+        m.fs.F102.vap_outlet.temperature.fix(375)
+        m.fs.F102.deltaP.fix(-200000)
     # Purge split fraction and compressor outlet
     m.fs.S101.split_fraction[0, "purge"].fix(0.2)
     m.fs.C101.outlet.pressure.fix(350000)
