@@ -519,7 +519,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         def hydrogen_product_rate_eqn(b, t):
             return (
                 b.hydrogen_product_rate[t]
-                == b.cmp04.control_volume.properties_out[0].flow_mass
+                == b.cmp04.control_volume.properties_out[t].flow_mass
             )
 
         # Translator equations
@@ -578,9 +578,16 @@ class SoecFlowsheetData(FlowsheetBlockData):
                 == 1 - b.feed_recycle_split.inlet.mole_frac_comp[t, "H2O"]
             )
 
+        self.soec_inverter_efficiency = pyo.Var(initialize=0.97)
+        self.soec_inverter_efficiency.fix()
+
+        @self.Expression(self.time)
+        def soec_ac_power(b, t):
+            return b.soec_module.electrical_work[t]/b.soec_inverter_efficiency
+
         @self.Expression(self.time)
         def soec_power_per_h2(b, t):
-            return b.soec_module.electrical_work[t] / b.h2_mass_production[t]
+            return b.soec_ac_power[t] / b.h2_mass_production[t]
 
         @self.Expression(self.time)
         def total_compressor_power(b, t):
@@ -594,7 +601,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         @self.Expression(self.time)
         def total_electric_power(b, t):
             return (
-                b.soec_module.electrical_work[t]
+                b.soec_ac_power[t]
                 + b.sweep_turbine.control_volume.work[t]
                 + b.sweep_compressor.control_volume.work[t]
                 + b.sweep_heater.control_volume.heat[t]
@@ -998,11 +1005,13 @@ class SoecFlowsheetData(FlowsheetBlockData):
                     format_string="{:.2f}",
                     display_units="%",
                 )
-            except AttributeError:  # If there is no vapor fraction it's not steam
-                tag_group[f"{i}_yH2O"] = iutil.ModelTag(
-                    doc=f"{i}: mole percent H2O",
+            except AttributeError:
+                # If there is no vapor fraction it's not steam/water and all
+                # else is 100% vapor
+                tag_group[f"{i}_vf"] = iutil.ModelTag(
+                    doc=f"{i}: vapor fraction",
                     expr=100,
-                    format_string="{:.3f}",
+                    format_string="{:.2f}",
                     display_units="%",
                 )
             try:  # gas (not steam) properties have mole fractions
@@ -1054,7 +1063,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         )
         tag_group["soec_power"] = iutil.ModelTag(
             doc="SOEC electric power",
-            expr=self.soec_module.electrical_work[0],
+            expr=self.soec_ac_power[0],
             format_string="{:.3f}",
             display_units=pyo.units.MW,
         )
