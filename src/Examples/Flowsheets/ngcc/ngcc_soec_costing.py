@@ -538,8 +538,8 @@ def get_ngcc_soec_capital_cost(m):
 
         @heater.costing.Expression()
         def total_plant_cost(b):
-            U = 100 * pyo.units.W / pyo.units.m ** 2 / pyo.units.K
-            DT = 50 * pyo.units.K
+            U = 56 * pyo.units.W / pyo.units.m ** 2 / pyo.units.K
+            DT = 20 * pyo.units.K
             area = heater.heat_duty[0] / U / DT
             # Add factor of two to pathways cost to account for corrosion-resistant materials for trim heaters
             return 2*81.88*pyo.units.convert(area, pyo.units.ft**2) / 1e6
