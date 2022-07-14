@@ -120,8 +120,8 @@ class SoecFlowsheetData(FlowsheetBlockData):
         # Heat capacity and heat transfer coefficients of oxygen electrode aren't well known but probably don't matter
         # because the electrode is extremely thin
         self.soec_module.solid_oxide_cell.oxygen_electrode.solid_heat_capacity.fix(142.3)
-        self.soec_module.solid_oxide_cell.oxygen_electrode.solid_density.fix(3030)
-        self.soec_module.solid_oxide_cell.oxygen_electrode.solid_thermal_conductivity.fix(5.84)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.solid_density.fix(5300)
+        self.soec_module.solid_oxide_cell.oxygen_electrode.solid_thermal_conductivity.fix(2.0)
         # Also unknown but probably insignificant
         self.soec_module.solid_oxide_cell.oxygen_electrode.resistivity_log_preexponential_factor.fix(
             pyo.log(7.8125e-05)
@@ -143,8 +143,8 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha1.fix(0.647816)
         self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.activation_potential_alpha2.fix(0.352184)
 
-        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2"].fix(1)
-        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2O"].fix(1)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2"].fix(0.5)
+        self.soec_module.solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp["H2O"].fix(0.5)
 
         self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
             25.5
@@ -153,7 +153,7 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha1.fix(0.503)
         self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha2.fix(0.497)
 
-        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_exponent_comp["O2"].fix(0.5)
+        self.soec_module.solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_exponent_comp["O2"].fix(0.25)
 
     def _add_units(self):
         zfaces = np.linspace(0, 1, 11).tolist()
