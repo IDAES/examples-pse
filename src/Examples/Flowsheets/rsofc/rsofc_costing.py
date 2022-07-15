@@ -34,7 +34,8 @@ from idaes.core.util.unit_costing import initialize as cost_init
 from idaes.core.util.unit_costing import fired_heater_costing
 
 
-def add_total_plant_cost(b, project_contingency, process_contingency):
+def add_total_plant_cost(b, installation_labor=1.25, eng_fee=1.2,
+                         project_contingency=1.15, process_contingency=1.15):
 
     b.costing.total_plant_cost = pyo.Var(initialize=1e-6,
                                          # bounds=(0, None)
@@ -48,8 +49,9 @@ def add_total_plant_cost(b, project_contingency, process_contingency):
 
     @b.costing.Constraint()
     def total_plant_cost_eq(c):
-        return c.total_plant_cost == (c.purchase_cost * project_contingency *
-                                      process_contingency / 1e6)
+        return c.total_plant_cost == (
+            c.purchase_cost * installation_labor * eng_fee *
+            (project_contingency * process_contingency) / 1e6)
 
 
 def get_rsofc_sofc_capital_cost(fs):
@@ -58,7 +60,7 @@ def get_rsofc_sofc_capital_cost(fs):
 
     # TPC of 650 MW NG based sofc plant
     # SOEC-only cap costs for water-side equipment and H2 compr. will be added
-    # NGFC_TPC = 693.019  # MM$
+    # NGFC_TPC = 752.55  # MM$
 
     # fs.costing = pyo.Block()  # This is created in the costing module
     get_total_TPC(fs)
@@ -70,7 +72,7 @@ def get_rsofc_sofc_capital_cost(fs):
 
     @fs.costing.Constraint()
     def total_plant_cost_eq(c):
-        NGFC_TPC = 693.019  # MM$
+        NGFC_TPC = 752.55  # MM$
         return c.total_plant_cost == NGFC_TPC
 
     calculate_variable_from_constraint(
@@ -98,11 +100,11 @@ def get_rsofc_soec_capital_cost(fs):
     # For rsofc_soec mode - O2 and ng preheater costs are captured in NGFC_TPC
     # Water treatment and CO2 processing capcosts included in NGFC_TPC
 
-    # bhx1 - U-tube HXs
+    # U-tube HXs - bhx1, oxygen_preheater, and ng_preheater
     # costed with IDAES generic heat exchanger correlation
-
-    fs.bhx1.get_costing(hx_type="U-tube")
-    add_total_plant_cost(fs.bhx1, 1.15, 1.15)
+    for hx in [fs.bhx1, fs.oxygen_preheater, fs.ng_preheater]:
+        hx.get_costing(hx_type="U-tube")
+        add_total_plant_cost(hx)
 
     # bhx2
     # TODO - is this the right costing for oxycombustor with in-bed HEX tubes?
@@ -114,40 +116,77 @@ def get_rsofc_soec_capital_cost(fs):
         fired_type="steam_boiler",
         ref_parameter_pressure=fs.bhx2.inlet.pressure[0],
     )
-    add_total_plant_cost(fs.bhx2, 1.15, 1.15)
+    add_total_plant_cost(fs.bhx2)
 
+    # changing this to electric heater costing
     fs.fuel_recycle_heater.costing = pyo.Block()
-    fired_heater_costing(
-        fs.fuel_recycle_heater.costing,
-        fired_type="steam_boiler",
-        ref_parameter_pressure=fs.fuel_recycle_heater.inlet.pressure[0],
-    )
-    add_total_plant_cost(fs.fuel_recycle_heater, 1.15, 1.15)
+    fs.fuel_recycle_heater.costing.total_plant_cost = pyo.Var(
+            initialize=20,
+            bounds=(0, 1e4),
+            doc='total plant cost in $MM')
+
+    @fs.fuel_recycle_heater.costing.Constraint()
+    def total_plant_cost_eq(b):
+        U = 100 * pyo.units.W / pyo.units.m ** 2 / pyo.units.K
+        DT = 50 * pyo.units.K
+        area = fs.fuel_recycle_heater.heat_duty[0] / U / DT
+        # Add factor of two to pathways cost to account for corrosion-resistant materials for trim heaters
+        return b.total_plant_cost*1e6 == (
+            2*81.88*pyo.units.convert(area, pyo.units.ft**2))
+
+    # adding cost for air_preheater_2
+    fs.air_preheater_2.costing = pyo.Block()
+    fs.air_preheater_2.costing.total_plant_cost = pyo.Var(
+            initialize=20,
+            bounds=(0, 1e4),
+            doc='total plant cost in $MM')
+
+    @fs.air_preheater_2.costing.Constraint()
+    def total_plant_cost_eq(b):
+        return b.total_plant_cost*1e6 == (
+            2*81.88*pyo.units.convert(fs.air_preheater_2.area, pyo.units.ft**2))
 
     # H2 compressor
-    # costed with IDAES generic compressor correlations
-    # TODO - this is a placeholder until H2 compressor scaling is released
-    for unit in [fs.hcmp01,
-                 fs.hcmp02,
-                 fs.hcmp03,
-                 fs.hcmp04]:
-        unit.get_costing()
-        add_total_plant_cost(unit, 1.15, 1.15)
+    fs.hcmp01.costing = pyo.Block()
+    fs.hcmp01.costing.total_plant_cost = pyo.Var(
+            initialize=20,
+            bounds=(0, 1e4),
+            doc='total plant cost in $MM')
+
+    h2_comp_process_param = pyo.units.convert(
+        fs.hcmp01.control_volume.properties_out[0].flow_mass,
+        pyo.units.lb/pyo.units.hr)
+
+    @fs.hcmp01.costing.Constraint()
+    def total_plant_cost_eq(c):
+        # This is for 4 stages.  The original was for 2 hence the multiply by 2
+        ref_cost = 11.408  # MM$ 2018
+        ref_param = 44369*pyo.units.lb/pyo.units.hr
+        alpha = 0.7
+        return c.total_plant_cost == 2*ref_cost*(h2_comp_process_param/ref_param)**alpha
 
     get_total_TPC(fs)
 
     fs.generic_costing_units = [
         fs.bhx1,
+        fs.oxygen_preheater,
+        fs.ng_preheater,
         fs.bhx2,
-        fs.fuel_recycle_heater,
-        fs.hcmp01,
-        fs.hcmp02,
-        fs.hcmp03,
-        fs.hcmp04
         ]
 
     for u in fs.generic_costing_units:
         cost_init(u.costing)
+        calculate_variable_from_constraint(
+            u.costing.total_plant_cost,
+            u.costing.total_plant_cost_eq)
+
+    fs.custom_costing_units = [
+        fs.fuel_recycle_heater,
+        fs.air_preheater_2,
+        fs.hcmp01
+        ]
+
+    for u in fs.custom_costing_units:
         calculate_variable_from_constraint(
             u.costing.total_plant_cost,
             u.costing.total_plant_cost_eq)
@@ -161,7 +200,7 @@ def get_rsofc_soec_capital_cost(fs):
 
 
 def lock_rsofc_soec_capital_cost(fs):
-    for b in fs.generic_costing_units:
+    for b in fs.generic_costing_units + fs.custom_costing_units:
         for v in b.costing.total_plant_cost.values():
             print("TPC of generic units")
             print(b)

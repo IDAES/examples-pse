@@ -1097,13 +1097,25 @@ def add_result_constraints(fs):
         return (b.soec_stack.number_cells *
                 b.soec_stack.solid_oxide_cell.electrical_work[t])
 
-    fs.soec_power = pyo.Var(fs.time,
-                            units=pyo.units.MW)
+    fs.soec_power_DC = pyo.Var(fs.time,
+                               units=pyo.units.MW,
+                               doc='Direct current for the soec stack')
 
     @fs.Constraint(fs.time)
-    def soec_power_constraint(b, t):
-        return b.soec_power[t] == pyo.units.convert(
+    def soec_power_DC_constraint(b, t):
+        return b.soec_power_DC[t] == pyo.units.convert(
             b.module_electrical_work[t], pyo.units.MW)
+
+    # stack AC power
+    fs.soec_power_AC = pyo.Var(fs.time, units=pyo.units.MW,
+                               doc='Alternating current from grid '
+                               'for the soec stack')
+    fs.inverter_efficiency = pyo.Param(initialize=0.97, mutable=True)
+
+    @fs.Constraint(fs.time)
+    def soec_power_AC_constraint(b, t):
+        return (b.soec_power_AC[t] * b.inverter_efficiency ==
+                b.soec_power_DC[t])
 
     @fs.Expression(fs.time)
     def hydrogen_product_rate_expr(b, t):
@@ -1145,9 +1157,9 @@ def add_result_constraints(fs):
                 0.002 * pyo.units.kg / pyo.units.mol)
 
     @fs.Expression(fs.time)
-    def soec_power_per_h2(b, t):
+    def soec_power_AC_per_h2(b, t):
         return (
-            b.soec_power[t]
+            b.soec_power_AC[t]
             / b.hydrogen_product_rate_expr[t]
             / (0.002 * pyo.units.kg / pyo.units.mol)
         )
@@ -1382,7 +1394,7 @@ def add_result_constraints(fs):
     @fs.Constraint(fs.time)
     def net_power_constraint(fs, t):
         return (-1 * fs.net_power[t] == fs.steam_cycle_power[t] -
-                fs.soec_power[t] -
+                fs.soec_power_AC[t] -
                 fs.auxiliary_load[t] -
                 fs.transformer_losses[t])
 
@@ -1458,7 +1470,8 @@ def initialize_results(fs):
     variables = [
         fs.hydrogen_product_rate,
         fs.h2_compressor_power,
-        fs.soec_power,
+        fs.soec_power_DC,
+        fs.soec_power_AC,
         fs.HRSG_heat_duty,
         fs.ASU_HP_steam_heat,
         fs.steam_cycle_heat,
@@ -1484,7 +1497,8 @@ def initialize_results(fs):
     constraints = [
         fs.hydrogen_product_rate_constraint,
         fs.h2_compressor_power_constraint,
-        fs.soec_power_constraint,
+        fs.soec_power_DC_constraint,
+        fs.soec_power_AC_constraint,
         fs.HRSG_heat_duty_constraint,
         fs.ASU_HP_steam_constraint,
         fs.steam_cycle_heat_constraint,
@@ -2145,54 +2159,72 @@ def tag_for_pfd_and_tables(fs):
     stream_states = tables.stream_states_dict(streams)
 
     for i, s in stream_states.items():  # create the tags for stream quantities
-        tag_group[f"{i}_Fmol"] = iutil.ModelTag(
-            expr=s.flow_mol,
-            format_string="{:.3f}",
-            display_units=pyo.units.kmol/pyo.units.s
-        )
         tag_group[f"{i}_Fmass"] = iutil.ModelTag(
+            doc=f"{i}: mass flow",
             expr=s.flow_mass,
             format_string="{:.3f}",
             display_units=pyo.units.kg/pyo.units.s
         )
-        tag_group[f"{i}_P"] = iutil.ModelTag(
-            expr=s.pressure,
-            format_string="{:.1f}",
-            display_units=pyo.units.kPa
+        tag_group[f"{i}_Fmol"] = iutil.ModelTag(
+            doc=f"{i}: mole flow",
+            expr=s.flow_mol,
+            format_string="{:.3f}",
+            display_units=pyo.units.kmol/pyo.units.s
+        )
+        tag_group[f"{i}_Fvol"] = iutil.ModelTag(
+            doc=f"{i}: volumetric flow",
+            expr=s.flow_vol,
+            format_string="{:.3f}",
+            display_units=pyo.units.m**3/pyo.units.s
         )
         tag_group[f"{i}_T"] = iutil.ModelTag(
+            doc=f"{i}: temperature",
             expr=s.temperature,
             format_string="{:.2f}",
             display_units=pyo.units.K
         )
+        tag_group[f"{i}_P"] = iutil.ModelTag(
+            doc=f"{i}: pressure",
+            expr=s.pressure,
+            format_string="{:.1f}",
+            display_units=pyo.units.kPa
+        )
         try:
             tag_group[f"{i}_vf"] = iutil.ModelTag(
-                expr=s.phase_frac["Vap"],
+                doc=f"{i}: vapor fraction",
+                expr=100 * s.phase_frac["Vap"],
                 format_string="{:.3f}",
-                display_units=None
+                display_units="%"
                 )
         except (KeyError, AttributeError):
             pass
         try:
             for c in s.mole_frac_comp:
                 tag_group[f"{i}_y{c}"] = iutil.ModelTag(
-                    expr=s.mole_frac_comp[c]*100,
+                    doc=f"{i}: mole percent {c}",
+                    expr=s.mole_frac_comp[c] * 100,
                     format_string="{:.3f}",
                     display_units="%"
                 )
         except (KeyError, AttributeError):
             pass
-        try:
-            tag_group[f"{i}_y"] = iutil.ModelTag(
-                expr=s.mole_frac_comp,
-                format_string="{:.3f}",
-                display_units=None
-            )
-        except (KeyError, AttributeError):
-            pass
+        # try:
+        #     tag_group[f"{i}_y"] = iutil.ModelTag(
+        #         doc=f"{i}: mole percent",
+        #         expr=s.mole_frac_comp * 100,
+        #         format_string="{:.3f}",
+        #         display_units="%"
+        #     )
+        # except (KeyError, AttributeError):
+        #     pass
 
-    tag_group["soec_power"] = iutil.ModelTag(
-        expr=fs.soec_power[0],
+    tag_group["soec_power_AC"] = iutil.ModelTag(
+        expr=fs.soec_power_AC[0],
+        format_string="{:.2f}",
+        display_units=pyo.units.MW
+    )
+    tag_group["soec_power_DC"] = iutil.ModelTag(
+        expr=fs.soec_power_DC[0],
         format_string="{:.2f}",
         display_units=pyo.units.MW
     )
@@ -2292,6 +2324,7 @@ def tag_for_pfd_and_tables(fs):
         attributes=[
             "flow_mass",
             "flow_mol",
+            "flow_vol",
             "temperature",
             "pressure",
             "vapor_frac",            
@@ -2313,6 +2346,9 @@ def tag_for_pfd_and_tables(fs):
 
     sdf.sort_index(inplace=True)
     sdf.to_csv("streams.csv")
+    
+    # stream_states.sort_index(inplace=True)
+    # stream_states.to_csv("streams.csv")
 
     # other streams
     # a function for string formatting
@@ -2571,9 +2607,9 @@ def base_case_optimization(m, solver):
     m.soec_fs.tag_input["preheat_fg_split_to_oxygen"].setlb(0.30)
     m.soec_fs.tag_input["preheat_fg_split_to_oxygen"].setub(0.99)
 
-    # Unfix current density (optimization dof)
-    # However it should be below 800 mA/cm2 (8,000 A/m2)
-    # TODO - it seems this is already unfixed in solid_oxide_cell. Why?
+    # # Unfix current density (optimization dof)
+    # # However it should be below 800 mA/cm2 (8,000 A/m2)
+    # # TODO - it seems this is already unfixed in solid_oxide_cell. Why?
     m.soec_fs.soec_stack.solid_oxide_cell.current_density.unfix()
     # Average current density limitation constraint
     @m.soec_fs.Constraint(m.soec_fs.time)
@@ -2584,8 +2620,8 @@ def base_case_optimization(m, solver):
     # However ensure that it doesn't stray too far above the thermoneutral
     # point by constraining the outlet fuel/sweep temp from the soec < 1030 K
     m.soec_fs.soec_stack.solid_oxide_cell.potential.unfix()
-    m.soec_fs.soec_stack.solid_oxide_cell.potential.setlb(1.00)
-    m.soec_fs.soec_stack.solid_oxide_cell.potential.setub(1.40)
+    m.soec_fs.soec_stack.solid_oxide_cell.potential.setlb(0.50)
+    m.soec_fs.soec_stack.solid_oxide_cell.potential.setub(2.40)
 
     # soec_stack temperature constraints
     m.soec_fs.oxygen_outlet_temperature_constraint = pyo.Constraint(
@@ -2957,7 +2993,8 @@ def optimize_model(fs):
         "fuel_rate_mass",
         "co2_product_rate",
         "co2_product_rate_mass",
-        "soec_power",
+        "soec_power_AC",
+        "soec_power_DC",
         "h2_compressor_power",
         "feed_pump_power",
         "net_power",
