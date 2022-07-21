@@ -195,15 +195,12 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
         self.ngcc.gt.gt_power.fix(-477e6)
         self.ngcc.cap_specific_reboiler_duty.fix(2.4e6)
         self.ngcc.cap_fraction.fix(0.97)
-        self.soec.cmp01.ratioP.fix(2.07)
-        self.soec.cmp02.ratioP.fix(2.07)
-        self.soec.cmp03.ratioP.fix(2.07)
-        self.soec.cmp04.ratioP.fix(2.07)
-        self.soec.cmp05.ratioP.fix(2.07)
-        self.soec.cmp06.ratioP.fix(2.07)
-        self.soec.cmp06.ratioP.unfix()
-        self.soec.cmp06.control_volume.properties_out[:].pressure.fix(
-            320 * pyo.units.bar
+        self.soec.cmp01.ratioP.fix(2.28)
+        self.soec.cmp02.ratioP.fix(2.28)
+        self.soec.cmp03.ratioP.fix(2.28)
+        self.soec.cmp04.ratioP.unfix()
+        self.soec.cmp04.control_volume.properties_out[:].pressure.fix(
+            65 * pyo.units.bar
         )
         solver_obj.solve(self, tee=True)
 
