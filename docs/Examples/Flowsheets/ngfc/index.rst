@@ -1,5 +1,5 @@
-Flowsheets
-==========
+NGFC Flowsheets
+===============
 This folder contains Natural Gas Fuel Cell (NGFC) simualation files.
 
 .. toctree::

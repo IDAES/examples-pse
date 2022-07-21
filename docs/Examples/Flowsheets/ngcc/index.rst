@@ -1,5 +1,5 @@
-Flowsheets
-==========
+NGCC Flowsheets
+===============
 This folder contains Natural Gas Combined Cycle (NGCC) simualation files.
 
 .. toctree::
