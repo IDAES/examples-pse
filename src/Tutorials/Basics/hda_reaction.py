@@ -159,7 +159,7 @@ class HDAReactionBlockData(ReactionBlockDataBase):
                          units=pyunits.mol*pyunits.m**-3*pyunits.s**-1*pyunits.Pa**-1)  # TODO: Determine correct value and units
 
         self.reaction_rate = Var(self.params.rate_reaction_idx,
-                                 initialize=0,
+                                 initialize=1,
                                  units=pyunits.mol/pyunits.m**3/pyunits.s)
 
         self.arrhenus_equation = Constraint(
