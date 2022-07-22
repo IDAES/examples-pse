@@ -53,6 +53,9 @@ jobs:
       if: matrix.skip-wsl-only
       run: |
         rm -r src/Examples/DAE/petsc*.ipynb
+    - name: Skip notebooks that require Alamo
+      run: |
+        rm src/Examples/SurrMod/FlowsheetOptimization/ALAMO_flowsheet_optimization.ipynb
     - name: Add configured version of idaes-pse to requirements
       run: |
         echo "$IDAES_PSE_REQUIREMENT" >> requirements.txt
@@ -90,6 +93,9 @@ jobs:
         activate-environment: ${{ env.IDAES_CONDA_ENV_NAME_DEV }}
         python-version: ${{ matrix.python-version }}
     - uses: actions/checkout@v2
+    - name: Skip notebooks that require Alamo
+      run: |
+        rm src/Examples/SurrMod/FlowsheetOptimization/ALAMO_flowsheet_optimization.ipynb
     - name: Add configured version of idaes-pse to requirements
       run: |
         echo "$IDAES_PSE_REQUIREMENT" >> requirements.txt
