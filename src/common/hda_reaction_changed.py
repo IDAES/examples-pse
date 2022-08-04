@@ -61,8 +61,7 @@ class HDAReactionParameterData(ReactionParameterBlock):
         self.component_list = Set(initialize=['benzene',
                                               'toluene',
                                               'hydrogen',
-                                              'methane',
-                                              'diphenyl'])
+                                              'methane'])
 
         # Reaction Index
         self.rate_reaction_idx = Set(initialize=["R1"])
@@ -72,17 +71,15 @@ class HDAReactionParameterData(ReactionParameterBlock):
                                             ("R1", "Vap", "toluene"): -1,
                                             ("R1", "Vap", "hydrogen"): -1,
                                             ("R1", "Vap", "methane"): 1,
-                                            ("R1", "Vap", "diphenyl"): 0,
                                             ("R1", "Liq", "benzene"): 0,
                                             ("R1", "Liq", "toluene"): 0,
                                             ("R1", "Liq", "hydrogen"): 0,
-                                            ("R1", "Liq", "methane"): 0,
-                                            ("R1", "Liq", "diphenyl"): 0}
+                                            ("R1", "Liq", "methane"): 0}
 
         # Arrhenius Constant
         self.arrhenius = Var(initialize=6.3e+10,
                              units=pyunits.mol*pyunits.m**-3*pyunits.s**-1*pyunits.Pa**-1,
-                             doc="Arrhenius pre-exponential factor")  # TODO: Determine correct value and units
+                             doc="Arrhenius pre-exponential factor")
         self.arrhenius.fix()
 
         # Activation Energy
@@ -156,7 +153,7 @@ class HDAReactionBlockData(ReactionBlockDataBase):
                 self.config.parameters.dh_rxn)
 
         self.k_rxn = Var(initialize=0.2,
-                         units=pyunits.mol*pyunits.m**-3*pyunits.s**-1*pyunits.Pa**-1)  # TODO: Determine correct value and units
+                         units=pyunits.mol*pyunits.m**-3*pyunits.s**-1*pyunits.Pa**-1)
 
         self.reaction_rate = Var(self.params.rate_reaction_idx,
                                  initialize=1,
@@ -170,7 +167,7 @@ class HDAReactionBlockData(ReactionBlockDataBase):
 
         self.rate_expression = Constraint(
             expr=self.reaction_rate["R1"] ==
-            self.k_rxn * self.state_ref.pressure *  # TODO: Determine if pressure should be in this equation
+            self.k_rxn * self.state_ref.pressure *
             self.state_ref.mole_frac_phase_comp["Vap", "toluene"])
 
     def get_reaction_rate_basis(b):

@@ -4,6 +4,6 @@ This folder contains files that illustrate simulation, optimization and costing 
 
 .. toctree::
     Optimize a hydrodealkylation process with a distillation column <HDA_flowsheet_with_distillation_solution_doc>
-    Apply IDAES Generic Costing Framework for HDA capital cost calculations <HDA_flowsheet_with_costing_doc>
+    Apply IDAES Process Costing Framework for HDA capital cost calculations <HDA_flowsheet_with_costing_doc>
     ngcc/index
     ngfc/index
