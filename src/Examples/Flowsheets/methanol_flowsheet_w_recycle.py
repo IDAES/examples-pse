@@ -67,10 +67,10 @@ import idaes.logger as idaeslog
 
 def build_model(m):
     # Define model components and blocks
-    m.fs = FlowsheetBlock(default={"dynamic": False})
+    m.fs = FlowsheetBlock(dynamic=False)
 
     m.fs.thermo_params_VLE = GenericParameterBlock(
-        default=thermo_props_VLE.config_dict)
+        **thermo_props_VLE.config_dict)
 
     m.fs.thermo_params_VLE.set_default_scaling("flow_mol", 1)
     m.fs.thermo_params_VLE.set_default_scaling("temperature", 1e-2)
@@ -82,6 +82,8 @@ def build_model(m):
                                                    1e2, index=comp)
         m.fs.thermo_params_VLE.set_default_scaling("enth_mol_comp",
                                                    1e2, index=comp)
+        m.fs.thermo_params_VLE.set_default_scaling("enth_mol_phase",
+                                                   1e2, index=comp)
         m.fs.thermo_params_VLE.set_default_scaling("entr_mol_phase_comp",
                                                    1e2, index=comp)
         for attr in dir(getattr(m.fs.thermo_params_VLE, comp)):
@@ -92,7 +94,7 @@ def build_model(m):
                                                    1, index=comp)
 
     m.fs.thermo_params_vapor = GenericParameterBlock(
-        default=thermo_props_vapor.config_dict)
+        **thermo_props_vapor.config_dict)
 
     m.fs.thermo_params_vapor.set_default_scaling("flow_mol", 1)
     m.fs.thermo_params_vapor.set_default_scaling("temperature", 1e-2)
@@ -104,6 +106,8 @@ def build_model(m):
                                                      1e2, index=comp)
         m.fs.thermo_params_vapor.set_default_scaling("enth_mol_comp",
                                                      1e2, index=comp)
+        m.fs.thermo_params_vapor.set_default_scaling("enth_mol_phase",
+                                                     1e2, index=comp)
         m.fs.thermo_params_vapor.set_default_scaling("entr_mol_phase_comp",
                                                      1e2, index=comp)
         for attr in dir(getattr(m.fs.thermo_params_vapor, comp)):
@@ -114,79 +118,65 @@ def build_model(m):
                                                      1, index=comp)
 
     m.fs.reaction_params = GenericReactionParameterBlock(
-        default={"property_package": m.fs.thermo_params_vapor,
-                 **reaction_props.config_dict})
+        property_package=m.fs.thermo_params_vapor,
+        **reaction_props.config_dict)
 
     # feed blocks
-    m.fs.H2 = Feed(
-        default={"property_package": m.fs.thermo_params_vapor})
-    m.fs.CO = Feed(
-        default={"property_package": m.fs.thermo_params_vapor})
+    m.fs.H2 = Feed(property_package=m.fs.thermo_params_vapor)
+    m.fs.CO = Feed(property_package=m.fs.thermo_params_vapor)
 
     # mixing feed streams
-    m.fs.M101 = Mixer(
-        default={"property_package": m.fs.thermo_params_vapor,
-                 "momentum_mixing_type": MomentumMixingType.minimize,
-                 "has_phase_equilibrium": True,
-                 "inlet_list": ['H2_WGS', 'CO_WGS']})
+    m.fs.M101 = Mixer(property_package=m.fs.thermo_params_vapor,
+                      momentum_mixing_type=MomentumMixingType.minimize,
+                      has_phase_equilibrium=True,
+                      inlet_list=['H2_WGS', 'CO_WGS'])
 
     # mixing recycle back into feed streams
-    m.fs.M102 = Mixer(
-        default={"property_package": m.fs.thermo_params_vapor,
-                 "momentum_mixing_type": MomentumMixingType.minimize,
-                 "has_phase_equilibrium": True,
-                 "inlet_list": ["feed", "recycle"]})
+    m.fs.M102 = Mixer(property_package=m.fs.thermo_params_vapor,
+                      momentum_mixing_type=MomentumMixingType.minimize,
+                      has_phase_equilibrium=True,
+                      inlet_list=["feed", "recycle"])
 
     # pre-compression
-    m.fs.C101 = Compressor(
-        default={"dynamic": False,
-                 "property_package": m.fs.thermo_params_vapor,
-                 "compressor": True,
-                 "thermodynamic_assumption": ThermodynamicAssumption.isothermal
-                 })
+    m.fs.C101 = Compressor(dynamic=False,
+                           property_package=m.fs.thermo_params_vapor,
+                           compressor=True,
+                           thermodynamic_assumption=ThermodynamicAssumption.isothermal)
 
     # pre-heating
-    m.fs.H101 = Heater(
-        default={"property_package": m.fs.thermo_params_vapor,
-                 "has_pressure_change": False,
-                 "has_phase_equilibrium": False})
+    m.fs.H101 = Heater(property_package=m.fs.thermo_params_vapor,
+                       has_pressure_change=False,
+                       has_phase_equilibrium=False)
 
     # reactor
-    m.fs.R101 = StoichiometricReactor(
-        default={"has_heat_transfer": True,
-                 "has_heat_of_reaction": True,
-                 "has_pressure_change": False,
-                 "property_package": m.fs.thermo_params_vapor,
-                 "reaction_package": m.fs.reaction_params})
+    m.fs.R101 = StoichiometricReactor(has_heat_transfer=True,
+                                      has_heat_of_reaction=True,
+                                      has_pressure_change=False,
+                                      property_package=m.fs.thermo_params_vapor,
+                                      reaction_package=m.fs.reaction_params)
 
     # post-expansion
-    m.fs.T101 = Turbine(
-        default={"dynamic": False,
-                 "property_package": m.fs.thermo_params_vapor})
+    m.fs.T101 = Turbine(dynamic=False,
+                        property_package=m.fs.thermo_params_vapor)
 
     # post-cooling
-    m.fs.H102 = Heater(
-        default={"property_package": m.fs.thermo_params_vapor,
-                 "has_pressure_change": False,
-                 "has_phase_equilibrium": False})
+    m.fs.H102 = Heater(property_package=m.fs.thermo_params_vapor,
+                       has_pressure_change=False,
+                       has_phase_equilibrium=False)
 
     # product recovery
-    m.fs.F101 = Flash(
-        default={"property_package": m.fs.thermo_params_VLE,
-                 "has_heat_transfer": True,
-                 "has_pressure_change": True})
+    m.fs.F101 = Flash(property_package=m.fs.thermo_params_VLE,
+                      has_heat_transfer=True,
+                      has_pressure_change=True)
 
     # split waste gases for recycle
-    m.fs.S101 = Splitter(
-        default={"property_package": m.fs.thermo_params_vapor,
-                 "ideal_separation": False,
-                 "outlet_list": ["purge", "recycle"]})
+    m.fs.S101 = Splitter(property_package=m.fs.thermo_params_vapor,
+                         ideal_separation=False,
+                         outlet_list=["purge", "recycle"])
 
     # product blocks
-    m.fs.EXHAUST = Product(
-        default={"property_package": m.fs.thermo_params_vapor})
-    m.fs.CH3OH = Product(
-        default={"property_package": m.fs.thermo_params_VLE})
+    m.fs.EXHAUST = Product(property_package=m.fs.thermo_params_vapor)
+    m.fs.CH3OH = Product(property_package=m.fs.thermo_params_VLE)
 
     # Build the flowsheet
     print('Unit degrees of freedom')
@@ -317,6 +307,8 @@ def scale_flowsheet(m):
             iscale.set_scaling_factor(var, 1e-2)
         if 'enth_mol' in var.name:
             iscale.set_scaling_factor(var, 1e-3)
+        if 'enth_mol_phase' in var.name:
+            iscale.set_scaling_factor(var, 1e-3)
         if 'mole_frac' in var.name:
             iscale.set_scaling_factor(var, 1e2)
         if 'entr_mol' in var.name:
@@ -329,35 +321,9 @@ def scale_flowsheet(m):
             iscale.set_scaling_factor(var, 1e-3)
 
     # manual scaling
-    for unit in ('M101', 'M102', 'C101', 'H101', 'R101',
-                 'T101', 'H102', 'F101', 'S101'):
+    for unit in ('H2', 'CO', 'M101', 'M102', 'C101', 'H101', 'R101',
+                 'T101', 'H102', 'F101', 'S101', 'CH3OH'):
         block = getattr(m.fs, unit)
-        if 'mixer' in unit:
-            iscale.set_scaling_factor(block.inlet_1_state[0.0].mole_frac_comp,
-                                      1e2)
-            iscale.set_scaling_factor(block.inlet_2_state[0.0].mole_frac_comp,
-                                      1e2)
-            iscale.set_scaling_factor(block.mixed_state[0.0].mole_frac_comp,
-                                      1e2)
-            iscale.set_scaling_factor(block.inlet_1_state[0.0].enth_mol_phase,
-                                      1e-3)
-            iscale.set_scaling_factor(block.inlet_2_state[0.0].enth_mol_phase,
-                                      1e-3)
-            iscale.set_scaling_factor(block.mixed_state[0.0].enth_mol_phase,
-                                      1e-3)
-        if 'splitter' in unit:
-            iscale.set_scaling_factor(block.mixed_state[0.0].mole_frac_comp,
-                                      1e2)
-            iscale.set_scaling_factor(block.outlet_1_state[0.0].mole_frac_comp,
-                                      1e2)
-            iscale.set_scaling_factor(block.outlet_2_state[0.0].mole_frac_comp,
-                                      1e2)
-            iscale.set_scaling_factor(block.mixed_state[0.0].enth_mol_phase,
-                                      1e-3)
-            iscale.set_scaling_factor(block.outlet_1_state[0.0].enth_mol_phase,
-                                      1e-3)
-            iscale.set_scaling_factor(block.outlet_2_state[0.0].enth_mol_phase,
-                                      1e-3)
         if hasattr(block, "control_volume"):
             iscale.set_scaling_factor(
                 block.control_volume.properties_in[0.0].mole_frac_comp, 1e2)
@@ -382,6 +348,19 @@ def scale_flowsheet(m):
         if hasattr(block, "properties"):
             iscale.set_scaling_factor(
                 block.properties[0.0].mole_frac_comp, 1e2)
+        if hasattr(block, "split"):
+            iscale.set_scaling_factor(
+                block.split._Liq_flow_mol_ref, 1)
+            iscale.set_scaling_factor(
+                block.split._Vap_flow_mol_ref, 1)
+            iscale.set_scaling_factor(
+                block.split._Liq_mole_frac_comp_ref, 1e2)
+            iscale.set_scaling_factor(
+                block.split._Vap_mole_frac_comp_ref, 1e2)
+            iscale.set_scaling_factor(
+                block.split._Liq_enth_mol_ref, 1e-3)
+            iscale.set_scaling_factor(
+                block.split._Vap_enth_mol_ref, 1e-3)
 
     # set scaling for unit constraints
     for name in ('M101', 'M102', 'C101', 'H101', 'R101',
@@ -537,6 +516,19 @@ def scale_flowsheet(m):
                     iscale.constraint_scaling_transform(c, 1e-5,
                                                         overwrite=False)
 
+    iscale.set_scaling_factor(
+        m.fs.M101.H2_WGS_state[0.0].enth_mol_phase['Vap'], 1e-3)
+    iscale.set_scaling_factor(
+        m.fs.M101.CO_WGS_state[0.0].enth_mol_phase['Vap'], 1e-3)
+    iscale.set_scaling_factor(
+        m.fs.M101.mixed_state[0.0].enth_mol_phase['Vap'], 1e-3)
+    iscale.set_scaling_factor(
+        m.fs.M102.feed_state[0.0].enth_mol_phase['Vap'], 1e-3)
+    iscale.set_scaling_factor(
+        m.fs.M102.recycle_state[0.0].enth_mol_phase['Vap'], 1e-3)
+    iscale.set_scaling_factor(
+        m.fs.M102.mixed_state[0.0].enth_mol_phase['Vap'], 1e-3)
+
     iscale.calculate_scaling_factors(m)
 
 
@@ -628,7 +620,7 @@ def add_costing(m):
     m.fs.R101.diameter = 2 * pyunits.m
     m.fs.R101.length.fix(4*pyunits.m)  # for initial problem at 75% conversion
     m.fs.R101.costing = UnitModelCostingBlock(
-        default={"flowsheet_costing_block": m.fs.costing})
+        flowsheet_costing_block=m.fs.costing)
     # Reactor length (size, and capital cost) is adjusted based on conversion
     # surrogate model which scales length linearly with conversion
     m.fs.R101.length.unfix()
@@ -642,8 +634,7 @@ def add_costing(m):
     m.fs.F101.diameter = 2 * pyunits.m
     m.fs.F101.length = 4 * pyunits.m
     m.fs.F101.costing = UnitModelCostingBlock(
-        default={
-            "flowsheet_costing_block": m.fs.costing})
+        flowsheet_costing_block=m.fs.costing)
 
     # Computing heater/cooler capital costs
     # Surrogates prepared with IDAES shell and tube hx considering IP steam and
