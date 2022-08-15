@@ -113,12 +113,17 @@ contents:
               - mixer: Mixer unit model with ideal property package
               - pump: Pump unit model with iapws property package
               - heat exchanger 0D: Heat Exchanger 0D unit model heating a benzene-toluene mixture using steam
+              - skeleton unit: Skeleton unit model demonstrating custom variables, ports, and constraints
           -
             name: Reactors
             title: "Reactors"
             description: Detailed examples on importing and implementing IDAES reactor models in flowsheets
             notebooks:
               - cstr: CSTR unit model with ideal property package, pure liquid phase and rate-kinetics reaction
+              - equilibrium_reactor: Equilibrium reactor unit model with Peng-Robinson EOS, pure vapor phase and equilibrium-kinetics reaction
+              - gibbs_reactor: Gibbs reactor unit model with pure vapor phase equilibrium
+              - plug_flow_reactor: Plug flow reactor unit model with ideal property package, liquid phase and rate-kinetics reaction
+              - stoichiometric_reactor: Stoichiometric reactor unit model with ideal property package, liquid phase and rate-kinetics reaction
       -
         name: Tools
         title: Tools for working with IDAES
@@ -131,6 +136,7 @@ contents:
         notebooks:
           - HDA_flowsheet_with_distillation: Optimize hydrodealkylation process with a distillation column
           - HDA_flowsheet_with_costing: Apply IDAES Process Costing Framework for HDA capital cost calculations
+          - methanol_synthesis: Optimize gas-phase methanol synthesis from hydrogen and carbon monoxide
         subfolders:
           -
             name: ngcc
