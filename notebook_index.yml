@@ -116,12 +116,17 @@ contents:
               - heat exchanger 0D: Heat Exchanger 0D unit model heating a benzene-toluene mixture using steam
               - heat exchanger 1D: Heat Exchanger 1D unit model heating a benzene-toluene mixture using steam
               - heat exchanger NTU: Heat Exchanger NTU unit model for heat integration of two aqueous MEA streams
+              - skeleton unit: Skeleton unit model demonstrating custom variables, ports, and constraints
           -
             name: Reactors
             title: "Reactors"
             description: Detailed examples on importing and implementing IDAES reactor models in flowsheets
             notebooks:
               - cstr: CSTR unit model with ideal property package, pure liquid phase and rate-kinetics reaction
+              - equilibrium_reactor: Equilibrium reactor unit model with Peng-Robinson EOS, pure vapor phase and equilibrium-kinetics reaction
+              - gibbs_reactor: Gibbs reactor unit model with pure vapor phase equilibrium
+              - plug_flow_reactor: Plug flow reactor unit model with ideal property package, liquid phase and rate-kinetics reaction
+              - stoichiometric_reactor: Stoichiometric reactor unit model with ideal property package, liquid phase and rate-kinetics reaction
       -
         name: Tools
         title: Tools for working with IDAES
@@ -133,6 +138,7 @@ contents:
         title: Simulation and Optimization of Flowsheets
         notebooks:
           - HDA_flowsheet_with_distillation: Optimize hydrodealkylation process with a distillation column
+          - methanol_synthesis: Optimize gas-phase methanol synthesis from hydrogen and carbon monoxide
         subfolders:
           -
             name: ngcc
@@ -183,6 +189,14 @@ contents:
         title: Surrogate Modeling
         description: Surrogate modeling examples, broken down into packages
         subfolders:
+          -
+            name: FlowsheetOptimization
+            description: Demonstration of surrogate integration and optimization in IDAES flowsheets
+            notebooks:
+              - ALAMO_flowsheet_optimization: Demonstration of training, visualization and flowsheet integration using ALAMO surrogates
+              - PySMO_flowsheet_optimization: Demonstration of training, visualization and flowsheet integration using PySMO surrogates
+              - Keras_flowsheet_optimization: Demonstration of training, visualization and flowsheet integration using Keras surrogates
+              - Best_practices_optimization: Demonstration of surrogate comparison and results analysis for model selection
           -
             name: PySMO
             description: Python Surrogate Modeling Objects

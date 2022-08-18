@@ -11,3 +11,4 @@ Descriptive examples showing how to use some common IDAES unit models.
     Mixer <mixer_doc>
     Pump <pump_doc>
     Turbine <turbine_doc>
+    Skeleton Unit <skeleton_unit_doc>
