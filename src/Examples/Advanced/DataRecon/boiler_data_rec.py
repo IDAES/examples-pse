@@ -171,7 +171,7 @@ def boiler_flowsheet():
             * (m.fs.coal_flow/m.fs.SR)**2  # ~ 28.3876e3 kg/s
 
         # flow mol component in mol/s = kg/s/kg/mol
-        return m.fs.FSH.side_2.properties_in[0].flow_mol_comp[i] == \
+        return m.fs.FSH.hot_side.properties_in[0].flow_mol_comp[i] == \
             (mass_flow / sum(m.fs.fg_frac[c]*m.fs.prop_fluegas.mw_comp[c]
                              for c in m.fs.prop_fluegas.component_list))\
             * m.fs.fg_frac[i]
@@ -179,7 +179,7 @@ def boiler_flowsheet():
                                      rule=fg_flow_rule)
 
     def fg_temp_rule(b):
-        return m.fs.FSH.side_2.properties_in[0].temperature == \
+        return m.fs.FSH.hot_side.properties_in[0].temperature == \
             59836.381548557488713413 * m.fs.coal_flow**-0.5 \
             + 791.74814907302368283126 * m.fs.coal_flow**0.5 \
             + 0.60200443235342349090899 * m.fs.coal_flow**1.5 \
@@ -214,8 +214,8 @@ def boiler_flowsheet():
     # unfix variables to build flowsheet connections
     m.fs.PlSH.heat_duty.unfix()
     m.fs.Water_wall.heat_duty.unfix()
-    m.fs.FSH.side_2.properties_in[:].flow_mol_comp.unfix()
-    m.fs.FSH.side_2.properties_in[:].temperature.unfix()
+    m.fs.FSH.hot_side.properties_in[:].flow_mol_comp.unfix()
+    m.fs.FSH.hot_side.properties_in[:].temperature.unfix()
     m.fs.coal_flow.fix(50.15)
     print('degrees of freedom = ' + str(degrees_of_freedom(m)))
     # initialize surrogate models (better initial point before solve)
