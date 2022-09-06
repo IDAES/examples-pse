@@ -36,12 +36,12 @@ from pyomo.environ import (Constraint,
                            value)
 from pyomo.network import Arc, SequentialDecomposition
 from idaes.core import FlowsheetBlock
-from idaes.generic_models.unit_models import (PressureChanger,
-                                        Mixer,
-                                        Separator as Splitter,
-                                        Heater,
-                                        StoichiometricReactor)
-from idaes.generic_models.unit_models import Flash
+from idaes.models.unit_models import (PressureChanger,
+                                      Mixer,
+                                      Separator as Splitter,
+                                      Heater,
+                                      StoichiometricReactor,
+                                      Flash)
 try:
     # importing from same directory
     import hda_ideal_VLE as thermo_props
@@ -50,7 +50,7 @@ except ModuleNotFoundError:
     # importing from installed examples_pse package
     from idaes_examples.Tutorials.Basics import hda_ideal_VLE as thermo_props
     from idaes_examples.Tutorials.Basics import hda_reaction as reaction_props
-from idaes.generic_models.unit_models.pressure_changer import ThermodynamicAssumption
+from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 from idaes.core.util.model_statistics import degrees_of_freedom
 
 # Import idaes logger to set output levels
