@@ -51,7 +51,7 @@ import pyomo.environ as pyo
 from pyomo.util.calc_var_value import calculate_variable_from_constraint
 
 # Import IDAES core
-from idaes.generic_models.properties import iapws95
+from idaes.models.properties import iapws95
 from idaes.core.util import model_serializer as ms
 from idaes.core.util.model_statistics import degrees_of_freedom
 import idaes.core.util.scaling as iscale
@@ -105,7 +105,7 @@ def boiler_flowsheet():
     """
     Make the flowsheet object, fix some variables, and solve the problem
     """
-    import idaes.power_generation.flowsheets.\
+    import idaes.models_extra.power_generation.flowsheets.\
         supercritical_power_plant.boiler_subflowsheet_build as blr
     # First, we import the boler model from boiler_subflowsheet_build
     m, solver = blr.main()
