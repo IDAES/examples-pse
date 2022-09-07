@@ -91,48 +91,45 @@ def build_power_island(m):
             "Ar",
         ]
     )
-    m.fs.NG_props = GenericParameterBlock(default=NG_config)
+    m.fs.NG_props = GenericParameterBlock(**NG_config)
 
     syn_config = get_prop(
         components=["H2", "CO", "H2O", "CO2", "CH4", "N2", "O2", "Ar"]
     )
-    m.fs.syn_props = GenericParameterBlock(default=syn_config)
+    m.fs.syn_props = GenericParameterBlock(**syn_config)
 
     air_config = get_prop(components=["H2O", "CO2", "N2", "O2", "Ar"])
-    m.fs.air_props = GenericParameterBlock(default=air_config)
+    m.fs.air_props = GenericParameterBlock(**air_config)
 
     m.fs.rxn_props = GenericReactionParameterBlock(
-        default=get_rxn(m.fs.syn_props, reactions=["h2_cmb", "co_cmb", "ch4_cmb"])
+        **get_rxn(m.fs.syn_props, reactions=["h2_cmb", "co_cmb", "ch4_cmb"])
     )
 
     # build anode side units
     m.fs.anode_mix = Mixer(
-        default={"inlet_list": ["feed", "recycle"], "property_package": m.fs.NG_props}
+        inlet_list=["feed", "recycle"],
+        property_package=m.fs.NG_props
     )
 
     m.fs.anode_hx = HeatExchanger(
-        default={
-            "delta_temperature_callback": delta_temperature_underwood_callback,
-            "shell": {"property_package": m.fs.syn_props, "has_pressure_change": True},
-            "tube": {"property_package": m.fs.NG_props, "has_pressure_change": True},
-        }
+        delta_temperature_callback=delta_temperature_underwood_callback,
+        hot_side_name="shell",
+        cold_side_name="tube",
+        shell={"property_package": m.fs.syn_props, "has_pressure_change": True},
+        tube={"property_package": m.fs.NG_props, "has_pressure_change": True},
     )
 
     m.fs.prereformer = GibbsReactor(
-        default={
-            "has_heat_transfer": True,
-            "has_pressure_change": True,
-            "inert_species": ["N2", "Ar", "O2"],
-            "property_package": m.fs.NG_props,
-        }
+        has_heat_transfer=True,
+        has_pressure_change=True,
+        inert_species=["N2", "Ar", "O2"],
+        property_package=m.fs.NG_props,
     )
 
     m.fs.anode_translator = Translator(
-        default={
-            "outlet_state_defined": True,
-            "inlet_property_package": m.fs.NG_props,
-            "outlet_property_package": m.fs.syn_props,
-        }
+        outlet_state_defined=True,
+        inlet_property_package=m.fs.NG_props,
+        outlet_property_package=m.fs.syn_props,
     )
 
     # C2H6, C3H8, and C4H10 are not present in the system after the prereformer
@@ -154,11 +151,9 @@ def build_power_island(m):
         return b.inlet.mole_frac_comp[t, j] == b.outlet.mole_frac_comp[t, j]
 
     m.fs.fuel_cell_mix = Mixer(
-        default={
-            "inlet_list": ["fuel_inlet", "ion_inlet"],
-            "momentum_mixing_type": MomentumMixingType.none,
-            "property_package": m.fs.syn_props,
-        }
+        inlet_list=["fuel_inlet", "ion_inlet"],
+        momentum_mixing_type=MomentumMixingType.none,
+        property_package=m.fs.syn_props,
     )
 
     # outlet pressure should be equal to fuel inlet pressure because oxygen is
@@ -168,35 +163,27 @@ def build_power_island(m):
         return b.outlet.pressure[t] == b.fuel_inlet.pressure[t]
 
     m.fs.anode = GibbsReactor(
-        default={
-            "has_heat_transfer": True,
-            "has_pressure_change": True,
-            "inert_species": ["N2", "Ar"],
-            "property_package": m.fs.syn_props,
-        }
+        has_heat_transfer=True,
+        has_pressure_change=True,
+        inert_species=["N2", "Ar"],
+        property_package=m.fs.syn_props,
     )
 
     m.fs.anode_recycle = Separator(
-        default={
-            "outlet_list": ["exhaust", "recycle"],
-            "property_package": m.fs.syn_props,
-        }
+        outlet_list=["exhaust", "recycle"],
+        property_package=m.fs.syn_props,
     )
 
     m.fs.anode_blower = PressureChanger(
-        default={
-            "compressor": True,
-            "property_package": m.fs.syn_props,
-            "thermodynamic_assumption": ThermodynamicAssumption.isentropic,
-        }
+        compressor=True,
+        property_package=m.fs.syn_props,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic,
     )
 
     m.fs.recycle_translator = Translator(
-        default={
-            "outlet_state_defined": True,
-            "inlet_property_package": m.fs.syn_props,
-            "outlet_property_package": m.fs.NG_props,
-        }
+        outlet_state_defined=True,
+        inlet_property_package=m.fs.syn_props,
+        outlet_property_package=m.fs.NG_props,
     )
 
     # recycle is fed back to a part of the system that contains higher
@@ -223,32 +210,29 @@ def build_power_island(m):
 
     # build cathode side units
     m.fs.air_blower = PressureChanger(
-        default={
-            "compressor": True,
-            "property_package": m.fs.air_props,
-            "thermodynamic_assumption": ThermodynamicAssumption.isentropic,
-        }
+        compressor=True,
+        property_package=m.fs.air_props,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic,
     )
 
     m.fs.cathode_hx = HeatExchanger(
-        default={
-            "delta_temperature_callback": delta_temperature_underwood_callback,
-            "shell": {"property_package": m.fs.air_props, "has_pressure_change": True},
-            "tube": {"property_package": m.fs.air_props, "has_pressure_change": True},
-        }
+        delta_temperature_callback=delta_temperature_underwood_callback,
+        hot_side_name="shell",
+        cold_side_name="tube",
+        shell={"property_package": m.fs.air_props, "has_pressure_change": True},
+        tube={"property_package": m.fs.air_props, "has_pressure_change": True},
     )
 
     m.fs.cathode_mix = Mixer(
-        default={"inlet_list": ["feed", "recycle"], "property_package": m.fs.air_props}
+        inlet_list=["feed", "recycle"],
+        property_package=m.fs.air_props
     )
 
     # represents oxygen moving across SOFC electrolyte
     m.fs.cathode = Separator(
-        default={
-            "outlet_list": ["air_outlet", "ion_outlet"],
-            "split_basis": SplittingType.componentFlow,
-            "property_package": m.fs.air_props,
-        }
+        outlet_list=["air_outlet", "ion_outlet"],
+        split_basis=SplittingType.componentFlow,
+        property_package=m.fs.air_props,
     )
 
     m.fs.cathode.split_fraction[0, "ion_outlet", "H2O"].fix(1e-11)
@@ -257,11 +241,9 @@ def build_power_island(m):
     m.fs.cathode.split_fraction[0, "ion_outlet", "Ar"].fix(1e-11)
 
     m.fs.cathode_translator = Translator(
-        default={
-            "outlet_state_defined": True,
-            "inlet_property_package": m.fs.air_props,
-            "outlet_property_package": m.fs.syn_props,
-        }
+        outlet_state_defined=True,
+        inlet_property_package=m.fs.air_props,
+        outlet_property_package=m.fs.syn_props,
     )
 
     # cathode side O2 crosses the electrolyte to anode side
@@ -281,50 +263,42 @@ def build_power_island(m):
     m.fs.cathode_translator.outlet.mole_frac_comp[0, "O2"].fix(1)
 
     m.fs.cathode_heat = Heater(
-        default={"has_pressure_change": True, "property_package": m.fs.air_props}
+        has_pressure_change=True,
+        property_package=m.fs.air_props
     )
 
     m.fs.cathode_recycle = Separator(
-        default={
-            "outlet_list": ["exhaust", "recycle"],
-            "property_package": m.fs.air_props,
-        }
+        outlet_list=["exhaust", "recycle"],
+        property_package=m.fs.air_props,
     )
 
     m.fs.cathode_blower = PressureChanger(
-        default={
-            "compressor": True,
-            "property_package": m.fs.air_props,
-            "thermodynamic_assumption": ThermodynamicAssumption.isentropic,
-        }
+        compressor=True,
+        property_package=m.fs.air_props,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic,
     )
 
     # build combustor and HRSG units
     m.fs.cathode_exhaust_split = Separator(
-        default={
-            "outlet_list": ["exhaust_outlet", "combustor_outlet"],
-            "property_package": m.fs.air_props,
-        }
+        outlet_list=["exhaust_outlet", "combustor_outlet"],
+        property_package=m.fs.air_props,
     )
 
     m.fs.cathode_expander = PressureChanger(
-        default={
-            "compressor": False,
-            "property_package": m.fs.air_props,
-            "thermodynamic_assumption": ThermodynamicAssumption.isentropic,
-        }
+        compressor=False,
+        property_package=m.fs.air_props,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic,
     )
 
     m.fs.cathode_HRSG = Heater(
-        default={"has_pressure_change": True, "property_package": m.fs.air_props}
+        has_pressure_change=True,
+        property_package=m.fs.air_props
     )
 
     m.fs.cathode_exhaust_translator = Translator(
-        default={
-            "outlet_state_defined": True,
-            "inlet_property_package": m.fs.air_props,
-            "outlet_property_package": m.fs.syn_props,
-        }
+        outlet_state_defined=True,
+        inlet_property_package=m.fs.air_props,
+        outlet_property_package=m.fs.syn_props,
     )
 
     # for the portion of the cathode exhaust entering the combustor
@@ -351,32 +325,27 @@ def build_power_island(m):
             m.fs.cathode_exhaust_translator.outlet.mole_frac_comp[0, j].fix(1e-11)
 
     m.fs.combustor_mix = Mixer(
-        default={
-            "inlet_list": ["anode_inlet", "cathode_inlet"],
-            "property_package": m.fs.syn_props,
-        }
+        inlet_list=["anode_inlet", "cathode_inlet"],
+        property_package=m.fs.syn_props,
     )
 
     m.fs.combustor = StoichiometricReactor(
-        default={
-            "has_heat_of_reaction": False,
-            "has_heat_transfer": False,
-            "has_pressure_change": True,
-            "property_package": m.fs.syn_props,
-            "reaction_package": m.fs.rxn_props,
-        }
+        has_heat_of_reaction=False,
+        has_heat_transfer=False,
+        has_pressure_change=True,
+        property_package=m.fs.syn_props,
+        reaction_package=m.fs.rxn_props,
     )
 
     m.fs.combustor_expander = PressureChanger(
-        default={
-            "compressor": False,
-            "property_package": m.fs.syn_props,
-            "thermodynamic_assumption": ThermodynamicAssumption.isentropic,
-        }
+        compressor=False,
+        property_package=m.fs.syn_props,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic,
     )
 
     m.fs.anode_HRSG = Heater(
-        default={"has_pressure_change": True, "property_package": m.fs.syn_props}
+        has_pressure_change=True,
+        property_package=m.fs.syn_props
     )
 
     # build arcs to connect unit operations
@@ -605,34 +574,28 @@ def set_power_island_inputs(m):
 def build_reformer(m):
     # build unit models
     m.fs.reformer_recuperator = HeatExchanger(
-        default={
-            "delta_temperature_callback": delta_temperature_underwood_callback,
-            "shell": {"property_package": m.fs.NG_props},
-            "tube": {"property_package": m.fs.NG_props},
-        }
+        delta_temperature_callback=delta_temperature_underwood_callback,
+        hot_side_name="shell",
+        cold_side_name="tube",
+        shell={"property_package": m.fs.NG_props},
+        tube={"property_package": m.fs.NG_props},
     )
 
     m.fs.NG_expander = PressureChanger(
-        default={
-            "compressor": False,
-            "property_package": m.fs.NG_props,
-            "thermodynamic_assumption": ThermodynamicAssumption.isentropic,
-        }
+        compressor=False,
+        property_package=m.fs.NG_props,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic,
     )
 
     m.fs.reformer_bypass = Separator(
-        default={
-            "outlet_list": ["reformer_outlet", "bypass_outlet"],
-            "property_package": m.fs.NG_props,
-        }
+        outlet_list=["reformer_outlet", "bypass_outlet"],
+        property_package=m.fs.NG_props,
     )
 
     m.fs.air_compressor_s1 = PressureChanger(
-        default={
-            "compressor": True,
-            "property_package": m.fs.NG_props,
-            "thermodynamic_assumption": ThermodynamicAssumption.isentropic,
-        }
+        compressor=True,
+        property_package=m.fs.NG_props,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic,
     )
 
     # sets air flow to reformer based on NG flow
@@ -644,26 +607,24 @@ def build_reformer(m):
         return air_flow == 2.868 * (1 - IR) * ng_flow
 
     m.fs.intercooler_s1 = Heater(
-        default={"property_package": m.fs.NG_props, "has_pressure_change": True}
+        property_package=m.fs.NG_props,
+        has_pressure_change=True
     )
 
     m.fs.air_compressor_s2 = PressureChanger(
-        default={
-            "compressor": True,
-            "property_package": m.fs.NG_props,
-            "thermodynamic_assumption": ThermodynamicAssumption.isentropic,
-        }
+        compressor=True,
+        property_package=m.fs.NG_props,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic,
     )
 
     m.fs.intercooler_s2 = Heater(
-        default={"property_package": m.fs.NG_props, "has_pressure_change": True}
+        property_package=m.fs.NG_props,
+        has_pressure_change=True
     )
 
     m.fs.reformer_mix = Mixer(
-        default={
-            "inlet_list": ["gas_inlet", "oxygen_inlet", "steam_inlet"],
-            "property_package": m.fs.NG_props,
-        }
+        inlet_list=["gas_inlet", "oxygen_inlet", "steam_inlet"],
+        property_package=m.fs.NG_props,
     )
 
     # sets steam flow to reformer based on NG flow
@@ -675,19 +636,15 @@ def build_reformer(m):
         return steam_flow == (1 - IR) * ng_flow
 
     m.fs.reformer = GibbsReactor(
-        default={
-            "has_heat_transfer": True,
-            "has_pressure_change": True,
-            "inert_species": ["N2", "Ar"],
-            "property_package": m.fs.NG_props,
-        }
+        has_heat_transfer=True,
+        has_pressure_change=True,
+        inert_species=["N2", "Ar"],
+        property_package=m.fs.NG_props,
     )
 
     m.fs.bypass_rejoin = Mixer(
-        default={
-            "inlet_list": ["syngas_inlet", "bypass_inlet"],
-            "property_package": m.fs.NG_props,
-        }
+        inlet_list=["syngas_inlet", "bypass_inlet"],
+        property_package=m.fs.NG_props,
     )
 
     # build and connect arcs
@@ -1711,7 +1668,7 @@ def pfd_result(outfile, m, df):
 def main():
     # create model and flowsheet
     m = pyo.ConcreteModel(name="NGFC without carbon capture")
-    m.fs = FlowsheetBlock(default={"dynamic": False})
+    m.fs = FlowsheetBlock(dynamic=False)
 
     reinit = False  # switch to True to re-initialize and re-solve
     resolve = False  # switch to True to re-solve only (for debugging)
