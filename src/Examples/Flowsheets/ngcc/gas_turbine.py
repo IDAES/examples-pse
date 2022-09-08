@@ -92,20 +92,20 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         # parameters can be used for natural gas and natural gas mixed with air.
         self.prop_water = iapws95.Iapws95ParameterBlock()
         self.air_prop_params = GenericParameterBlock(
-            default=get_prop(air_species, ["Vap"]),
+            **get_prop(air_species, ["Vap"]),
             doc="Air property parameters",
         )
         self.cmb_prop_params = GenericParameterBlock(
-            default=get_prop(cmb_species, ["Vap"]),
+            **get_prop(cmb_species, ["Vap"]),
             doc="Natural gas or Natural gas + Air property parameters",
         )
         self.flue_prop_params = GenericParameterBlock(
-            default=get_prop(flue_species, ["Vap"]),
+            **get_prop(flue_species, ["Vap"]),
             doc="Flue gas property parameters",
         )
         # Combustion reaction package
         self.gas_combustion = GenericReactionParameterBlock(
-            default=get_rxn(self.cmb_prop_params, self.rxns),
+            **get_rxn(self.cmb_prop_params, self.rxns),
             doc="Reaction parameters package",
         )
 

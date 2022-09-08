@@ -39,6 +39,7 @@ import idaes.core.util.scaling as iscale
 
 import ngcc_soec
 
+import idaes.core.util.unit_costing as costing
 from idaes.core.util.unit_costing import initialize as initialize_unit_costing
 
 
@@ -315,17 +316,17 @@ def add_results_for_costing(m):
     @m.fs.Expression(m.fs.time)
     def feedwater_flow(b, t):
         return pyunits.convert(
-            b.ngcc.hrsg.econ_hp1.side_1.properties_in[t].flow_mass,
+            b.ngcc.hrsg.econ_hp1.hot_side.properties_in[t].flow_mass,
             pyunits.lb/pyunits.hr)
 
     # HRSG duty, MMBtu/hr
     @m.fs.Expression(m.fs.time)
     def hrsg_duty(b, t):
         return pyunits.convert(
-            ((b.ngcc.hrsg.sh_hp4.side_2.properties_in[0.0].flow_mol *
-             b.ngcc.hrsg.sh_hp4.side_2.properties_in[0.0].enth_mol) -
-             (b.ngcc.hrsg.econ_lp.side_2.properties_out[0.0].flow_mol *
-              b.ngcc.hrsg.econ_lp.side_2.properties_in[0.0].enth_mol)),
+            ((b.ngcc.hrsg.sh_hp4.cold_side.properties_in[0.0].flow_mol *
+             b.ngcc.hrsg.sh_hp4.cold_side.properties_in[0.0].enth_mol) -
+             (b.ngcc.hrsg.econ_lp.cold_side.properties_out[0.0].flow_mol *
+              b.ngcc.hrsg.econ_lp.cold_side.properties_in[0.0].enth_mol)),
             pyunits.MBtu/pyunits.hr)
 
     # gas flow to HRSG, acfm
@@ -546,10 +547,14 @@ def get_ngcc_soec_capital_cost(m):
 
     # water heaters - U-tube HXs
     # costed with IDAES generic heat exchanger correlation
-    m.fs.soec.water_heater01.get_costing(hx_type="U-tube")
+
+    m.fs.soec.water_heater01.flowsheet().get_costing(year="2018")
+    m.fs.soec.water_heater01.costing = pyo.Block()
+    costing.hx_costing(m.fs.soec.water_heater01.costing, hx_type="U-tube")
     add_total_plant_cost(m.fs.soec.water_heater01)
 
-    m.fs.soec.water_heater02.get_costing(hx_type="U-tube")
+    m.fs.soec.water_heater02.costing = pyo.Block()
+    costing.hx_costing(m.fs.soec.water_heater02.costing, hx_type="U-tube")
     add_total_plant_cost(m.fs.soec.water_heater02)
 
     # sweep hx and feed hx
