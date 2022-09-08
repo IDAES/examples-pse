@@ -25,12 +25,12 @@ from pyomo.environ import units as pyunits
 # Import IDAES cores
 from idaes.core import LiquidPhase, Component
 
-from idaes.generic_models.properties.core.state_definitions import FpcTP
-from idaes.generic_models.properties.core.eos.ideal import Ideal
-from idaes.generic_models.properties.core.phase_equil.forms import fugacity
-from idaes.generic_models.properties.core.pure.Perrys import Perrys
-from idaes.generic_models.properties.core.pure.RPP4 import RPP4
-from idaes.generic_models.properties.core.pure.NIST import NIST
+from idaes.models.properties.modular_properties.state_definitions import FpcTP
+from idaes.models.properties.modular_properties.eos.ideal import Ideal
+from idaes.models.properties.modular_properties.phase_equil.forms import fugacity
+from idaes.models.properties.modular_properties.pure.Perrys import Perrys
+from idaes.models.properties.modular_properties.pure.RPP4 import RPP4
+from idaes.models.properties.modular_properties.pure.NIST import NIST
 
 # Set up logger
 _log = logging.getLogger(__name__)

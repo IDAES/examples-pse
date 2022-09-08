@@ -150,34 +150,26 @@ class NgccFlowsheetData(FlowsheetBlockData):
 
     def _add_flowsheets(self):
         self.gt = gas_turbine.GasTurbineFlowsheet(
-            default={
-                "dynamic": self.config.dynamic,
-                "time": self.time,
-                "time_units": self.config.time_units,
-            }
+            dynamic=self.config.dynamic,
+            time=self.time,
+            time_units=self.config.time_units,
         )
         self.hrsg = hrsg.HrsgFlowsheet(
-            default={
-                "dynamic": self.config.dynamic,
-                "time": self.time,
-                "time_units": self.config.time_units,
-            }
+            dynamic=self.config.dynamic,
+            time=self.time,
+            time_units=self.config.time_units,
         )
         self.st = steam_turbine.SteamTurbineFlowsheet(
-            default={
-                "dynamic": self.config.dynamic,
-                "time": self.time,
-                "time_units": self.config.time_units,
-            }
+            dynamic=self.config.dynamic,
+            time=self.time,
+            time_units=self.config.time_units,
         )
 
     def _add_units(self):
         self.fg_translate = um.Translator(
             doc="Translate from generic to flue gas prop and drop Ar.",
-            default={
-                "inlet_property_package": self.gt.flue_prop_params,
-                "outlet_property_package": self.hrsg.prop_gas,
-            },
+            inlet_property_package=self.gt.flue_prop_params,
+            outlet_property_package=self.hrsg.prop_gas,
         )
 
     def _add_arcs(self):
