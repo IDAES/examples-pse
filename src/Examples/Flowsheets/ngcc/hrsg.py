@@ -83,7 +83,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         """
         self.prop_water = iapws95.Iapws95ParameterBlock()
         self.prop_gas = FlueGasParameterBlock(
-            default={"components": ["N2", "O2", "CO2", "H2O"]}
+            components=["N2", "O2", "CO2", "H2O"]
         )
 
     def _add_unit_models(self):

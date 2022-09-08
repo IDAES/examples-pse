@@ -55,15 +55,15 @@ class SoecFlowsheetData(FlowsheetBlockData):
     def _add_properties(self):
         self.steam_prop_params = iapws95.Iapws95ParameterBlock()
         self.o2_side_prop_params = GenericParameterBlock(
-            default=get_prop(self.sweep_comp, {"Vap"}, eos=EosType.PR),
+            **get_prop(self.sweep_comp, {"Vap"}, eos=EosType.PR),
             doc="Air property parameters",
         )
         self.h2_side_prop_params = GenericParameterBlock(
-            default=get_prop(self.feed_comp, {"Vap"}, eos=EosType.PR),
+            **get_prop(self.feed_comp, {"Vap"}, eos=EosType.PR),
             doc="H2O + H2 gas property parameters",
         )
         self.h2_pure_prop_params = GenericParameterBlock(
-            default=get_prop({"H2"}, {"Vap"}, eos=EosType.PR),
+            **get_prop({"H2"}, {"Vap"}, eos=EosType.PR),
             doc="Pure H2 gas property parameters",
         )
         generic_prop_packages = [
@@ -183,49 +183,41 @@ class SoecFlowsheetData(FlowsheetBlockData):
             }
 
         self.soec_module = soc.SolidOxideModuleSimple(
-            default={
-                "solid_oxide_cell_config": {
-                    "has_holdup": False,
-                    "control_volume_zfaces": zfaces,
-                    "control_volume_xfaces_fuel_electrode": xfaces_electrode,
-                    "control_volume_xfaces_oxygen_electrode": xfaces_electrode,
-                    "control_volume_xfaces_electrolyte": xfaces_electrolyte,
-                    "fuel_component_list": fuel_comps,
-                    "fuel_triple_phase_boundary_stoich_dict": fuel_stoich_dict,
-                    "inert_fuel_species_triple_phase_boundary": [],
-                    "oxygen_component_list": oxygen_comps,
-                    "oxygen_triple_phase_boundary_stoich_dict": oxygen_stoich_dict,
-                    "inert_oxygen_species_triple_phase_boundary": ["N2", "Ar", "CO2", "H2O"],
-                    "include_temperature_x_thermo": True,
-                    "include_contact_resistance": False,
-                },
-                "fuel_property_package": self.h2_side_prop_params,
-                "oxygen_property_package": self.o2_side_prop_params,
-            }
+            solid_oxide_cell_config={
+                "has_holdup": False,
+                "control_volume_zfaces": zfaces,
+                "control_volume_xfaces_fuel_electrode": xfaces_electrode,
+                "control_volume_xfaces_oxygen_electrode": xfaces_electrode,
+                "control_volume_xfaces_electrolyte": xfaces_electrolyte,
+                "fuel_component_list": fuel_comps,
+                "fuel_triple_phase_boundary_stoich_dict": fuel_stoich_dict,
+                "inert_fuel_species_triple_phase_boundary": [],
+                "oxygen_component_list": oxygen_comps,
+                "oxygen_triple_phase_boundary_stoich_dict": oxygen_stoich_dict,
+                "inert_oxygen_species_triple_phase_boundary": ["N2", "Ar", "CO2", "H2O"],
+                "include_temperature_x_thermo": True,
+                "include_contact_resistance": False,
+            },
+            fuel_property_package=self.h2_side_prop_params,
+            oxygen_property_package=self.o2_side_prop_params,
         )
         self.soec_module.number_cells.fix(60e6)
 
         self.sweep_recycle_split = gum.Separator(
             doc="Sweep recycle splitter",
-            default={
-                "property_package": self.o2_side_prop_params,
-                "outlet_list": ["out", "recycle"],
-            },
+            property_package=self.o2_side_prop_params,
+            outlet_list=["out", "recycle"],
         )
         self.feed_recycle_split = gum.Separator(
             doc="Feed recycle splitter",
-            default={
-                "property_package": self.h2_side_prop_params,
-                "outlet_list": ["out", "recycle"],
-            },
+            property_package=self.h2_side_prop_params,
+            outlet_list=["out", "recycle"],
         )
         self.sweep_recycle_mix = gum.Mixer(
             doc="Sweep recycle mixer",
-            default={
-                "property_package": self.o2_side_prop_params,
-                "inlet_list": ["feed", "recycle"],
-                "momentum_mixing_type": gum.MomentumMixingType.none,
-            },
+            property_package=self.o2_side_prop_params,
+            inlet_list=["feed", "recycle"],
+            momentum_mixing_type=gum.MomentumMixingType.none,
         )
 
         @self.sweep_recycle_mix.Constraint(self.time)
@@ -234,11 +226,9 @@ class SoecFlowsheetData(FlowsheetBlockData):
 
         self.feed_recycle_mix = gum.Mixer(
             doc="Feed recycle mixer",
-            default={
-                "property_package": self.h2_side_prop_params,
-                "inlet_list": ["feed", "recycle"],
-                "momentum_mixing_type": gum.MomentumMixingType.none,
-            },
+            property_package=self.h2_side_prop_params,
+            inlet_list=["feed", "recycle"],
+            momentum_mixing_type=gum.MomentumMixingType.none,
         )
 
         @self.feed_recycle_mix.Constraint(self.time)
@@ -247,58 +237,53 @@ class SoecFlowsheetData(FlowsheetBlockData):
 
         self.sweep_compressor = gum.Compressor(
             doc="Sweep air compressor",
-            default={"property_package": self.o2_side_prop_params},
+            property_package=self.o2_side_prop_params,
         )
         self.sweep_hx = gum.HeatExchanger(
-            default={
-                "shell": {"property_package": self.o2_side_prop_params},
-                "tube": {"property_package": self.o2_side_prop_params},
-            }
+            hot_side_name="shell",
+            cold_side_name="tube",
+            shell={"property_package": self.o2_side_prop_params},
+            tube={"property_package": self.o2_side_prop_params},
         )
         self.sweep_turbine = gum.Turbine(
             doc="Sweep air turbine",
-            default={"property_package": self.o2_side_prop_params},
+            property_package=self.o2_side_prop_params,
         )
         self.feed_hx01 = gum.HeatExchanger(
-            default={
-                "shell": {"property_package": self.h2_side_prop_params},
-                "tube": {"property_package": self.steam_prop_params},
-                # "delta_temperature_callback":delta_temperature_underwood_callback
-            }
+            hot_side_name="shell",
+            cold_side_name="tube",
+            shell={"property_package": self.h2_side_prop_params},
+            tube={"property_package": self.steam_prop_params},
         )
         self.feed_translator = gum.Translator(
-            default={
-                "inlet_property_package": self.steam_prop_params,
-                "outlet_property_package": self.h2_side_prop_params,
-                "outlet_state_defined": False,
-            }
+            inlet_property_package=self.steam_prop_params,
+            outlet_property_package=self.h2_side_prop_params,
+            outlet_state_defined=False,
         )
         self.feed_heater = gum.Heater(
-            default={"property_package": self.h2_side_prop_params}
+            property_package=self.h2_side_prop_params
         )
         self.sweep_heater = gum.Heater(
-            default={"property_package": self.o2_side_prop_params}
+            property_package=self.o2_side_prop_params
         )
         self.water_pump = hum.HelmIsentropicCompressor(
-            default={"property_package": self.steam_prop_params}
+            property_package=self.steam_prop_params
         )
         self.water_split = hum.HelmSplitter(
-            default={
-                "property_package": self.steam_prop_params,
-                "outlet_list": ["outlet1", "outlet2"],
-            }
+            property_package=self.steam_prop_params,
+            outlet_list=["outlet1", "outlet2"],
         )
         self.water_heater01 = gum.HeatExchanger(
-            default={
-                "shell": {"property_package": self.h2_side_prop_params},
-                "tube": {"property_package": self.steam_prop_params},
-            }
+            hot_side_name="shell",
+            cold_side_name="tube",
+            shell={"property_package": self.h2_side_prop_params},
+            tube={"property_package": self.steam_prop_params},
         )
         self.water_heater02 = gum.HeatExchanger(
-            default={
-                "shell": {"property_package": self.o2_side_prop_params},
-                "tube": {"property_package": self.steam_prop_params},
-            }
+            hot_side_name="shell",
+            cold_side_name="tube",
+            shell={"property_package": self.o2_side_prop_params},
+            tube={"property_package": self.steam_prop_params},
         )
         # Magic dryer, just magically drop water out of a port.
         @self.Expression(self.time, {"H2"})
@@ -315,36 +300,34 @@ class SoecFlowsheetData(FlowsheetBlockData):
         self.h2_drop_water_port = Port(
             rule=lambda b: {
                 "flow_mol": b.waterless_h2_flow_expr,
-                "pressure": b.water_heater01._pressure_shell_outlet_ref,
-                "temperature": b.water_heater01._temperature_shell_outlet_ref,
+                "pressure": b.water_heater01._pressure_hot_side_outlet_ref,
+                "temperature": b.water_heater01._temperature_hot_side_outlet_ref,
                 "mole_frac_comp": b.waterless_h2_mole_frac_expr,
             }
         )
         self.h2_precooler = gum.Heater(
-            default={"property_package": self.h2_pure_prop_params}
+            property_package=self.h2_pure_prop_params
         )
         self.cmp01 = gum.Compressor(
-            default={"property_package": self.h2_pure_prop_params}
+            property_package=self.h2_pure_prop_params
         )
-        self.ic01 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
+        self.ic01 = gum.Heater(property_package=self.h2_pure_prop_params)
         self.cmp02 = gum.Compressor(
-            default={"property_package": self.h2_pure_prop_params}
+            property_package=self.h2_pure_prop_params
         )
-        self.ic02 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
+        self.ic02 = gum.Heater(property_package=self.h2_pure_prop_params)
         self.cmp03 = gum.Compressor(
-            default={"property_package": self.h2_pure_prop_params}
+            property_package=self.h2_pure_prop_params
         )
-        self.ic03 = gum.Heater(default={"property_package": self.h2_pure_prop_params})
+        self.ic03 = gum.Heater(property_package=self.h2_pure_prop_params)
         self.cmp04 = gum.Compressor(
-            default={"property_package": self.h2_pure_prop_params}
+            property_package=self.h2_pure_prop_params
         )
         self.makeup_mix = hum.HelmMixer(
-            default={
-                "dynamic": False,
-                "property_package": self.steam_prop_params,
-                "momentum_mixing_type": gum.MomentumMixingType.none,
-                "inlet_list": ["w1", "w2"],
-            }
+            dynamic=False,
+            property_package=self.steam_prop_params,
+            momentum_mixing_type=gum.MomentumMixingType.none,
+            inlet_list=["w1", "w2"],
         )
 
     def _add_arcs(self):
@@ -1250,7 +1233,7 @@ if __name__ == "__main__":
     idaes.cfg.ipopt["options"]["halt_on_ampl_error"] = "no"
 
     m = pyo.ConcreteModel()
-    m.fs = soec.SoecFlowsheet(default={"dynamic": False})
+    m.fs = soec.SoecFlowsheet(dynamic=False)
     iscale.calculate_scaling_factors(m)
 
     m.fs.initialize(load_from=None, outlvl=idaeslog.INFO_HIGH)
