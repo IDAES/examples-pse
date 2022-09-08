@@ -1061,6 +1061,17 @@ class SoecFlowsheetData(FlowsheetBlockData):
             format_string="{:.3f}",
             display_units=pyo.units.MA,
         )
+        tag_group["soec_current_density"] = iutil.ModelTag(
+            doc="SOEC electrical current density",
+            expr=sum(self.soec_module.solid_oxide_cell.current_density[0, iz]
+                                         * self.soec_module.solid_oxide_cell.fuel_electrode.xface_area[iz]
+                                         for iz in self.soec_module.solid_oxide_cell.iznodes)/sum(
+                                         self.soec_module.solid_oxide_cell.fuel_electrode.xface_area[iz]
+                                         for iz in self.soec_module.solid_oxide_cell.iznodes
+                                         ),
+            format_string="{:.1f}",
+            display_units=pyo.units.A/pyo.units.m**2,
+        )
         tag_group["soec_power"] = iutil.ModelTag(
             doc="SOEC electric power",
             expr=self.soec_ac_power[0],
@@ -1109,11 +1120,17 @@ class SoecFlowsheetData(FlowsheetBlockData):
             format_string="{:.3f}",
             display_units=pyo.units.MW,
         )
+        tag_group["bop_power"] = iutil.ModelTag(
+            doc="Total electric power for SOEC and auxilaries",
+            expr=self.total_electric_power[0] - self.soec_ac_power[0],
+            format_string="{:.3f}",
+            display_units=pyo.units.MW,
+        )
         tag_group["total_electric_power_per_h2"] = iutil.ModelTag(
             doc="Total electric power for SOEC and auxilaries per H2 produced",
             expr=self.total_electric_power_per_h2[0],
             format_string="{:.3f}",
-            display_units=pyo.units.MJ / pyo.units.kg,
+            display_units=pyo.units.kWh / pyo.units.kg,
         )
         tag_group["pump_power"] = iutil.ModelTag(
             doc="Makeup water pump power",
@@ -1145,6 +1162,19 @@ class SoecFlowsheetData(FlowsheetBlockData):
             format_string="{:.0f}",
             display_units=pyo.units.A / pyo.units.m**2,
         )
+        tag_group["water_utilization"] = iutil.ModelTag(
+            doc="Single pass water conversion",
+            expr=self.soec_single_pass_water_conversion[0] * 100,
+            format_string="{:.1f}",
+            display_units="%",
+        )
+        tag_group["water_utilization_overall"] = iutil.ModelTag(
+            doc="Single pass water conversion",
+            expr=self.soec_overall_water_conversion[0] * 100,
+            format_string="{:.1f}",
+            display_units="%",
+        )
+
         tag_group = iutil.ModelTagGroup()
         self.tags_input = tag_group
         tag_group["water_utilization"] = iutil.ModelTag(
