@@ -18,20 +18,18 @@ Author: Brandon Paul
 """
 from pyomo.environ import units as pyunits
 
-from idaes.generic_models.properties.core.generic.generic_reaction import (
+from idaes.models.properties.modular_properties.base.generic_reaction import (
         ConcentrationForm)
-from idaes.generic_models.properties.core.reactions.dh_rxn import \
+from idaes.models.properties.modular_properties.reactions.dh_rxn import \
     constant_dh_rxn
-from idaes.generic_models.properties.core.reactions.rate_constant import \
+from idaes.models.properties.modular_properties.reactions.rate_constant import \
     arrhenius
-from idaes.generic_models.properties.core.reactions.rate_forms import \
+from idaes.models.properties.modular_properties.reactions.rate_forms import \
     power_law_rate
 
-#import egprod_ideal as thermo_props
 
 # For this example, the thermophysical properties are imported from the
 # corresponding ideal property package, egprod_ideal.py
-#thermo_configuration = thermo_props.configuration
 
 # Next, create the reaction property definition which describes the system on
 # reactions to be modeled.
@@ -56,7 +54,7 @@ config_dict = {
                                     # 0.331/min (Elements of Chemical Reaction
                                     # Engineering 5th ed, Fogler, p. 157-160)
                                     # 1st order in EO, assume excess water/cat.
-                    "reaction_order": {("Liq", "ethylene_oxide"): 1},
-                    "dh_rxn_ref": (-48199.68, pyunits.J/pyunits.mol),
-                    "arrhenius_const": (1.5638e-9, pyunits.s**-1),
-                    "energy_activation": (-40961.36, pyunits.J/pyunits.mol)}}}}
+                   "reaction_order": {("Liq", "ethylene_oxide"): 1},
+                   "dh_rxn_ref": (-48199.68, pyunits.J/pyunits.mol),
+                   "arrhenius_const": (1.5638e-9, pyunits.s**-1),
+                   "energy_activation": (-40961.36, pyunits.J/pyunits.mol)}}}}

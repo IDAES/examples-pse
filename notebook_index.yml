@@ -72,6 +72,7 @@ contents:
           - introduction: Full version of an introduction to Python and Pyomo
           - flash_unit: Simulate a flash unit
           - HDA_flowsheet: Perform optimization of a hydrodealkylation process
+          - idaes_visualizer: Tutorial on how to use the Visualizer for IDAES flowsheets
       -
         name: Advanced
         description: Advanced tutorials on topics such as parameter estimation and custom property packages.
@@ -113,12 +114,17 @@ contents:
               - mixer: Mixer unit model with ideal property package
               - pump: Pump unit model with iapws property package
               - heat exchanger 0D: Heat Exchanger 0D unit model heating a benzene-toluene mixture using steam
+              - skeleton unit: Skeleton unit model demonstrating custom variables, ports, and constraints
           -
             name: Reactors
             title: "Reactors"
             description: Detailed examples on importing and implementing IDAES reactor models in flowsheets
             notebooks:
               - cstr: CSTR unit model with ideal property package, pure liquid phase and rate-kinetics reaction
+              - equilibrium_reactor: Equilibrium reactor unit model with Peng-Robinson EOS, pure vapor phase and equilibrium-kinetics reaction
+              - gibbs_reactor: Gibbs reactor unit model with pure vapor phase equilibrium
+              - plug_flow_reactor: Plug flow reactor unit model with ideal property package, liquid phase and rate-kinetics reaction
+              - stoichiometric_reactor: Stoichiometric reactor unit model with ideal property package, liquid phase and rate-kinetics reaction
       -
         name: Tools
         title: Tools for working with IDAES
@@ -130,12 +136,18 @@ contents:
         title: Simulation and Optimization of Flowsheets
         notebooks:
           - HDA_flowsheet_with_distillation: Optimize hydrodealkylation process with a distillation column
+          - methanol_synthesis: Optimize gas-phase methanol synthesis from hydrogen and carbon monoxide
         subfolders:
           -
             name: ngcc
             title: "Natural Gas Combined Cycle (NGCC) Flowsheets"
             notebooks:
               - ngcc: Run the baseline NGCC simulation and a series of turndown simulations
+          -
+            name: ngfc
+            title: "Natural Gas Fuel Cell (NGFC) Flowsheet"
+            notebooks:
+              - NGFC_flowsheet: Steady-state simulation of NGFC power plant without carbon capture
       -
         name: Advanced
         description: Examples of advanced capabilities of the IDAES-Core
@@ -175,6 +187,14 @@ contents:
         title: Surrogate Modeling
         description: Surrogate modeling examples, broken down into packages
         subfolders:
+          -
+            name: FlowsheetOptimization
+            description: Demonstration of surrogate integration and optimization in IDAES flowsheets
+            notebooks:
+              - ALAMO_flowsheet_optimization: Demonstration of training, visualization and flowsheet integration using ALAMO surrogates
+              - PySMO_flowsheet_optimization: Demonstration of training, visualization and flowsheet integration using PySMO surrogates
+              - Keras_flowsheet_optimization: Demonstration of training, visualization and flowsheet integration using Keras surrogates
+              - Best_practices_optimization: Demonstration of surrogate comparison and results analysis for model selection
           -
             name: PySMO
             description: Python Surrogate Modeling Objects
