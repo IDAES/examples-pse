@@ -60,70 +60,58 @@ class SteamTurbineFlowsheetData(FlowsheetBlockData):
     def _add_models(self):
         self.steam_turbine = helm.HelmTurbineMultistage(
             doc="Steam turbine",
-            default={
-                "property_package": self.prop_water,
-                "num_parallel_inlet_stages": 1,
-                "num_hp": 7,  # full load ave P ratio about 0.8238 with inlet
-                "num_ip": 10,  # full load ave P ratio about 0.8264
-                "num_lp": 11,  # full load ave P ratio about 0.7194 with outlet
-                "hp_disconnect": [7],  # disconnected for reheater
-                "ip_disconnect": [10],  # disconnected for HRSG LP steam mix
-            },
+            property_package=self.prop_water,
+            num_parallel_inlet_stages=1,
+            num_hp=7,  # full load ave P ratio about 0.8238 with inlet
+            num_ip=10,  # full load ave P ratio about 0.8264
+            num_lp=11,  # full load ave P ratio about 0.7194 with outlet
+            hp_disconnect=[7],  # disconnected for reheater
+            ip_disconnect=[10],  # disconnected for HRSG LP steam mix
         )
         self.steam_turbine_lp_mix = helm.HelmMixer(
             doc="Mix LP steam from HRSG into turbine LP steam.",
-            default={
-                "property_package": self.prop_water,
-                "momentum_mixing_type": helm.MomentumMixingType.none,
-                "inlet_list": ["turbine", "hrsg"],
-            },
+            property_package=self.prop_water,
+            momentum_mixing_type=helm.MomentumMixingType.none,
+            inlet_list=["turbine", "hrsg"],
         )
         self.steam_turbine_lp_split = helm.HelmSplitter(
             doc="Split off carbon capture steam.",
-            default={
-                "property_package": self.prop_water,
-                "outlet_list": ["turbine", "reboiler", "soec"],
-            },
+            property_package=self.prop_water,
+            outlet_list=["turbine", "reboiler", "soec"],
         )
         self.dummy_reheat = gum.Heater(
             doc="Dummy reheater, can be deactivated to couple with HRSG.",
-            default={"property_package": self.prop_water},
+            property_package=self.prop_water,
         )
         self.main_condenser = helm.HelmNtuCondenser(
             doc="Main steam turbine condenser.",
-            default={
-                "shell": {
-                    "has_pressure_change": False,
-                    "property_package": self.prop_water,
-                },
-                "tube": {
-                    "has_pressure_change": False,
-                    "property_package": self.prop_water,
-                },
+            shell={
+                "has_pressure_change": False,
+                "property_package": self.prop_water,
+            },
+            tube={
+                "has_pressure_change": False,
+                "property_package": self.prop_water,
             },
         )
         self.hotwell = helm.HelmMixer(
             doc="Hotwell is a mixer to add makeup water.",
-            default={
-                "momentum_mixing_type": helm.MomentumMixingType.none,
-                "inlet_list": ["condensate", "makeup"],
-                "property_package": self.prop_water,
-            },
+            momentum_mixing_type=helm.MomentumMixingType.none,
+            inlet_list=["condensate", "makeup"],
+            property_package=self.prop_water,
         )
         self.cond_pump = helm.HelmIsentropicCompressor(
-            doc="Hotwell condensate pump", default={"property_package": self.prop_water}
+            doc="Hotwell condensate pump", property_package=self.prop_water
         )
         self.return_mix = helm.HelmMixer(
             doc="Mixer for steam streams returning to HRSG.",
-            default={
-                "property_package": self.prop_water,
-                "momentum_mixing_type": helm.MomentumMixingType.none,
-                "inlet_list": ["pump", "reboiler", "dryer", "reclaimer"],
-            },
+            property_package=self.prop_water,
+            momentum_mixing_type=helm.MomentumMixingType.none,
+            inlet_list=["pump", "reboiler", "dryer", "reclaimer"],
         )
         self.reboiler = gum.Heater(
             doc="Carbon capture system reboiler",
-            default={"property_package": self.prop_water},
+            property_package=self.prop_water,
         )
 
     def _add_constraints(self):

@@ -83,7 +83,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         """
         self.prop_water = iapws95.Iapws95ParameterBlock()
         self.prop_gas = FlueGasParameterBlock(
-            default={"components": ["N2", "O2", "CO2", "H2O"]}
+            components=["N2", "O2", "CO2", "H2O"]
         )
 
     def _add_unit_models(self):
@@ -95,338 +95,335 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         ######### LP Section ###########
         self.econ_lp = BoilerHeatExchanger(
             doc="LP Economizer",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": False,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Liq",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            cold_side_name="tube",
+            hot_side_name="shell",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": False,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": False,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Liq",
+            has_radiation=False,
         )
         self.mixer1 = HelmMixer(
             doc="Mixer for econ_lp outlet and NG preheater return streams",
-            default={
-                "dynamic": False,
-                "property_package": prop_water,
-                "momentum_mixing_type": MomentumMixingType.none,
-                "inlet_list": ["econ_lp", "Preheater"],
-            },
+            dynamic=False,
+            property_package=prop_water,
+            momentum_mixing_type=MomentumMixingType.none,
+            inlet_list=["econ_lp", "Preheater"],
         )
         self.drum_lp = HelmPhaseSeparator(
             doc="Phase seperator for LP evaporator (parital evaporator)",
-            default={"property_package": prop_water},
+            property_package=prop_water,
         )
         self.evap_lp = HeatExchanger(
             doc="LP evaporator heat exchanger section",
-            default={
-                "shell": {"property_package": prop_gas},
-                "tube": {"property_package": prop_water},
-                "delta_temperature_callback": delta_temperature_lmtd_callback,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-            },
+            hot_side_name="shell",
+            cold_side_name="tube",
+            shell={"property_package": prop_gas},
+            tube={"property_package": prop_water},
+            delta_temperature_callback=delta_temperature_lmtd_callback,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
         )
         self.mixer_soec = HelmMixer(
             doc="Mixer for evap_lp outlet and soec makeup",
-            default={
-                "dynamic": False,
-                "property_package": prop_water,
-                "momentum_mixing_type": MomentumMixingType.none,
-                "inlet_list": ["main", "soec_makeup"],
-            },
+            dynamic=False,
+            property_package=prop_water,
+            momentum_mixing_type=MomentumMixingType.none,
+            inlet_list=["main", "soec_makeup"],
         )
         self.split_fg_lp = Splitter(
             doc="LP superheater flue bypass gas splitter",
-            default={
-                "property_package": prop_gas,
-                "ideal_separation": False,
-                "outlet_list": ["toLP_SH", "toMixer"],
-            },
+            property_package=prop_gas,
+            ideal_separation=False,
+            outlet_list=["toLP_SH", "toMixer"],
         )
         self.mixer_lp2 = Mixer(
             doc="LP section flue gas bypass mixer",
-            default={
-                "property_package": prop_gas,
-                "inlet_list": ["fromLP_SH", "bypass"],
-            },
+            property_package=prop_gas,
+            inlet_list=["fromLP_SH", "bypass"],
         )
         self.sh_lp = BoilerHeatExchanger(
             doc="LP superheater",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": False,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Vap",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": False,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": False,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Vap",
+            has_radiation=False,
         )
         self.splitter1 = HelmSplitter(
             doc="LP liquid split to IP and HP pumps",
-            default={"property_package": prop_water, "outlet_list": ["toIP", "toHP"]},
+            property_package=prop_water,
+            outlet_list=["toIP", "toHP"],
         )
         self.pump_ip = WaterPump(
             doc="Intermediate pressure pump",
-            default={
-                "property_package": prop_water,
-            },
+            property_package=prop_water,
         )
         self.pump_hp = WaterPump(
             doc="High pressure pump",
-            default={
-                "property_package": prop_water,
-            },
+            property_package=prop_water,
         )
         ######### IP Section ###########
         self.econ_ip1 = BoilerHeatExchanger(
             doc="IP ecomonmizer part 1",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Liq",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Liq",
+            has_radiation=False,
         )
         self.splitter_ip1 = HelmSplitter(
             doc="IP economizer hot water split for natural gas preheater",
-            default={
-                "property_package": prop_water,
-                "outlet_list": ["toIP_ECON2", "toNGPH"],
-            },
+            property_package=prop_water,
+            outlet_list=["toIP_ECON2", "toNGPH"],
         )
         self.econ_ip2 = BoilerHeatExchanger(
             doc="IP ecomonmizer part 2",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Liq",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Liq",
+            has_radiation=False,
         )
         self.evap_ip = HeatExchanger(
             doc="IP evaporator (total evaporator)",
-            default={
-                "shell": {"property_package": prop_gas},
-                "tube": {"property_package": prop_water},
-                "delta_temperature_callback": delta_temperature_lmtd_callback,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-            },
+            hot_side_name="shell",
+            cold_side_name="tube",
+            shell={"property_package": prop_gas},
+            tube={"property_package": prop_water},
+            delta_temperature_callback=delta_temperature_lmtd_callback,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
         )
         self.sh_ip1 = BoilerHeatExchanger(
             doc="IP superheater 1",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Vap",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Vap",
+            has_radiation=False,
         )
         self.mixer_ip1 = HelmMixer(
             doc="Mixer for econ_lp outlet and Preheater streams",
-            default={
-                "dynamic": False,
-                "property_package": prop_water,
-                "momentum_mixing_type": MomentumMixingType.none,
-                "inlet_list": ["sh_ip1", "Cold_reheat"],
-            },
+            dynamic=False,
+            property_package=prop_water,
+            momentum_mixing_type=MomentumMixingType.none,
+            inlet_list=["sh_ip1", "Cold_reheat"],
         )
         self.splitter_ip2 = HelmSplitter(
             doc="IP Splitter 2, for ejector, reclaimer and dryer",
-            default={
-                "property_package": prop_water,
-                "outlet_list": ["Cold_reheat", "toEjector", "toReclaimer", "toDryer"],
-            },
+            property_package=prop_water,
+            outlet_list=["Cold_reheat", "toEjector", "toReclaimer", "toDryer"],
         )
         self.sh_ip2 = BoilerHeatExchanger(
             doc="IP superheater 2",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Vap",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Vap",
+            has_radiation=False,
         )
         self.sh_ip3 = BoilerHeatExchanger(
             doc="IP superheater 3",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Vap",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Vap",
+            has_radiation=False,
         )
         self.econ_hp1 = BoilerHeatExchanger(
             doc="HP economizer 1",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Liq",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Liq",
+            has_radiation=False,
         )
         self.econ_hp2 = BoilerHeatExchanger(
             doc="HP economizer 2",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Liq",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Liq",
+            has_radiation=False,
         )
         self.econ_hp3 = BoilerHeatExchanger(
             doc="HP economizer 3",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Liq",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Liq",
+            has_radiation=False,
         )
         self.econ_hp4 = BoilerHeatExchanger(
             doc="HP economizer 4",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Liq",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Liq",
+            has_radiation=False,
         )
         self.econ_hp5 = BoilerHeatExchanger(
             doc="HP economizer 5",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Liq",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Liq",
+            has_radiation=False,
         )
         self.evap_hp_valve = HelmValve(
             doc="HP evaporator valve",
-            default={
-                "property_package": prop_water,
-            },
+            property_package=prop_water,
         )
         self.evap_hp_valve.pressure_flow_equation.deactivate()
         self.evap_hp = HeatExchanger(
             doc="HP evaporator (total evaporator)",
-            default={
-                "shell": {"property_package": prop_gas},
-                "tube": {"property_package": prop_water},
-                "delta_temperature_callback": delta_temperature_lmtd_callback,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-            },
+            hot_side_name="shell",
+            cold_side_name="tube",
+            shell={"property_package": prop_gas},
+            tube={"property_package": prop_water},
+            delta_temperature_callback=delta_temperature_lmtd_callback,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
         )
         self.sh_hp1 = BoilerHeatExchanger(
             doc="HP superheater 1",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Vap",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Vap",
+            has_radiation=False,
         )
         self.sh_hp2 = BoilerHeatExchanger(
             doc="HP superheater 2",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Vap",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Vap",
+            has_radiation=False,
         )
         self.sh_hp3 = BoilerHeatExchanger(
             doc="HP superheater 3",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Vap",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Vap",
+            has_radiation=False,
         )
         self.sh_hp4 = BoilerHeatExchanger(
             doc="HP superheater 4",
-            default={
-                "delta_temperature_callback": delta_temp_cb,
-                "tube": {"property_package": prop_water},
-                "shell": {"property_package": prop_gas},
-                "has_pressure_change": True,
-                "has_holdup": False,
-                "flow_pattern": HeatExchangerFlowPattern.countercurrent,
-                "tube_arrangement": TubeArrangement.inLine,
-                "side_1_water_phase": "Vap",
-                "has_radiation": False,
-            },
+            delta_temperature_callback=delta_temp_cb,
+            hot_side_name="shell",
+            cold_side_name="tube",
+            tube={"property_package": prop_water,
+                  "has_pressure_change": True,},
+            shell={"property_package": prop_gas,
+                   "has_pressure_change": True,},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Vap",
+            has_radiation=False,
         )
 
     def _add_flowsheet_constraints(self):
@@ -487,7 +484,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.lp10 = Arc(
             doc="drum_lp vapor to sh_lp",
             source=self.drum_lp.vap_outlet,
-            destination=self.sh_lp.side_1_inlet,
+            destination=self.sh_lp.tube_inlet,
         )
         self.lp06 = Arc(
             doc="drum_lp liquid to splitter1",
@@ -508,31 +505,31 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.ip01 = Arc(
             doc="pump_ip to econ_ip1",
             source=self.pump_ip.outlet,
-            destination=self.econ_ip1.side_1_inlet,
+            destination=self.econ_ip1.tube_inlet,
         )
         self.ip02 = Arc(
             doc="econ_ip1 to splitter_ip1",
-            source=self.econ_ip1.side_1_outlet,
+            source=self.econ_ip1.tube_outlet,
             destination=self.splitter_ip1.inlet,
         )
         self.ip03 = Arc(
             doc="splitter_ip1 to econ_ip2",
             source=self.splitter_ip1.toIP_ECON2,
-            destination=self.econ_ip2.side_1_inlet,
+            destination=self.econ_ip2.tube_inlet,
         )
         self.ip05 = Arc(
             doc="econ_ip2 to evap_ip",
-            source=self.econ_ip2.side_1_outlet,
+            source=self.econ_ip2.tube_outlet,
             destination=self.evap_ip.tube_inlet,
         )
         self.ip06 = Arc(
             doc="evap_ip to IPSH1",
             source=self.evap_ip.tube_outlet,
-            destination=self.sh_ip1.side_1_inlet,
+            destination=self.sh_ip1.tube_inlet,
         )
         self.ip07 = Arc(
             doc="sh_ip1 to mixer_ip1",
-            source=self.sh_ip1.side_1_outlet,
+            source=self.sh_ip1.tube_outlet,
             destination=self.mixer_ip1.sh_ip1,
         )
         self.ip15 = Arc(
@@ -543,42 +540,42 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.ip08 = Arc(
             doc="mixer_ip1 to sh_ip2",
             source=self.mixer_ip1.outlet,
-            destination=self.sh_ip2.side_1_inlet,
+            destination=self.sh_ip2.tube_inlet,
         )
         self.ip09 = Arc(
             doc="sh_ip2 to IPSH3",
-            source=self.sh_ip2.side_1_outlet,
-            destination=self.sh_ip3.side_1_inlet,
+            source=self.sh_ip2.tube_outlet,
+            destination=self.sh_ip3.tube_inlet,
         )
         ######### HP Section ###########
         self.hp01 = Arc(
             doc="pump_hp to HP_ECON",
             source=self.pump_hp.outlet,
-            destination=self.econ_hp1.side_1_inlet,
+            destination=self.econ_hp1.tube_inlet,
         )
         self.hp02 = Arc(
             doc="HP_ECON to econ_hp2",
-            source=self.econ_hp1.side_1_outlet,
-            destination=self.econ_hp2.side_1_inlet,
+            source=self.econ_hp1.tube_outlet,
+            destination=self.econ_hp2.tube_inlet,
         )
         self.hp03 = Arc(
             doc="econ_hp3 to econ_hp4",
-            source=self.econ_hp2.side_1_outlet,
-            destination=self.econ_hp3.side_1_inlet,
+            source=self.econ_hp2.tube_outlet,
+            destination=self.econ_hp3.tube_inlet,
         )
         self.hp04 = Arc(
             doc="econ_hp3 to econ_hp4",
-            source=self.econ_hp3.side_1_outlet,
-            destination=self.econ_hp4.side_1_inlet,
+            source=self.econ_hp3.tube_outlet,
+            destination=self.econ_hp4.tube_inlet,
         )
         self.hp05 = Arc(
             doc="econ_hp4 to econ_hp5",
-            source=self.econ_hp4.side_1_outlet,
-            destination=self.econ_hp5.side_1_inlet,
+            source=self.econ_hp4.tube_outlet,
+            destination=self.econ_hp5.tube_inlet,
         )
         self.hp06 = Arc(
             doc="econ_hp5 to evap_hp",
-            source=self.econ_hp5.side_1_outlet,
+            source=self.econ_hp5.tube_outlet,
             destination=self.evap_hp_valve.inlet,
         )
         self.hp06b = Arc(
@@ -589,86 +586,86 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.hp07 = Arc(
             doc="evap_hp to sh_hp1",
             source=self.evap_hp.tube_outlet,
-            destination=self.sh_hp1.side_1_inlet,
+            destination=self.sh_hp1.tube_inlet,
         )
         self.hp08 = Arc(
             doc="sh_hp1 to sh_hp2",
-            source=self.sh_hp1.side_1_outlet,
-            destination=self.sh_hp2.side_1_inlet,
+            source=self.sh_hp1.tube_outlet,
+            destination=self.sh_hp2.tube_inlet,
         )
         self.hp09 = Arc(
             doc="sh_hp2 to sh_hp3",
-            source=self.sh_hp2.side_1_outlet,
-            destination=self.sh_hp3.side_1_inlet,
+            source=self.sh_hp2.tube_outlet,
+            destination=self.sh_hp3.tube_inlet,
         )
         self.hp10 = Arc(
             doc="Flue gas from sh_hp3 to sh_hp4",
-            source=self.sh_hp3.side_1_outlet,
-            destination=self.sh_hp4.side_1_inlet,
+            source=self.sh_hp3.tube_outlet,
+            destination=self.sh_hp4.tube_inlet,
         )
         self.g09 = Arc(
             doc="Flue gas from sh_hp4 to sh_ip3",
-            source=self.sh_hp4.side_2_outlet,
-            destination=self.sh_ip3.side_2_inlet,
+            source=self.sh_hp4.shell_outlet,
+            destination=self.sh_ip3.shell_inlet,
         )
         self.g10 = Arc(
             doc="Flue gas from sh_ip3 to sh_hp3",
-            source=self.sh_ip3.side_2_outlet,
-            destination=self.sh_hp3.side_2_inlet,
+            source=self.sh_ip3.shell_outlet,
+            destination=self.sh_hp3.shell_inlet,
         )
         self.g11 = Arc(
             doc="Flue gas from sh_hp3 to sh_hp2",
-            source=self.sh_hp3.side_2_outlet,
-            destination=self.sh_hp2.side_2_inlet,
+            source=self.sh_hp3.shell_outlet,
+            destination=self.sh_hp2.shell_inlet,
         )
         self.g12 = Arc(
             doc="Flue gas from sh_hp2 to sh_ip2",
-            source=self.sh_hp2.side_2_outlet,
-            destination=self.sh_ip2.side_2_inlet,
+            source=self.sh_hp2.shell_outlet,
+            destination=self.sh_ip2.shell_inlet,
         )
         self.g13 = Arc(
             doc="Flue gas from sh_ip2 to sh_hp1",
-            source=self.sh_ip2.side_2_outlet,
-            destination=self.sh_hp1.side_2_inlet,
+            source=self.sh_ip2.shell_outlet,
+            destination=self.sh_hp1.shell_inlet,
         )
         self.g14 = Arc(
             doc="Flue gas from sh_hp1 to evap_hp",
-            source=self.sh_hp1.side_2_outlet,
+            source=self.sh_hp1.shell_outlet,
             destination=self.evap_hp.shell_inlet,
         )
         self.g15 = Arc(
             doc="Flue gas from evap_hp to econ_hp5",
             source=self.evap_hp.shell_outlet,
-            destination=self.econ_hp5.side_2_inlet,
+            destination=self.econ_hp5.shell_inlet,
         )
         self.g16 = Arc(
             doc="Flue gas from econ_hp5 to sh_ip1",
-            source=self.econ_hp5.side_2_outlet,
-            destination=self.sh_ip1.side_2_inlet,
+            source=self.econ_hp5.shell_outlet,
+            destination=self.sh_ip1.shell_inlet,
         )
         self.g17 = Arc(
             doc="Flue gas from sh_ip1 to econ_hp4",
-            source=self.sh_ip1.side_2_outlet,
-            destination=self.econ_hp4.side_2_inlet,
+            source=self.sh_ip1.shell_outlet,
+            destination=self.econ_hp4.shell_inlet,
         )
         self.g18 = Arc(
             doc="Flue gas from econ_hp4 to econ_hp3",
-            source=self.econ_hp4.side_2_outlet,
-            destination=self.econ_hp3.side_2_inlet,
+            source=self.econ_hp4.shell_outlet,
+            destination=self.econ_hp3.shell_inlet,
         )
         self.g19 = Arc(
             doc="Flue gas from econ_hp3 to split_fg_lp",
-            source=self.econ_hp3.side_2_outlet,
+            source=self.econ_hp3.shell_outlet,
             destination=self.split_fg_lp.inlet,
         )
         self.g20 = Arc(
             doc="Flue gas from split_fg_lp to sh_lp",
             source=self.split_fg_lp.toLP_SH,
-            destination=self.sh_lp.side_2_inlet,
+            destination=self.sh_lp.shell_inlet,
         )
         self.g21 = Arc(
             doc="Flue gas from sh_lp to mixer_lp2",
-            source=self.sh_lp.side_2_outlet,
+            source=self.sh_lp.shell_outlet,
             destination=self.mixer_lp2.fromLP_SH,
         )
         self.g22 = Arc(
@@ -684,32 +681,32 @@ class HrsgFlowsheetData(FlowsheetBlockData):
         self.g24 = Arc(
             doc="Flue gas from evap_ip to econ_ip2",
             source=self.evap_ip.shell_outlet,
-            destination=self.econ_ip2.side_2_inlet,
+            destination=self.econ_ip2.shell_inlet,
         )
         self.g25 = Arc(
             doc="Flue gas from econ_ip2 to econ_hp2",
-            source=self.econ_ip2.side_2_outlet,
-            destination=self.econ_hp2.side_2_inlet,
+            source=self.econ_ip2.shell_outlet,
+            destination=self.econ_hp2.shell_inlet,
         )
         self.g26 = Arc(
             doc="Flue gas from econ_hp2 to econ_ip1",
-            source=self.econ_hp2.side_2_outlet,
-            destination=self.econ_ip1.side_2_inlet,
+            source=self.econ_hp2.shell_outlet,
+            destination=self.econ_ip1.shell_inlet,
         )
         self.g27 = Arc(
             doc="Flue gas from econ_ip1 to econ_hp1",
-            source=self.econ_ip1.side_2_outlet,
-            destination=self.econ_hp1.side_2_inlet,
+            source=self.econ_ip1.shell_outlet,
+            destination=self.econ_hp1.shell_inlet,
         )
         self.g28 = Arc(
             doc="Flue gas from econ_hp1 to evap_lp",
-            source=self.econ_hp1.side_2_outlet,
+            source=self.econ_hp1.shell_outlet,
             destination=self.evap_lp.shell_inlet,
         )
         self.g29 = Arc(
             doc="Flue gas from evap_lp to econ_lp",
             source=self.evap_lp.shell_outlet,
-            destination=self.econ_lp.side_2_inlet,
+            destination=self.econ_lp.shell_inlet,
         )
         pyo.TransformationFactory("network.expand_arcs").apply_to(self)
 
@@ -1003,8 +1000,8 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             self.sh_hp4,
         ]
         for unit in hx_list:  # set boiler hx scaling factors
-            iscale.set_scaling_factor(unit.side_1.heat, 1e-6)
-            iscale.set_scaling_factor(unit.side_2.heat, 1e-6)
+            iscale.set_scaling_factor(unit.tube.heat, 1e-6)
+            iscale.set_scaling_factor(unit.shell.heat, 1e-6)
             iscale.set_scaling_factor(unit.overall_heat_transfer_coefficient, 1e-2)
             iscale.set_scaling_factor(unit.area, 1e-3)
             iscale.set_scaling_factor(unit.N_Re_tube, 1e-5)
@@ -1323,21 +1320,21 @@ class HrsgFlowsheetData(FlowsheetBlockData):
                 self,
                 descend_into=False,
                 additional={  # these are streams in or out without an arc
-                    "lp01": self.econ_lp.side_1_inlet,
+                    "lp01": self.econ_lp.tube_inlet,
                     "lp03": self.mixer1.Preheater,
                     "lp12": self.mixer_soec.soec_makeup,
                     "ip04": self.splitter_ip1.toNGPH,
-                    "lp11": self.sh_lp.side_1_outlet,
-                    "hp11": self.sh_hp4.side_1_outlet,
-                    "ip10": self.sh_ip3.side_1_outlet,
+                    "lp11": self.sh_lp.tube_outlet,
+                    "hp11": self.sh_hp4.tube_outlet,
+                    "ip10": self.sh_ip3.tube_outlet,
                     "ip11": self.splitter_ip2.inlet,
                     "ip15": self.splitter_ip2.Cold_reheat,
                     "ip13": self.splitter_ip2.toReclaimer,
                     "ip12": self.splitter_ip2.toEjector,
                     "ip14": self.splitter_ip2.toDryer,
-                    "g30": self.econ_lp.side_2_outlet,
-                    "g19": self.econ_hp3.side_2_outlet,
-                    "g08": self.sh_hp4.side_2_inlet,
+                    "g30": self.econ_lp.shell_outlet,
+                    "g19": self.econ_hp3.shell_outlet,
+                    "g08": self.sh_hp4.shell_inlet,
                 },
             )
         )

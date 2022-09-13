@@ -92,183 +92,145 @@ class GasTurbineFlowsheetData(FlowsheetBlockData):
         # parameters can be used for natural gas and natural gas mixed with air.
         self.prop_water = iapws95.Iapws95ParameterBlock()
         self.air_prop_params = GenericParameterBlock(
-            default=get_prop(air_species, ["Vap"]),
+            **get_prop(air_species, ["Vap"]),
             doc="Air property parameters",
         )
         self.cmb_prop_params = GenericParameterBlock(
-            default=get_prop(cmb_species, ["Vap"]),
+            **get_prop(cmb_species, ["Vap"]),
             doc="Natural gas or Natural gas + Air property parameters",
         )
         self.flue_prop_params = GenericParameterBlock(
-            default=get_prop(flue_species, ["Vap"]),
+            **get_prop(flue_species, ["Vap"]),
             doc="Flue gas property parameters",
         )
         # Combustion reaction package
         self.gas_combustion = GenericReactionParameterBlock(
-            default=get_rxn(self.cmb_prop_params, self.rxns),
+            **get_rxn(self.cmb_prop_params, self.rxns),
             doc="Reaction parameters package",
         )
 
     def _add_models(self):
         self.feed_air1 = um.Feed(
-            doc="Air feed block", default={"property_package": self.air_prop_params}
+            doc="Air feed block", property_package=self.air_prop_params
         )
         self.feed_fuel1 = um.Feed(
-            doc="Fuel feed block", default={"property_package": self.cmb_prop_params}
+            doc="Fuel feed block", property_package=self.cmb_prop_params
         )
         self.exhaust_1 = um.Product(
             doc="Exhaust product block",
-            default={"property_package": self.flue_prop_params},
+            property_package=self.flue_prop_params,
         )
         self.vsv = um.Valve(
             doc="Valve to approximatly variable inlet guide vanes",
-            default={
-                "valve_function_callback": um.ValveFunctionType.linear,
-                "property_package": self.air_prop_params,
-            },
+            valve_function_callback=um.ValveFunctionType.linear,
+            property_package=self.air_prop_params,
         )
         self.cmp1 = um.Compressor(
             doc="Gas turbine air compression section",
-            default={
-                "property_package": self.air_prop_params,
-                "support_isentropic_performance_curves": True,
-            },
+            property_package=self.air_prop_params,
+            support_isentropic_performance_curves=True,
         )
         self.splt1 = um.Separator(
             doc="Blade cooling air splitter",
-            default={
-                "property_package": self.air_prop_params,
-                "outlet_list": ["air04", "air05", "air07", "air09"],
-            },
+            property_package=self.air_prop_params,
+            outlet_list=["air04", "air05", "air07", "air09"],
         )
         self.valve01 = um.Valve(
             doc="Stage 1 blade cooling air valve",
-            default={
-                "valve_function_callback": um.ValveFunctionType.linear,
-                "property_package": self.air_prop_params,
-            },
+            valve_function_callback=um.ValveFunctionType.linear,
+            property_package=self.air_prop_params,
         )
         self.valve02 = um.Valve(
             doc="Stage 2 blade cooling air valve",
-            default={
-                "valve_function_callback": um.ValveFunctionType.linear,
-                "property_package": self.air_prop_params,
-            },
+            valve_function_callback=um.ValveFunctionType.linear,
+            property_package=self.air_prop_params,
         )
         self.valve03 = um.Valve(
             doc="Stage 2 blade cooling air valve",
-            default={
-                "valve_function_callback": um.ValveFunctionType.linear,
-                "property_package": self.air_prop_params,
-            },
+            valve_function_callback=um.ValveFunctionType.linear,
+            property_package=self.air_prop_params,
         )
         self.inject_translator = um.Translator(
             doc="Translator for air to combustion mixture properties",
-            default={
-                "inlet_property_package": self.air_prop_params,
-                "outlet_property_package": self.cmb_prop_params,
-                "outlet_state_defined": False,
-            },
+            inlet_property_package=self.air_prop_params,
+            outlet_property_package=self.cmb_prop_params,
+            outlet_state_defined=False,
         )
         self.ng_preheat = um.HeatExchanger(
-            default={
-                "shell": {"property_package": self.prop_water},
-                "tube": {"property_package": self.cmb_prop_params},
-            }
+            hot_side_name="shell",
+            cold_side_name="tube",
+            shell={"property_package": self.prop_water},
+            tube={"property_package": self.cmb_prop_params},
         )
         self.inject1 = um.Mixer(
             doc="Fuel injection mixer (mix air and natural gas)",
-            default={
-                "property_package": self.cmb_prop_params,
-                "inlet_list": ["gas", "air"],
-                "momentum_mixing_type": um.MomentumMixingType.none,
-            },
+            property_package=self.cmb_prop_params,
+            inlet_list=["gas", "air"],
+            momentum_mixing_type=um.MomentumMixingType.none,
         )
         self.translator1 = um.Translator(
             doc="Translate stage 1 blade cooling air properties to flue gas",
-            default={
-                "inlet_property_package": self.air_prop_params,
-                "outlet_property_package": self.flue_prop_params,
-                "outlet_state_defined": False,
-            },
+            inlet_property_package=self.air_prop_params,
+            outlet_property_package=self.flue_prop_params,
+            outlet_state_defined=False,
         )
         self.mx1 = um.Mixer(
             doc="Stage 1 blade cooling air mixer",
-            default={
-                "property_package": self.flue_prop_params,
-                "inlet_list": ["gas", "air"],
-                "momentum_mixing_type": um.MomentumMixingType.equality,
-            },
+            property_package=self.flue_prop_params,
+            inlet_list=["gas", "air"],
+            momentum_mixing_type=um.MomentumMixingType.equality,
         )
         self.translator2 = um.Translator(
             doc="Translate stage 2 blade cooling air properties to flue gas",
-            default={
-                "inlet_property_package": self.air_prop_params,
-                "outlet_property_package": self.flue_prop_params,
-                "outlet_state_defined": False,
-            },
+            inlet_property_package=self.air_prop_params,
+            outlet_property_package=self.flue_prop_params,
+            outlet_state_defined=False,
         )
         self.mx2 = um.Mixer(
             doc="Stage 2 blade cooling air mixer",
-            default={
-                "property_package": self.flue_prop_params,
-                "inlet_list": ["gas", "air"],
-                "momentum_mixing_type": um.MomentumMixingType.equality,
-            },
+            property_package=self.flue_prop_params,
+            inlet_list=["gas", "air"],
+            momentum_mixing_type=um.MomentumMixingType.equality,
         )
         self.translator3 = um.Translator(
             doc="Translate stage 3 blade cooling air properties to flue gas",
-            default={
-                "inlet_property_package": self.air_prop_params,
-                "outlet_property_package": self.flue_prop_params,
-                "outlet_state_defined": False,
-            },
+            inlet_property_package=self.air_prop_params,
+            outlet_property_package=self.flue_prop_params,
+            outlet_state_defined=False,
         )
         self.mx3 = um.Mixer(
             doc="Stage 3 blade cooling air mixer",
-            default={
-                "property_package": self.flue_prop_params,
-                "inlet_list": ["gas", "air"],
-                "momentum_mixing_type": um.MomentumMixingType.equality,
-            },
+            property_package=self.flue_prop_params,
+            inlet_list=["gas", "air"],
+            momentum_mixing_type=um.MomentumMixingType.equality,
         )
         # Combustor, for now assuming complete reactions and no NOx
         self.cmb1 = um.StoichiometricReactor(
             doc="Combustor",
-            default={
-                "property_package": self.cmb_prop_params,
-                "reaction_package": self.gas_combustion,
-                "has_pressure_change": True,
-            },
+            property_package=self.cmb_prop_params,
+            reaction_package=self.gas_combustion,
+            has_pressure_change=True,
         )
         self.flue_translator = um.Translator(
             doc="Translate combustion mixture properties to flue gas",
-            default={
-                "inlet_property_package": self.cmb_prop_params,
-                "outlet_property_package": self.flue_prop_params,
-                "outlet_state_defined": False,
-            },
+            inlet_property_package=self.cmb_prop_params,
+            outlet_property_package=self.flue_prop_params,
+            outlet_state_defined=False,
         )
         self.gts1 = um.Turbine(
             doc="Gas turbine stage 1",
-            default={
-                "property_package": self.flue_prop_params,
-                "support_isentropic_performance_curves": True,
-            },
+            property_package=self.flue_prop_params,
+            support_isentropic_performance_curves=True,
         )
         self.gts2 = um.Turbine(
             doc="Gas turbine stage 2",
-            default={
-                "property_package": self.flue_prop_params,
-                "support_isentropic_performance_curves": True,
-            },
+            property_package=self.flue_prop_params,
+            support_isentropic_performance_curves=True,
         )
         self.gts3 = um.Turbine(
             doc="Gas turbine stage 3",
-            default={
-                "property_package": self.flue_prop_params,
-                "support_isentropic_performance_curves": True,
-            },
+            property_package=self.flue_prop_params,
+            support_isentropic_performance_curves=True,
         )
 
     def _add_performance_curves_gts1(self, flow_scale=0.896):
