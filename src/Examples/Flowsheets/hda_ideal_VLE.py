@@ -21,7 +21,7 @@ import logging
 # Import Pyomo libraries
 from pyomo.environ import Constraint, Expression, log, NonNegativeReals,\
     Var, Set, Param, sqrt, log10, units as pyunits
-from pyomo.opt import SolverFactory, TerminationCondition
+from pyomo.opt import TerminationCondition
 from pyomo.util.calc_var_value import calculate_variable_from_constraint
 
 # Import IDAES cores
@@ -41,7 +41,8 @@ from idaes.core.util.initialization import (fix_state_vars,
 from idaes.core.util.misc import add_object_reference
 from idaes.core.util.model_statistics import degrees_of_freedom, \
                                              number_unfixed_variables
-from idaes.core.util.misc import extract_data, get_solver
+from idaes.core.solvers import get_solver
+from idaes.core.util.misc import extract_data
 import idaes.core.util.scaling as iscale
 import idaes.logger as idaeslog
 
