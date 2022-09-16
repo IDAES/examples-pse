@@ -57,7 +57,7 @@ else:
 # Check model construction and solving
 m = ConcreteModel()
 
-m.fs = FlowsheetBlock(default={"dynamic": False})
+m.fs = FlowsheetBlock(dynamic=False)
 
 m.fs.v = Var(m.fs.time)
 
