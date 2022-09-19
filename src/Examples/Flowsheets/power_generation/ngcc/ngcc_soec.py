@@ -44,20 +44,8 @@ class NgccSoecFlowsheetData(FlowsheetBlockData):
         self._add_tags()
 
     def _add_flowsheets(self):
-        self.ngcc = ngcc.NgccFlowsheet(
-            default={
-                "dynamic": self.config.dynamic,
-                "time": self.time,
-                "time_units": self.config.time_units,
-            }
-        )
-        self.soec = soec.SoecFlowsheet(
-            default={
-                "dynamic": self.config.dynamic,
-                "time": self.time,
-                "time_units": self.config.time_units,
-            }
-        )
+        self.ngcc = ngcc.NgccFlowsheet(dynamic=self.config.dynamic, time=self.time, time_units=self.config.time_units)
+        self.soec = soec.SoecFlowsheet(dynamic=self.config.dynamic, time=self.time, time_units=self.config.time_units)
 
     def _add_arcs(self):
         self.c01 = Arc(
