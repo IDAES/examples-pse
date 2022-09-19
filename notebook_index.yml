@@ -139,15 +139,30 @@ contents:
           - methanol_synthesis: Optimize gas-phase methanol synthesis from hydrogen and carbon monoxide
         subfolders:
           -
-            name: ngcc
-            title: "Natural Gas Combined Cycle (NGCC) Flowsheets"
-            notebooks:
-              - ngcc: Run the baseline NGCC simulation and a series of turndown simulations
-          -
-            name: ngfc
-            title: "Natural Gas Fuel Cell (NGFC) Flowsheet"
-            notebooks:
-              - NGFC_flowsheet: Steady-state simulation of NGFC power plant without carbon capture
+            name: power_generation
+            title: Simulation and Optimization of Power Generation Flowsheets
+            subfolders:
+              -
+                name: ngcc
+                title: "Natural Gas Combined Cycle (NGCC) Flowsheets"
+                notebooks:
+                  - ngcc: Run the baseline NGCC simulation and a series of turndown simulations
+              -
+                name: ngfc
+                title: "Natural Gas Fuel Cell (NGFC) Flowsheet"
+                notebooks:
+                  - NGFC_flowsheet: Steady-state simulation of NGFC power plant without carbon capture
+              -
+                name: subcritical
+                title: "Subcritical Pulverized Coal Fired Power Plant Flowsheets"
+                notebooks:
+                  - subcritical_boiler: Simulate a subcritical boiler system
+              -
+                name: supercritical
+                title: "Supercritical Pulverized Coal Fired Power Plant Flowsheets"
+                notebooks:
+                  - supercritical_steam_cycle: Simulate a typical supercritical steam cycle
+                  - supercritical_power_plant: Simulate a typical supercritical powerplant including boiler and steam cycle
       -
         name: Advanced
         description: Examples of advanced capabilities of the IDAES-Core

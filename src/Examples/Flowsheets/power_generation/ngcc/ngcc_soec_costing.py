@@ -782,7 +782,7 @@ def display_capital_costs(m):
 
 #     # create the ngcc model
 #     m = pyo.ConcreteModel()
-#     m.fs = ngcc_soec.NgccSoecFlowsheet(default={"dynamic": False})
+#     m.fs = ngcc_soec.NgccSoecFlowsheet(dynamic=False)
 #     iscale.calculate_scaling_factors(m)
 #     m.fs.initialize(
 #         load_from="ngcc_soec_init.json.gz",
