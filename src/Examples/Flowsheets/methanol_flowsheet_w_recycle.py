@@ -28,7 +28,7 @@ from pyomo.environ import (Constraint,
                            maximize,
                            units as pyunits)
 from pyomo.environ import TerminationCondition
-from pyomo.network import Arc
+from pyomo.network import Arc, SequentialDecomposition
 
 # Import IDAES core libraries
 from idaes.core import FlowsheetBlock
@@ -44,7 +44,7 @@ from idaes.models.properties.modular_properties.base.generic_property import \
 from idaes.models.properties.modular_properties.base.generic_reaction import \
     GenericReactionParameterBlock
 
-from . import (
+from idaes_examples.common.methanol import (
     ideal_VLE as thermo_props_VLE,
     ideal_vapor as thermo_props_vapor,
     reactions as reaction_props,
@@ -58,11 +58,13 @@ from idaes.models.unit_models import (
     Turbine,
     StoichiometricReactor,
     Flash,
+    Separator as Splitter,
     Product)
 from idaes.models.unit_models.mixer import MomentumMixingType
 from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 from idaes.core import UnitModelCostingBlock
 from idaes.models.costing.SSLW import SSLWCosting
+import idaes.logger as idaeslog
 
 
 def build_model(m):
@@ -131,6 +133,12 @@ def build_model(m):
                       has_phase_equilibrium=True,
                       inlet_list=['H2_WGS', 'CO_WGS'])
 
+    # mixing recycle back into feed streams
+    m.fs.M102 = Mixer(property_package=m.fs.thermo_params_vapor,
+                      momentum_mixing_type=MomentumMixingType.minimize,
+                      has_phase_equilibrium=True,
+                      inlet_list=["feed", "recycle"])
+
     # pre-compression
     m.fs.C101 = Compressor(dynamic=False,
                            property_package=m.fs.thermo_params_vapor,
@@ -143,7 +151,6 @@ def build_model(m):
                        has_phase_equilibrium=False)
 
     # reactor
-
     m.fs.R101 = StoichiometricReactor(has_heat_transfer=True,
                                       has_heat_of_reaction=True,
                                       has_pressure_change=False,
@@ -164,17 +171,20 @@ def build_model(m):
                       has_heat_transfer=True,
                       has_pressure_change=True)
 
+    # split waste gases for recycle
+    m.fs.S101 = Splitter(property_package=m.fs.thermo_params_vapor,
+                         ideal_separation=False,
+                         outlet_list=["purge", "recycle"])
+
     # product blocks
     m.fs.EXHAUST = Product(property_package=m.fs.thermo_params_vapor)
     m.fs.CH3OH = Product(property_package=m.fs.thermo_params_VLE)
 
     # Build the flowsheet
-    # print degrees of freedom for each unit model
-    # (DOF unit) = (DOF internal) - (DOF feeds)
-    # since inlet is specified by state properties of feed streams
     print('Unit degrees of freedom')
-    for unit in ('M101', 'C101', 'H101', 'R101', 'T101', 'H102', 'F101'):
-        if unit == 'M101':
+    for unit in ('M101', 'C101', 'H101', 'R101', 'T101', 'H102', 'F101',
+                 'M102', 'S101'):
+        if unit == 'M101' or unit == 'M102':
             spec = 14  # (FTP + 4 mole fractions) for both feed streams
         else:
             spec = 7  # (FTP + 4 mole fractions) for feed stream
@@ -184,8 +194,11 @@ def build_model(m):
     m.fs.H2_FEED = Arc(source=m.fs.H2.outlet, destination=m.fs.M101.H2_WGS)
     m.fs.CO_FEED = Arc(source=m.fs.CO.outlet, destination=m.fs.M101.CO_WGS)
 
+    # mixed feed to mix with recycle
+    m.fs.s01 = Arc(source=m.fs.M101.outlet, destination=m.fs.M102.feed)
+
     # pre-compression
-    m.fs.s02 = Arc(source=m.fs.M101.outlet, destination=m.fs.C101.inlet)
+    m.fs.s02 = Arc(source=m.fs.M102.outlet, destination=m.fs.C101.inlet)
 
     # pre-heating
     m.fs.s03 = Arc(source=m.fs.C101.outlet, destination=m.fs.H101.inlet)
@@ -202,8 +215,14 @@ def build_model(m):
     # product recovery
     m.fs.s07 = Arc(source=m.fs.H102.outlet, destination=m.fs.F101.inlet)
 
+    # waste gases
+    m.fs.s08 = Arc(source=m.fs.F101.vap_outlet, destination=m.fs.S101.inlet)
+
+    # recycle
+    m.fs.s09 = Arc(source=m.fs.S101.recycle, destination=m.fs.M102.recycle)
+
     # product streams
-    m.fs.gas = Arc(source=m.fs.F101.vap_outlet, destination=m.fs.EXHAUST.inlet)
+    m.fs.gas = Arc(source=m.fs.S101.purge, destination=m.fs.EXHAUST.inlet)
     m.fs.prod = Arc(source=m.fs.F101.liq_outlet, destination=m.fs.CH3OH.inlet)
 
     # connecting unit models
@@ -274,6 +293,8 @@ def set_inputs(m):
         expr=m.fs.F101.control_volume.properties_out[0].temperature ==
         407.15 * pyunits.K)
 
+    m.fs.S101.split_fraction[0, "purge"].fix(0.9999)  # initially no recycle
+
     print('DOF after units specified: ', degrees_of_freedom(m))
 
 
@@ -302,8 +323,8 @@ def scale_flowsheet(m):
             iscale.set_scaling_factor(var, 1e-3)
 
     # manual scaling
-    for unit in ('H2', 'CO', 'M101', 'C101', 'H101',
-                 'R101', 'T101', 'H102', 'F101', 'CH3OH'):
+    for unit in ('H2', 'CO', 'M101', 'M102', 'C101', 'H101', 'R101',
+                 'T101', 'H102', 'F101', 'S101', 'CH3OH'):
         block = getattr(m.fs, unit)
         if hasattr(block, "control_volume"):
             iscale.set_scaling_factor(
@@ -344,7 +365,8 @@ def scale_flowsheet(m):
                 block.split._Vap_enth_mol_ref, 1e-3)
 
     # set scaling for unit constraints
-    for name in ('M101', 'C101', 'H101', 'R101', 'T101', 'H102', 'F101'):
+    for name in ('M101', 'M102', 'C101', 'H101', 'R101',
+                 'T101', 'H102', 'F101', 'S101'):
         unit = getattr(m.fs, name)
         # mixer constraints
         if hasattr(unit, 'material_mixing_equations'):
@@ -502,6 +524,12 @@ def scale_flowsheet(m):
         m.fs.M101.CO_WGS_state[0.0].enth_mol_phase['Vap'], 1e-3)
     iscale.set_scaling_factor(
         m.fs.M101.mixed_state[0.0].enth_mol_phase['Vap'], 1e-3)
+    iscale.set_scaling_factor(
+        m.fs.M102.feed_state[0.0].enth_mol_phase['Vap'], 1e-3)
+    iscale.set_scaling_factor(
+        m.fs.M102.recycle_state[0.0].enth_mol_phase['Vap'], 1e-3)
+    iscale.set_scaling_factor(
+        m.fs.M102.mixed_state[0.0].enth_mol_phase['Vap'], 1e-3)
 
     iscale.calculate_scaling_factors(m)
 
@@ -510,37 +538,56 @@ def initialize_flowsheet(m):
 
     # Initialize and solve flowsheet
 
-    print('')
-    m.fs.H2.initialize()
-    propagate_state(arc=m.fs.H2_FEED)
+    seq = SequentialDecomposition()
+    seq.options.select_tear_method = "heuristic"
+    seq.options.tear_method = "Wegstein"
+    seq.options.iterLim = 5
 
-    m.fs.CO.initialize()
-    propagate_state(arc=m.fs.CO_FEED)
+    # Using the SD tool
+    G = seq.create_graph(m)
+    heuristic_tear_set = seq.tear_set_arcs(G, method="heuristic")
+    order = seq.calculation_order(G)
+    print()
+    print('Tear Stream:')
+    for o in heuristic_tear_set:
+        print(o.name, ': ', o.source.name, ' to ', o.destination.name)
+    print()
+    print('Calculation order:')
+    for o in order:
+        print(o[0].name)
+    print()
 
-    m.fs.M101.initialize()
-    propagate_state(arc=m.fs.s02)  # mixer to compressor
+    tear_guesses = {
+        "flow_mol": {0: 954.00},
+        "mole_frac_comp": {
+                (0, "CH4"): 1e-6,
+                (0, "CO"): 0.33207,
+                (0, "H2"): 0.66792,
+                (0, "CH3OH"): 1e-6},
+        "enth_mol": {0: -36848},
+        "pressure": {0: 3e6}}
 
-    m.fs.C101.initialize()
-    propagate_state(arc=m.fs.s03)  # compressor to heater
+    # automatically build stream set for flowsheet and find the tear stream
+    stream_set = [arc for arc in m.fs.component_data_objects(Arc)]
+    for stream in stream_set:
+        if stream in heuristic_tear_set:
+            seq.set_guesses_for(stream.destination, tear_guesses)
 
-    m.fs.H101.initialize()
-    propagate_state(arc=m.fs.s04)  # heater to reactor
-
-    m.fs.R101.initialize()
-    propagate_state(arc=m.fs.s05)  # reactor to turbine
-
-    m.fs.T101.initialize()
-    propagate_state(arc=m.fs.s06)  # turbine to cooler
-
-    m.fs.H102.initialize()
-    propagate_state(arc=m.fs.s07)  # cooler to flash
-
-    m.fs.F101.initialize()
-    propagate_state(arc=m.fs.gas)
-    propagate_state(arc=m.fs.prod)
-
-    m.fs.EXHAUST.initialize()
-    m.fs.CH3OH.initialize()
+    def function(unit):
+        print('Solving ', str(unit))
+        unit.initialize(outlvl=idaeslog.ERROR)  # no output unless it breaks
+        for stream in stream_set:
+            if stream.source.parent_block() == unit:
+                propagate_state(arc=stream)  # this is an outlet of the unit
+            stream.destination.unfix()
+        print('DOF = ', degrees_of_freedom(m))
+    print('Initial DOF = ', degrees_of_freedom(m))
+    seq.run(m, function)
+    for stream in stream_set:
+        if stream.destination.is_fixed() is True:
+            print('Unfixing ', stream.destination.name, '...')
+            stream.destination.unfix()
+    print('Final DOF = ', degrees_of_freedom(m))
 
 
 def add_costing(m):
@@ -576,6 +623,7 @@ def add_costing(m):
     m.fs.R101.length.fix(4*pyunits.m)  # for initial problem at 75% conversion
     m.fs.R101.costing = UnitModelCostingBlock(
         flowsheet_costing_block=m.fs.costing)
+    # Reactor length (size, and capital cost) is adjusted based on conversion
     # surrogate model which scales length linearly with conversion
     m.fs.R101.length.unfix()
     m.fs.R101.L_eq = Constraint(expr=m.fs.R101.length ==
@@ -644,7 +692,6 @@ def report(m):
     print()
     print()
     extent = m.fs.R101.rate_reaction_extent[0, "R1"]  # shorter parameter alias
-
     print('Extent of reaction: ', value(extent))
     print('Stoichiometry of each component normalized by the extent:')
     complist = ('CH4', 'H2', 'CH3OH', 'CO')
@@ -663,13 +710,16 @@ def report(m):
     print('Reactor duty (MW): ', m.fs.R101.heat_duty[0].value/1e6)
     print('Duty from Reaction (MW)):', value(extent) *
           -m.fs.reaction_params.reaction_R1.dh_rxn_ref.value/1e6)
+    print('Compressor work (MW): ', m.fs.C101.work_mechanical[0].value/1e6)
     print('Turbine work (MW): ', m.fs.T101.work_isentropic[0].value/1e6)
-    print('Mixer outlet temperature (C)): ',
+    print('Feed Mixer outlet temperature (C)): ',
           m.fs.M101.mixed_state[0].temperature.value - 273.15)
-    print('Compressor outlet temperature (C)): ',
+    print('Recycle Mixer outlet temperature (C)): ',
+          m.fs.M102.mixed_state[0].temperature.value - 273.15)
+    print('Feed Compressor outlet temperature (C)): ',
           m.fs.C101.control_volume.properties_out[0].temperature.value
           - 273.15)
-    print('Compressor outlet pressure (Pa)): ',
+    print('Feed Compressor outlet pressure (Pa)): ',
           m.fs.C101.control_volume.properties_out[0].pressure.value)
     print('Heater outlet temperature (C)): ',
           m.fs.H101.control_volume.properties_out[0].temperature.value
@@ -688,6 +738,8 @@ def report(m):
     print('Flash outlet temperature (C)): ',
           m.fs.F101.control_volume.properties_out[0].temperature.value
           - 273.15)
+    print('Purge percentage (amount of vapor vented to exhaust):',
+          100*value(m.fs.S101.split_fraction[0, "purge"]), ' %')
     print('Methanol recovery(%): ', value(100*m.fs.F101.recovery))
     print('annualized capital cost ($/year) =',
           value(m.fs.annualized_capital_cost))
@@ -760,6 +812,12 @@ def main(m):
     m.fs.F101.isothermal = Constraint(
         expr=m.fs.F101.control_volume.properties_out[0].temperature ==
         m.fs.F101.control_volume.properties_in[0].temperature)
+
+    m.fs.S101.split_fraction[0, "purge"].unfix()  # allow some gas recycle
+    m.fs.S101.split_fraction_lb = Constraint(
+        expr=m.fs.S101.split_fraction[0, "purge"] >= 0.10)  # min 10% purge
+    m.fs.S101.split_fraction_ub = Constraint(
+        expr=m.fs.S101.split_fraction[0, "purge"] <= 0.50)  # max 50% purge
 
     print()
     print('Solving optimization problem...')
