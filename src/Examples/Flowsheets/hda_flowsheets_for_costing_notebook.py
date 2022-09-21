@@ -72,9 +72,6 @@ from idaes.core.util.constants import Constants
 import sys
 import os
 
-commonpath = os.path.join(os.getcwd(), '../../common')
-sys.path.append(commonpath)
-
 
 def hda_with_flash(tee=True):
     if tee is True:
@@ -83,46 +80,45 @@ def hda_with_flash(tee=True):
         outlvl = idaeslog.ERROR
 
     # Import thermodynamic and reaction property packages
-    import hda_ideal_VLE as thermo_props
-    import hda_reaction as reaction_props
+    from idaes_examples.common.hda import ideal_VLE as thermo_props
+    from idaes_examples.common.hda import reaction as reaction_props
 
     # build flowsheet
     print('Building flowsheet...')
     print()
 
     m = ConcreteModel()
-    m.fs = FlowsheetBlock(default={"dynamic": False})
+    m.fs = FlowsheetBlock(dynamic=False)
 
     m.fs.thermo_params = thermo_props.HDAParameterBlock()
     m.fs.reaction_params = reaction_props.HDAReactionParameterBlock(
-        default={"property_package": m.fs.thermo_params})
+        property_package=m.fs.thermo_params)
 
-    m.fs.M101 = Mixer(default={"property_package": m.fs.thermo_params,
-                               "inlet_list": ["toluene_feed", "hydrogen_feed",
-                                              "vapor_recycle"]})
-    m.fs.H101 = Heater(default={"property_package": m.fs.thermo_params,
-                                "has_pressure_change": False,
-                                "has_phase_equilibrium": True})
+    m.fs.M101 = Mixer(property_package=m.fs.thermo_params,
+                      inlet_list=["toluene_feed", "hydrogen_feed",
+                                  "vapor_recycle"])
+    m.fs.H101 = Heater(property_package=m.fs.thermo_params,
+                       has_pressure_change=False,
+                       has_phase_equilibrium=True)
     m.fs.R101 = StoichiometricReactor(
-                default={"property_package": m.fs.thermo_params,
-                         "reaction_package": m.fs.reaction_params,
-                         "has_heat_of_reaction": True,
-                         "has_heat_transfer": True,
-                         "has_pressure_change": False})
-    m.fs.F101 = Flash(default={"property_package": m.fs.thermo_params,
-                               "has_heat_transfer": True,
-                               "has_pressure_change": True})
-    m.fs.S101 = Splitter(default={"property_package": m.fs.thermo_params,
-                                  "ideal_separation": False,
-                                  "outlet_list": ["purge", "recycle"]})
-    m.fs.C101 = PressureChanger(default={
-                "property_package": m.fs.thermo_params,
-                "compressor": True,
-                "thermodynamic_assumption":
-                ThermodynamicAssumption.isothermal})
-    m.fs.F102 = Flash(default={"property_package": m.fs.thermo_params,
-                               "has_heat_transfer": True,
-                               "has_pressure_change": True})
+                property_package=m.fs.thermo_params,
+                reaction_package=m.fs.reaction_params,
+                has_heat_of_reaction=True,
+                has_heat_transfer=True,
+                has_pressure_change=False)
+    m.fs.F101 = Flash(property_package=m.fs.thermo_params,
+                      has_heat_transfer=True,
+                      has_pressure_change=True)
+    m.fs.S101 = Splitter(property_package=m.fs.thermo_params,
+                         ideal_separation=False,
+                         outlet_list=["purge", "recycle"])
+    m.fs.C101 = PressureChanger(
+        property_package=m.fs.thermo_params,
+        compressor=True,
+        thermodynamic_assumption=ThermodynamicAssumption.isothermal)
+    m.fs.F102 = Flash(property_package=m.fs.thermo_params,
+                      has_heat_transfer=True,
+                      has_pressure_change=True)
 
     m.fs.s03 = Arc(source=m.fs.M101.outlet, destination=m.fs.H101.inlet)
     m.fs.s04 = Arc(source=m.fs.H101.outlet, destination=m.fs.R101.inlet)
@@ -247,50 +243,49 @@ def hda_with_distillation(tee=True):
         outlvl = idaeslog.ERROR
 
     # Import thermodynamic and reaction property packages
-    import hda_reaction as reaction_props
+    from idaes_examples.common.hda import reaction as reaction_props
     from idaes.models.properties.activity_coeff_models.\
         BTX_activity_coeff_VLE import BTXParameterBlock
-    from hda_ideal_VLE import HDAParameterBlock
+    from idaes_examples.common.hda.ideal_VLE import HDAParameterBlock
 
     # build flowsheet
     print('Building flowsheet...')
     print()
 
     m = ConcreteModel()
-    m.fs = FlowsheetBlock(default={"dynamic": False})
+    m.fs = FlowsheetBlock(dynamic=False)
 
     m.fs.BTHM_params = HDAParameterBlock()
-    m.fs.BT_params = BTXParameterBlock(default={
-        "valid_phase": ('Liq', 'Vap'),
-        "activity_coeff_model": "Ideal"
-        })
+    m.fs.BT_params = BTXParameterBlock(
+        valid_phase=('Liq', 'Vap'),
+        activity_coeff_model="Ideal"
+        )
     m.fs.reaction_params = reaction_props.HDAReactionParameterBlock(
-        default={"property_package": m.fs.BTHM_params})
+        property_package=m.fs.BTHM_params)
 
-    m.fs.M101 = Mixer(default={"property_package": m.fs.BTHM_params,
-                               "inlet_list": ["toluene_feed", "hydrogen_feed",
-                                              "vapor_recycle"]})
-    m.fs.H101 = Heater(default={"property_package": m.fs.BTHM_params,
-                                "has_phase_equilibrium": True})
+    m.fs.M101 = Mixer(property_package=m.fs.BTHM_params,
+                      inlet_list=["toluene_feed", "hydrogen_feed",
+                                  "vapor_recycle"])
+    m.fs.H101 = Heater(property_package=m.fs.BTHM_params,
+                       has_phase_equilibrium=True)
     m.fs.R101 = CSTR(
-            default={"property_package": m.fs.BTHM_params,
-                     "reaction_package": m.fs.reaction_params,
-                     "has_heat_of_reaction": True,
-                     "has_heat_transfer": True})
-    m.fs.F101 = Flash(default={"property_package": m.fs.BTHM_params,
-                               "has_heat_transfer": True,
-                               "has_pressure_change": True})
-    m.fs.S101 = Splitter(default={"property_package": m.fs.BTHM_params,
-                                  "outlet_list": ["purge", "recycle"]})
-    m.fs.C101 = PressureChanger(default={
-                "property_package": m.fs.BTHM_params,
-                "compressor": True,
-                "thermodynamic_assumption":
-                ThermodynamicAssumption.isothermal})
-    m.fs.translator = Translator(default={
-        "inlet_property_package": m.fs.BTHM_params,
-        "outlet_property_package": m.fs.BT_params
-        })
+            property_package=m.fs.BTHM_params,
+            reaction_package=m.fs.reaction_params,
+            has_heat_of_reaction=True,
+            has_heat_transfer=True)
+    m.fs.F101 = Flash(property_package=m.fs.BTHM_params,
+                      has_heat_transfer=True,
+                      has_pressure_change=True)
+    m.fs.S101 = Splitter(property_package=m.fs.BTHM_params,
+                         outlet_list=["purge", "recycle"])
+    m.fs.C101 = PressureChanger(
+                property_package=m.fs.BTHM_params,
+                compressor=True,
+                thermodynamic_assumption=ThermodynamicAssumption.isothermal)
+    m.fs.translator = Translator(
+        inlet_property_package=m.fs.BTHM_params,
+        outlet_property_package=m.fs.BT_params
+        )
 
     # Add constraint: Total flow = benzene flow + toluene flow (molar)
     m.fs.translator.eq_total_flow = Constraint(
@@ -321,9 +316,9 @@ def hda_with_distillation(tee=True):
         (m.fs.translator.inlet.flow_mol_phase_comp[0, "Liq", "benzene"] +
          m.fs.translator.inlet.flow_mol_phase_comp[0, "Liq", "toluene"]))
 
-    m.fs.H102 = Heater(default={"property_package": m.fs.BT_params,
-                                "has_pressure_change": True,
-                                "has_phase_equilibrium": True})
+    m.fs.H102 = Heater(property_package=m.fs.BT_params,
+                       has_pressure_change=True,
+                       has_phase_equilibrium=True)
 
     m.fs.s03 = Arc(source=m.fs.M101.outlet, destination=m.fs.H101.inlet)
     m.fs.s04 = Arc(source=m.fs.H101.outlet, destination=m.fs.R101.inlet)
@@ -459,13 +454,12 @@ def hda_with_distillation(tee=True):
     from io import StringIO
     stream = StringIO()
     with LoggingIntercept(stream, "pyomo.core", logging.WARNING):
-        m.fs.D101 = TrayColumn(default={
-                            "number_of_trays": 10,
-                            "feed_tray_location": 5,
-                            "condenser_type": CondenserType.totalCondenser,
-                            "condenser_temperature_spec":
-                            TemperatureSpec.atBubblePoint,
-                            "property_package": m.fs.BT_params})
+        m.fs.D101 = TrayColumn(
+                            number_of_trays=10,
+                            feed_tray_location=5,
+                            condenser_type=CondenserType.totalCondenser,
+                            condenser_temperature_spec=TemperatureSpec.atBubblePoint,
+                            property_package=m.fs.BT_params)
 
     m.fs.s11 = Arc(source=m.fs.H102.outlet, destination=m.fs.D101.feed)
 
@@ -516,14 +510,12 @@ def hda_with_distillation(tee=True):
     # loop over units
     for unit in [m.fs.H101, m.fs.H102]:
         unit.costing = UnitModelCostingBlock(
-            default={
-                "flowsheet_costing_block": unit.parent_block().costing,
-                "costing_method": SSLWCostingData.cost_fired_heater,
-                "costing_method_arguments": {
+            flowsheet_costing_block=unit.parent_block().costing,
+            costing_method=SSLWCostingData.cost_fired_heater,
+            costing_method_arguments={
                     "material_type": HeaterMaterial.CarbonSteel,
                     "heat_source": HeaterSource.Fuel,
                 }
-            }
         )
 
     # map unit models to unit classes
@@ -554,15 +546,13 @@ def hda_with_distillation(tee=True):
 
         # define vessel costing
         unit.costing = UnitModelCostingBlock(
-            default={
-                "flowsheet_costing_block": unit.parent_block().costing,
-                "costing_method": SSLWCostingData.unit_mapping[unit_class],
-                "costing_method_arguments": {
+            flowsheet_costing_block=unit.parent_block().costing,
+            costing_method=SSLWCostingData.unit_mapping[unit_class],
+            costing_method_arguments={
                     "material_type": VesselMaterial.CarbonSteel,
                     "shell_thickness": 1.25 * pyunits.inch
 
                 }
-            }
         )
 
     # costing for column - m.fs.D101
@@ -572,10 +562,9 @@ def hda_with_distillation(tee=True):
     m.fs.D101.length = Param(initialize=0.8575, units=pyunits.m)
 
     m.fs.D101.costing = UnitModelCostingBlock(
-            default={
-                "flowsheet_costing_block": m.fs.costing,
-                "costing_method": SSLWCostingData.cost_vertical_vessel,
-                "costing_method_arguments": {
+            flowsheet_costing_block=m.fs.costing,
+            costing_method=SSLWCostingData.cost_vertical_vessel,
+            costing_method_arguments={
                     "material_type": VesselMaterial.CarbonSteel,
                     "shell_thickness": 1.25 * pyunits.inch,
                     "include_platforms_ladders": True,
@@ -584,7 +573,6 @@ def hda_with_distillation(tee=True):
                     "tray_type": TrayType.Sieve
 
                 }
-            }
         )
 
     # Check that the degrees of freedom is zero
