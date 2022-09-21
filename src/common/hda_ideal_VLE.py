@@ -21,7 +21,7 @@ import logging
 # Import Pyomo libraries
 from pyomo.environ import Constraint, Expression, log, NonNegativeReals,\
     Var, Set, Param, sqrt, log10, units as pyunits
-from pyomo.opt import SolverFactory, TerminationCondition
+from pyomo.opt import TerminationCondition
 from pyomo.util.calc_var_value import calculate_variable_from_constraint
 
 # Import IDAES cores
