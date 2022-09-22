@@ -41,8 +41,8 @@ from idaes.core.util.initialization import (fix_state_vars,
 from idaes.core.util.misc import add_object_reference
 from idaes.core.util.model_statistics import degrees_of_freedom, \
                                              number_unfixed_variables
-from idaes.core.solvers import get_solver
 from idaes.core.util.misc import extract_data
+from idaes.core.solvers import get_solver
 import idaes.core.util.scaling as iscale
 import idaes.logger as idaeslog
 
