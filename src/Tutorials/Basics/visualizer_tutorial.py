@@ -42,14 +42,10 @@ from idaes.models.unit_models import (PressureChanger,
                                       Heater,
                                       StoichiometricReactor,
                                       Flash)
-try:
-    # importing from same directory
-    import hda_ideal_VLE as thermo_props
-    import hda_reaction as reaction_props
-except ModuleNotFoundError:
-    # importing from installed examples_pse package
-    from idaes_examples.Tutorials.Basics import hda_ideal_VLE as thermo_props
-    from idaes_examples.Tutorials.Basics import hda_reaction as reaction_props
+# Import thermodynamic and reaction property packages
+from idaes_examples.common.hda import ideal_VLE as thermo_props
+from idaes_examples.common.hda import reaction as reaction_props
+
 from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 from idaes.core.util.model_statistics import degrees_of_freedom
 
