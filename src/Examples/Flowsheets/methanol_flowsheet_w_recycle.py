@@ -45,9 +45,9 @@ from idaes.models.properties.modular_properties.base.generic_reaction import \
     GenericReactionParameterBlock
 
 from idaes_examples.common.methanol import (
-    ideal_VLE as thermo_props_VLE,
-    ideal_vapor as thermo_props_vapor,
-    reactions as reaction_props,
+    methanol_ideal_VLE as thermo_props_VLE,
+    methanol_ideal_vapor as thermo_props_vapor,
+    methanol_reactions as reaction_props,
 )
 
 from idaes.models.unit_models import (

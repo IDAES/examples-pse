@@ -20,11 +20,9 @@ import logging
 # Import Pyomo libraries
 from pyomo.environ import (Constraint,
                            exp,
-                           Expression,
-                           Param,
-                           PositiveReals,
                            Set,
                            Var,
+                           Param,
                            units as pyunits)
 
 # Import IDAES cores
@@ -33,6 +31,7 @@ from idaes.core import (declare_process_block_class,
                         ReactionParameterBlock,
                         ReactionBlockDataBase,
                         ReactionBlockBase)
+from idaes.core.util.constants import Constants as const
 from idaes.core.util.misc import add_object_reference
 
 # Set up logger
@@ -43,11 +42,10 @@ _log = logging.getLogger(__name__)
 class HDAReactionParameterData(ReactionParameterBlock):
     """
     Property Parameter Block Class
-
     Contains parameters and indexing sets associated with properties for
     superheated steam.
-
     """
+
     def build(self):
         '''
         Callable method for Block construction.
@@ -78,23 +76,30 @@ class HDAReactionParameterData(ReactionParameterBlock):
                                             ("R1", "Liq", "hydrogen"): 0,
                                             ("R1", "Liq", "methane"): 0}
 
+        # Arrhenius Constant
+        self.arrhenius = Var(initialize=6.3e+10,
+                             units=pyunits.mol*pyunits.m**-3*pyunits.s**-1*pyunits.Pa**-1,
+                             doc="Arrhenius pre-exponential factor")
+        self.arrhenius.fix()
+
+        # Activation Energy
+        self.energy_activation = Var(initialize=217.6e3,
+                                     units=pyunits.J/pyunits.mol,
+                                     doc="Activation energy")
+        self.energy_activation.fix()
+
         # Heat of Reaction
         dh_rxn_dict = {"R1": -1.08e5}
         self.dh_rxn = Param(self.rate_reaction_idx,
                             initialize=dh_rxn_dict,
-                            doc="Heat of reaction [J/mol]")
-
-        # Gas Constant
-        self.gas_const = Param(within=PositiveReals,
-                               mutable=False,
-                               default=8.314,
-                               doc='Gas Constant [J/mol.K]')
+                            units=pyunits.J/pyunits.mol,
+                            doc="Heat of reaction")
 
     @classmethod
     def define_metadata(cls, obj):
         obj.add_properties({
-                'k_rxn': {'method': '_rate_constant', 'units': 'm^3/mol.s'},
-                'reaction_rate': {'method': "_rxn_rate", 'units': 'mol/m^3.s'}
+                'k_rxn': {'method': None, 'units': 'm^3/mol.s'},
+                'reaction_rate': {'method': None, 'units': 'mol/m^3.s'}
                 })
         obj.add_default_units({'time': pyunits.s,
                                'length': pyunits.m,
@@ -111,13 +116,10 @@ class ReactionBlock(ReactionBlockBase):
     def initialize(blk, outlvl=0, **kwargs):
         '''
         Initialization routine for reaction package.
-
         Keyword Arguments:
             outlvl : sets output level of initialization routine
-
                      * 0 = no output (default)
                      * 1 = report after each step
-
         Returns:
             None
         '''
@@ -143,6 +145,24 @@ class HDAReactionBlockData(ReactionBlockDataBase):
                 self,
                 "dh_rxn",
                 self.config.parameters.dh_rxn)
+
+        self.k_rxn = Var(initialize=0.2,
+                         units=pyunits.mol*pyunits.m**-3*pyunits.s**-1*pyunits.Pa**-1)
+
+        self.reaction_rate = Var(self.params.rate_reaction_idx,
+                                 initialize=1,
+                                 units=pyunits.mol/pyunits.m**3/pyunits.s)
+
+        self.arrhenus_equation = Constraint(
+            expr=self.k_rxn ==
+            self.params.arrhenius * exp(
+                -self.params.energy_activation /
+                (const.gas_constant*self.state_ref.temperature)))
+
+        self.rate_expression = Constraint(
+            expr=self.reaction_rate["R1"] ==
+            self.k_rxn * self.state_ref.pressure *
+            self.state_ref.mole_frac_phase_comp["Vap", "toluene"])
 
     def get_reaction_rate_basis(b):
         return MaterialFlowBasis.molar

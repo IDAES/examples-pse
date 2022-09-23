@@ -1662,7 +1662,7 @@ def pfd_result(outfile, m, df):
 
     original_svg_file = os.path.join(this_file_dir(), "NGFC_results_template.svg")
     with open(original_svg_file, "r") as f:
-        svg_tag(tags=None, svg=f, tag_group=tag_group, outfile=outfile)
+        svg_tag(svg=f, tag_group=tag_group, outfile=outfile)
 
 
 def main():
