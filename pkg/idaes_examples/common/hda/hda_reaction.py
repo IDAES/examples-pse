@@ -93,13 +93,7 @@ class HDAReactionParameterData(ReactionParameterBlock):
         self.dh_rxn = Param(self.rate_reaction_idx,
                             initialize=dh_rxn_dict,
                             units=pyunits.J/pyunits.mol,
-                            doc="Heat of reaction [J/mol]")
-
-        # Gas Constant
-        self.gas_const = Param(mutable=False,
-                               default=8.314,
-                               units=pyunits.J/pyunits.mol/pyunits.K,
-                               doc='Gas Constant [J/mol.K]')
+                            doc="Heat of reaction")
 
     @classmethod
     def define_metadata(cls, obj):
