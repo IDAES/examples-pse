@@ -12,6 +12,13 @@ on:
     # run daily at 5:00 am UTC (12 am ET/9 pm PT)
     - cron: '0 5 * * *'
 
+concurrency:
+  # NOTE: the value of `group` should be chosen carefully,
+  # otherwise we might end up over- or under-canceling workflow runs
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+  # comment to remove to test this block
+
 env:
   IDAES_CONDA_ENV_NAME_DEV: examples-pse-dev
   IDAES_PSE_REQUIREMENT: idaes-pse[prerelease] @ https://github.com/IDAES/idaes-pse/archive/main.zip
