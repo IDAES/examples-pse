@@ -17,7 +17,6 @@ concurrency:
   # otherwise we might end up over- or under-canceling workflow runs
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
-  # comment to remove to test this block
 
 env:
   IDAES_CONDA_ENV_NAME_DEV: examples-pse-dev
