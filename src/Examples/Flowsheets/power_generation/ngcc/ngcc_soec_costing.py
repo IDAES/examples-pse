@@ -891,7 +891,6 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
                                CE_index_units)
 
     # build cost constraints
-    # QGESSCostingData.get_total_TPC(m.fs.costing, CE_index_year=CE_index_year)
     m.fs.costing.build_process_costs(
         net_power=None,
         fixed_OM=False,
@@ -904,11 +903,7 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
     )
 
     # costing initialization
-    QGESSCostingData.costing_initialization(m.fs)
-
-    # QGESSCostingData.initialize_unit_costing(m.fs.soec.water_heater01.costing)
-    # QGESSCostingData.initialize_unit_costing(m.fs.soec.water_heater02.costing)
-    # QGESSCostingData.initialize_unit_costing(m.fs.soec.sweep_turbine.costing)
+    QGESSCostingData.costing_initialization(m.fs.costing)
 
     calculate_variable_from_constraint(
         m.fs.costing.total_TPC,
