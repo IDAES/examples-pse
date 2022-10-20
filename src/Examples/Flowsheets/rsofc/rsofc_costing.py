@@ -21,7 +21,6 @@ import pyomo.environ as pyo
 from pyomo.util.calc_var_value import calculate_variable_from_constraint
 
 from idaes.models_extra.power_generation.costing.power_plant_costing import (
-    get_PP_costing,
     get_total_TPC,
     costing_initialization,
     get_fixed_OM_costs,
@@ -31,8 +30,6 @@ from idaes.models_extra.power_generation.costing.power_plant_costing import (
 )
 
 from idaes.core.util.unit_costing import initialize as cost_init
-
-# from idaes.core.util.unit_costing import fired_heater_costing
 
 
 def add_total_plant_cost(
@@ -45,7 +42,6 @@ def add_total_plant_cost(
 
     b.costing.total_plant_cost = pyo.Var(
         initialize=1e-6,
-        # bounds=(0, None)
         doc="Unit total_TPC in $MM",
     )
     try:
@@ -77,7 +73,6 @@ def get_rsofc_sofc_capital_cost(fs):
     get_total_TPC(fs)
     fs.costing.total_plant_cost = pyo.Var(
         initialize=1e-6,
-        # bounds=(0, 1e4),
         doc="total plant cost in $MM",
     )
 
@@ -90,8 +85,6 @@ def get_rsofc_sofc_capital_cost(fs):
         fs.costing.total_plant_cost, fs.costing.total_plant_cost_eq
     )
 
-    # TODO - Not sure why, but total_plant_cost is not assigned to total_TPC
-    # TODO - ie total_TPC returns as zero
     get_total_TPC(fs)
 
     costing_initialization(fs)
@@ -114,18 +107,6 @@ def get_rsofc_soec_capital_cost(fs):
         hx.get_costing(hx_type="U-tube")
         add_total_plant_cost(hx)
 
-    # # bhx2
-    # # TODO - is this the right costing for oxycombustor with in-bed HEX tubes?
-    # # TODO - try costing bhx2 as hrsg and compare the numbers to the steam_boiler cost
-    # # costed with IDAES generic fired heater correlation
-    # fs.bhx2.costing = pyo.Block()
-    # fired_heater_costing(
-    #     fs.bhx2.costing,
-    #     fired_type="steam_boiler",
-    #     ref_parameter_pressure=fs.bhx2.inlet.pressure[0],
-    # )
-    # add_total_plant_cost(fs.bhx2)
-
     # changing this to electric heater costing
     fs.fuel_recycle_heater.costing = pyo.Block()
     fs.fuel_recycle_heater.costing.total_plant_cost = pyo.Var(
@@ -137,7 +118,8 @@ def get_rsofc_soec_capital_cost(fs):
         U = 100 * pyo.units.W / pyo.units.m**2 / pyo.units.K
         DT = 50 * pyo.units.K
         area = fs.fuel_recycle_heater.heat_duty[0] / U / DT
-        # Add factor of two to pathways cost to account for corrosion-resistant materials for trim heaters
+        # Add factor of two to pathways cost to account for
+        # corrosion-resistant materials for trim heaters
         return b.total_plant_cost * 1e6 == (
             2 * 81.88 * pyo.units.convert(area, pyo.units.ft**2)
         )
@@ -167,7 +149,7 @@ def get_rsofc_soec_capital_cost(fs):
 
     @fs.hcmp01.costing.Constraint()
     def total_plant_cost_eq(c):
-        # This is for 4 stages.  The original was for 2 hence the multiply by 2
+        # This is for 4 stages.  The original was for 2 hence the multiplication by 2
         ref_cost = 11.408  # MM$ 2018
         ref_param = 44369 * pyo.units.lb / pyo.units.hr
         alpha = 0.7
@@ -224,9 +206,7 @@ def get_rsofc_sofc_fixed_OM_costing(
     fs, design_rsofc_netpower=650 * pyo.units.MW, fixed_TPC=None
 ):
 
-    # TODO - deleting this Var/Constraint pair so non-zero TPC value is used
-    # del fs.costing.total_TPC
-    # del fs.costing.total_TPC_eq
+    # Deleting this Var/Constraint pair so non-zero TPC value is used
     fs.costing.del_component(fs.costing.total_TPC)
     fs.costing.del_component(fs.costing.total_TPC_eq)
 

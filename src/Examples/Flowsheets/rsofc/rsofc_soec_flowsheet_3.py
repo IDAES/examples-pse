@@ -39,6 +39,7 @@ import idaes.core.util.scaling as iscale
 import idaes.core.util.initialization as iinit
 from idaes.core.util import model_serializer as ms
 import idaes.core.plugins
+from idaes.core.solvers import use_idaes_solver_configuration_defaults
 
 # Import unit models
 from idaes.models_extra.power_generation.unit_models.helm import (
@@ -65,9 +66,8 @@ from idaes.models_extra.power_generation.properties.natural_gas_PR import (
     get_rxn,
     EosType,
 )
-from properties.CO2_H2O_Ideal_VLE_scaled import get_prop as CO2_H2O_VLE_config
-from idaes.core.solvers import use_idaes_solver_configuration_defaults
 from idaes.models.properties import iapws95
+from properties.CO2_H2O_Ideal_VLE import get_prop as CO2_H2O_VLE_config
 
 
 # Import costing
@@ -358,7 +358,7 @@ def add_combustor(fs):
     ###########################################################################
     #  Add stream connections
     ###########################################################################
-    fs.cmb_mix_in = Arc(  # TODO - rename arc
+    fs.cmb_mix_in = Arc(
         source=fs.oxygen_preheater.tube_outlet,
         destination=fs.pre_oxycombustor_translator.inlet,
     )
@@ -367,7 +367,7 @@ def add_combustor(fs):
     )
     fs.bng01 = Arc(source=fs.ng_preheater.tube_outlet, destination=fs.cmb_mix.ng)
     fs.bng02 = Arc(source=fs.cmb_mix.outlet, destination=fs.cmb.inlet)
-    fs.cmb_out = Arc(  # TODO - rename arc
+    fs.cmb_out = Arc(
         source=fs.cmb.outlet, destination=fs.post_oxycombustor_translator.inlet
     )
     fs.fg01 = Arc(
@@ -398,12 +398,6 @@ def add_aux_boiler_steam(fs):
     ###########################################################################
     #  Specify performance variables of unit operations
     ###########################################################################
-    # fs.bhx2.shell_outlet.temperature[0].fix(700)
-    # fs.bhx2.overall_heat_transfer_coefficient.fix(100)
-    # fs.bhx1.area.fix(400)
-    # htpx(T=None, P=None, x=None)
-    # bhx2 - inbed combustor heat exchanger spec
-    # TODO - Rewrite this spec in a more elegant way - Q comes from cmb
     h_bhx2 = pyo.value(
         iapws95.htpx(1023.15 * pyo.units.K, 1.1e5 * pyo.units.Pa)
     )  # enthalpy outlet
@@ -541,17 +535,6 @@ def add_soec_unit(fs):
     ###########################################################################
     #  Add stream connections
     ###########################################################################
-    # fs.ostrm01 = Arc(
-    #     doc="SOEC sweep gas out to recycle splitter",
-    #     source=self.soec_stack.oxygen_outlet,
-    #     destination=self.sweep_recycle_split.inlet,
-    # )
-    # fs.hstrm01 = Arc(
-    #     doc="SOEC hydrogen stream out to recycle splitter",
-    #     source=self.soec_stack.fuel_outlet,
-    #     destination=self.feed_recycle_split.inlet,
-    # )
-
     fs.o01 = Arc(
         doc="SOEC sweep gas out to recycle splitter",
         source=fs.soec_stack.oxygen_outlet,
@@ -592,8 +575,8 @@ def _define_cell_params(self):
     solid_oxide_cell.oxygen_electrode.length_x.fix(40e-6)
     solid_oxide_cell.oxygen_electrode.porosity.fix(0.30717)
     solid_oxide_cell.oxygen_electrode.tortuosity.fix(3.0)  # Revisit
-    # Heat capacity and heat transfer coefficients of oxygen electrode aren't well known but probably don't matter
-    # because the electrode is extremely thin
+    # Heat capacity and heat transfer coefficients of oxygen electrode aren't well
+    # known but probably don't matter because the electrode is extremely thin
     solid_oxide_cell.oxygen_electrode.solid_heat_capacity.fix(142.3)
     solid_oxide_cell.oxygen_electrode.solid_density.fix(3030)
     solid_oxide_cell.oxygen_electrode.solid_thermal_conductivity.fix(
@@ -617,7 +600,6 @@ def _define_cell_params(self):
     solid_oxide_cell.electrolyte.resistivity_thermal_exponent_dividend.fix(
         8988.134
     )
-
     solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
         22.5
     )
@@ -685,23 +667,7 @@ def add_soec_inlet_mix(fs):
     ###########################################################################
     #  Specify performance variables of unit operations
     ###########################################################################
-    # # Additional constraints to specify the pre combustor translator block
-    # @fs.pre_oxycombustor_translator.Constraint(fs.time)
-    # def pre_oxycombustor_translator_F(b, t):
-    #     return b.inlet.flow_mol[t] == b.outlet.flow_mol[t]
-
-    # @fs.pre_oxycombustor_translator.Constraint(fs.time)
-    # def pre_oxycombustor_translator_T(b, t):
-    #     return b.inlet.temperature[t] == b.outlet.temperature[t]
-
-    # @fs.pre_oxycombustor_translator.Constraint(fs.time)
-    # def pre_oxycombustor_translator_P(b, t):
-    #     return b.inlet.pressure[t] == b.outlet.pressure[t]
-    ###########################################################################
-    #  Specify performance variables of unit operations
-    ###########################################################################
     fs.fuel_recycle_heater.outlet.temperature.fix(1023.15)  # K
-    # fs.air_recycle_heater.outlet.temperature.fix(1023.15)  # K
 
     @fs.mxf1.Constraint(fs.time)
     def fmxpress_eqn(b, t):
@@ -710,23 +676,6 @@ def add_soec_inlet_mix(fs):
     @fs.mxa1.Constraint(fs.time)
     def amxpress_eqn(b, t):
         return b.mixed_state[t].pressure == b.air_state[t].pressure
-
-    # # Additional constraints to specify the feed translator block
-    # @fs.feed_translator.Constraint(fs.time)
-    # def temperature_eqn(b, t):
-    #     return b.properties_out[t].temperature == b.properties_in[t].temperature
-
-    # @fs.feed_translator.Constraint(fs.time)
-    # def pressure_eqn(b, t):
-    #     return b.properties_out[t].pressure == b.properties_in[t].pressure
-
-    # @fs.feed_translator.Constraint(fs.time)
-    # def flow_mol_eqn(b, t):
-    #     return b.properties_out[t].flow_mol == b.properties_in[t].flow_mol
-
-    # @fs.feed_translator.Constraint(fs.time)
-    # def mole_frac_comp_eqn(b, t):
-    #     return b.properties_out[t].mole_frac_comp["H2"] == 1e-19
 
     ###########################################################################
     #  Add stream connections
@@ -769,32 +718,9 @@ def add_soec_inlet_mix(fs):
         source=fs.fuel_recycle_heater.outlet,
         destination=fs.mxf1.recycle,
     )
-    # fs.or01 = Arc(  # O2 rich air from soec recycle stream
-    #     source=fs.splta1.recycle,
-    #     destination=fs.air_recycle_heater.inlet,
-    # )
-    # fs.or02 = Arc(  # O2 rich air from soec recycle stream
-    #     source=fs.air_recycle_heater.outlet,
-    #     destination=fs.mxa1.recycle,
-    # )
-    fs.a03 = Arc(source=fs.air_preheater_2.tube_outlet, destination=fs.mxa1.air)
-
-    # fs.s05 = Arc(source=fs.mxf1.outlet,
-    #              destination=fs.soec.inlet_fc_mult)
-    # fs.s06 = Arc(source=fs.mxa1.outlet,
-    #              destination=fs.soec.inlet_ac_mult)
-
-    # self.sweep01b = Arc(
-    #     doc="Sweep heater to SOEC",
-    #     source=self.sweep_heater.outlet,
-    #     destination=self.soec_stack.oxygen_inlet,
-    # )
-    # self.feed01b = Arc(
-    #     doc="Feed heater to SOEC",
-    #     source=self.feed_heater.outlet,
-    #     destination=self.soec_stack.fuel_inlet,
-    # )
-
+    fs.a03 = Arc(
+        source=fs.air_preheater_2.tube_outlet,
+        destination=fs.mxa1.air)
     fs.s05 = Arc(
         doc="Feed heater to SOEC",
         source=fs.mxf1.outlet,
@@ -920,7 +846,6 @@ def add_hrsg_and_cpu(fs):
     fs.condenser.outlet.temperature.fix(310.9)  # K (100 F)
 
     fs.flash.heat_duty.fix(0)  # Adiabatic flash
-    # fs.flash.control_volume.properties_out[0].temperature.fix(310.9)  # K
     fs.flash.control_volume.properties_out[0].pressure.fix(101325)  # Pa
 
     # CPU translator constraints
@@ -989,12 +914,6 @@ def add_more_hx_connections(fs):
 
 
 def add_design_constraints(fs):
-    # fs.soec_heat_duty = pyo.Var(fs.time, units=pyo.units.W)
-
-    # @fs.Constraint(fs.time)
-    # def heat_duty_soec_zero_eqn(b, t):
-    #     return b.soec.heat_duty[t] == b.soec_heat_duty[t]
-
     fs.cmb_temperature = pyo.Var(fs.time, initialize=1500, units=pyo.units.K)
 
     @fs.Constraint(fs.time)
@@ -1015,8 +934,6 @@ def add_design_constraints(fs):
 
     @fs.Constraint(fs.time)
     def air_to_combustor(b, t):
-        # XS = 1.09  # excess oxygen
-
         F_CH4 = (
             fs.ng_preheater.tube_inlet.flow_mol[t]
             * fs.ng_preheater.tube_inlet.mole_frac_comp[(t, "CH4")]
@@ -1041,7 +958,7 @@ def add_design_constraints(fs):
         )
         return 1e-1 * O2_fed == 1e-1 * fs.excess_oxygen[0] * O2_required
 
-    # TODO - add constraint for cmb Q to in-bed heat exchanger (produces steam)
+    # Constraint for Q from cmb to in-bed heat exchanger (produces steam)
     @fs.Constraint(fs.time)
     def combustor_heat(b, t):
         return fs.cmb.heat_duty[t] == -1 * (
@@ -1189,14 +1106,6 @@ def add_result_constraints(fs):
             1 - fs.steam_cycle_efficiency
         )
 
-    # # gross plant power
-    # fs.gross_power = pyo.Var(fs.time, initialize=670, units=pyo.units.MW)
-
-    # @fs.Constraint(fs.time)
-    # def gross_power_constraint(fs, t):
-    #     return (fs.gross_power[t] == fs.stack_power_AC[t] +
-    #             fs.steam_cycle_power[t])
-
     # boiler feedwater pump load - steam cycle not modeled, scaled from BB
     fs.feedwater_pump_work = pyo.Var(fs.time, initialize=2, units=pyo.units.MW)
 
@@ -1253,9 +1162,11 @@ def add_result_constraints(fs):
 
     @fs.Constraint(fs.time)
     def cooling_water_duty_constraint(fs, t):
-        return fs.cooling_water_duty[t] == fs.steam_cycle_loss[t] + fs.CPU.heat_duty[
+        return (fs.cooling_water_duty[t] == fs.steam_cycle_loss[t] + fs.CPU.heat_duty[
             t
-        ] / 1e6 * pyo.units.MW + 7.327 * pyo.units.MW + pyo.units.convert(  # 25 MMbtu/hr of additional heat
+        ] / 1e6 * pyo.units.MW
+            + 7.327 * pyo.units.MW  # 25 MMbtu/hr of additional heat
+            + pyo.units.convert(
             -1 * fs.intercooler_s1.heat_duty[t]
             + -1 * fs.intercooler_s2.heat_duty[t]
             + -1 * fs.hcmp_ic01.heat_duty[t]
@@ -1265,6 +1176,7 @@ def add_result_constraints(fs):
             pyo.units.MW,
         ) + pyo.units.convert(
             -1 * fs.condenser.heat_duty[t], pyo.units.MW
+        )
         )
 
     @fs.Constraint(fs.time)
@@ -1442,9 +1354,6 @@ def add_result_constraints(fs):
     def net_power_per_mass_h2(b, t):
         return fs.net_power[t] / fs.h2_product_rate_mass[t]
 
-    # TODO - include results constraints for water usage/makeup water i.e.
-    # TODO - cooling water loss, steam cycle loss, process water for H2 gen
-
 
 def initialize_results(fs):
 
@@ -1524,7 +1433,7 @@ def set_guess(fs):
     # Set guess for temp, pressure and mole frac conditions to initalize soec
     fs.soec_stack.fuel_inlet.flow_mol[0].fix(
         5600
-    )  # 8000 mol/s (this value initializes), lb is 5400 mol/s
+    )
     fs.soec_stack.fuel_inlet.temperature[0].fix(1023.15)
     fs.soec_stack.fuel_inlet.pressure[0].fix(1.01325e5)
     fs.soec_stack.fuel_inlet.mole_frac_comp[0, "H2O"].fix(0.90)
@@ -1532,7 +1441,7 @@ def set_guess(fs):
 
     fs.soec_stack.oxygen_inlet.flow_mol[0].fix(
         5600
-    )  # 8000 mol/s (this value initializes), lb is 5400 mol/s
+    )
     fs.soec_stack.oxygen_inlet.temperature[0].fix(1023.15)
     fs.soec_stack.oxygen_inlet.pressure[0].fix(1.01325e5)
     fs.soec_stack.oxygen_inlet.mole_frac_comp[0, "O2"].fix(0.2074)
@@ -1583,11 +1492,11 @@ def set_inputs(fs):
     _set_port(
         fs.air_blower.inlet, F=5600, T=288.15, P=1.01325e5, comp=air_comp, fix=True
     )
-    _set_port(  # TODO - remove alongside mxa1 as recycle is no longer spec'd
+    _set_port(
         fs.mxa1.recycle,
-        F=1e-3,
+        F=1e-3,  # Flow set to tiny val
         T=1023.15,
-        P=1.04e5,  # Flow set to tiny val
+        P=1.04e5,
         comp={"O2": 0.2074, "H2O": 0.0099, "CO2": 0.0003, "N2": 0.7732, "Ar": 0.0092},
         fix=True,
     )
@@ -1608,7 +1517,6 @@ def initialize_plant(fs, solver):
         current_density_guess=-5000,  # mA/cm2
         temperature_guess=1023.15,
     )
-
     iinit.propagate_state(fs.h01)
     iinit.propagate_state(fs.o01)
     fs.spltf1.initialize()
@@ -1639,14 +1547,12 @@ def initialize_plant(fs, solver):
     iinit.propagate_state(fs.cmb_mix_in)
     fs.pre_oxycombustor_translator.initialize()
     iinit.propagate_state(fs.ba03)
-
     fs.ng_preheater.initialize()
     iinit.propagate_state(fs.bng01)
     fs.cmb_mix.initialize()
     iinit.propagate_state(fs.bng02)
     fs.cmb.initialize()
     iinit.propagate_state(fs.cmb_out)
-
     fs.post_oxycombustor_translator.initialize()
     iinit.propagate_state(fs.fg01)
 
@@ -1657,9 +1563,7 @@ def initialize_plant(fs, solver):
     iinit.propagate_state(fs.s02)
     fs.bhx2.initialize()
     iinit.propagate_state(fs.s03)
-
     fs.main_steam_split.initialize()
-
     fs.mxf1.initialize()
     iinit.propagate_state(fs.s05)
 
@@ -1668,13 +1572,7 @@ def initialize_plant(fs, solver):
     iinit.propagate_state(fs.a01)
     fs.air_preheater_1.initialize()
     iinit.propagate_state(fs.a02)
-
     fs.air_preheater_2.initialize()
-    fs.air_preheater_2.shell_inlet.display()
-    fs.air_preheater_2.tube_outlet.display()
-    fs.air_preheater_2.shell_outlet.display()
-    fs.air_preheater_2.tube_inlet.display()
-
     iinit.propagate_state(fs.a03)
     fs.mxa1.initialize()
     iinit.propagate_state(fs.s06)
@@ -1684,25 +1582,14 @@ def initialize_plant(fs, solver):
     fs.preheat_split.inlet.unfix()
 
     # Unfix some dof
-    # TODO - maybe tie the unfixing of these vars to the add_constraint method
     fs.bhx2.outlet.enth_mol.unfix()  # related to soec_steam_temperature eqn
-    fs.air_compressor_s1.inlet.flow_mol.unfix()  #  related to ng to air flow design constraint
-    fs.ng_preheater.tube_inlet.flow_mol.unfix()  # related to fixing combustor temperature
-
-    # Solve soec model alone before flowsheet solve to check that it converges
-    # solver.solve(fs.soec, tee=True, symbolic_solver_labels=True)
-    # Unfix because cell is solved as thermoneutral (soec_heat_duty.fix(0))
-    fs.s05_expanded.deactivate()
-    fs.s06_expanded.deactivate()
-
-    # Connect soec to BOP - activate relavant arcs, unfix relevant variables
-    fs.s05_expanded.activate()
-    fs.s06_expanded.activate()
+    fs.air_compressor_s1.inlet.flow_mol.unfix()  # related to ng to air flow constraint
+    fs.ng_preheater.tube_inlet.flow_mol.unfix()  # related to fixing cmb temperature
 
     fs.soec_stack.fuel_inlet.unfix()
     fs.soec_stack.oxygen_inlet.unfix()
 
-    # TODO - Vary air_blower.inlet such that O2 mole frac is less than 0.35 (set as optimization)
+    # Vary air_blower.inlet such that O2 mole frac <= 0.35
     fs.air_blower.inlet.flow_mol.unfix()
     fs.soec_stack.oxygen_outlet.mole_frac_comp[0, "O2"].fix(0.35)
 
@@ -1718,12 +1605,6 @@ def initialize_plant(fs, solver):
         },
         symbolic_solver_labels=True,
     )
-
-    fs.soec_stack.oxygen_inlet.display()
-    fs.soec_stack.fuel_inlet.display()
-    fs.soec_stack.oxygen_outlet.display()
-    fs.soec_stack.fuel_outlet.display()
-    fs.ng_preheater.tube_inlet.flow_mol.display()
 
 
 def initialize_bop(fs, solver):
@@ -1754,12 +1635,13 @@ def initialize_bop(fs, solver):
     iinit.propagate_state(fs.fg03)
     fs.condenser.initialize()
     fs.condenser.outlet.display()
-    # assert False
+
     iinit.propagate_state(fs.CPU_translator_in)
     fs.CPU_translator.initialize()
     iinit.propagate_state(fs.fg04)
     fs.flash.initialize()
 
+    # Initialize CPU inlet
     calculate_variable_from_constraint(fs.CPU.inlet.flow_mol[0], fs.CPU_inlet_F[0])
     calculate_variable_from_constraint(fs.CPU.inlet.pressure[0], fs.CPU_inlet_P[0])
     calculate_variable_from_constraint(fs.CPU.inlet.temperature[0], fs.CPU_inlet_T[0])
@@ -1843,7 +1725,6 @@ def add_scaling(fs):
     for t, c in fs.post_oxycombustor_translator.post_oxycombustor_translator_P.items():
         iscale.constraint_scaling_transform(c, 1e-5, overwrite=True)
 
-    # This scaling term is needed to improve model convergence
     for t, c in fs.aux_boiler_feed_pump.eq_work.items():
         iscale.constraint_scaling_transform(c, 1e-10, overwrite=True)
     for (t, r), v in fs.cmb.control_volume.rate_reaction_extent.items():
@@ -1906,23 +1787,18 @@ def get_solver():
 def tag_inputs_opt_vars(fs):
     tags = iutil.ModelTagGroup()
 
-    tags["feed_h2_frac"] = iutil.ModelTag(
-        expr=fs.soec_stack.fuel_inlet.mole_frac_comp[0, "H2"],
+    # Optimization variables
+    tags["soec_outlet_o2_frac"] = iutil.ModelTag(
+        expr=fs.soec_stack.oxygen_outlet.mole_frac_comp[0, "O2"],
         format_string="{:.3f}",
         display_units=None,
-        doc="H2 side inlet H2 mole frac (from recycle)",
+        doc="O2 side outlet O2 mole fraction",
     )
-    tags["feed_water_flow"] = iutil.ModelTag(
-        expr=fs.aux_boiler_feed_pump.inlet.flow_mol[0],
+    tags["air_blower_flow"] = iutil.ModelTag(
+        expr=fs.air_blower.inlet.flow_mol[0],
         format_string="{:.3f}",
         display_units=None,
-        doc="Feed water flow (provides steam to soec fuel side)",
-    )
-    tags["sweep_air_flow"] = iutil.ModelTag(
-        expr=fs.air_compressor_s1.inlet.flow_mol[0],
-        format_string="{:.3f}",
-        display_units=None,
-        doc="Air flow to soec air side",
+        doc="Air blower flow (provides air to soec air side)",
     )
     tags["combustor_temperature"] = iutil.ModelTag(
         expr=fs.cmb.outlet.temperature[0],
@@ -1936,48 +1812,49 @@ def tag_inputs_opt_vars(fs):
         display_units=None,
         doc="Split frac. of soec air to air preheater, rest goes to NG heater",
     )
-    tags["n_cells"] = iutil.ModelTag(
-        expr=fs.soec_stack.number_cells,
-        format_string="{:,.0f}",
+    tags["soec_h2_split_to_product"] = iutil.ModelTag(
+        expr=fs.spltf1.split_fraction[0, "out"],
+        format_string="{:.3f}",
         display_units=None,
-        doc="Number of SOEC cells",
+        doc="Split frac. of soec h2 to product, rest goes to recycle",
     )
-    tags["cell_pressure"] = iutil.ModelTag(
-        expr=fs.aux_boiler_feed_pump.outlet.pressure[0],
+    tags["oxygen_preheater_delta_T_in"] = iutil.ModelTag(
+        expr=fs.oxygen_preheater.delta_temperature_in[0],
         format_string="{:.3f}",
-        display_units=pyo.units.kPa,
-        doc="Steam and SOEC pressure",
+        display_units=pyo.units.K,
+        doc="Air preheater inlet approach temperature",
     )
-    # TODO - HEX areas aren't optimization variables as DT is fixed.
-    tags["oxygen_preheater_area"] = iutil.ModelTag(
-        expr=fs.oxygen_preheater.area,
+    tags["ng_preheater_delta_T_in"] = iutil.ModelTag(
+        expr=fs.ng_preheater.delta_temperature_in[0],
         format_string="{:.3f}",
-        display_units=pyo.units.m**2,
-        doc="Air preheater area",
+        display_units=pyo.units.K,
+        doc="NG preheater inlet approach temperature",
     )
-    tags["ng_preheater_area"] = iutil.ModelTag(
-        expr=fs.ng_preheater.area,
+    tags["air_preheater_1_delta_T_in"] = iutil.ModelTag(
+        expr=fs.air_preheater_1.delta_temperature_in[0],
         format_string="{:.3f}",
-        display_units=pyo.units.m**2,
-        doc="NG preheater area",
+        display_units=pyo.units.K,
+        doc="air_preheater_1 inlet approach temperature",
     )
-    tags["bhx1_area"] = iutil.ModelTag(
-        expr=fs.bhx1.area,
+    tags["air_preheater_2_delta_T_in"] = iutil.ModelTag(
+        expr=fs.air_preheater_2.delta_temperature_in[0],
         format_string="{:.3f}",
-        display_units=pyo.units.m**2,
-        doc="bhx1 area",
+        display_units=pyo.units.K,
+        doc="air_preheater_2 inlet approach temperature",
     )
-    tags["air_preheater_1_area"] = iutil.ModelTag(
-        expr=fs.air_preheater_1.area,
-        format_string="{:.3f}",
-        display_units=pyo.units.m**2,
-        doc="air_preheater_1 area",
+    tags["soc_cell_potential"] = iutil.ModelTag(
+        expr=fs.soec_stack.solid_oxide_cell.potential[0],
+        format_string="{:.4f}",
+        display_units=pyo.units.volts,
+        doc="soc cell potential"
     )
-    tags["air_preheater_2_area"] = iutil.ModelTag(
-        expr=fs.air_preheater_2.area,
+
+    # Input variables
+    tags["condenser_outlet_temperature"] = iutil.ModelTag(
+        expr=fs.condenser.outlet.temperature[0],
         format_string="{:.3f}",
-        display_units=pyo.units.m**2,
-        doc="air_preheater_2 area",
+        display_units=pyo.units.K,
+        doc="Condenser outlet temperature (controls CO2 product purity from CPU)",
     )
     tags["hydrogen_product_rate"] = iutil.ModelTag(
         expr=fs.hydrogen_product_rate[0],
@@ -1985,6 +1862,25 @@ def tag_inputs_opt_vars(fs):
         display_units=pyo.units.kmol / pyo.units.s,
         doc="Rate of hydrogen production",
     )
+    tags["n_cells"] = iutil.ModelTag(
+        expr=fs.soec_stack.number_cells,
+        format_string="{:,.0f}",
+        display_units=None,
+        doc="Number of SOEC cells",
+    )
+    tags["feed_water_flow"] = iutil.ModelTag(
+        expr=fs.aux_boiler_feed_pump.inlet.flow_mol[0],
+        format_string="{:.3f}",
+        display_units=None,
+        doc="Feed water flow (provides steam to soec fuel side)",
+    )
+    tags["sweep_air_flow"] = iutil.ModelTag(
+        expr=fs.air_compressor_s1.inlet.flow_mol[0],
+        format_string="{:.3f}",
+        display_units=None,
+        doc="Air flow to soec air side",
+    )
+
     fs.tag_input = tags
     display_input_tags(fs)
 
@@ -2212,38 +2108,6 @@ def display_input_tags(fs):
         print("")
 
 
-def check_scaling(m):
-    import idaes.core.util.scaling as iscale
-
-    jac, nlp = iscale.get_jacobian(m, scaled=True)
-    # print("Extreme Jacobian entries:")
-    sourceFile = open("extreme_jacobian.txt", "w")
-    for i in iscale.extreme_jacobian_entries(jac=jac, nlp=nlp, small=1e-6, large=1e3):
-        print(f"    {i[0]:.2e}, [{i[1]}, {i[2]}]", file=sourceFile)
-    sourceFile.close()
-
-    # print("Unscaled constraints:")
-    sourceFile2 = open("unscaled_constraints.txt", "w")
-    for c in iscale.unscaled_constraints_generator(m):
-        print(f"    {c}", file=sourceFile2)
-    sourceFile2.close()
-
-    sourceFile3 = open("constraints_with_scale_factor.txt", "w")
-    # print("Scaled constraints by factor:")
-    for c, s in iscale.constraints_with_scale_factor_generator(m):
-        print(f"    {c}, {s}", file=sourceFile3)
-    sourceFile3.close()
-
-    # print("Badly scaled variables:")
-    sourceFile4 = open("badly_scaled_var.txt", "w")
-    for v, sv in iscale.badly_scaled_var_generator(
-        m, large=1e3, small=1e-4, zero=1e-12
-    ):
-        print(f"    {v} -- {sv} -- {iscale.get_scaling_factor(v)}", file=sourceFile4)
-    sourceFile.close()
-    print(f"Jacobian Condition Number: {iscale.jacobian_cond(jac=jac):.2e}")
-
-
 def write_pfd_results(m, filename, infilename=None):
     """
     Write simulation results in a template PFD in svg format and save as
@@ -2313,7 +2177,7 @@ def base_case_optimization(m, solver):
         expr=1e2 * m.soec_fs.CO2_capture_efficiency[0] >= 1e2 * 0.98
     )
 
-    m.soec_fs.condenser.outlet.temperature.unfix()  # 310.9 K
+    m.soec_fs.condenser.outlet.temperature.unfix()
 
     #############################
     # Optimization #
@@ -2337,8 +2201,7 @@ def base_case_optimization(m, solver):
         <= 1e2 * 0.35
     )
 
-    # TODO - confirm this constraint
-    # Allow fuel recycle flowrate to vary
+    # This allows fuel recycle flowrate to vary
     # Single pass conversion set to be > 0.50
     m.soec_fs.spltf1.split_fraction[:, "out"].unfix()
     m.soec_fs.spltf1.split_fraction[:, "out"].setlb(0.5)
@@ -2356,11 +2219,6 @@ def base_case_optimization(m, solver):
     m.soec_fs.tag_input["preheat_fg_split_to_oxygen"].unfix()  # optimization
     m.soec_fs.tag_input["preheat_fg_split_to_oxygen"].setlb(0.30)
     m.soec_fs.tag_input["preheat_fg_split_to_oxygen"].setub(0.99)
-
-    # Unfix current density (optimization dof)
-    # However it should be below 800 mA/cm2 (8,000 A/m2)
-    # TODO - it seems this is already unfixed in solid_oxide_cell. Why?
-    m.soec_fs.soec_stack.solid_oxide_cell.current_density.unfix()
 
     # Average current density limitation constraint
     @m.soec_fs.Constraint(m.soec_fs.time)
@@ -2432,20 +2290,9 @@ def base_case_optimization(m, solver):
         )
     )
 
-    # Objective function
-    # m.soec_fs.obj = pyo.Objective(
-    #     expr=m.soec_fs.soec_power[0] / 10)
-    # m.soec_fs.obj = pyo.Objective(
-    #     expr=m.soec_fs.ng_preheater.tube_inlet.flow_mol[0] / 10)
-    # m.soec_fs.obj = pyo.Objective(
-    #     expr=1e3*m.soec_fs.H2_costing.total_variable_OM_cost[0] /
-    #     m.soec_fs.net_power_per_mass_h2[0])
-
     m.soec_fs.obj = pyo.Objective(
         expr=1e2
         * m.soec_fs.H2_costing.total_variable_OM_cost[0]
-        # +
-        # 1e4*m.soec_fs.slack_h2o_comp**2
     )
 
     options = {
@@ -2522,8 +2369,7 @@ def optimize_model(fs):
         expr=1e2 * fs.soec_stack.oxygen_outlet.mole_frac_comp[0, "O2"] <= 1e2 * 0.35
     )
 
-    # TODO - confirm this constraint
-    # Allow fuel recycle flowrate to vary
+    # This Allows fuel recycle flowrate to vary
     # Single pass conversion set to be > 0.50
     fs.spltf1.split_fraction[:, "out"].unfix()
     fs.spltf1.split_fraction[:, "out"].setlb(0.5)
@@ -2532,8 +2378,6 @@ def optimize_model(fs):
         expr=1e2 * fs.soec_single_pass_water_conversion[0] >= 1e2 * 0.50
     )
 
-    # TODO - is this contraint correct? Might not be feasible at lower flows
-    # because the conversion will increase as the steam flowrate reduces
     # Outlet H2O mole fraction from the fuel side should be > 0.20
     fs.soec_outlet_h2o_constraint = pyo.Constraint(
         expr=1e3 * fs.spltf1.inlet.mole_frac_comp[0, "H2O"] >= 1e3 * 0.20
@@ -2543,11 +2387,6 @@ def optimize_model(fs):
     fs.tag_input["preheat_fg_split_to_oxygen"].unfix()  # optimization
     fs.tag_input["preheat_fg_split_to_oxygen"].setlb(0.30)
     fs.tag_input["preheat_fg_split_to_oxygen"].setub(0.99)
-
-    # Unfix current density (optimization dof)
-    # However it should be below 800 mA/cm2 (8,000 A/m2)
-    # TODO - it seems this is already unfixed in solid_oxide_cell. Why?
-    fs.soec_stack.solid_oxide_cell.current_density.unfix()
 
     # Average current density limitation constraint
     @fs.Constraint(fs.time)
@@ -2665,25 +2504,6 @@ def optimize_model(fs):
         doc="Water treatment chemicals O&M cost",
     )
 
-    print(f"Hydrogen product rate {fs.tag_input['hydrogen_product_rate']}.")
-    print(
-        "mole_frac H2 in fuel outlet = ",
-        pyo.value(fs.spltf1.inlet.mole_frac_comp[0, "H2O"]),
-    )
-    print("H2 recycle fraction = ", pyo.value(fs.spltf1.split_fraction[0, "recycle"]))
-    print(
-        "single_pass_water_conversion = ",
-        pyo.value(fs.soec_single_pass_water_conversion[0]),
-    )
-    print("preheat_fg_split_to_oxygen = ", fs.tag_input["preheat_fg_split_to_oxygen"])
-    print("cmb outlet temperature = ", pyo.value(fs.cmb.outlet.temperature[0]))
-    print("cell potential = ", pyo.value(fs.soec_stack.solid_oxide_cell.potential[0]))
-    print(
-        "average_current_density = ",
-        pyo.value(fs.soec_stack.solid_oxide_cell.average_current_density[0]),
-    )
-    print("excess oxygen = ", pyo.value(fs.excess_oxygen[0]))
-
     cols_input = ("hydrogen_product_rate",)
     cols_pfd = (
         "status",
@@ -2719,7 +2539,6 @@ def optimize_model(fs):
         )
         print()
         print()
-        print()
         print(f"Hydrogen product rate {fs.tag_input['hydrogen_product_rate']}.")
         print(f"Number of soec cells {fs.tag_input['n_cells']}.")
         res = solver.solve(fs, tee=True, symbolic_solver_labels=True, options=options)
@@ -2732,31 +2551,6 @@ def optimize_model(fs):
             w = csv.writer(f)
             w.writerow(row_1 + row_2)
 
-        print(f"Hydrogen product rate {fs.tag_input['hydrogen_product_rate']}.")
-        print(
-            "mole_frac H2 in fuel outlet = ",
-            pyo.value(fs.spltf1.inlet.mole_frac_comp[0, "H2O"]),
-        )
-        print(
-            "H2 recycle fraction = ", pyo.value(fs.spltf1.split_fraction[0, "recycle"])
-        )
-        print(
-            "single_pass_water_conversion = ",
-            pyo.value(fs.soec_single_pass_water_conversion[0]),
-        )
-        print(
-            "preheat_fg_split_to_oxygen = ", fs.tag_input["preheat_fg_split_to_oxygen"]
-        )
-        print("cmb outlet temperature = ", pyo.value(fs.cmb.outlet.temperature[0]))
-        print(
-            "cell potential = ", pyo.value(fs.soec_stack.solid_oxide_cell.potential[0])
-        )
-        print(
-            "average_current_density = ",
-            pyo.value(fs.soec_stack.solid_oxide_cell.average_current_density[0]),
-        )
-        print("excess oxygen = ", pyo.value(fs.excess_oxygen[0]))
-
         # write_pfd_results(
         #     m, f"rsofc_soec_{fs.tag_input['hydrogen_product_rate'].display(units=False)}.svg"
         # )
@@ -2764,7 +2558,10 @@ def optimize_model(fs):
 
 def get_model(m=None, name="SOEC Module"):
 
+    # json file for saving/loading initialized model
     init_fname = "rsofc_soec_surrogate_init.json.gz"
+
+    solver = get_solver()
 
     if os.path.exists(init_fname):
         # main plant
@@ -2783,7 +2580,7 @@ def get_model(m=None, name="SOEC Module"):
         expand_arcs.apply_to(m.soec_fs)
         add_scaling(m.soec_fs)
 
-        # bop
+        # balance of plant
         add_h2_compressor(m.soec_fs)
         add_hrsg_and_cpu(m.soec_fs)
         expand_arcs = pyo.TransformationFactory("network.expand_arcs")
@@ -2797,9 +2594,9 @@ def get_model(m=None, name="SOEC Module"):
         ms.from_json(m, fname=init_fname)
 
     else:
+        # main plant
         add_flowsheet(m)
         add_properties(m.soec_fs)
-
         add_asu(m.soec_fs)
         add_preheater(m.soec_fs)
         add_soec_air_side_units(m.soec_fs)
@@ -2808,17 +2605,16 @@ def get_model(m=None, name="SOEC Module"):
         add_soec_unit(m.soec_fs)
         add_more_hx_connections(m.soec_fs)
         add_soec_inlet_mix(m.soec_fs)
-
         add_design_constraints(m.soec_fs)
         expand_arcs = pyo.TransformationFactory("network.expand_arcs")
         expand_arcs.apply_to(m.soec_fs)
         set_guess(m.soec_fs)
         set_inputs(m.soec_fs)
-        solver = get_solver()
         add_scaling(m.soec_fs)
         iscale.scale_arc_constraints(m.soec_fs)
-
         initialize_plant(m.soec_fs, solver)
+
+        # balance of plant
         add_h2_compressor(m.soec_fs)
         add_hrsg_and_cpu(m.soec_fs)
         expand_arcs = pyo.TransformationFactory("network.expand_arcs")
@@ -2826,27 +2622,17 @@ def get_model(m=None, name="SOEC Module"):
         add_scaling_bop(m.soec_fs)
         initialize_bop(m.soec_fs, solver)
 
+        # results
         add_result_constraints(m.soec_fs)
         initialize_results(m.soec_fs)
-        tag_inputs_opt_vars(m.soec_fs)
-        # tag_for_pfd_and_tables(m.soec_fs)
-        rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
-        base_case_solve(m.soec_fs, solver)  # solve for H2 prod. of 5 kg/s (2.5 kmol/s)
-        # base_case_optimization(m, solver)  # 5 kg/s
 
-        # # save model and results
-        # ms.to_json(m, fname=init_fname)
+        # save model and results
+        ms.to_json(m, fname=init_fname)
 
     return m, solver
 
 
 def base_case_solve(fs, solver):
-    # Values are changed to solve for the base case H2 production of 2.5 kmol/s
-    # or 5 kg/s.
-    # fs.preheat_split.split_fraction[:, "oxygen"].fix(0.6241)
-    # fs.soec.fc.mole_frac_comp[:, 0, "H2"].fix(0.0010)
-    # fs.soec.fc.flow_mol[:, 0].fix(8.296e-4)
-    # fs.soec.ac.flow_mol[:, 0].fix(8.296e-4)
     # Values are changed to solve for the base case H2 production of 2.5 kmol/s
     # or 5 kg/s.
     fs.hydrogen_product_rate.fix(2500)  # 2500 mol/s
@@ -2869,16 +2655,17 @@ def base_case_solve(fs, solver):
 if __name__ == "__main__":
     m = pyo.ConcreteModel()
     m, solver = get_model(m)
+
     tag_inputs_opt_vars(m.soec_fs)
     tag_for_pfd_and_tables(m.soec_fs)
-    # display_input_tags(m.soec_fs)
-    # check_scaling(m)
-    write_pfd_results(m, "rsofc_soec_results.svg")
-    # m.soec_fs.visualize("rSOEC Flowsheet")  # visualize flowsheet
 
-    # rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
-
+    # base_case_solve(m.soec_fs, solver)  # solve for H2 prod. of 5 kg/s (2.5 kmol/s)
+    rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
+    base_case_optimization(m, solver)  # 5 kg/s
     # optimize_model(m.soec_fs)
 
-    # strip_bounds = pyo.TransformationFactory("contrib.strip_var_bounds")
-    # strip_bounds.apply_to(m, reversible=False)
+    # display_input_tags(m.soec_fs)
+    write_pfd_results(m, "rsofc_soec_results.svg")
+
+    # visualize flowsheet
+    # m.soec_fs.visualize("rSOEC Flowsheet")
