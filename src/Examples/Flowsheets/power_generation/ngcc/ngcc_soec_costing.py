@@ -782,7 +782,15 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
     # SOEC CAPITAL COSTING
 
     # soec modules
-    m.fs.soec.soec_module.costing = pyo.Block()
+    # create dummy diameter and length variables
+    m.fs.soec.soec_module.diameter = pyo.Var(initialize=0, units=pyunits.m)
+    m.fs.soec.soec_module.length = pyo.Var(initialize=0, units=pyunits.m)
+    m.fs.soec.soec_module.costing = UnitModelCostingBlock(
+        flowsheet_costing_block=m.fs.costing,
+        costing_method=SSLWCostingData.cost_vessel,
+        costing_method_arguments={
+            "include_platforms_ladders": False,
+        },)
 
     @m.fs.soec.soec_module.costing.Expression()
     def total_plant_cost(c):
@@ -793,7 +801,15 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
 
     # high temperature soec trim heaters
     for heater in [m.fs.soec.feed_heater, m.fs.soec.sweep_heater]:
-        heater.costing = pyo.Block()
+        # create dummy area variables
+        heater.area = pyo.Var(initialize=0, units=pyunits.m**2)
+        heater.costing = UnitModelCostingBlock(
+            flowsheet_costing_block=m.fs.costing,
+            costing_method=SSLWCostingData.cost_fired_heater,
+            costing_method_arguments={
+                "integer": True,
+            },
+        )
 
         @heater.costing.Expression()
         def total_plant_cost(b):
@@ -834,7 +850,13 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
     # sweep hx and feed hx
     # costed with price/ft^2 from NGFC Pathways study
     for hx in [m.fs.soec.sweep_hx, m.fs.soec.feed_hx01]:
-        hx.costing = pyo.Block()
+        hx.costing = UnitModelCostingBlock(
+            flowsheet_costing_block=m.fs.costing,
+            costing_method=SSLWCostingData.cost_heat_exchanger,
+            costing_method_arguments={
+                "hx_type": HXType.Utube,
+            },
+        )
 
         @hx.costing.Expression()
         def total_plant_cost(c):
@@ -843,7 +865,13 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
                 pyunits.USD_2018, CE_index_units)
 
     # sweep compressor
-    m.fs.soec.sweep_compressor.costing = pyo.Block()
+    m.fs.soec.sweep_compressor.costing = UnitModelCostingBlock(
+        flowsheet_costing_block=m.fs.costing,
+        costing_method=SSLWCostingData.cost_compressor,
+        costing_method_arguments={
+            "integer": True,
+        },
+    )
 
     # air is coming in at standard conditions
     sweep_compressor_scfm = pyo.units.convert(
@@ -874,7 +902,13 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
     add_total_plant_cost(m.fs.soec.sweep_turbine)
 
     # H2 compressor
-    m.fs.soec.cmp01.costing = pyo.Block()
+    m.fs.soec.cmp01.costing = UnitModelCostingBlock(
+        flowsheet_costing_block=m.fs.costing,
+        costing_method=SSLWCostingData.cost_compressor,
+        costing_method_arguments={
+            "integer": True,
+        },
+    )
 
     h2_comp_process_param = pyo.units.convert(
         m.fs.soec.cmp01.control_volume.properties_out[0].flow_mass,
@@ -1066,38 +1100,38 @@ def display_capital_costs(m):
         pyo.value(m.fs.costing.heat_exchanger_costs)))
 
 
-if __name__ == "__main__":
-    # set up solver
-    use_idaes_solver_configuration_defaults()
-    idaes.cfg.ipopt.options.nlp_scaling_method = "user-scaling"
-    idaes.cfg.ipopt.options.linear_solver = "ma57"
-    idaes.cfg.ipopt.options.OF_ma57_automatic_scaling = "yes"
-    idaes.cfg.ipopt.options.ma57_pivtol = 1e-5
-    idaes.cfg.ipopt.options.ma57_pivtolmax = 0.1
-    idaes.cfg.ipopt.options.max_iter = 200
-    solver = pyo.SolverFactory("ipopt")
+# if __name__ == "__main__":
+    # # set up solver
+    # use_idaes_solver_configuration_defaults()
+    # idaes.cfg.ipopt.options.nlp_scaling_method = "user-scaling"
+    # solver = pyo.SolverFactory("ipopt")
 
-    # create the ngcc model
-    m = pyo.ConcreteModel()
-    m.fs = ngcc_soec.NgccSoecFlowsheet(dynamic=False)
-    m.fs.costing = QGESSCosting()
-    iscale.calculate_scaling_factors(m)
-    m.fs.initialize(
-        load_from="ngcc_soec_init.json.gz",
-        save_to="ngcc_soec_init.json.gz")
-    res = solver.solve(m, tee=True)
-    print()
-    print("Loaded model solved")
-    print()
+    # # create the ngcc model
+    # m = pyo.ConcreteModel()
+    # m.fs = ngcc_soec.NgccSoecFlowsheet(dynamic=False)
+    # iscale.calculate_scaling_factors(m)
+    # m.fs.initialize(
+    #     load_from="ngcc_soec_init.json.gz",
+    #     save_to="ngcc_soec_init.json.gz")
+    # print("Solve initial problem")
+    # res = solver.solve(m, tee=True)
+    # print("Fix fuel cost and resolve")
+    # m.fs.ngcc.fuel_cost.fix(4.42)
+    # res = solver.solve(m, tee=True)
+    # print("Fix reboiler duty and resolve")
+    # m.fs.ngcc.cap_specific_reboiler_duty.fix(2.4e6)
+    # res = solver.solve(m, tee=True)
+    # print("Fix capture fraction and resolve")
+    # m.fs.ngcc.cap_fraction.fix(0.97)
+    # res = solver.solve(m, tee=True)
 
-    # add capital costing
-    add_results_for_costing(m)
-    res = solver.solve(m, tee=True)  # solve just new variables
-    get_ngcc_soec_capital_cost(m, CE_index_year="2018")
-    res = solver.solve(m, tee=True)  # solve all costing
+    # # add capital costing
+    # print("Add initial costing and resolve")
+    # m.fs.costing = QGESSCosting()
+    # add_results_for_costing(m)
+    # res = solver.solve(m, tee=True)
+    # print("Add capital costing and resolve")
+    # get_ngcc_soec_capital_cost(m, CE_index_year="2018")
+    # res = solver.solve(m, tee=True)
 
-    print()
-    print("Capital costing solved")
-    print()
-
-    display_capital_costs(m)
+    # display_capital_costs(m)
