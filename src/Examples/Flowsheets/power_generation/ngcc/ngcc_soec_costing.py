@@ -36,6 +36,7 @@ from pyomo.util.calc_var_value import calculate_variable_from_constraint
 
 from idaes.core.solvers import use_idaes_solver_configuration_defaults
 import idaes.core.util.scaling as iscale
+from idaes.core.util import model_serializer as ms
 
 import ngcc_soec
 
@@ -1101,37 +1102,39 @@ def display_capital_costs(m):
 
 
 # if __name__ == "__main__":
-    # # set up solver
-    # use_idaes_solver_configuration_defaults()
-    # idaes.cfg.ipopt.options.nlp_scaling_method = "user-scaling"
-    # solver = pyo.SolverFactory("ipopt")
+#     # set up solver
+#     use_idaes_solver_configuration_defaults()
+#     idaes.cfg.ipopt.options.nlp_scaling_method = "user-scaling"
+#     solver = pyo.SolverFactory("ipopt")
 
-    # # create the ngcc model
-    # m = pyo.ConcreteModel()
-    # m.fs = ngcc_soec.NgccSoecFlowsheet(dynamic=False)
-    # iscale.calculate_scaling_factors(m)
-    # m.fs.initialize(
-    #     load_from="ngcc_soec_init.json.gz",
-    #     save_to="ngcc_soec_init.json.gz")
-    # print("Solve initial problem")
-    # res = solver.solve(m, tee=True)
-    # print("Fix fuel cost and resolve")
-    # m.fs.ngcc.fuel_cost.fix(4.42)
-    # res = solver.solve(m, tee=True)
-    # print("Fix reboiler duty and resolve")
-    # m.fs.ngcc.cap_specific_reboiler_duty.fix(2.4e6)
-    # res = solver.solve(m, tee=True)
-    # print("Fix capture fraction and resolve")
-    # m.fs.ngcc.cap_fraction.fix(0.97)
-    # res = solver.solve(m, tee=True)
+#     # create the ngcc model
+#     m = pyo.ConcreteModel()
+#     m.fs = ngcc_soec.NgccSoecFlowsheet(dynamic=False)
+#     iscale.calculate_scaling_factors(m)
+#     m.fs.initialize(
+#         load_from="ngcc_soec_init.json.gz",
+#         save_to="ngcc_soec_init.json.gz")
+#     print("Solve initial problem")
+#     res = solver.solve(m, tee=True)
+#     print("Fix fuel cost and resolve")
+#     m.fs.ngcc.fuel_cost.fix(4.42)
+#     res = solver.solve(m, tee=True)
+#     print("Fix reboiler duty and resolve")
+#     m.fs.ngcc.cap_specific_reboiler_duty.fix(2.4e6)
+#     res = solver.solve(m, tee=True)
+#     print("Fix capture fraction and resolve")
+#     m.fs.ngcc.cap_fraction.fix(0.97)
+#     res = solver.solve(m, tee=True)
 
-    # # add capital costing
-    # print("Add initial costing and resolve")
-    # m.fs.costing = QGESSCosting()
-    # add_results_for_costing(m)
-    # res = solver.solve(m, tee=True)
-    # print("Add capital costing and resolve")
-    # get_ngcc_soec_capital_cost(m, CE_index_year="2018")
-    # res = solver.solve(m, tee=True)
+#     # add capital costing
+#     print("Add initial costing and resolve")
+#     m.fs.costing = QGESSCosting()
+#     add_results_for_costing(m)
+#     res = solver.solve(m, tee=True)
+#     print("Add capital costing and resolve")
+#     get_ngcc_soec_capital_cost(m, CE_index_year="2018")
+#     res = solver.solve(m, tee=True)
 
-    # display_capital_costs(m)
+#     ms.to_json(m, fname="NGCC_flowsheet_solution.json.gz")
+
+#     display_capital_costs(m)
