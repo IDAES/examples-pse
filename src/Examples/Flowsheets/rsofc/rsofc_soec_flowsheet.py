@@ -151,10 +151,7 @@ def add_properties(fs):
     fs.h2_compress_prop.set_default_scaling("mole_frac_phase_comp", 1e2)
 
     fs.CO2_H2O_VLE = GenericParameterBlock(
-        **CO2_H2O_VLE_config(
-            components=air_comp,
-            phases=["Vap", "Liq"],
-        )
+        **CO2_H2O_VLE_config(components=air_comp, phases=["Vap", "Liq"],)
     )
     fs.CO2_H2O_VLE.set_default_scaling("mole_frac_comp", 1e2)
     fs.CO2_H2O_VLE.set_default_scaling("mole_frac_phase_comp", 1e2)
@@ -248,8 +245,7 @@ def add_preheater(fs):
         tube={"property_package": fs.fg_prop},
     )
     fs.preheat_split = gum.Separator(
-        property_package=fs.air_prop,
-        outlet_list=["oxygen", "ng"],
+        property_package=fs.air_prop, outlet_list=["oxygen", "ng"],
     )
 
     ###########################################################################
@@ -514,12 +510,10 @@ def add_soec_unit(fs):
     fs.soec_stack.number_cells.fix(3.22e6)
 
     fs.spltf1 = gum.Separator(
-        property_package=fs.h2_prop,
-        outlet_list=["out", "recycle"],
+        property_package=fs.h2_prop, outlet_list=["out", "recycle"],
     )
     fs.splta1 = gum.Separator(
-        property_package=fs.air_prop,
-        outlet_list=["out", "recycle"],
+        property_package=fs.air_prop, outlet_list=["out", "recycle"],
     )
 
     ###########################################################################
@@ -568,9 +562,7 @@ def _define_cell_params(self):
     solid_oxide_cell.fuel_electrode.resistivity_log_preexponential_factor.fix(
         pyo.log(2.5e-5)
     )
-    solid_oxide_cell.fuel_electrode.resistivity_thermal_exponent_dividend.fix(
-        0
-    )
+    solid_oxide_cell.fuel_electrode.resistivity_thermal_exponent_dividend.fix(0)
 
     solid_oxide_cell.oxygen_electrode.length_x.fix(40e-6)
     solid_oxide_cell.oxygen_electrode.porosity.fix(0.30717)
@@ -579,27 +571,19 @@ def _define_cell_params(self):
     # known but probably don't matter because the electrode is extremely thin
     solid_oxide_cell.oxygen_electrode.solid_heat_capacity.fix(142.3)
     solid_oxide_cell.oxygen_electrode.solid_density.fix(3030)
-    solid_oxide_cell.oxygen_electrode.solid_thermal_conductivity.fix(
-        5.84
-    )
+    solid_oxide_cell.oxygen_electrode.solid_thermal_conductivity.fix(5.84)
     # Also unknown but probably insignificant
     solid_oxide_cell.oxygen_electrode.resistivity_log_preexponential_factor.fix(
         pyo.log(7.8125e-05)
     )
-    solid_oxide_cell.oxygen_electrode.resistivity_thermal_exponent_dividend.fix(
-        0
-    )
+    solid_oxide_cell.oxygen_electrode.resistivity_thermal_exponent_dividend.fix(0)
 
     solid_oxide_cell.electrolyte.length_x.fix(10.5e-6)
     solid_oxide_cell.electrolyte.heat_capacity.fix(400)
     solid_oxide_cell.electrolyte.density.fix(6000)
     solid_oxide_cell.electrolyte.thermal_conductivity.fix(2.17)
-    solid_oxide_cell.electrolyte.resistivity_log_preexponential_factor.fix(
-        -9.001
-    )
-    solid_oxide_cell.electrolyte.resistivity_thermal_exponent_dividend.fix(
-        8988.134
-    )
+    solid_oxide_cell.electrolyte.resistivity_log_preexponential_factor.fix(-9.001)
+    solid_oxide_cell.electrolyte.resistivity_thermal_exponent_dividend.fix(8988.134)
     solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
         22.5
     )
@@ -615,14 +599,10 @@ def _define_cell_params(self):
 
     solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp[
         "H2"
-    ].fix(
-        1
-    )
+    ].fix(1)
     solid_oxide_cell.fuel_triple_phase_boundary.exchange_current_exponent_comp[
         "H2O"
-    ].fix(
-        1
-    )
+    ].fix(1)
 
     solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_log_preexponential_factor.fix(
         25.5
@@ -630,18 +610,12 @@ def _define_cell_params(self):
     solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_activation_energy.fix(
         112.066e3
     )
-    solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha1.fix(
-        0.503
-    )
-    solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha2.fix(
-        0.497
-    )
+    solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha1.fix(0.503)
+    solid_oxide_cell.oxygen_triple_phase_boundary.activation_potential_alpha2.fix(0.497)
 
     solid_oxide_cell.oxygen_triple_phase_boundary.exchange_current_exponent_comp[
         "O2"
-    ].fix(
-        0.5
-    )
+    ].fix(0.5)
 
 
 def add_soec_inlet_mix(fs):
@@ -658,10 +632,8 @@ def add_soec_inlet_mix(fs):
         inlet_list=["air", "recycle"],
         momentum_mixing_type=gum.MomentumMixingType.none,
     )
-    fs.fuel_recycle_heater = (
-        gum.Heater(  # recycle heater for temperature control purposes
-            has_pressure_change=False, property_package=fs.h2_prop
-        )
+    fs.fuel_recycle_heater = gum.Heater(  # recycle heater for temperature control purposes
+        has_pressure_change=False, property_package=fs.h2_prop
     )
 
     ###########################################################################
@@ -703,24 +675,17 @@ def add_soec_inlet_mix(fs):
         }
     )
 
-    fs.s04 = Arc(
-        source=fs.main_steam_split.h_side_adapt,
-        destination=fs.mxf1.water,
-    )
+    fs.s04 = Arc(source=fs.main_steam_split.h_side_adapt, destination=fs.mxf1.water,)
     ###########################################################################
 
     ###########################################################################
     fs.hr01 = Arc(  # h2 rich air from soec recycle stream
-        source=fs.spltf1.recycle,
-        destination=fs.fuel_recycle_heater.inlet,
+        source=fs.spltf1.recycle, destination=fs.fuel_recycle_heater.inlet,
     )
     fs.hr02 = Arc(  # h2 rich air from soec recycle stream
-        source=fs.fuel_recycle_heater.outlet,
-        destination=fs.mxf1.recycle,
+        source=fs.fuel_recycle_heater.outlet, destination=fs.mxf1.recycle,
     )
-    fs.a03 = Arc(
-        source=fs.air_preheater_2.tube_outlet,
-        destination=fs.mxa1.air)
+    fs.a03 = Arc(source=fs.air_preheater_2.tube_outlet, destination=fs.mxa1.air)
     fs.s05 = Arc(
         doc="Feed heater to SOEC",
         source=fs.mxf1.outlet,
@@ -1162,11 +1127,9 @@ def add_result_constraints(fs):
 
     @fs.Constraint(fs.time)
     def cooling_water_duty_constraint(fs, t):
-        return (fs.cooling_water_duty[t] == fs.steam_cycle_loss[t] + fs.CPU.heat_duty[
+        return fs.cooling_water_duty[t] == fs.steam_cycle_loss[t] + fs.CPU.heat_duty[
             t
-        ] / 1e6 * pyo.units.MW
-            + 7.327 * pyo.units.MW  # 25 MMbtu/hr of additional heat
-            + pyo.units.convert(
+        ] / 1e6 * pyo.units.MW + 7.327 * pyo.units.MW + pyo.units.convert(  # 25 MMbtu/hr of additional heat
             -1 * fs.intercooler_s1.heat_duty[t]
             + -1 * fs.intercooler_s2.heat_duty[t]
             + -1 * fs.hcmp_ic01.heat_duty[t]
@@ -1176,7 +1139,6 @@ def add_result_constraints(fs):
             pyo.units.MW,
         ) + pyo.units.convert(
             -1 * fs.condenser.heat_duty[t], pyo.units.MW
-        )
         )
 
     @fs.Constraint(fs.time)
@@ -1431,17 +1393,13 @@ def set_guess(fs):
     )
 
     # Set guess for temp, pressure and mole frac conditions to initalize soec
-    fs.soec_stack.fuel_inlet.flow_mol[0].fix(
-        5600
-    )
+    fs.soec_stack.fuel_inlet.flow_mol[0].fix(5600)
     fs.soec_stack.fuel_inlet.temperature[0].fix(1023.15)
     fs.soec_stack.fuel_inlet.pressure[0].fix(1.01325e5)
     fs.soec_stack.fuel_inlet.mole_frac_comp[0, "H2O"].fix(0.90)
     fs.soec_stack.fuel_inlet.mole_frac_comp[0, "H2"].fix(0.10)
 
-    fs.soec_stack.oxygen_inlet.flow_mol[0].fix(
-        5600
-    )
+    fs.soec_stack.oxygen_inlet.flow_mol[0].fix(5600)
     fs.soec_stack.oxygen_inlet.temperature[0].fix(1023.15)
     fs.soec_stack.oxygen_inlet.pressure[0].fix(1.01325e5)
     fs.soec_stack.oxygen_inlet.mole_frac_comp[0, "O2"].fix(0.2074)
@@ -1514,8 +1472,7 @@ def initialize_plant(fs, solver):
         1.285
     )  # Roughly at the thermoneutral point
     fs.soec_stack.initialize(
-        current_density_guess=-5000,  # mA/cm2
-        temperature_guess=1023.15,
+        current_density_guess=-5000, temperature_guess=1023.15,  # mA/cm2
     )
     iinit.propagate_state(fs.h01)
     iinit.propagate_state(fs.o01)
@@ -1709,10 +1666,9 @@ def add_scaling(fs):
     for (t, j), c in fs.cmb.control_volume.material_balances.items():
         iscale.constraint_scaling_transform(c, 1e-1, overwrite=True)
     for (
-        t,
-        p,
-        j,
-    ), c in fs.cmb.control_volume.rate_reaction_stoichiometry_constraint.items():
+        (t, p, j,),
+        c,
+    ) in fs.cmb.control_volume.rate_reaction_stoichiometry_constraint.items():
         iscale.constraint_scaling_transform(c, 1e-1, overwrite=True)
 
     for t, c in fs.pre_oxycombustor_translator.pre_oxycombustor_translator_F.items():
@@ -1846,7 +1802,7 @@ def tag_inputs_opt_vars(fs):
         expr=fs.soec_stack.solid_oxide_cell.potential[0],
         format_string="{:.4f}",
         display_units=pyo.units.volts,
-        doc="soc cell potential"
+        doc="soc cell potential",
     )
 
     # Input variables
@@ -1920,7 +1876,7 @@ def tag_for_pfd_and_tables(fs):
             doc=f"{i}: volumetric flow",
             expr=s.flow_vol,
             format_string="{:.3f}",
-            display_units=pyo.units.m**3 / pyo.units.s,
+            display_units=pyo.units.m ** 3 / pyo.units.s,
         )
         tag_group[f"{i}_T"] = iutil.ModelTag(
             doc=f"{i}: temperature",
@@ -1972,7 +1928,7 @@ def tag_for_pfd_and_tables(fs):
         doc="Average current density of SOEC",
         expr=fs.soec_stack.solid_oxide_cell.average_current_density[0],
         format_string="{:.0f}",
-        display_units=pyo.units.A / pyo.units.m**2,
+        display_units=pyo.units.A / pyo.units.m ** 2,
     )
     tag_group["h2_product_rate_mass"] = iutil.ModelTag(
         expr=fs.h2_product_rate_mass[0],
@@ -1990,9 +1946,7 @@ def tag_for_pfd_and_tables(fs):
         display_units=pyo.units.kg / pyo.units.s,
     )
     tag_group["net_power"] = iutil.ModelTag(
-        expr=fs.net_power[0],
-        format_string="{:.3f}",
-        display_units=pyo.units.MW,
+        expr=fs.net_power[0], format_string="{:.3f}", display_units=pyo.units.MW,
     )
     tag_group["net_power_per_mass_h2"] = iutil.ModelTag(
         expr=fs.net_power_per_mass_h2[0],
@@ -2312,8 +2266,7 @@ def base_case_optimization(m, solver):
     )
 
     m.soec_fs.obj = pyo.Objective(
-        expr=1e2
-        * m.soec_fs.H2_costing.total_variable_OM_cost[0]
+        expr=1e2 * m.soec_fs.H2_costing.total_variable_OM_cost[0]
     )
 
     options = {
@@ -2485,10 +2438,7 @@ def optimize_model(fs):
         )
     )
 
-    fs.obj = pyo.Objective(
-        expr=1e2
-        * fs.H2_costing.total_variable_OM_cost[0]
-    )
+    fs.obj = pyo.Objective(expr=1e2 * fs.H2_costing.total_variable_OM_cost[0])
 
     options = {
         "max_iter": 150,

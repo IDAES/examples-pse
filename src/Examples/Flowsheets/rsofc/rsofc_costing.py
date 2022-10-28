@@ -40,10 +40,7 @@ def add_total_plant_cost(
     process_contingency=1.15,
 ):
 
-    b.costing.total_plant_cost = pyo.Var(
-        initialize=1e-6,
-        doc="Unit total_TPC in $MM",
-    )
+    b.costing.total_plant_cost = pyo.Var(initialize=1e-6, doc="Unit total_TPC in $MM",)
     try:
         b.parent_block().generic_costing_units.append(b)
     except AttributeError:
@@ -72,8 +69,7 @@ def get_rsofc_sofc_capital_cost(fs):
     # fs.costing = pyo.Block()  # This is created in the costing module
     get_total_TPC(fs)
     fs.costing.total_plant_cost = pyo.Var(
-        initialize=1e-6,
-        doc="total plant cost in $MM",
+        initialize=1e-6, doc="total plant cost in $MM",
     )
 
     @fs.costing.Constraint()
@@ -115,13 +111,13 @@ def get_rsofc_soec_capital_cost(fs):
 
     @fs.fuel_recycle_heater.costing.Constraint()
     def total_plant_cost_eq(b):
-        U = 100 * pyo.units.W / pyo.units.m**2 / pyo.units.K
+        U = 100 * pyo.units.W / pyo.units.m ** 2 / pyo.units.K
         DT = 50 * pyo.units.K
         area = fs.fuel_recycle_heater.heat_duty[0] / U / DT
         # Add factor of two to pathways cost to account for
         # corrosion-resistant materials for trim heaters
         return b.total_plant_cost * 1e6 == (
-            2 * 81.88 * pyo.units.convert(area, pyo.units.ft**2)
+            2 * 81.88 * pyo.units.convert(area, pyo.units.ft ** 2)
         )
 
     # adding cost for air_preheater_2
@@ -133,7 +129,7 @@ def get_rsofc_soec_capital_cost(fs):
     @fs.air_preheater_2.costing.Constraint()
     def total_plant_cost_eq(b):
         return b.total_plant_cost * 1e6 == (
-            2 * 81.88 * pyo.units.convert(fs.air_preheater_2.area, pyo.units.ft**2)
+            2 * 81.88 * pyo.units.convert(fs.air_preheater_2.area, pyo.units.ft ** 2)
         )
 
     # H2 compressor
@@ -259,7 +255,7 @@ def get_rsofc_soec_variable_OM_costing(fs):
     @fs.Expression(fs.time)
     def water_withdrawal(fs, t):  # cm^3/s
         molar_mass = 18.015 * pyo.units.g / pyo.units.mol
-        density = 0.997 * pyo.units.g / pyo.units.cm**3
+        density = 0.997 * pyo.units.g / pyo.units.cm ** 3
         return (
             molar_mass
             / density
@@ -441,7 +437,7 @@ def get_rsofc_sofc_variable_OM_costing(fs):
             3.2
             * syngas_flow
             / 611167
-            * pyo.units.m**3
+            * pyo.units.m ** 3
             / pyo.units.day
             * pyo.units.hr
             / pyo.units.lb
@@ -463,7 +459,7 @@ def get_rsofc_sofc_variable_OM_costing(fs):
 
     prices = {
         "desulfur adsorbent": 6.0297 * pyo.units.USD_2018 / pyo.units.lb,
-        "methanation catalyst": 601.765 * pyo.units.USD_2018 / pyo.units.m**3,
+        "methanation catalyst": 601.765 * pyo.units.USD_2018 / pyo.units.m ** 3,
     }
 
     get_variable_OM_costs(fs, fs.net_power, resources, rates, prices)
