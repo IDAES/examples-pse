@@ -2059,39 +2059,6 @@ def tag_for_pfd_and_tables(fs):
     sdf.sort_index(inplace=True)
     sdf.to_csv("streams.csv")
 
-    # other streams
-    # a function for string formatting
-    def fstr(value, decimals, unit=""):
-        if decimals == 0:
-            rounded_value = int(value)
-        else:
-            rounded_value = round(value, decimals)
-        return "{:,}".format(rounded_value) + unit
-
-    other_streams = {
-        "out05": fs.CPU.water,
-        "out06": fs.CPU.pureco2,
-        "out07": fs.CPU.vent,
-        "out04": fs.flash.liq_outlet,
-        "fg05'": fs.flash.vap_outlet,
-    }
-    for i, s in other_streams.items():
-        tag_group[f"{i}_Fmol"] = iutil.ModelTag(
-            expr=fstr(pyo.value(s.flow_mol[0]) / 1000, 2, "kmol/s"),
-            format_string="{:.3f}",
-            display_units=pyo.units.kmol / pyo.units.s,
-        )
-        tag_group[f"{i}_P"] = iutil.ModelTag(
-            expr=fstr(pyo.value(s.pressure[0]) / 1000, 0, "kPa"),
-            format_string="{:.1f}",
-            display_units=pyo.units.kPa,
-        )
-        tag_group[f"{i}_T"] = iutil.ModelTag(
-            expr=fstr(pyo.value(s.temperature[0]), 0, "K"),
-            format_string="{:.2f}",
-            display_units=pyo.units.K,
-        )
-
     tag_group["status"] = iutil.ModelTag(expr=None, format_string="{}")
     fs.tag_pfd = tag_group
 
