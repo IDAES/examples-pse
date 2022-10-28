@@ -24,6 +24,7 @@ __author__ = "Chinedu Okoli"
 import os
 import csv
 import numpy as np
+import pandas as pd
 
 # Import pyomo modules
 import pyomo.environ as pyo
@@ -47,7 +48,7 @@ from idaes.models_extra.power_generation.unit_models.helm import (
     HelmIsentropicCompressor,
 )
 import idaes.models.unit_models as gum  # generic unit models
-from surrogates.cpu import CPU
+from cpu import CPU
 from idaes.models.unit_models.heat_exchanger import delta_temperature_underwood_callback
 from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 from idaes.models.unit_models.separator import SplittingType
@@ -67,7 +68,7 @@ from idaes.models_extra.power_generation.properties.natural_gas_PR import (
     EosType,
 )
 from idaes.models.properties import iapws95
-from properties.CO2_H2O_Ideal_VLE import get_prop as CO2_H2O_VLE_config
+from CO2_H2O_Ideal_VLE import get_prop as CO2_H2O_VLE_config
 
 
 # Import costing
@@ -1318,6 +1319,17 @@ def add_result_constraints(fs):
 
 
 def initialize_results(fs):
+    """
+
+    Parameters
+    ----------
+    fs : flowsheet object.
+
+    Returns
+    -------
+    variables : list of initialized result variables.
+
+    """
 
     variables = [
         fs.hydrogen_product_rate,
@@ -1376,6 +1388,8 @@ def initialize_results(fs):
     for v, c in zip(variables, constraints):
         for t in fs.time:
             calculate_variable_from_constraint(v[t], c[t])
+
+    return variables
 
 
 def set_guess(fs):
@@ -1740,7 +1754,7 @@ def get_solver():
     return pyo.SolverFactory("ipopt")
 
 
-def tag_inputs_opt_vars(fs):
+def tags_inputs_opt_vars(fs):
     tags = iutil.ModelTagGroup()
 
     # Optimization variables
@@ -1838,10 +1852,9 @@ def tag_inputs_opt_vars(fs):
     )
 
     fs.tag_input = tags
-    display_input_tags(fs)
 
 
-def tag_for_pfd_and_tables(fs):
+def tags_for_pfd(fs):
     tag_group = iutil.ModelTagGroup()
     streams = tables.arcs_to_stream_dict(
         fs,
@@ -2040,6 +2053,25 @@ def stream_tables(fs):
             ("mole_frac_comp", "C2H6"),
             ("mole_frac_comp", "C3H8"),
             ("mole_frac_comp", "C4H10"),
+        ],
+        heading=[
+            "flow_mass, kg/s",
+            "flow_mol, mol/s",
+            "flow_vol, m**3/s",
+            "temperature, K",
+            "pressure, Pa",
+            "vapor_frac",
+            "mole_frac_Ar",
+            "mole_frac_CO",
+            "mole_frac_CO2",
+            "mole_frac_H2",
+            "mole_frac_H2O",
+            "mole_frac_N2",
+            "mole_frac_O2",
+            "mole_frac_CH4",
+            "mole_frac_C2H6",
+            "mole_frac_C3H8",
+            "mole_frac_C4H10",
         ],
         exception=False,
     )
@@ -2279,6 +2311,34 @@ def base_case_optimization(m, solver):
         "OF_ma57_automatic_scaling": "yes",
     }
     solver.solve(m.soec_fs, tee=True, options=options, symbolic_solver_labels=True)
+
+
+def results_table_dataframe(result_variables):
+    # This is special for this model
+    # Input: result_variables (list of summary results of the process)
+    # Returns: a dataframe of results in a table form
+
+    variable_name = []
+    variable_value = []
+    variable_units = []
+
+    # Populate results table from results_variables list
+    for var in result_variables:
+        variable_name.append(var[0].name)  # make descriptive Var names and update to var.doc
+        variable_value.append(var[0].value)
+        variable_units.append(pyo.units.get_units(var[0]))
+
+    results_table_dict = {}
+    results_table_dict["Variable"] = variable_name
+    results_table_dict["Value"] = variable_value
+    results_table_dict["Units"] = variable_units
+
+    # Make a panda table of the results and format values
+    results_table = pd.DataFrame(results_table_dict)
+    results_table.loc[:, "Value"] = results_table["Value"].map("{:.2f}".format)
+    results_table = results_table.to_string(index=False)
+
+    return results_table
 
 
 def optimize_model(fs):
@@ -2618,13 +2678,14 @@ if __name__ == "__main__":
     m = pyo.ConcreteModel()
     m, solver = get_model(m)
 
-    tag_inputs_opt_vars(m.soec_fs)
-    tag_for_pfd_and_tables(m.soec_fs)
+    tags_inputs_opt_vars(m.soec_fs)
+    tags_for_pfd(m.soec_fs)
 
     # base_case_simulation(m.soec_fs, solver)  # solve for H2 prod. of 5 kg/s (2.5 kmol/s)
     rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
     base_case_optimization(m, solver)  # 5 kg/s
     # optimize_model(m.soec_fs)
+
 
     # display_input_tags(m.soec_fs)
     write_pfd_results(m, "rsofc_soec_results.svg")
@@ -2632,6 +2693,11 @@ if __name__ == "__main__":
     # stream tables
     stream_table = stream_tables(m.soec_fs)
     # stream_table.to_csv("streams.csv")
+
+    # Print results table
+    result_variables = initialize_results(m.soec_fs)
+    results_table = results_table_dataframe(result_variables)
+    print(results_table)
 
     # visualize flowsheet
     # m.soec_fs.visualize("rSOEC Flowsheet")

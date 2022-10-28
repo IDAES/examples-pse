@@ -64,7 +64,7 @@ from pyomo.environ import Var, value, units as pyunits, Constraint
 from pyomo.network import Port
 import idaes.logger as idaeslog
 
-import surrogates.cpu_surrogate_methods as sm
+import cpu_surrogate_methods as sm
 
 __author__ = "Differentiate Team (N. Susarla, A. Noring, M. Zamarripa)"
 __version__ = "1.0.0"
