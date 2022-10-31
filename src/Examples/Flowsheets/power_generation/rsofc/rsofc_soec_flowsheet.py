@@ -73,6 +73,10 @@ from CO2_H2O_Ideal_VLE import get_prop as CO2_H2O_VLE_config
 
 # Import costing
 import rsofc_costing as rsofc_cost
+from idaes.models_extra.power_generation.costing.power_plant_capcost import (
+    QGESSCosting,
+    QGESSCostingData,
+)
 
 # Import logger
 import idaes.logger as idaeslog
@@ -98,6 +102,7 @@ def add_flowsheet(m=None, name="SOEC Module"):
     #     m = pyo.ConcreteModel(name)
     if not hasattr(m, "soec_fs"):
         m.soec_fs = FlowsheetBlock(dynamic=False)
+        m.soec_fs.costing = QGESSCosting()
     return m
 
 
@@ -2298,11 +2303,12 @@ def base_case_optimization(m, solver):
     )
 
     m.soec_fs.obj = pyo.Objective(
-        expr=1e2 * m.soec_fs.H2_costing.total_variable_OM_cost[0]
+        expr=1e2 * m.soec_fs.costing.total_variable_OM_cost[0]
+        * m.soec_fs.net_power[0] / m.soec_fs.h2_product_rate_mass[0]
     )
 
     options = {
-        "max_iter": 150,
+        "max_iter": 500,
         "tol": 1e-4,
         "bound_push": 1e-5,
         "linear_solver": "ma57",
@@ -2498,7 +2504,8 @@ def optimize_model(fs):
         )
     )
 
-    fs.obj = pyo.Objective(expr=1e2 * fs.H2_costing.total_variable_OM_cost[0])
+    fs.obj = pyo.Objective(expr=1e2 * fs.costing.total_variable_OM_cost[0]
+                           * fs.net_power[0] / fs.h2_product_rate_mass[0])
 
     options = {
         "max_iter": 150,
@@ -2512,35 +2519,40 @@ def optimize_model(fs):
 
     # Additional tags for variable O&M costs
     fs.tag_pfd["total_variable_OM_cost"] = iutil.ModelTag(
-        expr=fs.H2_costing.total_variable_OM_cost[0],
+        expr=fs.costing.total_variable_OM_cost[0]
+        * fs.net_power[0] / fs.h2_product_rate_mass[0],
         format_string="{:.3f}",
         display_units=pyo.units.USD_2018 / pyo.units.kg,
         doc="Total variable O&M cost",
     )
 
     fs.tag_pfd["electricity_variable_OM_costs"] = iutil.ModelTag(
-        expr=fs.H2_costing.variable_operating_costs[0, "electricity"],
+        expr=fs.costing.variable_operating_costs[0, "electricity"]
+        * fs.net_power[0] / fs.h2_product_rate_mass[0],
         format_string="{:.3f}",
         display_units=pyo.units.USD_2018 / pyo.units.kg,
         doc="Electricity variable O&M cost",
     )
 
     fs.tag_pfd["natural_gas_variable_OM_costs"] = iutil.ModelTag(
-        expr=fs.H2_costing.variable_operating_costs[0, "natural gas"],
+        expr=fs.costing.variable_operating_costs[0, "natural gas"]
+        * fs.net_power[0] / fs.h2_product_rate_mass[0],
         format_string="{:.3f}",
         display_units=pyo.units.USD_2018 / pyo.units.kg,
         doc="Natural gas variable O&M cost",
     )
 
     fs.tag_pfd["water_variable_OM_costs"] = iutil.ModelTag(
-        expr=fs.H2_costing.variable_operating_costs[0, "water"],
+        expr=fs.costing.variable_operating_costs[0, "water"]
+        * fs.net_power[0] / fs.h2_product_rate_mass[0],
         format_string="{:.3f}",
         display_units=pyo.units.USD_2018 / pyo.units.kg,
         doc="Water variable O&M cost",
     )
 
     fs.tag_pfd["water_treatment_chemicals_OM_costs"] = iutil.ModelTag(
-        expr=fs.H2_costing.variable_operating_costs[0, "water treatment chemicals"],
+        expr=fs.costing.variable_operating_costs[0, "water treatment chemicals"]
+        * fs.net_power[0] / fs.h2_product_rate_mass[0],
         format_string="{:.3f}",
         display_units=pyo.units.USD_2018 / pyo.units.kg,
         doc="Water treatment chemicals O&M cost",
