@@ -14,7 +14,7 @@ This is a black box (surrogate based) model for CO2 purification process
 available in Aspen.
 
 The unit has 1 inlet stream for rich CO2 inlet: inlet
-the unti has 3 outlet streams: pureCO2, water, and vent
+The unit has 3 outlet streams: pureCO2, water, and vent
 
 The state variables are flow_mol, mol_fraction, temperature, and pressure.
 The state variables can be accessed via ports named: inlet, pure_CO2, water,
@@ -26,24 +26,18 @@ The surrogate models were prepared varying rich inlet flowrate. Expected value
 set is trained by running the CPU rigorous model. ALAMO has been used to fit
 the surrogate models.
 Outputs are function of (inlet flowrate, inlet composition).
-This model 1 is simple and temperature and pressure are fixed
-
-pyomo block for co2 purifucation process based on surrogates
+This model is simple, and temperature and pressure are fixed Pyomo blocks for
+co2 purifucation process based on surrogates.
 
 This is a black box (surrogate based) model for CO2 purification process
 available in Aspen.
 
 The unit has 1 inlet stream for rich CO2 inlet: inlet
-Also, the unti has 3 outlet streams: pureCO2, water, and vent
+Also, the unit has 3 outlet streams: pureCO2, water, and vent
 
-The state variables are:
-(1) flow_mol
-(2) temperature
-(3) pressure
-(4) mole_frac_comp
-
-The state variables can be accessed via ports named: inlet, pureco2, water,
-and vent
+The state variables can be accessed via ports named for the streams
+(inlet, pureco2, water, and vent), and include FTPx variables
+(flow_mol, temperature, pressure, mole_frac_comp).
 
 This model is only based on the inlet flow rate of the CO2 rich stream
 The degrees of freedom are the Inlet states:
@@ -53,16 +47,19 @@ The degrees of freedom are the Inlet states:
 (4) Inlet component mol fractions: CO2, H2O, N2, Ar, O2
 """
 
-# Import IDAES cores
-import numpy as np
+# Import IDAES cores and logger
 from idaes.core import declare_process_block_class, UnitModelBlockData
 import idaes.core.util.scaling as iscale
-
-# Additional import for the unit operation
-import pyomo.environ as pyo
-from pyomo.environ import Var, value, units as pyunits, Constraint
-from pyomo.network import Port
+from idaes.core.solvers import get_solver
+from idaes.core.util.exceptions import InitializationError
 import idaes.logger as idaeslog
+
+# Import Pyomo environment and network
+from pyomo.environ import (Var,
+                           units as pyunits,
+                           Constraint,
+                           assert_optimal_termination)
+from pyomo.network import Port
 
 import cpu_surrogate_methods as sm
 
@@ -132,13 +129,11 @@ class CPUData(UnitModelBlockData):
         flow_units = pyunits.mol / pyunits.s
         pressure_units = pyunits.Pa
         temperature_units = pyunits.K
-        # heat_duty_units = pyunits.J/pyunits.s
 
         # Total mole flow [mol/s]
         self.inlet_flow_mol = Var(
             self.flowsheet().config.time,
             initialize=3600,
-            # bounds=(1367.08, 5000),
             units=flow_units,
             doc="Total inlet mole flow [mol/s]",
         )
@@ -166,24 +161,28 @@ class CPUData(UnitModelBlockData):
             self.flowsheet().config.time,
             self.component_list,
             initialize=1 / len(self.component_list),
+            units=pyunits.dimensionless,
             doc="Inlet stream: Component mole fraction",
         )
         self.pureco2_mole_frac_comp = Var(
             self.flowsheet().config.time,
             self.component_list,
             initialize=1 / len(self.component_list),
+            units=pyunits.dimensionless,
             doc="PureCO2 stream: Component mole fraction",
         )
         self.water_mole_frac_comp = Var(
             self.flowsheet().config.time,
             self.component_list,
             initialize=1 / len(self.component_list),
+            units=pyunits.dimensionless,
             doc="Water stream: Component mole fraction",
         )
         self.vent_mole_frac_comp = Var(
             self.flowsheet().config.time,
             self.component_list,
             initialize=1 / len(self.component_list),
+            units=pyunits.dimensionless,
             doc="Vent stream: Component mole fraction",
         )
 
@@ -621,7 +620,7 @@ class CPUData(UnitModelBlockData):
                 b.inlet_mole_frac_comp[t, "N2"],
             )
 
-    def initialize(blk, outlvl=idaeslog.NOTSET, solver="ipopt", optarg={"tol": 1e-6}):
+    def initialize(blk, outlvl=idaeslog.NOTSET, solver=None, optarg=None):
         """
         CO2 pure pyomo block initialization routine
 
@@ -635,10 +634,9 @@ class CPUData(UnitModelBlockData):
         Returns:
             None
         """
-        iscale.calculate_scaling_factors(blk)
         init_log = idaeslog.getInitLogger(blk.name, outlvl, tag="unit")
         solve_log = idaeslog.getSolveLogger(blk.name, outlvl, tag="unit")
-        opt = pyo.SolverFactory(solver)
+        opt = get_solver(solver)
         opt.options = optarg
 
         init_log.info_low("Starting initialization...")
@@ -654,7 +652,6 @@ class CPUData(UnitModelBlockData):
         with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
             res = opt.solve(blk, tee=slc.tee)
         init_log.info_high("Initialization Step 1 {}.".format(idaeslog.condition(res)))
-        init_log.info_high("Initialization Step 1 Complete.")
 
         # check component material balances
         # deactivate component balance equation for inlet
@@ -674,15 +671,19 @@ class CPUData(UnitModelBlockData):
         blk.inlet.mole_frac_comp[0, "O2"].unfix()
         blk.inlet.mole_frac_comp[0, "H2O"].unfix()
         blk.inlet.mole_frac_comp[0, "N2"].unfix()
-        # blk.mole_frac_comp_inlet_eqn.activate()
 
         init_log.info("Initialization Complete.")
+        try:
+            assert_optimal_termination(res)
+        except RuntimeError:
+            raise InitializationError(
+                f"{blk.name} failed to initialize successfully. Please check "
+                f"the output logs for more information."
+            )
 
     def calculate_scaling_factors(self):
         super().calculate_scaling_factors()
 
-        # for v in self.component_data_objects(Var):
-        #     iscale.set_scaling_factor(v, 1)
         for c in self.component_data_objects(Constraint):
             iscale.set_scaling_factor(c, 1)
 

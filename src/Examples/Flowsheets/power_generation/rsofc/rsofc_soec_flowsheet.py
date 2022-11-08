@@ -98,8 +98,6 @@ def _set_port(port, F, T, P, comp, fix=True):
 
 
 def add_flowsheet(m=None, name="SOEC Module"):
-    # if m is None:
-    #     m = pyo.ConcreteModel(name)
     if not hasattr(m, "soec_fs"):
         m.soec_fs = FlowsheetBlock(dynamic=False)
         m.soec_fs.costing = QGESSCosting()
@@ -2696,7 +2694,7 @@ if __name__ == "__main__":
     # base_case_simulation(m.soec_fs, solver)  # solve for H2 prod. of 5 kg/s (2.5 kmol/s)
     rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
     base_case_optimization(m, solver)  # 5 kg/s
-    # optimize_model(m.soec_fs)
+    optimize_model(m.soec_fs)
 
 
     # display_input_tags(m.soec_fs)
@@ -2712,4 +2710,4 @@ if __name__ == "__main__":
     print(results_table)
 
     # visualize flowsheet
-    # m.soec_fs.visualize("rSOEC Flowsheet")
+    m.soec_fs.visualize("rSOEC Flowsheet")
