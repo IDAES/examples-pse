@@ -28,7 +28,6 @@ import pandas as pd
 
 # Import pyomo modules
 import pyomo.environ as pyo
-from pyomo.core.base.var import IndexedVar, _GeneralVarData
 from pyomo.util.calc_var_value import calculate_variable_from_constraint
 from pyomo.network import Arc, Port
 from pyomo.common.fileutils import this_file_dir
@@ -75,7 +74,6 @@ from idaes.models.properties import iapws95
 import rsofc_costing as rsofc_cost
 from idaes.models_extra.power_generation.costing.power_plant_capcost import (
     QGESSCosting,
-    QGESSCostingData,
 )
 
 # Import logger
@@ -2675,9 +2673,6 @@ def get_model(m=None, name="SOEC Module"):
 
         # load model and results
         ms.from_json(m, fname=init_fname)
-        #set_missing_scaling_and_bounds(m.soec_fs)
-        #ms.to_json(m, fname="rsofc_soec_surrogate_init.json.gz")
-        #assert False
 
     else:
         # main plant
