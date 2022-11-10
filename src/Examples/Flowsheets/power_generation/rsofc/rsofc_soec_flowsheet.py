@@ -28,6 +28,7 @@ import pandas as pd
 
 # Import pyomo modules
 import pyomo.environ as pyo
+from pyomo.core.base.var import IndexedVar, _GeneralVarData
 from pyomo.util.calc_var_value import calculate_variable_from_constraint
 from pyomo.network import Arc, Port
 from pyomo.common.fileutils import this_file_dir
@@ -68,7 +69,6 @@ from idaes.models_extra.power_generation.properties.natural_gas_PR import (
     EosType,
 )
 from idaes.models.properties import iapws95
-from CO2_H2O_Ideal_VLE import get_prop as CO2_H2O_VLE_config
 
 
 # Import costing
@@ -155,7 +155,7 @@ def add_properties(fs):
     fs.h2_compress_prop.set_default_scaling("mole_frac_phase_comp", 1e2)
 
     fs.CO2_H2O_VLE = GenericParameterBlock(
-        **CO2_H2O_VLE_config(components=air_comp, phases=["Vap", "Liq"],)
+        **get_prop(components=air_comp, phases=["Vap", "Liq"],)
     )
     fs.CO2_H2O_VLE.set_default_scaling("mole_frac_comp", 1e2)
     fs.CO2_H2O_VLE.set_default_scaling("mole_frac_phase_comp", 1e2)
@@ -205,8 +205,8 @@ def add_asu(fs):
     fs.intercooler_s2.deltaP.fix(-3447)  # Pa (-0.5 psi)
 
     # air seperation unit
-    fs.ASU.split_fraction[0, "O2_outlet", "CO2"].fix(0)
-    fs.ASU.split_fraction[0, "O2_outlet", "H2O"].fix(0)
+    fs.ASU.split_fraction[0, "O2_outlet", "CO2"].fix(1e-10)
+    fs.ASU.split_fraction[0, "O2_outlet", "H2O"].fix(1e-10)
     fs.ASU.split_fraction[0, "O2_outlet", "N2"].fix(0.0005)
     fs.ASU.split_fraction[0, "O2_outlet", "O2"].fix(0.9691)
     fs.ASU.split_fraction[0, "O2_outlet", "Ar"].fix(0.0673)
@@ -322,7 +322,7 @@ def add_combustor(fs):
 
     for j in fs.fg_prop.component_list:
         if j not in fs.air_prop.component_list:
-            fs.pre_oxycombustor_translator.outlet.mole_frac_comp[0, j].fix(0)
+            fs.pre_oxycombustor_translator.outlet.mole_frac_comp[0, j].fix(1e-10)
 
     # Additional constraints to specify the mixer
     @fs.cmb_mix.Constraint(fs.time)
@@ -837,7 +837,7 @@ def add_hrsg_and_cpu(fs):
     for t in fs.time:
         for j in fs.air_prop.component_list:
             if j not in fs.CO2_H2O_VLE.component_list:
-                fs.CPU_translator.outlet.mole_frac_comp[t, j].fix(0)
+                fs.CPU_translator.outlet.mole_frac_comp[t, j].fix(1e-10)
 
     ###########################################################################
     #  Add stream connections
@@ -1705,8 +1705,6 @@ def add_scaling(fs):
     for (t, p, j), v in fs.cmb.control_volume.rate_reaction_generation.items():
         iscale.set_scaling_factor(fs.cmb.control_volume.rate_reaction_generation, 1e-1)
 
-    iscale.calculate_scaling_factors(fs)
-
 
 def add_scaling_bop(fs):
     iscale.set_scaling_factor(fs.HRSG_2.control_volume.heat, 1e-5)
@@ -1740,7 +1738,31 @@ def add_scaling_bop(fs):
     for t, c in fs.CPU.vent_pressure_eq.items():
         iscale.constraint_scaling_transform(c, 1e-3, overwrite=True)
 
-    iscale.calculate_scaling_factors(fs)
+
+def set_missing_scaling_and_bounds(fs):
+    # loop through all Expressions for more compact script
+    # find any objects missing scaling factors and add scaling factors of 1
+    for expr in fs.component_data_objects(pyo.Expression, descend_into=True):
+        if iscale.get_scaling_factor(expr) is None:
+            iscale.set_scaling_factor(expr, 1)
+
+    # loop through all Vars for more compact script
+    # find any objects missing scaling factors and add scaling factors of 1
+    for var in fs.component_data_objects(pyo.Var, descend_into=True):
+        if iscale.get_scaling_factor(var) is None:
+            iscale.set_scaling_factor(var, 1, overwrite=True)
+
+    # catch some mole fraction variables that slipped through
+    iscale.set_scaling_factor(fs.CPU_translator.properties_out[0.0].mole_frac_comp, 1e2)
+    iscale.set_scaling_factor(fs.flash.control_volume.properties_in[0.0].mole_frac_comp, 1e2)
+    iscale.set_scaling_factor(fs.flash.control_volume.properties_out[0.0].mole_frac_comp, 1e2)
+
+    # correct lower bounds on mole fractions that default to 1e-20
+    for var in fs.component_data_objects(pyo.Var, descend_into=True):
+        if '.mole_frac_comp' in var.name and var.lb == 1e-20:
+            var.setlb(0)
+            if var.value == 0:
+                var.set_value(1e-10, skip_validation=True)
 
 
 def get_solver():
@@ -2192,7 +2214,7 @@ def base_case_optimization(m, solver):
     #############################
     # Optimization #
     #############################
-    iscale.calculate_scaling_factors(m)
+
     m.soec_fs.tag_input["hydrogen_product_rate"].fix(
         float(2.50) * pyo.units.kmol / pyo.units.s
     )
@@ -2205,7 +2227,7 @@ def base_case_optimization(m, solver):
     m.soec_fs.air_blower.inlet.flow_mol.unfix()  # mol/s
     m.soec_fs.air_blower.inlet.flow_mol.setlb(100)
     m.soec_fs.air_blower.inlet.flow_mol.setub(8000)
-    m.soec_fs.soec_stack.oxygen_outlet.mole_frac_comp[0, "O2"].unfix
+    m.soec_fs.soec_stack.oxygen_outlet.mole_frac_comp[0, "O2"].unfix()
     m.soec_fs.sweep_constraint = pyo.Constraint(
         expr=1e2 * m.soec_fs.soec_stack.oxygen_outlet.mole_frac_comp[0, "O2"]
         <= 1e2 * 0.35
@@ -2302,7 +2324,7 @@ def base_case_optimization(m, solver):
 
     m.soec_fs.obj = pyo.Objective(
         expr=1e2 * m.soec_fs.costing.total_variable_OM_cost[0]
-        * m.soec_fs.net_power[0] / m.soec_fs.h2_product_rate_mass[0]
+        / m.soec_fs.h2_product_rate_mass[0]
     )
 
     options = {
@@ -2400,7 +2422,7 @@ def optimize_model(fs):
     #############################
     # Optimization #
     #############################
-    iscale.calculate_scaling_factors(m)
+
     fs.tag_input["hydrogen_product_rate"].fix(
         float(2.50) * pyo.units.kmol / pyo.units.s
     )
@@ -2503,7 +2525,7 @@ def optimize_model(fs):
     )
 
     fs.obj = pyo.Objective(expr=1e2 * fs.costing.total_variable_OM_cost[0]
-                           * fs.net_power[0] / fs.h2_product_rate_mass[0])
+                           / fs.h2_product_rate_mass[0])
 
     options = {
         "max_iter": 150,
@@ -2518,42 +2540,47 @@ def optimize_model(fs):
     # Additional tags for variable O&M costs
     fs.tag_pfd["total_variable_OM_cost"] = iutil.ModelTag(
         expr=fs.costing.total_variable_OM_cost[0]
-        * fs.net_power[0] / fs.h2_product_rate_mass[0],
+        / pyo.units.convert(fs.h2_product_rate_mass[0],
+                            pyo.units.kg/pyo.units.a),
         format_string="{:.3f}",
-        display_units=pyo.units.USD_2018 / pyo.units.kg,
-        doc="Total variable O&M cost",
+        display_units=pyo.units.MUSD_2018 / pyo.units.kg,
+        doc="Total variable O&M cost $MM/kg hydrogen",
     )
 
     fs.tag_pfd["electricity_variable_OM_costs"] = iutil.ModelTag(
         expr=fs.costing.variable_operating_costs[0, "electricity"]
-        * fs.net_power[0] / fs.h2_product_rate_mass[0],
+        / pyo.units.convert(fs.h2_product_rate_mass[0],
+                            pyo.units.kg/pyo.units.a),
         format_string="{:.3f}",
-        display_units=pyo.units.USD_2018 / pyo.units.kg,
-        doc="Electricity variable O&M cost",
+        display_units=pyo.units.MUSD_2018 / pyo.units.kg,
+        doc="Electricity variable O&M cost $MM/kg hydrogen",
     )
 
     fs.tag_pfd["natural_gas_variable_OM_costs"] = iutil.ModelTag(
-        expr=fs.costing.variable_operating_costs[0, "natural gas"]
-        * fs.net_power[0] / fs.h2_product_rate_mass[0],
+        expr=fs.costing.variable_operating_costs[0, "natural_gas"]
+        / pyo.units.convert(fs.h2_product_rate_mass[0],
+                            pyo.units.kg/pyo.units.a),
         format_string="{:.3f}",
-        display_units=pyo.units.USD_2018 / pyo.units.kg,
-        doc="Natural gas variable O&M cost",
+        display_units=pyo.units.MUSD_2018 / pyo.units.kg,
+        doc="Natural gas variable O&M cost $MM/kg hydrogen",
     )
 
     fs.tag_pfd["water_variable_OM_costs"] = iutil.ModelTag(
         expr=fs.costing.variable_operating_costs[0, "water"]
-        * fs.net_power[0] / fs.h2_product_rate_mass[0],
+        / pyo.units.convert(fs.h2_product_rate_mass[0],
+                            pyo.units.kg/pyo.units.a),
         format_string="{:.3f}",
-        display_units=pyo.units.USD_2018 / pyo.units.kg,
-        doc="Water variable O&M cost",
+        display_units=pyo.units.MUSD_2018 / pyo.units.kg,
+        doc="Water variable O&M cost $MM/kg hydrogen",
     )
 
     fs.tag_pfd["water_treatment_chemicals_OM_costs"] = iutil.ModelTag(
-        expr=fs.costing.variable_operating_costs[0, "water treatment chemicals"]
-        * fs.net_power[0] / fs.h2_product_rate_mass[0],
+        expr=fs.costing.variable_operating_costs[0, "water_treatment_chemicals"]
+        / pyo.units.convert(fs.h2_product_rate_mass[0],
+                            pyo.units.kg/pyo.units.a),
         format_string="{:.3f}",
-        display_units=pyo.units.USD_2018 / pyo.units.kg,
-        doc="Water treatment chemicals O&M cost",
+        display_units=pyo.units.MUSD_2018 / pyo.units.kg,
+        doc="Water treatment chemicals O&M cost $MM/kg hydrogen",
     )
 
     cols_input = ("hydrogen_product_rate",)
@@ -2642,8 +2669,15 @@ def get_model(m=None, name="SOEC Module"):
         # results
         add_result_constraints(m.soec_fs)
 
+        # calculate all scaling factors
+        set_missing_scaling_and_bounds(m.soec_fs)
+        iscale.calculate_scaling_factors(m.soec_fs)
+
         # load model and results
         ms.from_json(m, fname=init_fname)
+        #set_missing_scaling_and_bounds(m.soec_fs)
+        #ms.to_json(m, fname="rsofc_soec_surrogate_init.json.gz")
+        #assert False
 
     else:
         # main plant
@@ -2676,6 +2710,12 @@ def get_model(m=None, name="SOEC Module"):
 
         # results
         add_result_constraints(m.soec_fs)
+
+        # calculate all scaling factors
+        set_missing_scaling_and_bounds(m.soec_fs)
+        iscale.calculate_scaling_factors(m.soec_fs)
+
+        # solve for initial results
         initialize_results(m.soec_fs)
 
         # save model and results
@@ -2694,7 +2734,8 @@ if __name__ == "__main__":
     # base_case_simulation(m.soec_fs, solver)  # solve for H2 prod. of 5 kg/s (2.5 kmol/s)
     rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
     base_case_optimization(m, solver)  # 5 kg/s
-    optimize_model(m.soec_fs)
+    # uncomment to optimize model
+    # optimize_model(m.soec_fs)
 
 
     # display_input_tags(m.soec_fs)
@@ -2709,5 +2750,5 @@ if __name__ == "__main__":
     results_table = results_table_dataframe(result_variables)
     print(results_table)
 
-    # visualize flowsheet
-    m.soec_fs.visualize("rSOEC Flowsheet")
+    # uncomment to visualize flowsheet
+    # m.soec_fs.visualize("rSOEC Flowsheet")
