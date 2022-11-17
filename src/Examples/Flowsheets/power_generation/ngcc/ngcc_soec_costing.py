@@ -786,6 +786,8 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
     # create dummy diameter and length variables
     m.fs.soec.soec_module.diameter = pyo.Var(initialize=0, units=pyunits.m)
     m.fs.soec.soec_module.length = pyo.Var(initialize=0, units=pyunits.m)
+    m.fs.soec.soec_module.diameter.fix(0.1)
+    m.fs.soec.soec_module.length.fix(0.1)
     m.fs.soec.soec_module.costing = UnitModelCostingBlock(
         flowsheet_costing_block=m.fs.costing,
         costing_method=SSLWCostingData.cost_vessel,
