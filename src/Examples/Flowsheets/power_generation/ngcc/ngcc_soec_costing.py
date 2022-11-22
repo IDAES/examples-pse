@@ -55,67 +55,52 @@ def add_total_plant_cost(b, installation_labor=1.25, eng_fee=1.2,
 def add_results_for_costing(m):
     ###########################################################################
     # CO2 CAPTURE SYSTEM
-
     baseline_capture = 493487*pyunits.lb/pyunits.hr
     capture_percentage = 0.97
 
-    m.fs.CO2_captured = pyo.Var(m.fs.time, units=pyunits.lb/pyunits.hr)
-
-    @m.fs.Constraint(m.fs.time)
-    def CO2_captured_constraint(b, t):
-        return b.CO2_captured[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def CO2_captured(b, t):
+        return pyunits.convert(
             (b.ngcc.gt.gts2.control_volume.properties_out[t].flow_mol_comp["CO2"] *
              0.04401*pyunits.kg/pyunits.mol * capture_percentage),
             pyunits.lb/pyunits.hr)
 
     # CO2 purification, drying, and compression cooling duty
-    m.fs.CO2_cooling_duty = pyo.Var(m.fs.time, units=pyunits.MBtu/pyunits.hr)
-
-    @m.fs.Constraint(m.fs.time)
-    def CO2_cooling_duty_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def CO2_cooling_duty(b, t):
         baseline_duty = 1394.4*pyunits.MBtu/pyunits.hr
-        return b.CO2_cooling_duty[t] == baseline_duty*(b.CO2_captured[t]/baseline_capture)
+        return baseline_duty*(b.CO2_captured[t]/baseline_capture)
 
     # CO2 capture system makeup water
-    m.fs.CO2_water_makeup = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def CO2_water_makeup_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def CO2_water_makeup(b, t):
         baseline_makeup = 55.253*pyunits.gal/pyunits.min
-        return b.CO2_water_makeup[t] == baseline_makeup*(b.CO2_captured[t]/baseline_capture)
+        return baseline_makeup*(b.CO2_captured[t]/baseline_capture)
 
     #  CO2 capture system water discharge
-    m.fs.CO2_water_discharge = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def CO2_water_discharge_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def CO2_water_discharge(b, t):
         baseline_discharge = 604.73*pyunits.gal/pyunits.min
-        return b.CO2_water_discharge[t] == baseline_discharge*(b.CO2_captured[t]/baseline_capture)
+        return baseline_discharge*(b.CO2_captured[t]/baseline_capture)
 
     # CO2 capture auxiliary load
-    m.fs.CO2_aux_load = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def CO2_aux_load_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def CO2_aux_load(b, t):
         baseline_CO2_aux_load = 27690*pyunits.kW
-        return b.CO2_aux_load[t] == baseline_CO2_aux_load*(b.CO2_captured[t]/baseline_capture)
+        return baseline_CO2_aux_load*(b.CO2_captured[t]/baseline_capture)
 
     # CO2 compressor auxiliary load
     # this load is included in CO2_aux_load but needed seperatly for costing
-    m.fs.CO2_compressor_load = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def CO2_compressor_load_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def CO2_compressor_load(b, t):
         baseline_compressor_load = 17090*pyunits.kW
-        return b.CO2_compressor_load[t] == baseline_compressor_load*(b.CO2_captured[t]/baseline_capture)
+        return baseline_compressor_load*(b.CO2_captured[t]/baseline_capture)
 
     # CO2 aftercooler duty, MMBtu/hr
-    m.fs.CO2_aftercooler_duty = pyo.Var(m.fs.time, units=pyunits.MBtu/pyunits.hr)
-
-    @m.fs.Constraint(m.fs.time)
-    def CO2_aftercooler_duty_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def CO2_aftercooler_duty(b, t):
         baseline_aftercooler_duty = 32.24*pyunits.MBtu/pyunits.hr
-        return b.CO2_aftercooler_duty[t] == baseline_aftercooler_duty*(b.CO2_captured[t]/baseline_capture)
+        return baseline_aftercooler_duty*(b.CO2_captured[t]/baseline_capture)
 
     ###########################################################################
     # COOLING WATER SYSTEM
@@ -127,156 +112,122 @@ def add_results_for_costing(m):
     baseline_cw_flow = 220784*pyunits.gal/pyunits.min
 
     # steam cycle condenser duty
-    m.fs.condenser_duty = pyo.Var(m.fs.time, units=pyunits.MBtu/pyunits.hr)
-
-    @m.fs.Constraint(m.fs.time)
-    def condenser_duty_constraint(b, t):
-        return b.condenser_duty[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def condenser_duty(b, t):
+        return pyunits.convert(
             b.ngcc.st.main_condenser.heat_duty[t],
             pyunits.MBtu/pyunits.hr)
 
     # hydrogen compressor cooling duty
-    m.fs.h2_comp_cooling_duty = pyo.Var(m.fs.time, units=pyunits.MBtu/pyunits.hr)
-
-    @m.fs.Constraint(m.fs.time)
-    def h2_comp_cooling_duty_constraint(b, t):
-        return b.h2_comp_cooling_duty[t] == -1*pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def h2_comp_cooling_duty(b, t):
+        return -1*pyunits.convert(
             (b.soec.ic01.heat_duty[t] +
              b.soec.ic02.heat_duty[t] +
              b.soec.ic03.heat_duty[t]),
             pyunits.MBtu/pyunits.hr)
 
     # cooling water duty, includes 25 MMBtu of misc cooling loads
-    m.fs.cooling_water_duty = pyo.Var(m.fs.time, units=pyunits.MBtu/pyunits.hr)
-
-    @m.fs.Constraint(m.fs.time)
-    def cooling_water_duty_constraint(b, t):
-        return b.cooling_water_duty[t] == (b.condenser_duty[t] +
+    @m.fs.Expression(m.fs.time)
+    def cooling_water_duty(b, t):
+        return (b.condenser_duty[t] +
                 b.h2_comp_cooling_duty[t] +
                 b.CO2_cooling_duty[t] +
                 25*pyunits.MBtu/pyunits.hr)
 
     # cooling water circulation rate
-    m.fs.cooling_water_flow = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def cooling_water_flow_constraint(b, t):
-        return b.cooling_water_flow[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def cooling_water_flow(b, t):
+        return pyunits.convert(
             b.cooling_water_duty[t]/water_heat_capacity/CW_range/water_density,
             pyunits.gal/pyunits.min)
 
     # cooling tower evaporation losses
-    m.fs.evaporation_losses = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def evaporation_losses_constraint(b, t):
-        return b.evaporation_losses[t] == 0.008*20/10*b.cooling_water_flow[t]
+    @m.fs.Expression(m.fs.time)
+    def evaporation_losses(b, t):
+        return 0.008*20/10*b.cooling_water_flow[t]
 
     # cooling tower blowdown losses
-    m.fs.blowdown_losses = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def blowdown_losses_constraint(b, t):
-        return b.blowdown_losses[t] == b.evaporation_losses[t]/(cycles_of_concentration-1)
+    @m.fs.Expression(m.fs.time)
+    def blowdown_losses(b, t):
+        return b.evaporation_losses[t]/(cycles_of_concentration-1)
 
     # cooling water pump auxiliary load
-    m.fs.cooling_water_pump_load = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def cooling_water_pump_load_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def cooling_water_pump_load(b, t):
         baseline_pump_load = 4580*pyunits.kW
-        return b.cooling_water_pump_load[t] == baseline_pump_load*(b.cooling_water_flow[t]/baseline_cw_flow)
+        return baseline_pump_load*(b.cooling_water_flow[t]/baseline_cw_flow)
 
     # cooling tower fans auxiliary load
-    m.fs.cooling_tower_fan_load = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def cooling_tower_fan_load_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def cooling_tower_fan_load(b, t):
         baseline_fan_load = 2370*pyunits.kW
-        return b.cooling_tower_fan_load[t] == baseline_fan_load*(b.cooling_water_flow[t]/baseline_cw_flow)
+        return baseline_fan_load*(b.cooling_water_flow[t]/baseline_cw_flow)
 
     ###########################################################################
     # SYSTEM WATER USAGE
 
     # BFW makeup
-    m.fs.BFW_makeup = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def BFW_makeup_constraint(b, t):
-        return b.BFW_makeup[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def BFW_makeup(b, t):
+        return pyunits.convert(
             b.ngcc.st.hotwell.makeup_state[t].flow_vol,
             pyunits.gal/pyunits.min)
 
     # SOEC makeup
-    m.fs.SOEC_makeup = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def SOEC_makeup_constraint(b, t):
-        return b.SOEC_makeup[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def SOEC_makeup(b, t):
+        return pyunits.convert(
             b.soec.water_pump.control_volume.properties_in[t].flow_vol,
             pyunits.gal/pyunits.min)
 
     # water demand
-    m.fs.water_demand = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def water_demand_constraint(b, t):
-        return b.water_demand[t] == (b.evaporation_losses[t] +
+    @m.fs.Expression(m.fs.time)
+    def water_demand(b, t):
+        return pyunits.convert(b.evaporation_losses[t] +
                 b.blowdown_losses[t] +
                 b.BFW_makeup[t] +
                 b.SOEC_makeup[t] +
-                b.CO2_water_makeup[t])
+                b.CO2_water_makeup[t], pyunits.gal/pyunits.min)
 
     # internal recycle
-    m.fs.water_recycle = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def water_recycle_constraint(b, t):
-        return b.water_recycle[t] == 0*pyunits.gal/pyunits.min
+    @m.fs.Expression(m.fs.time)
+    def water_recycle(b, t):
+        return 0.001*pyunits.gal/pyunits.min
 
     # raw water withdrawal
-    m.fs.raw_water_withdrawal = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def raw_water_withdrawal_constraint(b, t):
-        return b.raw_water_withdrawal[t] == b.water_demand[t] - b.water_recycle[t]
+    @m.fs.Expression(m.fs.time)
+    def raw_water_withdrawal(b, t):
+        return pyunits.convert(b.water_demand[t] - b.water_recycle[t], pyunits.gal/pyunits.min)
 
     # hydrogen dryer discharge
-    m.fs.dryer_discharge = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def dryer_discharge_constraint(b, t):
-        return b.dryer_discharge[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def dryer_discharge(b, t):
+        return pyunits.convert(
             (b.soec.water_heater01.shell_outlet.flow_mol[t] *
              b.soec.water_heater01.shell_outlet.mole_frac_comp[t, "H2O"] *
              18.02*pyunits.g/pyunits.mol / water_density),
             pyunits.gal/pyunits.min)
 
     # process water discharge
-    m.fs.process_water_discharge = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def process_water_discharge_constraint(b, t):
-        return b.process_water_discharge[t] == (b.blowdown_losses[t]*0.9 +
+    @m.fs.Expression(m.fs.time)
+    def process_water_discharge(b, t):
+        return (b.blowdown_losses[t]*0.9 +
                 b.CO2_water_discharge[t] +
                 b.BFW_makeup[t] +
                 b.dryer_discharge[t])
 
     # raw water consumption
-    m.fs.raw_water_consumption = pyo.Var(m.fs.time, units=pyunits.gal/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def raw_water_consumption_constraint(b, t):
-        return b.raw_water_consumption[t] == b.raw_water_withdrawal[t] - b.process_water_discharge[t]
+    @m.fs.Expression(m.fs.time)
+    def raw_water_consumption(b, t):
+        return b.raw_water_withdrawal[t] - b.process_water_discharge[t]
 
     # ground water pump auxiliary load
-    m.fs.ground_water_pump_load = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def ground_water_pump_load_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def ground_water_pump_load(b, t):
         baseline_pump_load = 430*pyunits.kW
         baseline_water_withdrawal = 4773.14*pyunits.gal/pyunits.min
-        return b.ground_water_pump_load[t] == baseline_pump_load*(b.raw_water_withdrawal[t]/baseline_water_withdrawal)
+        return baseline_pump_load*(b.raw_water_withdrawal[t]/baseline_water_withdrawal)
 
     ###########################################################################
     # AUXILIARY LOADS AND NET POWER
@@ -284,70 +235,54 @@ def add_results_for_costing(m):
     baseline_gross_power = 689800*pyunits.kW
 
     # gas turbine gross power
-    m.fs.gas_turbine_gross_power = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def gas_turbine_gross_power_constraint(b, t):
-        return b.gas_turbine_gross_power[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def gas_turbine_gross_power(b, t):
+        return pyunits.convert(
             -1*b.ngcc.gt.gt_power[t],
             pyunits.kW)
 
     # steam turbine gross power
-    m.fs.steam_turbine_gross_power = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def steam_turbine_gross_power_constraint(b, t):
-        return b.steam_turbine_gross_power[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def steam_turbine_gross_power(b, t):
+        return pyunits.convert(
             -1*b.ngcc.st.steam_turbine.power[t],
             pyunits.kW)
 
     # total gross power
-    m.fs.gross_power = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def gross_power_constraint(b, t):
-        return b.gross_power[t] == b.gas_turbine_gross_power[t] + b.steam_turbine_gross_power[t]
+    @m.fs.Expression(m.fs.time)
+    def gross_power(b, t):
+        return b.gas_turbine_gross_power[t] + b.steam_turbine_gross_power[t]
 
     # gas turbine auxiliaries
-    m.fs.gas_turbine_aux_load = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def gas_turbine_aux_load_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def gas_turbine_aux_load(b, t):
         baseline_aux_load = 1020*pyunits.kW
         baseline_gt_power = 477300*pyunits.kW
-        return b.gas_turbine_aux_load[t] == baseline_aux_load*(b.gas_turbine_gross_power[t]/baseline_gt_power)
+        return baseline_aux_load*(b.gas_turbine_gross_power[t]/baseline_gt_power)
 
     # steam turbine auxiliaries
-    m.fs.steam_turbine_aux_load = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def steam_turbine_aux_load_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def steam_turbine_aux_load(b, t):
         baseline_aux_load = 200*pyunits.kW
         baseline_st_power = 212500*pyunits.kW
-        return b.steam_turbine_aux_load[t] == baseline_aux_load*(b.steam_turbine_gross_power[t]/baseline_st_power)
+        return baseline_aux_load*(b.steam_turbine_gross_power[t]/baseline_st_power)
 
     # miscellaneous loads
-    m.fs.misc_aux_loads = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def misc_aux_loads_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def misc_aux_loads(b, t):
         baseline_misc_loads = 572*pyunits.kW
-        return b.misc_aux_loads[t] == baseline_misc_loads*(b.gross_power[t]/baseline_gross_power)
+        return baseline_misc_loads*(b.gross_power[t]/baseline_gross_power)
 
     # transformer losses
-    m.fs.transformer_losses = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def transformer_losses_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def transformer_losses(b, t):
         baseline_transformer_losses = 2200*pyunits.kW
-        return b.transformer_losses[t] == baseline_transformer_losses*(b.gross_power[t]/baseline_gross_power)
+        return baseline_transformer_losses*(b.gross_power[t]/baseline_gross_power)
 
     # total auxiliary load
-    m.fs.aux_load = pyo.Var(m.fs.time, units=pyunits.kW)
-
-    @m.fs.Constraint(m.fs.time)
-    def aux_load_constraint(b, t):
-        return b.aux_load[t] == (b.cooling_water_pump_load[t] +
+    @m.fs.Expression(m.fs.time)
+    def aux_load(b, t):
+        return (b.cooling_water_pump_load[t] +
                 b.gas_turbine_aux_load[t] +
                 b.cooling_tower_fan_load[t] +
                 b.CO2_aux_load[t] +
@@ -371,28 +306,24 @@ def add_results_for_costing(m):
     # OTHER PROCESS PARAMETERS NEEDED FOR COSTING
 
     # fuel gas flow
-    m.fs.fuel_gas_flow = pyo.Var(m.fs.time, units=pyunits.lb/pyunits.hr)
+    #m.fs.fuel_gas_flow = pyo.Var(m.fs.time, units=pyunits.lb/pyunits.hr)
 
-    @m.fs.Constraint(m.fs.time)
-    def fuel_gas_flow_constraint(b, t):
-        return b.fuel_gas_flow[t] == pyunits.convert(b.ngcc.gt.feed_fuel1.properties[t].flow_mass,
+    @m.fs.Expression(m.fs.time)
+    def fuel_gas_flow(b, t):
+        return pyunits.convert(b.ngcc.gt.feed_fuel1.properties[t].flow_mass,
                                pyunits.lb/pyunits.hr)
 
     # feedwater flow, lb/hr
-    m.fs.feedwater_flow = pyo.Var(m.fs.time, units=pyunits.lb/pyunits.hr)
-
-    @m.fs.Constraint(m.fs.time)
-    def feedwater_flow_constraint(b, t):
-        return b.feedwater_flow[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def feedwater_flow(b, t):
+        return pyunits.convert(
             b.ngcc.hrsg.econ_hp1.hot_side.properties_in[t].flow_mass,
             pyunits.lb/pyunits.hr)
 
     # HRSG duty, MMBtu/hr
-    m.fs.hrsg_duty = pyo.Var(m.fs.time, units=pyunits.MBtu/pyunits.hr)
-
-    @m.fs.Constraint(m.fs.time)
-    def hrsg_duty_constraint(b, t):
-        return b.hrsg_duty[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def hrsg_duty(b, t):
+        return pyunits.convert(
             ((b.ngcc.hrsg.sh_hp4.cold_side.properties_in[0.0].flow_mol *
              b.ngcc.hrsg.sh_hp4.cold_side.properties_in[0.0].enth_mol) -
              (b.ngcc.hrsg.econ_lp.cold_side.properties_out[0.0].flow_mol *
@@ -400,32 +331,26 @@ def add_results_for_costing(m):
             pyunits.MBtu/pyunits.hr)
 
     # gas flow to HRSG, acfm
-    m.fs.hrsg_gas_flow = pyo.Var(m.fs.time, units=pyunits.ft**3/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def hrsg_gas_flow_constraint(b, t):
-        return b.hrsg_gas_flow[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def hrsg_gas_flow(b, t):
+        return pyunits.convert(
             b.ngcc.gt.mx3.mixed_state[0].flow_vol,
             pyunits.ft**3/pyunits.min)
 
     # CO2 capture absorber inlet flow rate, acfm
-    m.fs.absorber_gas_flow = pyo.Var(m.fs.time, units=pyunits.ft**3/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def absorber_gas_flow_constraint(b, t):
-        return b.absorber_gas_flow[t] == pyunits.convert(
+    @m.fs.Expression(m.fs.time)
+    def absorber_gas_flow(b, t):
+        return pyunits.convert(
             b.ngcc.hrsg.econ_lp.shell.properties_out[0].flow_vol,
             pyunits.ft**3/pyunits.min)
 
     # gas flow to stack, acfm
     # scale from baseline based on natural gas flow and adjust for CO2 capture
-    m.fs.stack_gas_flow = pyo.Var(m.fs.time, units=pyunits.ft**3/pyunits.min)
-
-    @m.fs.Constraint(m.fs.time)
-    def stack_gas_flow_constraint(b, t):
+    @m.fs.Expression(m.fs.time)
+    def stack_gas_flow(b, t):
         baseline_stack_flow = 1832949*pyunits.ft**3/pyunits.min
         baseline_natural_gas = 205630*pyunits.lb/pyunits.hr
-        return b.stack_gas_flow[t] == (baseline_stack_flow *
+        return (baseline_stack_flow *
                 b.fuel_gas_flow[t]/baseline_natural_gas *
                 (1-capture_percentage)/0.1)
 
