@@ -2584,9 +2584,9 @@ if __name__ == "__main__":
 
     # base_case_simulation(m.soec_fs, solver)  # solve for H2 prod. of 5 kg/s (2.5 kmol/s)
     rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
-    #base_case_optimization(m, solver)  # 5 kg/s
+    base_case_optimization(m, solver)  # 5 kg/s
     # uncomment to optimize model
-    optimize_model(m, solver)
+    # optimize_model(m, solver)
 
 
     # display_input_tags(m.soec_fs)
