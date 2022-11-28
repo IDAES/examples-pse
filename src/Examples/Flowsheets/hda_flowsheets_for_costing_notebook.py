@@ -79,7 +79,7 @@ def hda_with_flash(tee=True):
     else:
         outlvl = idaeslog.ERROR
 
-    # Import thermodynamic and reaction property packages
+    # Import thermodynamic and reaction property package
     from idaes_examples.common.hda import hda_ideal_VLE as thermo_props
     from idaes_examples.common.hda import hda_reaction as reaction_props
 
