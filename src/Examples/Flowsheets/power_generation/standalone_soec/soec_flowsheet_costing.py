@@ -443,6 +443,64 @@ def get_total_TPC(b):
     # def total_annualized_cost(b):
     #     return 0.0707 * b.total_as_spent_cost
 
+@declare_process_block_class("SOFCPathwaysCosting")
+class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
+
+    # Register currency and conversion rates based on CE Index
+    register_idaes_currency_units()
+
+    def build_global_params(self):
+        """
+        This is where we can declare any global parameters we need, such as
+        Lang factors, or coefficients for costing methods that should be
+        shared across the process.
+
+        You can do what you want here, so you could have e.g. sub-Blocks
+        for each costing method to separate the parameters for each method.
+        """
+        # Set the base year for all costs
+        self.base_currency = pyo.units.USD_2018
+        # Set a base period for all operating costs
+        self.base_period = pyo.units.year
+
+    def build_process_costs(self):
+        """
+        This is where you do all your process wide costing.
+        This is completely up to you, but you will have access to the
+        following aggregate costs:
+
+        1. self.aggregate_capital_cost
+        2. self.aggregate_fixed_operating_cost
+        3. self.aggregate_variable_operating_cost
+        4. self.aggregate_flow_costs (indexed by flow type)
+        """
+        # TODO: Do we have any process level methods to add here?
+        pass
+
+    @staticmethod
+    def initialize_build(self):
+        """
+        Here we can add initialization steps for the things we built in
+        build_process_costs.
+
+        Note that the aggregate costs will be initialized by the framework.
+        """
+        # TODO: For now,  no additional process level costs to initialize
+        pass
+
+    def cost_solid_oxide_cell(blk):
+        """
+        SOFC\SOEC costing method based on number of cells, assuming 400 mA/cm^2 per cell in SOFC mode
+        and 1000 mA/cm^2 in SOEC mode.
+        """
+
+        @blk.Expression()
+        def total_plant_cost(c):
+            extra_installed_area = 1.10  # accounts for cell degradation
+            return pyunits.convert(60.87 * blk.unit_model.number_cells *
+                                   extra_installed_area * pyunits.USD_2018,
+                                   to_units=self.base_currency)
+
 def get_soec_capital_cost(m, CE_index_year):
     CE_index_units = getattr(pyunits, "MUSD_" + CE_index_year)  # millions of USD in base year
 
@@ -450,17 +508,10 @@ def get_soec_capital_cost(m, CE_index_year):
     # SOEC CAPITAL COSTING
 
     # soec modules
-    # create dummy diameter and length variables
-    m.fs.soec_module.diameter = pyo.Var(initialize=0, units=pyunits.m)
-    m.fs.soec_module.length = pyo.Var(initialize=0, units=pyunits.m)
-    m.fs.soec_module.diameter.fix(0.1)
-    m.fs.soec_module.length.fix(0.1)
     m.fs.soec_module.costing = UnitModelCostingBlock(
         flowsheet_costing_block=m.fs.costing,
-        costing_method=SSLWCostingData.cost_vessel,
-        costing_method_arguments={
-            "include_platforms_ladders": False,
-        }, )
+        costing_method=SSLWCostingData.cost_none,
+    )
 
     @m.fs.soec.soec_module.costing.Expression()
     def total_plant_cost(c):
@@ -475,10 +526,7 @@ def get_soec_capital_cost(m, CE_index_year):
         heater.area = pyo.Var(initialize=0, units=pyunits.m ** 2)
         heater.costing = UnitModelCostingBlock(
             flowsheet_costing_block=m.fs.costing,
-            costing_method=SSLWCostingData.cost_fired_heater,
-            costing_method_arguments={
-                "integer": True,
-            },
+            costing_method=SSLWCostingData.cost_none,
         )
 
         @heater.costing.Expression()
@@ -500,10 +548,7 @@ def get_soec_capital_cost(m, CE_index_year):
         for hx in [m.fs.sweep_hot_exchanger, m.fs.sweep_medium_exchanger, m.fs.feed_hot_exchanger]:
             hx.costing = UnitModelCostingBlock(
                 flowsheet_costing_block=m.fs.costing,
-                costing_method=SSLWCostingData.cost_heat_exchanger,
-                costing_method_arguments={
-                    "hx_type": HXType.Utube,
-                },
+                costing_method=SSLWCostingData.cost_none,
             )
 
             @hx.costing.Expression()
