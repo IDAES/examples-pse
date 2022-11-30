@@ -5,5 +5,6 @@ This folder contains files that illustrate simulation and optimization of flowsh
 .. toctree::
     ngcc/index
     ngfc/index
+    rsofc/index
     subcritical/index
     supercritical/index
