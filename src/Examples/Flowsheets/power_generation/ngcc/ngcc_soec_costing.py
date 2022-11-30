@@ -105,6 +105,13 @@ def add_results_for_costing(m):
     ###########################################################################
     # COOLING WATER SYSTEM
 
+    # Unlike other systems, the cooling requirments are highest when the SOEC
+    # is off since the SOEC takes steam from the steam cycle, it lowers the
+    # condneser duty, which is by far the largest cooling load.  So here we
+    # will desing the cooling system for the SOEC being off and the NGCC 
+    # operating at max capacity.  Other system have the highest capacity
+    # requirements when the SOEC is on. 
+
     water_density = 8.333*pyunits.lb/pyunits.gal
     water_heat_capacity = 1*pyunits.Btu/pyunits.lb/pyunits.F
     CW_range = 20*pyunits.F
@@ -117,6 +124,11 @@ def add_results_for_costing(m):
         return pyunits.convert(
             b.ngcc.st.main_condenser.heat_duty[t],
             pyunits.MBtu/pyunits.hr)
+
+    # steam cycle condenser duty
+    @m.fs.Expression(m.fs.time)
+    def condenser_duty_soec_off(b, t):
+        return 815*pyunits.MBtu/pyunits.hr
 
     # hydrogen compressor cooling duty
     @m.fs.Expression(m.fs.time)
@@ -135,6 +147,13 @@ def add_results_for_costing(m):
                 b.CO2_cooling_duty[t] +
                 25*pyunits.MBtu/pyunits.hr)
 
+    # cooling water duty, includes 25 MMBtu of misc cooling loads
+    @m.fs.Expression(m.fs.time)
+    def cooling_water_duty_soec_off(b, t):
+        return (b.condenser_duty_soec_off[t] +
+                b.CO2_cooling_duty[t] +
+                25*pyunits.MBtu/pyunits.hr)
+
     # cooling water circulation rate
     @m.fs.Expression(m.fs.time)
     def cooling_water_flow(b, t):
@@ -142,21 +161,44 @@ def add_results_for_costing(m):
             b.cooling_water_duty[t]/water_heat_capacity/CW_range/water_density,
             pyunits.gal/pyunits.min)
 
+    # cooling water circulation rate
+    @m.fs.Expression(m.fs.time)
+    def cooling_water_flow_soec_off(b, t):
+        return pyunits.convert(
+            b.cooling_water_duty_soec_off[t]/water_heat_capacity/CW_range/water_density,
+            pyunits.gal/pyunits.min)
+
     # cooling tower evaporation losses
     @m.fs.Expression(m.fs.time)
     def evaporation_losses(b, t):
         return 0.008*20/10*b.cooling_water_flow[t]
+
+    # cooling tower evaporation losses
+    @m.fs.Expression(m.fs.time)
+    def evaporation_losses_soec_off(b, t):
+        return 0.008*20/10*b.cooling_water_flow_soec_off[t]
 
     # cooling tower blowdown losses
     @m.fs.Expression(m.fs.time)
     def blowdown_losses(b, t):
         return b.evaporation_losses[t]/(cycles_of_concentration-1)
 
+    # cooling tower blowdown losses
+    @m.fs.Expression(m.fs.time)
+    def blowdown_losses_soec_off(b, t):
+        return b.evaporation_losses_soec_off[t]/(cycles_of_concentration-1)
+
     # cooling water pump auxiliary load
     @m.fs.Expression(m.fs.time)
     def cooling_water_pump_load(b, t):
         baseline_pump_load = 4580*pyunits.kW
         return baseline_pump_load*(b.cooling_water_flow[t]/baseline_cw_flow)
+
+    # cooling water pump auxiliary load
+    @m.fs.Expression(m.fs.time)
+    def cooling_water_pump_load_soec_off(b, t):
+        baseline_pump_load = 4580*pyunits.kW
+        return baseline_pump_load*(b.cooling_water_flow_soec_off[t]/baseline_cw_flow)
 
     # cooling tower fans auxiliary load
     @m.fs.Expression(m.fs.time)
@@ -625,7 +667,7 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
         costing_method=QGESSCostingData.get_PP_costing,
         costing_method_arguments={
             "cost_accounts": cooling_tower_accounts,
-            "scaled_param": m.fs.cooling_water_duty[0],
+            "scaled_param": m.fs.cooling_water_duty_soec_off[0],
             "tech": 6,
             "ccs": "B",
             "CE_index_year": CE_index_year,

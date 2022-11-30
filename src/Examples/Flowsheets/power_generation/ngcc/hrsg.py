@@ -48,8 +48,7 @@ from idaes.models.unit_models import Mixer, Separator as Splitter
 from idaes.models.unit_models.heat_exchanger import (
     HeatExchanger,
     HeatExchangerFlowPattern,
-    delta_temperature_lmtd_callback as delta_temp_cb,
-    delta_temperature_lmtd_callback,
+    delta_temperature_lmtd_smooth_callback as delta_temp_cb,
 )
 from idaes.models_extra.power_generation.unit_models.boiler_heat_exchanger import (
     BoilerHeatExchanger,
@@ -125,7 +124,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             cold_side_name="tube",
             shell={"property_package": prop_gas},
             tube={"property_package": prop_water},
-            delta_temperature_callback=delta_temperature_lmtd_callback,
+            delta_temperature_callback=delta_temp_cb,
             flow_pattern=HeatExchangerFlowPattern.countercurrent,
         )
         self.mixer_soec = HelmMixer(
@@ -216,7 +215,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             cold_side_name="tube",
             shell={"property_package": prop_gas},
             tube={"property_package": prop_water},
-            delta_temperature_callback=delta_temperature_lmtd_callback,
+            delta_temperature_callback=delta_temp_cb,
             flow_pattern=HeatExchangerFlowPattern.countercurrent,
         )
         self.sh_ip1 = BoilerHeatExchanger(
@@ -362,7 +361,7 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             cold_side_name="tube",
             shell={"property_package": prop_gas},
             tube={"property_package": prop_water},
-            delta_temperature_callback=delta_temperature_lmtd_callback,
+            delta_temperature_callback=delta_temp_cb,
             flow_pattern=HeatExchangerFlowPattern.countercurrent,
         )
         self.sh_hp1 = BoilerHeatExchanger(
