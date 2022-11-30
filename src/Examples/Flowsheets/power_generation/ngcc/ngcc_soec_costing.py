@@ -372,6 +372,13 @@ def add_results_for_costing(m):
               b.ngcc.hrsg.econ_lp.cold_side.properties_in[0.0].enth_mol)),
             pyunits.MBtu/pyunits.hr)
 
+    # HRSG duty, MMBtu/hr
+    # Want to size the HRSG based on SOEC off, since it will have the
+    # highest duty there.
+    @m.fs.Expression(m.fs.time)
+    def hrsg_duty_no_soec(b, t):
+        return 2260.12*pyunits.MBtu/pyunits.hr
+
     # gas flow to HRSG, acfm
     @m.fs.Expression(m.fs.time)
     def hrsg_gas_flow(b, t):
@@ -582,7 +589,7 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
         costing_method=QGESSCostingData.get_PP_costing,
         costing_method_arguments={
             "cost_accounts": HRSG_duty_accounts,
-            "scaled_param": m.fs.hrsg_duty[0],
+            "scaled_param": m.fs.hrsg_duty_no_soec[0],
             "tech": 6,
             "ccs": "B",
             "CE_index_year": CE_index_year,
