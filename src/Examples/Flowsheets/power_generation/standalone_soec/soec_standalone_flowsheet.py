@@ -323,16 +323,22 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         )
 
         self.sweep_hot_exchanger = gum.HeatExchanger(
+            hot_side_name="shell",
+            cold_side_name="tube",
             shell={"property_package": self.o2_side_prop_params},
             tube={"property_package": self.o2_side_prop_params}
         )
 
         self.sweep_medium_exchanger = gum.HeatExchanger(
+            hot_side_name="shell",
+            cold_side_name="tube",
             shell={"property_package": self.o2_side_prop_params},
             tube={"property_package": self.o2_side_prop_params}
         )
 
         self.feed_hot_exchanger = gum.HeatExchanger(
+            hot_side_name="shell",
+            cold_side_name="tube",
             shell={"property_package": self.h2_side_prop_params},
             tube={"property_package": self.steam_prop_params},
         )
@@ -373,6 +379,8 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.cmp04.efficiency_isentropic = pyo.Var(self.time, initialize=1, units=pyo.units.dimensionless)
 
         self.water_preheater = gum.HeatExchanger(
+            hot_side_name="shell",
+            cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
         )
@@ -389,22 +397,32 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
                                 "outlet5", "outlet6"],
         )
         self.water_evaporator01 = gum.HeatExchanger(
+            hot_side_name="shell",
+            cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
         )
         self.water_evaporator02 = gum.HeatExchanger(
+            hot_side_name="shell",
+            cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
         )
         self.water_evaporator03 = gum.HeatExchanger(
+            hot_side_name="shell",
+            cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
         )
         self.water_evaporator04 = gum.HeatExchanger(
+            hot_side_name="shell",
+            cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
         )
         self.water_evaporator05 = gum.HeatExchanger(
+            hot_side_name="shell",
+            cold_side_name="tube",
             shell={"property_package": self.o2_side_prop_params},
             tube={"property_package": self.steam_prop_params},
         )
