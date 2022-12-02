@@ -7,7 +7,7 @@ from pyomo.network import Arc, Port
 from pyomo.common.fileutils import this_file_dir
 
 import idaes
-from idaes.core import FlowsheetBlockData, declare_process_block_class
+from idaes.core import FlowsheetBlockData, declare_process_block_class, UnitModelBlock
 from idaes.core.util.model_statistics import degrees_of_freedom
 from idaes.models.properties.modular_properties.base.generic_property import (
     GenericParameterBlock,
@@ -351,13 +351,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.feed_heater = gum.Heater(property_package=self.h2_side_prop_params)
         self.sweep_heater = gum.Heater(property_package=self.o2_side_prop_params)
 
-        # TODO get rid of translator-it's unnecessary bc same components & state variables
-        self.condensing_translator = gum.Translator(
-                inlet_property_package=self.h2_side_prop_params,
-                outlet_property_package=self.h2_condensing_prop_params,
-                outlet_state_defined=True,
-        )
-
         self.product_flash01 = gum.Flash(property_package=self.h2_condensing_prop_params)
         # Use vapor-only property package for compressors to prevent spurious liquid terms from popping up
         self.cmp01 = gum.Compressor(property_package=self.h2_side_prop_params)
@@ -450,7 +443,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
 
         self.water_compressor = hum.HelmIsentropicCompressor(property_package=self.steam_prop_params)
 
-        self.heat_pump = pyo.Block()
+        self.heat_pump = UnitModelBlock()
         self.heat_pump.heat_in = pyo.Var(self.time, initialize=0.5e6,
                                          units=pyo.units.W)
         self.heat_pump.heat_out = pyo.Var(self.time, initialize=-1e6,
@@ -728,14 +721,9 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             source=self.feed_recycle_split.out,
             destination=self.feed_hot_exchanger.shell_inlet,
         )
-        self.hstrm04a = Arc(
+        self.hstrm04 = Arc(
             doc="",
             source=self.feed_hot_exchanger.shell_outlet,
-            destination=self.condensing_translator.inlet,
-        )
-        self.hstrm04b = Arc(
-            doc="",
-            source=self.condensing_translator.outlet,
             destination=self.water_evaporator01.shell_inlet,
         )
         self.hstrm05 = Arc(
@@ -915,178 +903,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             source=self.water_compressor.outlet,
             destination=self.feed_hot_exchanger.tube_inlet
         )
-
-        # self.water02a = Arc(
-        #     doc="Water splitter to  water product economizer",
-        #     source=self.water_split.outlet1,
-        #     destination=self.water_economizer_product.tube_inlet,
-        # )
-        # self.water02b = Arc(
-        #     doc="Water product economizer to evaporator valve",
-        #     source=self.water_economizer_product.tube_outlet,
-        #     destination=self.valve_water_evaporator_product.inlet,
-        # )
-        # self.water02c = Arc(
-        #     doc="Water product evaporator valve to water heater 1",
-        #     source=self.valve_water_evaporator_product.outlet,
-        #     destination=self.water_evaporator_product.water_side.inlet,
-        # )
-        # self.water03a = Arc(
-        #     doc="Water splitter to water sweep economizer",
-        #     source=self.water_split.outlet2,
-        #     destination=self.water_economizer_sweep.tube_inlet,
-        # )
-        # self.water03b = Arc(
-        #     doc="Water sweep economizer to evaporator valve",
-        #     source=self.water_economizer_sweep.tube_outlet,
-        #     destination=self.valve_water_evaporator_sweep.inlet,
-        # )
-        # self.water03c = Arc(
-        #     doc="Water sweep evaporator valve to water heater 2",
-        #     source=self.valve_water_evaporator_sweep.outlet,
-        #     destination=self.water_heater02.tube_inlet,
-        # )
-        # self.water04 = Arc(
-        #     doc="Water splitter to water heater 3",
-        #     source=self.water_split.outlet3,
-        #     destination=self.heat_pump_hot_terminus.inlet,
-        # )
-        # self.water05a = Arc(
-        #     doc="Water heater 1 to water superheater 1",
-        #     source=self.water_evaporator_product.water_side.outlet,
-        #     destination=self.water_superheater_product.tube_inlet,
-        # )
-        # self.water05b = Arc(
-        #     doc="Water superheater 1 to water mixer",
-        #     source=self.water_superheater_product.tube_outlet,
-        #     destination=self.water_mix.inlet1,
-        # )
-        # self.water06a = Arc(
-        #     doc="Water heater 2 to water sweep superheater",
-        #     source=self.water_heater02.tube_outlet,
-        #     destination=self.water_superheater_sweep.tube_inlet,
-        # )
-        # self.water06b = Arc(
-        #     doc="Water sweep superheater to water mixer",
-        #     source=self.water_superheater_sweep.tube_outlet,
-        #     destination=self.water_mix.inlet2,
-        # )
-        # self.water07 = Arc(
-        #     doc="Water heater 3 to water compressor",
-        #     source=self.heat_pump_hot_terminus.outlet,
-        #     destination=self.water_mix.inlet3,
-        # )
-        # self.water08 = Arc(
-        #     doc="Water mixer to water compressor 1",
-        #     source=self.water_mix.outlet,
-        #     destination=self.water_compressor01.inlet,
-        # )
-        # self.water09 = Arc(
-        #     doc="Water compressor 1 to water compressor 2",
-        #     source=self.water_compressor01.outlet,
-        #     destination=self.water_compressor02.inlet,
-        # )
-        # self.feed00 = Arc(
-        #     doc="Connecting makeup water to feed",
-        #     source=self.water_compressor02.outlet,
-        #     destination=self.feed_hx02.tube_inlet,
-        # )
-
-        # self.ostrm06a = Arc(
-        #     doc="",
-        #     source=self.feed_hx02.shell_outlet,
-        #     destination=self.water_superheater_sweep.shell_inlet,
-        # )
-        # self.ostrm06b = Arc(
-        #     doc="",
-        #     source=self.water_superheater_sweep.shell_outlet,
-        #     destination=self.water_heater02.shell_inlet,
-        # )
-        # self.ostrm06c = Arc(
-        #     doc="",
-        #     source=self.water_heater02.shell_outlet,
-        #     destination=self.water_economizer_sweep.shell_inlet,
-        # )
-        # self.hstrm04a = Arc(
-        #     doc="",
-        #     source=self.feed_hx01.shell_outlet,
-        #     destination=self.condensing_translator.inlet,
-        # )
-        # self.hstrm04b = Arc(
-        #     doc="",
-        #     source=self.condensing_translator.outlet,
-        #     destination=self.water_superheater_product.shell_inlet,
-        # )
-        # self.hstrm04c = Arc(
-        #     doc="",
-        #     source=self.water_superheater_product.shell_outlet,
-        #     destination=self.water_evaporator_product.hydrogen_side.inlet,
-        # )
-        # self.hstrm04d = Arc(
-        #     doc="",
-        #     source=self.water_evaporator_product.hydrogen_side.outlet,
-        #     destination=self.water_economizer_product.shell_inlet,
-        # )
-        # self.hstrm06 = Arc(
-        #     doc="",
-        #     source=self.h2_drop_water_port,
-        #     destination=self.h2_precooler.inlet,
-        # )
-        # self.hstrm07 = Arc(
-        #     doc="",
-        #     source=self.h2_precooler.outlet,
-        #     destination=self.cmp01.inlet,
-        # )
-        # self.hstrm08 = Arc(
-        #     doc="",
-        #     source=self.cmp01.outlet,
-        #     destination=self.ic01.inlet,
-        # )
-        # self.hstrm09 = Arc(
-        #     doc="",
-        #     source=self.ic01.outlet,
-        #     destination=self.cmp02.inlet,
-        # )
-        # self.hstrm10 = Arc(
-        #     doc="",
-        #     source=self.cmp02.outlet,
-        #     destination=self.ic02.inlet,
-        # )
-        # self.hstrm11 = Arc(
-        #     doc="",
-        #     source=self.ic02.outlet,
-        #     destination=self.cmp03.inlet,
-        # )
-        # self.hstrm12 = Arc(
-        #     doc="",
-        #     source=self.cmp03.outlet,
-        #     destination=self.ic03.inlet,
-        # )
-        # self.hstrm13 = Arc(
-        #     doc="",
-        #     source=self.ic03.outlet,
-        #     destination=self.cmp04.inlet,
-        # )
-        # self.hstrm14 = Arc(
-        #     doc="",
-        #     source=self.cmp04.outlet,
-        #     destination=self.ic04.inlet,
-        # )
-        # self.hstrm15 = Arc(
-        #     doc="",
-        #     source=self.ic04.outlet,
-        #     destination=self.cmp05.inlet,
-        # )
-        # self.hstrm16 = Arc(
-        #     doc="",
-        #     source=self.cmp05.outlet,
-        #     destination=self.ic05.inlet,
-        # )
-        # self.hstrm17 = Arc(
-        #     doc="",
-        #     source=self.ic05.outlet,
-        #     destination=self.cmp06.inlet,
-        # )
         pyo.TransformationFactory("network.expand_arcs").apply_to(self)
 
     def _add_constraints(self):
@@ -1114,39 +930,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         def rule_pressure(blk, t):
             return blk.properties_in[t].pressure == blk.properties_out[t].pressure
 
-        # for blk in [self.fuel_inlet_translator, self.fuel_outlet_translator,
-        #             self.oxygen_inlet_translator, self.oxygen_outlet_translator]:
-        #     shortname = blk.name.split(".")[-1]
-        #     shortname = '_'.join(shortname.split("_")[:2])
-        #
-        #     blk.temperature_eqn = pyo.Constraint(self.time, rule=rule_temperature)
-        #     blk.pressure_eqn = pyo.Constraint(self.time, rule=rule_pressure)
-        #
-        #     if shortname.startswith("fuel"):
-        #         blk.mole_frac_comp_eqn = pyo.Constraint(self.time,
-        #                                                 self.soec.config.fuel_comps,
-        #                                                 rule=rule_mole_frac)
-        #     else:
-        #         blk.mole_frac_comp_eqn = pyo.Constraint(self.time,
-        #                                                 self.soec.config.oxygen_comps,
-        #                                                 rule=rule_mole_frac)
-        #     if shortname.endswith("inlet"):
-        #         blk.flow_mol_eqn = pyo.Constraint(self.time,
-        #                                           rule=rule_flow_mol_scale_down)
-        #     else:
-        #         blk.flow_mol_eqn = pyo.Constraint(self.time,
-        #                                           rule=rule_flow_mol_scale_up)
-
-        self.condensing_translator.temperature_eqn = pyo.Constraint(self.time,
-                                                                    rule=rule_temperature)
-        self.condensing_translator.pressure_eqn = pyo.Constraint(self.time,
-                                                                 rule=rule_pressure)
-
-        self.condensing_translator.flow_mol_eqn = pyo.Constraint(self.time,
-                                                                 rule=rule_flow_mol)
-        self.condensing_translator.mole_frac_comp_eqn = pyo.Constraint(self.time,
-                                                                       self.h2_side_prop_params.component_list,
-                                                                       rule=rule_mole_frac)
 
         self.product_dryer.temperature_eqn = pyo.Constraint(self.time,
                                                             rule=rule_temperature)
@@ -1210,33 +993,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         def soec_power_per_h2(b, t):
             return b.soec_module.electrical_work[t] / b.h2_mass_production[t]
 
-        # @self.Constraint(self.time)
-        # def product_condenser_eqn(b,t):
-        #     return 0 == (b.product_condenser00.heat_duty[t]
-        #                  + b.water_preheater.heat_duty[t])
-
-        # @self.Constraint(self.time)
-        # def product_evaporator1_eqn(b,t):
-        #     return 0 == (b.hydrogen_cooler.heat_duty[t] 
-        #                  + b.water_heater01a.heat_duty[t])
-
-        # @self.Constraint(self.time)
-        # def product_evaporator2_eqn(b,t):
-        #     return 0 == (b.product_condenser01.heat_duty[t] 
-        #                  + b.water_heater01b.heat_duty[t])
-
-        # @self.Constraint(self.time)
-        # def product_evaporator3_eqn(b,t):
-        #     return 0 == (b.product_condenser02.heat_duty[t] 
-        #                  + b.water_heater01c.heat_duty[t])
-        # @self.Constraint(self.time)
-        # def product_evaporator4_eqn(b,t):
-        #     return 0 == (b.product_condenser03.heat_duty[t] 
-        #                  + b.water_heater01d.heat_duty[t])
-        # @self.Constraint(self.time)
-        # def oxygen_evaporator_eqn(b,t):
-        #     return 0 == (b.oxygen_cooler.heat_duty[t] 
-        #                  + b.water_heater02.heat_duty[t])
         def rule_sat_vapor(b, t):
             return (b.properties_out[t].enth_mol
                     == b.properties_out[t].enth_mol_sat_phase["Vap"] + 30)
@@ -1562,13 +1318,11 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         # iscale.set_scaling_factor(self.cmp06.control_volume.work,1e-6)
 
         for blk in [self.feed_translator,
-                    self.condensing_translator,
                     self.product_dryer]:
             scale_indexed_constraint(blk.temperature_eqn, 1e-2)
             scale_indexed_constraint(blk.pressure_eqn, 1e-5)
             scale_indexed_constraint(blk.flow_mol_eqn, 1e-3)
-        for blk in [self.condensing_translator,
-                    self.product_dryer]:
+        for blk in [self.product_dryer]:
             scale_indexed_constraint(blk.mole_frac_comp_eqn, 10)
             # Scale heat pump
         for t in self.time:
@@ -1851,9 +1605,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
                                                duty=(1.8e+06, pyo.units.W))
         propagate_state(self.sweep02)
 
-        propagate_state(self.hstrm04a)
-        self.condensing_translator.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
-        propagate_state(self.hstrm04b)
+        propagate_state(self.hstrm04)
 
         self.water_preheater.tube_outlet.enth_mol.fix(
             iapws95.htpx(T=(273.15 + 70) * pyo.units.K, P=1.2e5 * pyo.units.Pa)
@@ -1995,7 +1747,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         # self.water_split.initialize()
 
         # propagate_state(self.hstrm04a)
-        # self.condensing_translator.initialize()
         # propagate_state(self.hstrm04b)
 
         # Tsat = pyo.value(self.water_economizer_product.tube.properties_in[0].temperature_sat)
