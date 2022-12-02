@@ -795,11 +795,12 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
             area = heater.heat_duty[0] / U / DT
             # Add factor of two to pathways cost to account for corrosion-resistant materials for trim heaters
             return pyunits.convert(
-                2*81.88 * pyo.value(
-                    pyo.units.convert(area, pyo.units.ft**2)
-                    ) *
-                pyunits.USD_2018,
-                CE_index_units)
+                2*81.88 
+                * pyo.units.convert(area, pyo.units.ft**2) 
+                / pyo.units.ft**2
+                * pyunits.USD_2018,
+                CE_index_units
+            )
 
     # water heaters - U-tube HXs
     # costed with IDAES generic heat exchanger correlation
@@ -837,9 +838,13 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
 
         @hx.costing.Expression()
         def total_plant_cost(c):
-            return pyunits.convert(81.88 * pyo.value(
-                pyo.units.convert(hx.area, pyo.units.ft**2)) *
-                pyunits.USD_2018, CE_index_units)
+            return pyunits.convert(
+                81.88 
+                * pyo.units.convert(hx.area, pyo.units.ft**2)
+                / pyo.units.ft**2
+                * pyunits.USD_2018, 
+                CE_index_units
+            )
 
     # sweep compressor
     m.fs.soec.sweep_compressor.costing = UnitModelCostingBlock(
@@ -853,17 +858,17 @@ def get_ngcc_soec_capital_cost(m, CE_index_year):
     # air is coming in at standard conditions
     sweep_compressor_scfm = pyo.units.convert(
         m.fs.soec.sweep_compressor.control_volume.properties_in[0].flow_vol,
-        pyo.units.ft**3/pyo.units.min)
+        pyo.units.ft**3/pyo.units.min)/(pyo.units.ft**3/pyo.units.min)
 
     n_sections = 11
 
     @m.fs.soec.sweep_compressor.costing.Expression()
     def total_plant_cost(c):  # in 2018 $
         return pyunits.convert(
-            n_sections * 10.9995 * pyunits.USD_2018 * pyo.value(pyo.exp(
+            n_sections * 10.9995 * pyunits.USD_2018 * pyo.exp(
                 0.4692 +
                 0.1203*pyo.log(sweep_compressor_scfm/1000/n_sections) +
-                0.0931*pyo.log(sweep_compressor_scfm/1000/n_sections)**2))
+                0.0931*pyo.log(sweep_compressor_scfm/1000/n_sections)**2)
             / 1e3,
             CE_index_units)
 
