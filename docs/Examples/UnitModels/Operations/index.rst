@@ -5,6 +5,7 @@ Descriptive examples showing how to use some common IDAES unit models.
 .. toctree::
     Compressor <compressor_doc>
     Feed <feed_doc>
+    Feed Flash <feed_flash_doc>
     Heater <heater_doc>
     Mixer <mixer_doc>
     Product <product_doc>
