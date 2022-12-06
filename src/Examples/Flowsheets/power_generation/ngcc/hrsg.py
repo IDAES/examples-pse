@@ -1338,7 +1338,10 @@ class HrsgFlowsheetData(FlowsheetBlockData):
             )
         )
         for i, s in stream_states.items():  # create the tags for steam quantities
-            if isinstance(s, iapws95.Iapws95StateBlockData):
+            if (
+                hasattr(s.config.parameters, "pure_component") 
+                and s.config.parameters.pure_component == "H2O"
+            ):
                 tag_group = tag_stm
                 is_steam = True
             else:
