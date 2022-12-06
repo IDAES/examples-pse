@@ -14,6 +14,7 @@ from idaes.models.properties.modular_properties.base.generic_property import (
     GenericStateBlockData
 )
 import idaes.core.util.scaling as iscale
+import idaes.core.util.exceptions as idaes_except
 from idaes.models_extra.power_generation.properties.natural_gas_PR import get_prop, EosType
 from idaes.models_extra.power_generation.unit_models.soc_submodels import SolidOxideModuleSimple
 # from idaes.power_generation.unit_models.compressor_multistage import (
@@ -465,176 +466,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         # Some outside source of water from which the heat pump can harvest heat
         self.heat_source = gum.Heater(property_package=self.steam_prop_params)
 
-        # self.water_economizer_product = gum.HeatExchanger(
-        #     default={
-        #         "shell":{"property_package":self.h2_condensing_prop_params},
-        #         "tube":{"property_package":self.steam_prop_params},
-        #         #"delta_temperature_callback":delta_temperature_lmtd_slack_callback
-        #     }
-        # )
-        # self.valve_water_evaporator_product = hum.HelmValve(
-        #     default={
-        #         "property_package": self.steam_prop_params,
-        #         "phase": "Liq"
-        #         }
-        #     )
-        # self.valve_water_evaporator_product.Cv.fix()
-        # self.valve_water_evaporator_product.valve_opening.fix()
-        # self.valve_water_evaporator_product.pressure_flow_equation.deactivate()
-        # self.water_heater01 = gum.HeatExchanger(
-        #     default={
-        #         "shell":{"property_package":self.h2_condensing_prop_params},
-        #         "tube":{"property_package":self.steam_prop_params},
-        #         #"delta_temperature_callback":delta_temperature_lmtd_slack_callback
-        #     }
-        # )
-
-        # self.water_evaporator_product = pyo.Block()
-
-        # self.water_evaporator_product.water_side = gum.Heater(
-        #     default={"property_package": self.steam_prop_params}
-        #     )
-        # self.water_evaporator_product.hydrogen_side = gum.Heater(
-        #     default={"property_package":self.h2_condensing_prop_params}
-        #     )
-        # @self.water_evaporator_product.Constraint(self.time)
-        # def heat_duty_eqn(b,t):
-        #     return 0 == b.water_side.heat_duty[t] + b.hydrogen_side.heat_duty[t]
-
-        # self.water_evaporator_product.area = pyo.Var(initialize = 1000,
-        #                                              bounds = (0,None)
-        #                                              )
-        # self.water_evaporator_product.overall_heat_transfer_coefficient = pyo.Var(
-        #                                             self.time,
-        #                                             initialize = 100,
-        #                                             bounds = (0,None)
-        #                                             )
-        # @self.water_evaporator_product.Constraint(self.time)
-        # def heat_transfer_eqn(b,t):
-        #     Q = b.hydrogen_side.heat_duty[t]
-        #     U = b.overall_heat_transfer_coefficient[t]
-        #     A = b.area
-        #     try:
-        #         T_dew = b.hydrogen_side.control_volume.properties_in[t].\
-        #             temperature_dew[("Liq","Vap")]
-        #     except KeyError:
-        #         T_dew = b.hydrogen_side.control_volume.properties_in[t].\
-        #             temperature_dew[("Vap","Liq")]
-        #     T_cond = smooth_min(
-        #         T_dew,
-        #         b.hydrogen_side.control_volume.properties_out[t].temperature,
-        #         eps = 1e-1
-        #     )
-        #     T_evap = smooth_max(
-        #         b.water_side.control_volume.properties_out[t].temperature_sat,
-        #         b.water_side.control_volume.properties_out[t].temperature,
-        #         eps = 1e-1
-        #     )
-        #     return Q == -U*A*(T_cond - T_evap)
-
-        # self.water_superheater_product = gum.HeatExchanger(
-        #     default={
-        #         "shell":{"property_package":self.h2_condensing_prop_params},
-        #         "tube":{"property_package":self.steam_prop_params},
-        #         #"delta_temperature_callback":delta_temperature_lmtd_slack_callback
-        #     }
-        # )
-        # self.water_economizer_sweep = gum.HeatExchanger(
-        #     default={
-        #         "shell":{"property_package":self.o2_side_prop_params},
-        #         "tube":{"property_package":self.steam_prop_params},
-        #         #"delta_temperature_callback":delta_temperature_lmtd_slack_callback
-        #     }
-        # )
-        # self.valve_water_evaporator_sweep = hum.HelmValve(
-        #     default={
-        #         "property_package": self.steam_prop_params,
-        #         "phase": "Liq"
-        #         }
-        # )
-        # self.valve_water_evaporator_sweep.Cv.fix()
-        # self.valve_water_evaporator_sweep.valve_opening.fix()
-        # self.valve_water_evaporator_sweep.pressure_flow_equation.deactivate()
-        # self.water_heater02 = gum.HeatExchanger(
-        #     default={
-        #         "shell":{"property_package":self.o2_side_prop_params},
-        #         "tube":{"property_package":self.steam_prop_params},
-        #         #"delta_temperature_callback":delta_temperature_lmtd_slack_callback
-        #     }
-        # )
-        # self.water_superheater_sweep = gum.HeatExchanger(
-        #     default={
-        #         "shell":{"property_package":self.o2_side_prop_params},
-        #         "tube":{"property_package":self.steam_prop_params},
-        #         #"delta_temperature_callback":delta_temperature_lmtd_slack_callback
-        #     }
-        # )
-        # @self.steam_mix.Constraint(self.time)
-        # def pressure_out_eqn(b,t):
-        #     return b.mixed_state[t].pressure == b.inlet1_state[t].pressure
-
-        # self.water_compressor02 = hum.HelmIsentropicCompressor(
-        #     default={"property_package": self.steam_prop_params}
-        # )
-
-        # Magic dryer, just magically drop water out of a port.
-        # @self.Expression(self.time, {"H2"})
-        # def waterless_h2_mole_frac_expr(b, t, i):
-        #     return 1
-        # @self.Expression(self.time)
-        # def waterless_h2_flow_expr(b, t):
-        #     return (
-        #         b.water_economizer_product.shell.properties_out[t].flow_mol
-        #         * b.water_economizer_product.shell.properties_out[t].mole_frac_comp["H2"]
-        #     )
-        # self.h2_drop_water_port = Port(
-        #     rule=lambda b: {
-        #         "flow_mol": b.waterless_h2_flow_expr,
-        #         "pressure": b.water_economizer_product._pressure_shell_outlet_ref,
-        #         "temperature": b.water_economizer_product._temperature_shell_outlet_ref,
-        #         "mole_frac_comp": b.waterless_h2_mole_frac_expr,
-        #     }
-        # )
-        # self.h2_precooler = gum.Heater(
-        #     default={"property_package":self.h2_pure_prop_params})
-        # self.cmp02 = gum.Compressor(
-        #     default={"property_package":self.h2_pure_prop_params})
-        # self.ic02 = gum.Flash(
-        #     default={"property_package":self.h2_pure_prop_params})
-        # self.cmp03 = gum.Compressor(
-        #     default={"property_package":self.h2_pure_prop_params})
-        # self.ic03 = gum.Heater(
-        #     default={"property_package":self.h2_pure_prop_params})
-        # self.cmp04 = gum.Compressor(
-        #     default={"property_package":self.h2_pure_prop_params})
-        # self.ic04 = gum.Heater(
-        #     default={"property_package":self.h2_pure_prop_params})
-        # self.cmp05 = gum.Compressor(
-        #     default={"property_package":self.h2_pure_prop_params})
-        # self.ic05 = gum.Heater(
-        #     default={"property_package":self.h2_pure_prop_params})
-        # self.cmp06 = gum.Compressor(
-        #     default={"property_package":self.h2_pure_prop_params})
-
     def _add_arcs(self):
-        # for blk in [self.fuel_inlet_translator,self.fuel_outlet_translator,
-        #               self.oxygen_inlet_translator,self.oxygen_outlet_translator]:
-        #     shortname = blk.name.split(".")[-1]
-        #     shortname = '_'.join(shortname.split("_")[:2])
-        #
-        #     if shortname.endswith("inlet"):
-        #         dest_port = getattr(self.soec,shortname)
-        #         setattr(self,shortname+"_translator_arc",
-        #                 Arc(source=blk.outlet,
-        #                     destination=dest_port)
-        #                 )
-        #     else:
-        #         src_port = getattr(self.soec,shortname)
-        #         setattr(self,shortname+"_translator_arc",
-        #                 Arc(source=src_port,
-        #                     destination=blk.inlet)
-        #                 )
-
         self.ostrm01 = Arc(
             doc="SOEC sweep gas out to recycle splitter",
             source=self.soec_module.oxygen_outlet,
@@ -797,66 +629,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             source=self.product_dryer.outlet,
             destination=self.cmp04.inlet,
         )
-        # self.hstrm05a = Arc(
-        #     doc="",
-        #     source=self.hydrogen_cooler.outlet,
-        #     destination=self.product_condenser00.inlet,
-        # )
-        # self.hstrm05b = Arc(
-        #     doc="",
-        #     source=self.product_condenser00.vap_outlet,
-        #     destination=self.cmp01.inlet,
-        # )  
-        # self.hstrm06 = Arc(
-        #     doc="",
-        #     source=self.cmp01.outlet,
-        #     destination=self.product_condenser01.inlet,
-        # )
-        # self.hstrm07 = Arc(
-        #     doc="",
-        #     source=self.product_condenser01.vap_outlet,
-        #     destination=self.cmp02.inlet,
-        # )   
-        # self.hstrm08 = Arc(
-        #     doc="",
-        #     source=self.cmp02.outlet,
-        #     destination=self.product_condenser02.inlet,
-        # )
-        # self.hstrm09 = Arc(
-        #     doc="",
-        #     source=self.product_condenser02.vap_outlet,
-        #     destination=self.cmp03.inlet,
-        # )
-        # self.hstrm10 = Arc(
-        #     doc="",
-        #     source=self.cmp03.outlet,
-        #     destination=self.product_condenser03.inlet,
-        # )
-        # self.hstrm11 = Arc(
-        #     doc="",
-        #     source=self.product_condenser03.vap_outlet,
-        #     destination=self.product_condenser04.inlet,
-        # )
-        # self.hstrm12a = Arc(
-        #     doc="",
-        #     source=self.product_condenser04.vap_outlet,
-        #     destination=self.product_dryer.inlet,
-        # )
-        # self.hstrm12b = Arc(
-        #     doc="",
-        #     source=self.product_dryer.outlet,
-        #     destination=self.cmp04.inlet,
-        # )
-        # self.hstrm13 = Arc(
-        #     doc="",
-        #     source=self.cmp04.outlet,
-        #     destination=self.cmp05.inlet,
-        # )
-        # self.feed01 = Arc(
-        #     doc="",
-        #     source=self.feed_medium_exchanger.tube_outlet,
-        #     destination=self.feed_hot_exchanger.tube_inlet,
-        # )
         self.feed02a = Arc(
             doc="",
             source=self.feed_hot_exchanger.tube_outlet,
@@ -1131,9 +903,10 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
 
         self.cmp04.del_component(self.cmp04.work_mechanical)
 
-        @self.cmp04.Expression(self.time)
-        def work_mechanical(b, t):
-            return (b.outlet.flow_mol[t] *
+        self.cmp04.work_mechanical = pyo.Var(self.time, units=pyo.units.W, initialize=1e6, bounds=(0, None))
+        @self.cmp04.Constraint(self.time)
+        def work_mechanical_eqn(b, t):
+            return b.work_mechanical[t] == (b.outlet.flow_mol[t] *
                     (b.control_volume.properties_out[t].gibbs_mol - b.control_volume.properties_in[t].gibbs_mol)
                     / b.efficiency_isentropic[t])
 
@@ -1287,35 +1060,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
                 for blk in [cond.control_volume.properties_in, cond.control_volume.properties_out]:
                     for p in ["Liq", "Vap"]:
                         ssf(blk[t].enth_mol_phase[p], 1e-4)
-        # ssf(self.heat_pump_hot_terminus.control_volume.heat,1e-6)
-        # iscale.constraint_scaling_transform(
-        #     self.heat_pump_hot_terminus.outlet_enthalpy_eqn[0], 1e-3)
-
-        # ssf(self.water_evaporator_product.hydrogen_side.control_volume.heat, 1e-7)
-        # ssf(self.water_evaporator_product.water_side.control_volume.heat, 1e-7)
-        # scale_indexed_constraint(self.water_evaporator_product.heat_transfer_eqn,1e-7)
-        # scale_indexed_constraint(self.water_evaporator_product.heat_duty_eqn,1e-7)
-        # iscale.set_scaling_factor(
-        #     self.water_evaporator_product.overall_heat_transfer_coefficient[0.0], 1e-2)
-        # iscale.set_scaling_factor(self.water_evaporator_product.area, 1e-3)
-        # iscale.set_scaling_factor(self.water_heater02.shell.heat, 1e-6)
-        # iscale.set_scaling_factor(self.water_heater02.tube.heat, 1e-6)
-        # iscale.set_scaling_factor(
-        #     self.water_heater02.overall_heat_transfer_coefficient[0.0], 1e-2)
-        # iscale.set_scaling_factor(self.water_heater02.area, 1e-3)
-        # iscale.set_scaling_factor(self.water_pump.control_volume.work[0.0], 1e-6)
-        # iscale.set_scaling_factor(self.h2_precooler.control_volume.heat, 1e-5)
-        # iscale.set_scaling_factor(self.cmp01.control_volume.work, 1e-6)
-        # iscale.set_scaling_factor(self.ic01.control_volume.heat, 1e-5)
-        # iscale.set_scaling_factor(self.cmp02.control_volume.work, 1e-6)
-        # iscale.set_scaling_factor(self.ic02.control_volume.heat, 1e-5)
-        # iscale.set_scaling_factor(self.cmp03.control_volume.work, 1e-6)
-        # iscale.set_scaling_factor(self.ic03.control_volume.heat, 1e-5)
-        # iscale.set_scaling_factor(self.cmp04.control_volume.work, 1e-6)
-        # iscale.set_scaling_factor(self.ic04.control_volume.heat, 1e-5)
-        # iscale.set_scaling_factor(self.cmp05.control_volume.work, 1e-6)
-        # iscale.set_scaling_factor(self.ic05.control_volume.heat, 1e-5)
-        # iscale.set_scaling_factor(self.cmp06.control_volume.work,1e-6)
 
         for blk in [self.feed_translator,
                     self.product_dryer]:
@@ -1334,6 +1078,9 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             cst(self.heat_pump_evaporator_eqn[t], 1e-6)
             cst(self.heat_pump_refrigeration_eqn[t], 1e-6)
 
+            ssf(self.cmp04.work_mechanical[t], 1e-6)
+            cst(self.cmp04.work_mechanical_eqn[t], 1e-6)
+
         for t in self.time:
             iscale.constraint_scaling_transform(
                 self.sweep_recycle_mix.pressure_equality_eqn[t], 1e-5)
@@ -1341,6 +1088,8 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
                 self.feed_recycle_mix.pressure_equality_eqn[t], 1e-5)
             iscale.constraint_scaling_transform(
                 self.steam_mix.pressure_equality_eqn[t], 1e-5)
+
+        ssf(self.soec_module.number_cells, 1e-6)
 
     @staticmethod
     def _set_gas_port(port, F, T, P, y, fix=True):
@@ -1739,235 +1488,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         if save_to is not None:
             iutil.to_json(self, fname=save_to)
 
-        return
-        # Makeup water heat exchangers
-
-        # self.water_pump.initialize()
-        # propagate_state(self.water01)
-        # self.water_split.initialize()
-
-        # propagate_state(self.hstrm04a)
-        # propagate_state(self.hstrm04b)
-
-        # Tsat = pyo.value(self.water_economizer_product.tube.properties_in[0].temperature_sat)
-
-        # propagate_state(self.water02a)
-
-        # self._set_gas_port(self.water_economizer_product.shell_inlet,
-        #    F=pyo.value(self.water_superheater_product.shell_inlet.flow_mol[0]),
-        #    T=Tsat+10,
-        #    P=pyo.value(self.water_superheater_product.shell_inlet.pressure[0]),
-        #    y={
-        #        j: pyo.value(self.water_superheater_product.shell_inlet.mole_frac_comp[0,j])
-        #        for j in self.water_superheater_product.shell.properties_in[0].component_list
-        #    },
-        #    fix=False
-        # )
-        # self.water_economizer_product.initialize(duty=(1e6,pyo.units.W))
-
-        # propagate_state(self.water02b)
-
-        # self.valve_water_evaporator_product.inlet.fix()
-        # assert degrees_of_freedom(self.valve_water_evaporator_product) == 0
-        # res = solver.solve(self.valve_water_evaporator_product)
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-        # self.valve_water_evaporator_product.inlet.unfix()
-
-        # propagate_state(self.water02c)
-
-        # self.water_superheater_product.tube_inlet.flow_mol[0].value = pyo.value(
-        #     self.water_evaporator_product.water_side.inlet.flow_mol[0])
-        # self.water_superheater_product.tube_inlet.pressure[0].value = pyo.value(
-        #     self.water_evaporator_product.water_side.inlet.pressure[0])
-        # self.water_superheater_product.tube_inlet.enth_mol[0].value = iapws95.htpx(
-        #     T=Tsat*pyo.units.K, x=1
-        #     )
-        # self.water_superheater_product.initialize(duty=(1e6,pyo.units.W))
-
-        # propagate_state(self.hstrm04c)
-
-        # self.water_evaporator_product.water_side.initialize()
-        # self.water_evaporator_product.water_side.inlet.fix()
-        # self.water_evaporator_product.water_side.heat_duty[0].fix(1e7)
-        # res = solver.solve(self.water_evaporator_product.water_side)
-
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-        # self.water_evaporator_product.water_side.heat_duty[0].unfix()
-
-        # self.water_evaporator_product.hydrogen_side.inlet.fix()
-        # self.water_evaporator_product.hydrogen_side.initialize()
-        # self.water_evaporator_product.hydrogen_side.heat_duty[0].fix(-1e7)
-        # res = solver.solve(self.water_evaporator_product.hydrogen_side)
-
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-        # self.water_evaporator_product.hydrogen_side.heat_duty[0].unfix()
-
-        # assert degrees_of_freedom(self.water_evaporator_product) == 0
-        # res = solver.solve(self.water_evaporator_product)
-
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-        # self.water_evaporator_product.water_side.inlet.unfix()
-        # self.water_evaporator_product.hydrogen_side.inlet.unfix()
-
-        # propagate_state(self.hstrm04d)
-        # propagate_state(self.water05a)
-
-        # self.water_economizer_product.initialize(duty=(1e6,pyo.units.W))
-        # self.water_superheater_product.initialize(duty=(1e6,pyo.units.W))
-
-        # propagate_state(self.water05b)
-
-        # propagate_state(self.water03a)
-        # propagate_state(self.ostrm06a)
-
-        # Tsat = pyo.value(self.water_economizer_sweep.tube.properties_in[0].temperature_sat)
-
-        # self._set_gas_port(self.water_economizer_sweep.shell_inlet,
-        #    F=pyo.value(self.water_superheater_sweep.shell_inlet.flow_mol[0]),
-        #    T=Tsat+10,
-        #    P=pyo.value(self.water_superheater_sweep.shell_inlet.pressure[0]),
-        #    y={
-        #        j: pyo.value(self.water_superheater_sweep.shell_inlet.mole_frac_comp[0,j])
-        #        for j in self.water_superheater_sweep.shell.properties_in[0].component_list
-        #    },
-        #    fix=False
-        # )
-        # self.water_economizer_sweep.initialize(duty=(1e6,pyo.units.W))
-
-        # propagate_state(self.water03b)
-
-        # self.valve_water_evaporator_sweep.inlet.fix()
-        # assert degrees_of_freedom(self.valve_water_evaporator_sweep) == 0
-        # res = solver.solve(self.valve_water_evaporator_sweep)
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-        # self.valve_water_evaporator_sweep.inlet.unfix()
-
-        # propagate_state(self.water03c)
-
-        # self.water_superheater_sweep.tube_inlet.flow_mol[0].value = pyo.value(
-        #     self.water_heater02.tube_inlet.flow_mol[0])
-        # self.water_superheater_sweep.tube_inlet.pressure[0].value = pyo.value(
-        #     self.water_heater02.tube_inlet.pressure[0])
-        # self.water_superheater_sweep.tube_inlet.enth_mol[0].value = iapws95.htpx(
-        #     T=Tsat*pyo.units.K, x=1
-        #     )
-
-        # self.water_superheater_sweep.initialize(duty=(1e6,pyo.units.W))
-
-        # propagate_state(self.ostrm06b)
-
-        # self.water_heater02.initialize(duty=(1e7,pyo.units.W))
-
-        # propagate_state(self.ostrm06c)
-        # propagate_state(self.water06a)
-
-        # self.water_economizer_sweep.initialize(duty=(1e6,pyo.units.W))
-        # self.water_superheater_sweep.initialize(duty=(1e6,pyo.units.W))
-
-        # propagate_state(self.water06b)
-
-        # propagate_state(self.water04)
-        # self.heat_pump_hot_terminus.initialize()
-        # propagate_state(self.water07)
-
-        # self.water_mix.initialize()
-        # propagate_state(self.water08)
-        # self.water_compressor01.initialize()
-        # propagate_state(self.water09)
-        # self.water_compressor02.initialize()
-
-        # Compression train
-
-        # propagate_state(self.hstrm06)
-        # self.h2_precooler.initialize()
-        # propagate_state(self.hstrm07)
-        # self.cmp01.initialize()
-        # propagate_state(self.hstrm08)
-        # self.ic01.initialize()
-        # propagate_state(self.hstrm09)
-        # self.cmp02.initialize()
-        # propagate_state(self.hstrm10)
-        # self.ic02.initialize()
-        # propagate_state(self.hstrm11)
-        # self.cmp03.initialize()
-        # propagate_state(self.hstrm12)
-        # self.ic03.initialize()
-        # propagate_state(self.hstrm13)
-        # self.cmp04.initialize()
-        # propagate_state(self.hstrm14)
-        # self.ic04.initialize()
-        # propagate_state(self.hstrm15)
-        # self.cmp05.initialize()
-        # propagate_state(self.hstrm16)
-        # self.ic05.initialize()
-        # propagate_state(self.hstrm17)
-        # self.cmp06.initialize()
-
-        # print("Solve with hydrogen side recycle first")
-        # # self.feed00_expanded.deactivate()
-        # self.feed01b_expanded.deactivate()
-        # self.sweep02_expanded.deactivate()
-        # self.feed02b_expanded.deactivate()
-        # self.sweep01b_expanded.deactivate()
-        # self.soec.fuel_inlet.fix()
-        # self.soec.oxygen_inlet.fix()
-
-        # res = solver.solve(self, tee=True)
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-        # propagate_state(self.feed01b, overwrite_fixed=True)
-        # propagate_state(self.sweep01b, overwrite_fixed=True)
-        # res = solver.solve(self, tee=True)
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-        # propagate_state(self.feed01b, overwrite_fixed=True)
-        # propagate_state(self.sweep01b, overwrite_fixed=True)
-        # res = solver.solve(self, tee=True)
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-
-        # print("solve with sweep recycle connected")
-        # self.sweep01b_expanded.activate()
-        # self.soec.oxygen_inlet.unfix()
-        # self.feed01b_expanded.activate()
-        # self.soec.fuel_inlet.unfix()
-        # # self.sweep_recycle_mix.feed.pressure.unfix()
-        # res = solver.solve(self, tee=True)
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-
-        # self.sweep_recycle_mix.feed.unfix()
-        # self.sweep02_expanded.activate()
-        # # self.feed_recycle_mix.feed.pressure.unfix()
-        # res = solver.solve(self, tee=True)
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-
-        # self.feed_recycle_mix.feed.unfix()
-        # self.feed02b_expanded.activate()
-        # res = solver.solve(self, tee=True)
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-
-        # print("solve with water feed connected")
-        # self.feed_hx02.tube_inlet.unfix()
-        # self.feed_hx02.tube_inlet.enth_mol.fix()
-        # self.heat_pump_hot_terminus.outlet_enthalpy_eqn.deactivate()
-        # #self.heat_pump_hot_terminus.outlet.temperature.unfix()
-        # self.feed00_expanded.activate()
-        # propagate_state(self.feed00)
-        # res = solver.solve(self)
-        # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-        # assert res.solver.status == pyo.SolverStatus.ok
-        # res = solver.solve(self, tee=True)
-
-        #    init_log.info_low(f"Initialization saved to {save_to}")
-        # init_log.info("High pressure system initialization - Completed")
 
     def _add_tags(self):
         tag_group = iutil.ModelTagGroup()
@@ -2188,6 +1708,148 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         if fname is None:
             return s
 
+    def _make_temperature_gradient_terms(self):
+        soec = self.soec_module.solid_oxide_cell
+        dz = soec.zfaces[2] - soec.zfaces[1]
+        # Going to assume that the zfaces are evenly spaced
+        for iz in soec.iznodes:
+            assert abs(soec.zfaces[iz + 1] - soec.zfaces[iz] - dz) < 1e-8
+        dz = dz * soec.length_z
+        def finite_difference(expr, t, ix, iz):
+            # Since this is mostly for reference, no need to worry about upwinding or whatever
+            if iz == soec.iznodes.first():
+                if ix is None:
+                    return (-1.5 * expr[t, iz] + 2 * expr[t, iz + 1] - 0.5 * expr[t, iz + 2]) / dz
+                else:
+                    return (-1.5 * expr[t, ix, iz] + 2 * expr[t, ix, iz + 1] - 0.5 * expr[t, ix, iz + 2]) / dz
+            elif iz == soec.iznodes.last():
+                if ix is None:
+                    return (1.5 * expr[t, iz] - 2 * expr[t, iz - 1] + 0.5 * expr[t, iz - 2]) / dz
+                else:
+                    return (1.5 * expr[t, ix, iz] - 2 * expr[t, ix, iz - 1] + 0.5 * expr[t, ix, iz - 2]) / dz
+            else:
+                if ix is None:
+                    return (0.5 * expr[t, iz + 1] - 0.5 * expr[t, iz - 1]) / dz
+                else:
+                    return (0.5 * expr[t, ix, iz + 1] - 0.5 * expr[t, ix, iz - 1]) / dz
+
+        soec.dtemperature_z_dz = pyo.Var(self.time, soec.iznodes, initialize=0, units=pyo.units.K / pyo.units.m)
+
+        @soec.Constraint(self.time, soec.iznodes)
+        def dtemperature_z_dz_eqn(b, t, iz):
+            return b.dtemperature_z_dz[t, iz] == finite_difference(b.temperature_z, t, None, iz)
+
+        soec.fuel_electrode.dtemperature_dz = pyo.Var(
+            self.time,
+            soec.fuel_electrode.ixnodes,
+            soec.fuel_electrode.iznodes,
+            initialize=0,
+            units=pyo.units.K / pyo.units.m
+        )
+
+        @soec.fuel_electrode.Constraint(self.time, soec.fuel_electrode.ixnodes, soec.fuel_electrode.iznodes)
+        def dtemperature_dz_eqn(b, t, ix, iz):
+            return b.dtemperature_dz[t, ix, iz] == finite_difference(b.temperature, t, ix, iz)
+
+        # soec.interconnect.dtemperature_dz = pyo.Var(
+        #     self.time,
+        #     soec.interconnect.ixnodes,
+        #     soec.interconnect.iznodes,
+        #     initialize=0,
+        #     units=pyo.units.K / pyo.units.m
+        # )
+
+        # @soec.interconnect.Constraint(self.time, soec.interconnect.ixnodes, soec.interconnect.iznodes)
+        # def dtemperature_dz_eqn(b, t, ix, iz):
+        #     return b.dtemperature_dz[t, ix, iz] == finite_difference(b.temperature, t, ix, iz)
+        #
+        vars = [
+            soec.dtemperature_z_dz,
+            soec.fuel_electrode.dtemperature_dz,
+            # soec.interconnect.dtemperature_dz
+        ]
+        cons = [
+            soec.dtemperature_z_dz_eqn,
+            soec.fuel_electrode.dtemperature_dz_eqn,
+            # soec.interconnect.dtemperature_dz_eqn
+        ]
+        for var, con in zip(vars, cons):
+            for idx, element in var.items():
+                iscale.set_scaling_factor(element, 5e-3)
+                iscale.constraint_scaling_transform(con[idx], 5e-3)
+
+    def make_performance_constraints(self):
+        for hx in [self.water_evaporator01, self.water_evaporator02]:
+            try:
+                tdew = hx.shell.properties_out[0].temperature_dew["Liq", "Vap"]
+            except KeyError:
+                tdew = hx.shell.properties_out[0].temperature_dew["Vap", "Liq"]
+
+            @hx.shell.Constraint(self.time)
+            def no_condensation_eqn(b, t):
+                return b.properties_out[0].temperature >= tdew
+
+            iscale.constraint_scaling_transform(hx.shell.no_condensation_eqn[0], 1e-2)
+
+        for hx in [self.water_evaporator03, self.water_evaporator04, self.water_preheater]:
+            for t in self.time:
+                try:
+                    eps = hx.hot_side.properties_in[t].eps_2_Liq_Vap
+                except (KeyError, idaes_except.PropertyNotSupportedError):
+                    eps = hx.hot_side.properties_in[t].eps_2_Vap_Liq
+                eps.set_value(1e-3)
+
+        delta_T_limit = 75
+
+        @self.Constraint(self.time)
+        def thermal_gradient_eqn_1(b, t):
+            return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]
+                    - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]) <= delta_T_limit
+
+        @self.Constraint(self.time)
+        def thermal_gradient_eqn_2(b, t):
+            return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]
+                    - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]) <= delta_T_limit
+
+        @self.Constraint(self.time)
+        def thermal_gradient_eqn_3(b, t):
+            return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]
+                    - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]) >= -delta_T_limit
+
+        @self.Constraint(self.time)
+        def thermal_gradient_eqn_4(b, t):
+            return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]
+                    - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]) >= -delta_T_limit
+
+        for con in [
+            self.thermal_gradient_eqn_1,
+            self.thermal_gradient_eqn_2,
+            self.thermal_gradient_eqn_3,
+            self.thermal_gradient_eqn_4
+        ]:
+            iscale.constraint_scaling_transform(con[0], 1e-2)
+
+        @self.Constraint(self.time)
+        def average_current_density_constraint(b, t):
+            return self.soec_module.solid_oxide_cell.average_current_density[0] / 1000 >= -8
+
+        @self.Constraint(self.time)
+        def sweep_min_concentration_eqn(b, t):
+            return b.sweep_recycle_split.inlet.mole_frac_comp[t, "O2"] >= 0.25
+
+        @self.Constraint(self.time)
+        def sweep_max_concentration_eqn(b, t):
+            return b.sweep_recycle_split.inlet.mole_frac_comp[t, "O2"] <= 0.35
+
+        @self.Constraint(self.time)
+        def min_h2_feed_eqn(b, t):
+            return b.feed_recycle_mix.outlet.mole_frac_comp[t, "H2"] >= 0.05
+
+        @self.Constraint(self.time)
+        def water_utilization(b, t):
+            return (b.water_demand[t] - b.water_recycle[t]) <= 10475 * pyo.units.mol / pyo.units.s
+
+        iscale.constraint_scaling_transform(self.water_utilization[0], 1e-4)
 
 if __name__ == "__main__":
 
