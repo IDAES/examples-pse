@@ -36,21 +36,17 @@ from pyomo.environ import (Constraint,
                            value)
 from pyomo.network import Arc, SequentialDecomposition
 from idaes.core import FlowsheetBlock
-from idaes.generic_models.unit_models import (PressureChanger,
-                                        Mixer,
-                                        Separator as Splitter,
-                                        Heater,
-                                        StoichiometricReactor)
-from idaes.generic_models.unit_models import Flash
-try:
-    # importing from same directory
-    import hda_ideal_VLE as thermo_props
-    import hda_reaction as reaction_props
-except ModuleNotFoundError:
-    # importing from installed examples_pse package
-    from idaes_examples.Tutorials.Basics import hda_ideal_VLE as thermo_props
-    from idaes_examples.Tutorials.Basics import hda_reaction as reaction_props
-from idaes.generic_models.unit_models.pressure_changer import ThermodynamicAssumption
+from idaes.models.unit_models import (PressureChanger,
+                                      Mixer,
+                                      Separator as Splitter,
+                                      Heater,
+                                      StoichiometricReactor,
+                                      Flash)
+# Import thermodynamic and reaction property packages
+from idaes_examples.common.hda import hda_ideal_VLE as thermo_props
+from idaes_examples.common.hda import hda_reaction as reaction_props
+
+from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 from idaes.core.util.model_statistics import degrees_of_freedom
 
 # Import idaes logger to set output levels
@@ -151,39 +147,20 @@ present by Douglas, J.M., Chemical  Design of Chemical Processes, 1988,
 McGraw-Hill.
     """
     m = pyo.ConcreteModel()
-    m.fs = FlowsheetBlock(default={"dynamic": False})
+    m.fs = FlowsheetBlock(dynamic=False)
     m.fs.thermo_params = thermo_props.HDAParameterBlock()
-    m.fs.reaction_params = reaction_props.HDAReactionParameterBlock(
-        default={"property_package": m.fs.thermo_params})
-    m.fs.M101 = Mixer(default={"property_package": m.fs.thermo_params,
-                               "inlet_list": ["toluene_feed", "hydrogen_feed",
-                                              "vapor_recycle"]})
+    m.fs.reaction_params = reaction_props.HDAReactionParameterBlock(property_package=m.fs.thermo_params)
+    m.fs.M101 = Mixer(property_package=m.fs.thermo_params, inlet_list=['toluene_feed', 'hydrogen_feed', 'vapor_recycle'])
 
-    m.fs.H101 = Heater(default={"property_package": m.fs.thermo_params,
-                                "has_pressure_change": False,
-                                "has_phase_equilibrium": True})
-    m.fs.R101 = StoichiometricReactor(
-        default={"property_package": m.fs.thermo_params,
-                 "reaction_package": m.fs.reaction_params,
-                 "has_heat_of_reaction": True,
-                 "has_heat_transfer": True,
-                 "has_pressure_change": False})
-    m.fs.F101 = Flash(default={"property_package": m.fs.thermo_params,
-                               "has_heat_transfer": True,
-                               "has_pressure_change": True})
-    m.fs.S101 = Splitter(default={"property_package": m.fs.thermo_params,
-                                  "ideal_separation": False,
-                                  "outlet_list": ["purge", "recycle"]})
+    m.fs.H101 = Heater(property_package=m.fs.thermo_params, has_pressure_change=False, has_phase_equilibrium=True)
+    m.fs.R101 = StoichiometricReactor(property_package=m.fs.thermo_params, reaction_package=m.fs.reaction_params, has_heat_of_reaction=True, has_heat_transfer=True, has_pressure_change=False)
+    m.fs.F101 = Flash(property_package=m.fs.thermo_params, has_heat_transfer=True, has_pressure_change=True)
+    m.fs.S101 = Splitter(property_package=m.fs.thermo_params, ideal_separation=False, outlet_list=['purge', 'recycle'])
 
-    m.fs.C101 = PressureChanger(default={
-        "property_package": m.fs.thermo_params,
-        "compressor": True,
-        "thermodynamic_assumption": ThermodynamicAssumption.isothermal})
+    m.fs.C101 = PressureChanger(property_package=m.fs.thermo_params, compressor=True, thermodynamic_assumption=ThermodynamicAssumption.isothermal)
 
     if second_flash:
-        m.fs.F102 = Flash(default={"property_package": m.fs.thermo_params,
-                                 "has_heat_transfer": True,
-                                 "has_pressure_change": True})
+        m.fs.F102 = Flash(property_package=m.fs.thermo_params, has_heat_transfer=True, has_pressure_change=True)
     m.fs.s03 = Arc(source=m.fs.M101.outlet, destination=m.fs.H101.inlet)
     m.fs.s04 = Arc(source=m.fs.H101.outlet, destination=m.fs.R101.inlet)
     m.fs.s05 = Arc(source=m.fs.R101.outlet, destination=m.fs.F101.inlet)

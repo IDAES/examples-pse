@@ -30,13 +30,13 @@ except:
 
 try:
     from idaes.core import *
-    from idaes.generic_models.unit_models import (PressureChanger,
+    from idaes.models.unit_models import (PressureChanger,
                                CSTR,
                                Flash,
                                Heater,
                                Mixer,
                                Separator)
-    from idaes.generic_models.unit_models.pressure_changer import ThermodynamicAssumption
+    from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 
     from idaes.core.util.model_statistics import degrees_of_freedom
 
@@ -57,7 +57,7 @@ else:
 # Check model construction and solving
 m = ConcreteModel()
 
-m.fs = FlowsheetBlock(default={"dynamic": False})
+m.fs = FlowsheetBlock(dynamic=False)
 
 m.fs.v = Var(m.fs.time)
 
