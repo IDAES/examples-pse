@@ -1852,272 +1852,162 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         iscale.constraint_scaling_transform(self.water_utilization[0], 1e-4)
 
 if __name__ == "__main__":
-
-    def scale_indexed_constraint(con, sf):
-        for idx, c in con.items():
-            iscale.constraint_scaling_transform(c, sf)
-
-
+    import os
+    from scipy.linalg import svd
+    from IPython.core.display import SVG
+    import pyomo.environ as pyo
+    import idaes
+    import idaes.logger as idaeslog
+    from idaes.core.util.model_statistics import degrees_of_freedom as dof
+    import idaes.core.util.exceptions as idaes_except
     from idaes.core.solvers import use_idaes_solver_configuration_defaults
+    import idaes.core.util.scaling as iscale
+    import soec_standalone_flowsheet
+    from soec_flowsheet_costing import (
+        get_solo_soec_capital_costing,
+        initialize_flowsheet_costing,
+        scale_flowsheet_costing,
+        get_soec_OM_costing,
+        display_soec_costing
+    )
+    import idaes.core.util.model_statistics as mstat
+    from idaes.models.properties import iapws95
+    from pyomo.util.check_units import assert_units_consistent
+    import idaes.core.util as iutil
+
+    import numpy as np
+    import pandas as pd
+
+    from pyomo.core.expr.current import identify_variables
+    from pyomo.common.collections import ComponentSet
+
+
+    def find_active_constraints_containing_variable(var, blk):
+        con_set = ComponentSet()
+        CUID = pyo.ComponentUID(var)
+        for c in blk.component_data_objects(ctype=pyo.Constraint, active=True, descend_into=True):
+            for v in identify_variables(c.body):
+                if CUID.matches(v):
+                    con_set.add(c)
+        return con_set
+
 
     use_idaes_solver_configuration_defaults()
     idaes.cfg.ipopt.options.nlp_scaling_method = "user-scaling"
-    idaes.cfg.ipopt["options"]["linear_solver"] = "ma27"
+    idaes.cfg.ipopt.options.OF_ma57_automatic_scaling = "yes"
+    idaes.cfg.ipopt["options"]["linear_solver"] = "ma57"
     idaes.cfg.ipopt["options"]["max_iter"] = 300
     idaes.cfg.ipopt["options"]["halt_on_ampl_error"] = "no"
 
     m = pyo.ConcreteModel()
-    m.fs = SoecStandaloneFlowsheet(default={"dynamic": False})
+    m.fs = soec_standalone_flowsheet.SoecStandaloneFlowsheet(dynamic=False)
     iscale.calculate_scaling_factors(m)
-    m.fs.initialize_build()  # load_from="soec_standalone_init.json.gz")
 
-    # m.fs.water_preheater.area.unfix()
-    # m.fs.water_preheater.heat_transfer_equation.activate()
+    m.fs.initialize_build(outlvl=idaeslog.INFO_LOW)  # , load_from="soec_standalone_init.json.gz")
 
-    # solver = pyo.SolverFactory("ipopt")
-    # res = solver.solve(m, tee=True)
+    print(dof(m))
+    get_solo_soec_capital_costing(m.fs, CE_index_year="2018")
+    get_soec_OM_costing(m.fs)
+    print(dof(m))
+    iscale.calculate_scaling_factors(m)
 
-    # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-    # assert res.solver.status == pyo.SolverStatus.ok
+    solver = pyo.SolverFactory("ipopt")
 
-    # m.fs.water_heater01.sat_vapor_eqn.deactivate()
-    # m.fs.water_heater02.sat_vapor_eqn.deactivate()
-    # m.fs.water_split.split_fraction[:,"outlet1"].fix(0.1)
-    # m.fs.water_split.split_fraction[:,"outlet2"].fix(0.1)
+    initialize_flowsheet_costing(m.fs)
+    scale_flowsheet_costing(m.fs)
 
-    # solver = pyo.SolverFactory("ipopt")
-    # res = solver.solve(m, tee=True, options={"tol": 1e-6, "max_iter": 300})
+    m.fs.tags_output["annual_water_cost"] = iutil.ModelTag(
+        doc="Annual water cost",
+        expr=m.fs.costing.annual_water_cost,
+        format_string="{:.2f}",
+    )
 
-    # m.fs.feed_medium_exchanger.report()
-    # m.fs.feed_hot_exchanger.report()
-    # m.fs.sweep_medium_exchanger.report()
-    # m.fs.sweep_hot_exchanger.report()
+    solver.solve(m, tee=True, options={"tol": 1e-6, "max_iter": 300, "halt_on_ampl_error": "no"})
 
-    # m.fs.water_preheater.tube_outlet.enth_mol.unfix()
-    # m.fs.water_evaporator01.shell_outlet.temperature.fix(365)
-    # m.fs.water_evaporator05.shell_outlet.temperature.fix(365)
 
-    # m.fs.water_evaporator02.shell_outlet.temperature.fix(365)
-    # m.fs.water_evaporator03.shell_outlet.temperature.fix(365)
-    # m.fs.water_evaporator04.shell_outlet.temperature.fix(365)
+    def set_indexed_variable_bounds(var, bounds):
+        for idx, subvar in var.items():
+            subvar.bounds = bounds
 
-    # m.fs.water_preheater.tube_outlet.enth_mol.unfix()
-    # m.fs.water_evaporator01.shell_outlet.temperature.unfix()
-    # m.fs.water_evaporator05.shell_outlet.temperature.unfix()
 
-    # m.fs.water_evaporator02.shell_outlet.temperature.unfix()
-    # m.fs.water_evaporator03.shell_outlet.temperature.unfix()
-    # m.fs.water_evaporator04.shell_outlet.temperature.unfix()
+    if True:
+        m.fs.obj = pyo.Objective(
+            expr=(
+                    m.fs.costing.annual_electricity_cost
+                    + m.fs.costing.annual_water_cost
+                    + m.fs.costing.total_annualized_cost
+                    + m.fs.costing.annual_fixed_operations_and_maintenance_cost
+                    + m.fs.costing.annual_air_cost
+            )
+        )
 
-    # assert degrees_of_freedom(m) == 6
+        for hx in [m.fs.feed_hot_exchanger, m.fs.sweep_hot_exchanger, m.fs.sweep_medium_exchanger,
+                   m.fs.water_evaporator01, m.fs.water_evaporator02, m.fs.water_evaporator03,
+                   m.fs.water_evaporator04, m.fs.water_evaporator05, m.fs.water_preheater]:
+            set_indexed_variable_bounds(hx.delta_temperature_in, (0, None))
+            set_indexed_variable_bounds(hx.delta_temperature_out, (0, None))
+            hx.area.bounds = (400, None)
+            hx.area.unfix()
 
-    # for hx in [m.fs.water_preheater, m.fs.water_evaporator01, 
-    #            m.fs.water_evaporator02, m.fs.water_evaporator03,
-    #            m.fs.water_evaporator04, m.fs.water_evaporator05]:
-    #     @hx.Constraint(m.fs.time)
-    #     def temp_in_ineq(b,t):
-    #         return b.delta_temperature_in[t] >= 10
-    #     @hx.Constraint(m.fs.time)
-    #     def temp_out_ineq(b,t):
-    #         return b.delta_temperature_out[t] >= 10
-    #     iscale.constraint_scaling_transform(hx.temp_in_ineq[0],1e-2)
-    #     iscale.constraint_scaling_transform(hx.temp_out_ineq[0],1e-2)
-    #     set_indexed_variable_bounds(hx.heat_duty,(0,None))
+        for cmp in [m.fs.sweep_blower, m.fs.cmp01, m.fs.cmp02, m.fs.cmp03, m.fs.cmp04]:
+            set_indexed_variable_bounds(cmp.work_mechanical, (0, None))
+        set_indexed_variable_bounds(m.fs.water_compressor.control_volume.work, (0, None))
 
-    # set_indexed_variable_bounds(m.fs.soec_overall_water_conversion, (0.6,0.75))
-    # set_indexed_variable_bounds(m.fs.soec.temperature_z, (923,1023))
-    # set_indexed_variable_bounds(m.fs.feed_heater.heat_duty,(0,None))
-    # set_indexed_variable_bounds(m.fs.sweep_heater.heat_duty,(0,None))
-    # set_indexed_variable_bounds(m.fs.heat_source.heat_duty,(0,None))
-    # set_indexed_variable_bounds(m.fs.heat_source.inlet.flow_mol,(1,None))
-    # set_indexed_variable_bounds(m.fs.cmp01.ratioP,(1,3))
-    # set_indexed_variable_bounds(m.fs.cmp02.ratioP,(1,3))
-    # set_indexed_variable_bounds(m.fs.cmp03.ratioP,(1,3))
-    # set_indexed_variable_bounds(m.fs.cmp04.ratioP,(1,None))
-    # m.fs.cmp01.ratioP.unfix()
-    # m.fs.cmp02.ratioP.unfix()
-    # m.fs.cmp03.ratioP.unfix()
-    # m.fs.cmp04.ratioP.unfix()
-    # m.fs.cmp04.outlet.pressure.fix(18e6)
+        m.fs.h2_mass_production.fix(2)
+        m.fs.water_preheater.tube_inlet.flow_mol.unfix()
+        m.fs.soec_single_pass_water_conversion.unfix()
+        m.fs.feed_recycle_split.split_fraction.unfix()
+        m.fs.sweep_recycle_split.split_fraction.unfix()
+        m.fs.sweep_blower.inlet.flow_mol.unfix()
+        # m.fs.sweep_blower.control_volume.properties_out[:].pressure.unfix()
+        m.fs.feed_heater.outlet.temperature.unfix()
+        m.fs.sweep_heater.outlet.temperature.unfix()
 
-    # m.fs.heat_pump_refrigeration_eqn.deactivate()
+        m.fs.soec_module.potential_cell.unfix()
+        m.fs.soec_module.number_cells.unfix()
+        m.fs.costing.electricity_price.fix(71.7)
 
-    # @m.fs.Constraint(m.fs.time)
-    # def heat_pump_refrigeration_ineq(b,t):
-    #     return 0 >= (b.heat_pump.heat_in[t] + b.heat_source.heat_duty[t]
-    #           + b.product_flash05.heat_duty[t] + b.cmp04.heat_duty[t])
+        set_indexed_variable_bounds(m.fs.soec_module.solid_oxide_cell.potential, (1.1, 1.6))
+        set_indexed_variable_bounds(m.fs.water_split.split_fraction, (0.03, 0.98))
+        set_indexed_variable_bounds(m.fs.feed_heater.heat_duty, (0, None))
+        set_indexed_variable_bounds(m.fs.sweep_heater.heat_duty, (0, None))
+        set_indexed_variable_bounds(m.fs.heat_pump_hot_terminus.heat_duty, (0, None))
+        set_indexed_variable_bounds(m.fs.sweep_blower.inlet.flow_mol, (1000, None))
+        m.fs.feed_recycle_split.split_fraction[0, "recycle"].bounds = (0.03, 0.5)
+        m.fs.sweep_recycle_split.split_fraction[0, "recycle"].bounds = (0.03, 0.5)
+        set_indexed_variable_bounds(m.fs.soec_overall_water_conversion, (0.4, 0.8))
+        set_indexed_variable_bounds(m.fs.soec_module.solid_oxide_cell.temperature_z, (550 + 273.15, 750 + 273.15))
+        set_indexed_variable_bounds(m.fs.soec_module.solid_oxide_cell.fuel_channel.temperature_inlet,
+                                    (600 + 273.15, 750 + 273.15))
+        set_indexed_variable_bounds(m.fs.soec_module.solid_oxide_cell.oxygen_channel.temperature_inlet,
+                                    (600 + 273.15, 750 + 273.15))
+        set_indexed_variable_bounds(m.fs.soec_module.solid_oxide_cell.current_density, (-10400, 5200))
+        set_indexed_variable_bounds(m.fs.heat_source.inlet.flow_mol[0], (1, None))
 
-    # scale_indexed_constraint(m.fs.heat_pump_refrigeration_ineq,1e-6)
+        m.fs.feed_heater.costing.max_heat_duty.set_value(8e6)
+        m.fs.sweep_heater.costing.max_heat_duty.set_value(8e6)
+        m.fs.heat_pump.costing.max_heat_duty.fix(2e7)
+        m.fs.max_raw_water_withdrawal.fix(3000)
 
-    # @m.fs.Constraint(m.fs.time)
-    # def sweep_concentration_eqn(b,t):
-    #     return b.sweep_recycle_split.inlet.mole_frac_comp[t,"O2"] == 0.35 
+        for cmp in [m.fs.cmp01, m.fs.cmp02, m.fs.cmp03, m.fs.cmp04]:
+            cmp.ratioP.unfix()
+            set_indexed_variable_bounds(cmp.ratioP, (1, 3))
+            set_indexed_variable_bounds(cmp.outlet.temperature, (273.15, 250 + 273.15))
 
-    # @m.fs.Constraint(m.fs.time)
-    # def min_h2_feed_eqn(b,t):
-    #     return b.feed_recycle_mix.outlet.mole_frac_comp[t,"H2"] >= 0.05
+        m.fs._make_temperature_gradient_terms()
+        set_indexed_variable_bounds(m.fs.soec_module.solid_oxide_cell.fuel_electrode.dtemperature_dz, (-750, 750))
+        m.fs.make_performance_constraints()
+    #     @m.fs.Constraint(m.fs.time)
+    #     def equal_pressures_eqn(b,t):
+    #        return b.soec_module.fuel_inlet.pressure[t] == b.soec_module.oxygen_inlet.pressure[t]
 
-    # @m.fs.Constraint(m.fs.time)
-    # def thermal_gradient_eqn_1(b,t):
-    #     return (b.soec.temperature_z[t,b.soec.iznodes.last()] - 
-    #             b.soec.temperature_z[t,b.soec.iznodes.first()]) <= 50
+    #     iscale.constraint_scaling_transform(m.fs.equal_pressures_eqn[0],1e-5)
 
-    # @m.fs.Constraint(m.fs.time)
-    # def thermal_gradient_eqn_2(b,t):
-    #     return (b.soec.temperature_z[t,b.soec.iznodes.last()] - 
-    #             b.soec.temperature_z[t,b.soec.iznodes.first()]) >= -50
-
-    # m.fs.h2_mass_production.fix(2)
-    # m.fs.soec_overall_water_conversion.fix(0.75)
-    # m.fs.sweep_blower.inlet.flow_mol.unfix()
-    # m.fs.water_preheater.tube_inlet.flow_mol.unfix()
-    # m.fs.soec_single_pass_water_conversion.unfix()
-    # m.fs.feed_recycle_split.split_fraction.unfix()
-    # m.fs.sweep_recycle_split.split_fraction.unfix()
-    # set_indexed_variable_bounds(m.fs.feed_recycle_split.split_fraction,(0,0.5))
-    # set_indexed_variable_bounds(m.fs.sweep_recycle_split.split_fraction,(0,0.5))
-
-    # m.fs.soec.potential.unfix()
-    # m.fs.obj = pyo.Objective(expr = (1e-6*m.fs.total_electric_power[0]
-    #                                   + 1e-4*m.fs.heat_source.inlet.flow_mol[0]
-    #                                   + 1e-4*m.fs.water_preheater.tube_inlet.flow_mol[0]
-    #                                   + 1e-4*m.fs.sweep_blower.inlet.flow_mol[0])
-    # )
-
-    # solver = pyo.SolverFactory("ipopt")
-    # res = solver.solve(m, tee=True, options={"max_iter":300})
-
-    # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-    # assert res.solver.status == pyo.SolverStatus.ok
-
-    # for hx in [m.fs.water_preheater,
-    #             m.fs.water_evaporator01,
-    #             m.fs.water_evaporator02,
-    #             m.fs.water_evaporator03,
-    #             m.fs.water_evaporator04,
-    #             m.fs.water_evaporator05]:
-    #     hx.heat_transfer_equation.activate()
-    #     # hx.heat_duty.fix()
-    #     hx.area.unfix()
-
-    # solver = pyo.SolverFactory("ipopt")
-    # res = solver.solve(m, tee=True, options={"max_iter":300})
-
-    # assert res.solver.termination_condition == pyo.TerminationCondition.optimal
-    # assert res.solver.status == pyo.SolverStatus.ok
-
-    # m.fs.soec.potential.fix()
-    # m.fs.h2_mass_production.unfix()
-    # m.fs.sweep_blower.inlet.flow_mol.fix()
-    # m.fs.feed_medium_exchanger.tube_inlet.flow_mol.fix()
-    # m.fs.sweep_concentration_eqn.deactivate()
-    # m.fs.min_h2_feed_eqn.deactivate()
-    # m.fs.thermal_gradient_eqn_1.deactivate()
-    # m.fs.thermal_gradient_eqn_2.deactivate()
-    # m.fs.feed_recycle_split.split_fraction[:,"recycle"].fix()
-    # m.fs.sweep_recycle_split.split_fraction[:,"recycle"].fix()
-
-    # for hx in [m.fs.feed_medium_exchanger,
-    #            m.fs.feed_hot_exchanger,
-    #             m.fs.sweep_hot_exchanger]:
-    #     hx.temp_in_ineq.deactivate()
-    #     hx.temp_out_ineq.deactivate()
-    #     hx.heat_transfer_equation.activate()
-    #     hx.heat_duty.fix()
-    #     hx.area.unfix()
-
-    # assert degrees_of_freedom(m) == 0    
-
-    # solver = pyo.SolverFactory("ipopt")
-    # res = solver.solve(m, tee=True)
-
-    # for hx in [m.fs.feed_medium_exchanger,
-    #            m.fs.feed_hot_exchanger,
-    #             m.fs.sweep_hot_exchanger]:
-    #     hx.report()
-
-    # m.fs.obj = pyo.Objective(expr = 1e-6*m.fs.total_electric_power[0])
-
-    # m.fs.h2_mass_production.fix(2)
-    # m.fs.feed_hx02.tube.properties_in[:].enth_mol.unfix()
-    # m.fs.water_compressor.control_volume.properties_out[:].pressure.unfix()
-    # m.fs.water_pump.control_volume.properties_in[:].flow_mol.unfix()
-    # m.fs.soec_single_pass_water_conversion.unfix()
-    # m.fs.feed_recycle_split.split_fraction.unfix()
-    # m.fs.sweep_recycle_split.split_fraction.unfix()
-    # m.fs.sweep_compressor.inlet.flow_mol.unfix()
-    # m.fs.feed_heater.outlet.temperature.unfix()
-    # m.fs.sweep_heater.outlet.temperature.unfix()
-    # m.fs.sweep_compressor.control_volume.properties_out[:].pressure.unfix()
-    # m.fs.water_split.split_fraction.unfix()
-
-    # # Until such time as we substitute 1D heat exchangers for the 0D ones, 
-    # # IPOPT will be tempted to use thermodynamically impossible heat xfers
-    # # because it doesn't see the phase change occuring.
-    # # (That also means the heat exchanger areas could be wildly off at present)
-    # # Compressing the vapor ensures a reasonable Delta T between the condensing
-    # # water and the evaporating water
-    # m.fs.water_compressor.control_volume.properties_out[:].pressure.fix(6e5)
-    # m.fs.water_pump.control_volume.properties_out[:].pressure.fix(3e5)
-    # m.fs.soec.potential.fix(1.288)
-
-    # set_indexed_variable_bounds(m.fs.feed_heater.heat_duty,(0,None))
-    # set_indexed_variable_bounds(m.fs.sweep_heater.heat_duty,(0,None))
-    # set_indexed_variable_bounds(m.fs.heat_pump_hot_terminus.heat_duty,(0,None))
-    # m.fs.feed_recycle_split.split_fraction[0,"recycle"].bounds = (0,0.5)
-    # m.fs.sweep_recycle_split.split_fraction[0,"recycle"].bounds = (0,0.5)
-    # set_indexed_variable_bounds(m.fs.sweep_heater.heat_duty,(0,None))
-    # set_indexed_variable_bounds(m.fs.soec_overall_water_conversion, (0.6,0.75))
-    # set_indexed_variable_bounds(m.fs.soec.temperature_z, (923,1027))
-
-    # @m.fs.Constraint(m.fs.time)
-    # def thermal_gradient_eqn_1(b,t):
-    #     return (b.soec.temperature_z[t,b.soec.iznodes.last()] - 
-    #             b.soec.temperature_z[t,b.soec.iznodes.first()]) <= 50
-
-    # @m.fs.Constraint(m.fs.time)
-    # def thermal_gradient_eqn_2(b,t):
-    #     return (b.soec.temperature_z[t,b.soec.iznodes.last()] - 
-    #             b.soec.temperature_z[t,b.soec.iznodes.first()]) >= -50
-
-    # iscale.constraint_scaling_transform(m.fs.thermal_gradient_eqn_1[0],1e-2)
-    # iscale.constraint_scaling_transform(m.fs.thermal_gradient_eqn_2[0],1e-2)
-
-    # @m.fs.Constraint(m.fs.time)
-    # def sweep_concentration_eqn(b,t):
-    #     return b.sweep_recycle_split.inlet.mole_frac_comp[t,"O2"] <= 0.35 
-
-    # @m.fs.Constraint(m.fs.time)
-    # def min_h2_feed_eqn(b,t):
-    #     return b.feed_recycle_mix.outlet.mole_frac_comp[t,"H2"] >= 0.05
-
-    # @m.fs.Constraint(m.fs.time)
-    # def equal_pressures_eqn(b,t):
-    #     return b.soec.fuel_inlet.pressure[t] == b.soec.oxygen_inlet.pressure[t]
-
-    # iscale.constraint_scaling_transform(m.fs.equal_pressures_eqn[0],1e-5)
-
-    # # Want to make sure the water stream is totally vaporized before compressing it
-    # @m.fs.heat_pump_hot_terminus.Constraint(m.fs.time)
-    # def outlet_temperature_ineq(b,t):
-    #     return (b.control_volume.properties_out[t].temperature 
-    #             >= b.control_volume.properties_out[t].temperature_sat + 10)
-    # iscale.constraint_scaling_transform(m.fs.heat_pump_hot_terminus.outlet_temperature_ineq[0],1e-2)
-    # # IPOPT may have a hard time determining a water split fraction if both streams are partially
-    # # vaporized, but if one or the other ends up completely vaporized, we'd like IPOPT to be able
-    # # to adjust the split fraction to compensate.
-    # @m.fs.Constraint(m.fs.time)
-    # def equal_water_split_eqn1(b,t):
-    #     return b.water_heater01.tube_outlet.enth_mol[t] == b.water_heater02.tube_outlet.enth_mol[t]
-
-    # def equal_water_split_eqn2(b,t):
-    #     return b.water_heater02.tube_outlet.enth_mol[t] == b.heat_pump_hot_terminus.outlet.enth_mol[t]
-
-    # iscale.constraint_scaling_transform(m.fs.equal_water_split_eqn1[0],1e-3)
-    # iscale.constraint_scaling_transform(m.fs.equal_water_split_eqn2[0],1e-3)
-
-    # solver = pyo.SolverFactory("ipopt")
-    # res = solver.solve(m, tee=True)
+    # set_indexed_variable_bounds(m.fs.soec_module.solid_oxide_cell.current_density, (-8000,8000))
+    # m.fs.average_current_density_constraint.deactivate()
+    m.fs.h2_mass_production.fix(5)
+    jac_unscaled, jac_scaled, nlp = iscale.constraint_autoscale_large_jac(m)
+    solver.solve(m, tee=True, options={"tol": 3e-8, "max_iter": 500, "halt_on_ampl_error": "yes"})
 
 def check_scaling(blk):
     jac, nlp = iscale.get_jacobian(blk, scaled=True)

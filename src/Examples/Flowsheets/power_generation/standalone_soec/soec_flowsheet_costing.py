@@ -297,7 +297,7 @@ def get_solo_soec_capital_costing(fs, CE_index_year):
         )
         # return 3000 * pyo.units.gal / pyo.units.min
 
-    fs.max_raw_water_withdrawal = pyo.Var(units=pyo.units.gal/pyo.units.min, initialize=3000)
+    fs.max_raw_water_withdrawal = pyo.Var(units=pyo.units.gal/pyo.units.min, initialize=3000, bounds=(0, None))
 
     @fs.Constraint(fs.time)
     def max_raw_water_withdrawal_constraint(b, t):
