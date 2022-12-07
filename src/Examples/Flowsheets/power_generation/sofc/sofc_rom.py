@@ -47,7 +47,6 @@ import numpy as np
 from pyomo.environ import (
     SolverFactory, Constraint, Param, Var, Set, exp, value
 )
-from pyomo.common.fileutils import this_file_dir
 
 from idaes.core import declare_process_block_class, UnitModelBlockData
 from idaes.core.util.model_statistics import degrees_of_freedom
@@ -75,24 +74,23 @@ class SofcRomData(UnitModelBlockData):
 
     def build(self):
         folder = "sofc_rom_parameters"
-        path = os.path.join(this_file_dir(), folder)
 
-        w1 = np.loadtxt(path+'/rom_w1.dat')
-        w2 = np.loadtxt(path+'/rom_w2.dat')
-        w3 = np.loadtxt(path+'/rom_w3.dat')
-        w4 = np.loadtxt(path+'/rom_w4.dat')
-        w5 = np.loadtxt(path+'/rom_w5.dat')
+        w1 = np.loadtxt(folder+'/rom_w1.dat')
+        w2 = np.loadtxt(folder+'/rom_w2.dat')
+        w3 = np.loadtxt(folder+'/rom_w3.dat')
+        w4 = np.loadtxt(folder+'/rom_w4.dat')
+        w5 = np.loadtxt(folder+'/rom_w5.dat')
 
-        b1 = np.loadtxt(path+'/rom_b1.dat')
-        b2 = np.loadtxt(path+'/rom_b2.dat')
-        b3 = np.loadtxt(path+'/rom_b3.dat')
-        b4 = np.loadtxt(path+'/rom_b4.dat')
-        b5 = np.loadtxt(path+'/rom_b5.dat')
+        b1 = np.loadtxt(folder+'/rom_b1.dat')
+        b2 = np.loadtxt(folder+'/rom_b2.dat')
+        b3 = np.loadtxt(folder+'/rom_b3.dat')
+        b4 = np.loadtxt(folder+'/rom_b4.dat')
+        b5 = np.loadtxt(folder+'/rom_b5.dat')
 
-        meanX = np.loadtxt(path+'/rom_meanx.dat')
-        meanY = np.loadtxt(path+'/rom_meany.dat')
-        stdX = np.loadtxt(path+'/rom_stdx.dat')
-        stdY = np.loadtxt(path+'/rom_stdy.dat')
+        meanX = np.loadtxt(folder+'/rom_meanx.dat')
+        meanY = np.loadtxt(folder+'/rom_meany.dat')
+        stdX = np.loadtxt(folder+'/rom_stdx.dat')
+        stdY = np.loadtxt(folder+'/rom_stdy.dat')
 
         all_weights = [w1, w2, w3, w4, w5]
         all_biases = [b1, b2, b3, b4, b5]
