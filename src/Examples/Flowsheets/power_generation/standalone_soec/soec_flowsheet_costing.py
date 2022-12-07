@@ -153,13 +153,13 @@ def get_solo_soec_capital_costing(fs, CE_index_year):
 
     flash_vessels = [
         fs.product_flash01,
-        # fs.product_flash02,
+        fs.product_flash02,
         fs.product_flash03,
         fs.product_flash04,
     ]
     for flash in flash_vessels:
-        flash.diameter = pyo.Var(initialize=1, units=pyunits.m)
-        flash.length = pyo.Var(initialize=1, units=pyunits.m)
+        flash.diameter = pyo.Var(initialize=1, units=pyunits.m, bounds=(0, None))
+        flash.length = pyo.Var(initialize=1, units=pyunits.m, bounds=(0, None))
 
         flash.costing = UnitModelCostingBlock(
             flowsheet_costing_block=fs.costing,
@@ -183,8 +183,6 @@ def get_solo_soec_capital_costing(fs, CE_index_year):
             ) * b.liq_outlet.flow_mol[0] * (10 * 60 * pyo.units.s)
 
         add_total_plant_cost(flash)
-        flash.diameter.bounds = (0, None)
-        flash.length.bounds = (0, None)
 
     # H2 compressors
     reciprocating_piston_compressors = [fs.cmp01, fs.cmp02, fs.cmp03]
@@ -295,17 +293,21 @@ def get_solo_soec_capital_costing(fs, CE_index_year):
             * (b.water_demand[t] - b.water_recycle[t]),
             pyo.units.gal/pyo.units.min
         )
-        # return 3000 * pyo.units.gal / pyo.units.min
 
     fs.max_raw_water_withdrawal = pyo.Var(units=pyo.units.gal/pyo.units.min, initialize=3000, bounds=(0, None))
 
     @fs.Constraint(fs.time)
-    def max_raw_water_withdrawal_constraint(b, t):
+    def max_raw_water_withdrawal_ineq(b, t):
         return b.raw_water_withdrawal[t] <= b.max_raw_water_withdrawal
+    @fs.Constraint(fs.time)
+    def max_raw_water_withdrawal_eqn(b, t):
+        return b.raw_water_withdrawal[t] == b.max_raw_water_withdrawal
 
     iscale.set_scaling_factor(fs.max_raw_water_withdrawal, 1e-3)
     for t in fs.time:
-        iscale.constraint_scaling_transform(fs.max_raw_water_withdrawal_constraint[t], 1e-3)
+        iscale.constraint_scaling_transform(fs.max_raw_water_withdrawal_ineq[t], 1e-3)
+        iscale.constraint_scaling_transform(fs.max_raw_water_withdrawal_eqn[t], 1e-3)
+    fs.max_raw_water_withdrawal_ineq.deactivate()
 
     fs.water_withdrawal_system.costing = UnitModelCostingBlock(
         flowsheet_costing_block=fs.costing,
@@ -328,7 +330,6 @@ def get_solo_soec_capital_costing(fs, CE_index_year):
         return pyo.units.convert(
             fs.heat_source.control_volume.properties_out[0].flow_vol,
             pyo.units.gal/pyo.units.min)
-        # return 3000 * pyo.units.gal / pyo.units.min
 
     fs.discharge_system.costing = UnitModelCostingBlock(
         flowsheet_costing_block=fs.costing,
@@ -584,11 +585,6 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
         def total_plant_cost(b):
             U = 56 * pyo.units.W / pyo.units.m**2 / pyo.units.K
             DT = 20 * pyo.units.K
-            # heat_duty = pyo.units.W * smooth_max(
-            #     b.unit_model.heat_duty[0]/pyo.units.W,
-            #     b.min_heat_duty/pyo.units.W,
-            #     eps=100000
-            # )
             heat_duty = b.max_heat_duty
             area = heat_duty / U / DT
             # Add factor of two to pathways cost to account for corrosion-resistant materials for trim heaters
@@ -598,11 +594,18 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
                 * pyo.units.convert(area, pyo.units.ft**2),
                 to_units=CE_index_units,
             )
-        @blk.unit_model.Constraint(blk.flowsheet().time)
-        def heat_duty_bound(b, t):
-            return b.heat_duty[t] <= b.costing.max_heat_duty
+        @blk.Constraint(blk.flowsheet().time)
+        def max_heat_duty_ineq(b, t):
+            return b.unit_model.heat_duty[t] <= b.max_heat_duty
+        @blk.Constraint(blk.flowsheet().time)
+        def max_heat_duty_eqn(b, t):
+            return b.unit_model.heat_duty[t] == b.max_heat_duty
+
+        iscale.set_scaling_factor(blk.max_heat_duty, 1e-6)
         for t in blk.flowsheet().time:
-            iscale.constraint_scaling_transform(blk.unit_model.heat_duty_bound[t], 1e-6)
+            iscale.constraint_scaling_transform(blk.max_heat_duty_ineq[t], 1e-6)
+            iscale.constraint_scaling_transform(blk.max_heat_duty_eqn[t], 1e-6)
+        blk.max_heat_duty_ineq.deactivate()
 
     def cost_reciprocating_piston_hydrogen_compressor(blk, CE_index_year="2018"):
         # TODO determine if intercooling is taken into account
@@ -700,18 +703,23 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
                 to_units=CE_index_units
             )
         @blk.Constraint(blk.flowsheet().time)
-        def max_heat_duty_constraint(b, t):
+        def max_heat_duty_ineq(b, t):
             return -b.unit_model.heat_out[t] <= b.max_heat_duty
+        @blk.Constraint(blk.flowsheet().time)
+        def max_heat_duty_eqn(b, t):
+            return -b.unit_model.heat_out[t] == b.max_heat_duty
 
         iscale.set_scaling_factor(blk.max_heat_duty, 1e-6)
         for t in blk.flowsheet().time:
-            iscale.constraint_scaling_transform(blk.max_heat_duty_constraint[t], 1e-6)
+            iscale.constraint_scaling_transform(blk.max_heat_duty_ineq[t], 1e-6)
+            iscale.constraint_scaling_transform(blk.max_heat_duty_eqn[t], 1e-6)
+        blk.max_heat_duty_ineq.deactivate()
 
 
 def initialize_flowsheet_costing(fs):
     flash_vessels = [
         fs.product_flash01,
-        # fs.product_flash02,
+        fs.product_flash02,
         fs.product_flash03,
         fs.product_flash04,
     ]
@@ -723,6 +731,11 @@ def initialize_flowsheet_costing(fs):
 
     # costing initialization
     QGESSCostingData.costing_initialization(fs.costing)
+
+    fs.max_raw_water_withdrawal.set_value(pyo.value(fs.raw_water_withdrawal[0]))
+    fs.feed_heater.costing.max_heat_duty.set_value(pyo.value(fs.feed_heater.heat_duty[0]))
+    fs.sweep_heater.costing.max_heat_duty.set_value(pyo.value(fs.sweep_heater.heat_duty[0]))
+    fs.heat_pump.costing.max_heat_duty.set_value(pyo.value(-fs.heat_pump.heat_out[0]))
 
     calculate_variable_from_constraint(fs.costing.total_TPC, fs.costing.total_TPC_eqn)
 
@@ -743,7 +756,7 @@ def scale_flowsheet_costing(fs):
 
     flash_vessels = [
         fs.product_flash01,
-        # fs.product_flash02,
+        fs.product_flash02,
         fs.product_flash03,
         fs.product_flash04,
     ]
@@ -773,18 +786,6 @@ def scale_flowsheet_costing(fs):
 
     ssf(fs.costing.total_TPC, 1)
     cst(fs.costing.total_TPC_eqn, 1)
-
-
-# def lock_capital_cost(fs):
-#     for b in fs.generic_costing_units:
-#         for v in b.costing.total_plant_cost.values():
-#             print(b)
-#             v.display()
-#             v.set_value(pyo.value(v))
-#
-#         b.costing.deactivate()
-#     fs.costing.deactivate()
-#     fs.costing.total_TPC.fix()
 
 
 def get_soec_OM_costing(fs, CE_index_year="2018"):

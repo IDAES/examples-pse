@@ -355,6 +355,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.product_flash01 = gum.Flash(property_package=self.h2_condensing_prop_params)
         # Use vapor-only property package for compressors to prevent spurious liquid terms from popping up
         self.cmp01 = gum.Compressor(property_package=self.h2_side_prop_params)
+        self.product_flash02 = gum.Flash(property_package=self.h2_condensing_prop_params)
         self.cmp02 = gum.Compressor(property_package=self.h2_side_prop_params)
         self.product_flash03 = gum.Flash(property_package=self.h2_condensing_prop_params)
         self.cmp03 = gum.Compressor(property_package=self.h2_side_prop_params)
@@ -581,14 +582,14 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.hstrm09 = Arc(
             doc="",
             source=self.water_evaporator02.shell_outlet,
-            #destination=self.product_flash02.inlet,
+            destination=self.product_flash02.inlet,
+            # destination=self.cmp02.inlet,
+        )
+        self.hstrm10 = Arc(
+            doc="",
+            source=self.product_flash02.vap_outlet,
             destination=self.cmp02.inlet,
         )
-        # self.hstrm10 = Arc(
-        #     doc="",
-        #     source=self.product_flash02.vap_outlet,
-        #     destination=self.cmp02.inlet,
-        # )
         self.hstrm11 = Arc(
             doc="",
             source=self.cmp02.outlet,
@@ -803,7 +804,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             )
 
         # Evaporation via heat exchange with a hot gas
-        for hx in [self.water_evaporator01, self.water_evaporator02, self.water_evaporator05]:
+        for hx in [self.water_evaporator01, self.water_evaporator05]:
             hx.del_component("delta_temperature_in_equation")
             hx.del_component("delta_temperature_out_equation")
             hx.delta_temperature_in_equation = pyo.Constraint(self.time,
@@ -811,7 +812,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             hx.delta_temperature_out_equation = pyo.Constraint(self.time,
                                                                rule=rule_dT_out)
         # Evaporation via heat exchange with condensing water in H2 stream
-        for hx in [self.water_evaporator03, self.water_evaporator04]:
+        for hx in [self.water_evaporator02, self.water_evaporator03, self.water_evaporator04]:
             hx.del_component("delta_temperature_in_equation")
             hx.del_component("delta_temperature_out_equation")
 
@@ -1052,8 +1053,9 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             ssf(self.cmp04.control_volume.properties_out[t].enth_mol_phase["Vap"], 1e-4)
 
         for cond in [self.product_flash01,
-                     #self.product_flash02,
-                     self.product_flash03, self.product_flash04,
+                     self.product_flash02,
+                     self.product_flash03,
+                     self.product_flash04,
                      self.product_flash05]:
             for t in self.time:
                 ssf(cond.control_volume.heat[t], 1e-6)
@@ -1240,8 +1242,8 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             self.product_flash05.control_volume.properties_out[t] \
                 .temperature.fix(273.15 + 15)
         for i in range(1, 6):
-            if i == 2:
-                continue
+            # if i == 2:
+            #     continue
             flash = getattr(self, f"product_flash0{i}")
             flash.deltaP.fix(0)
             flash.heat_duty.fix(0)
@@ -1395,8 +1397,8 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.water_evaporator02.shell.properties_in.release_state(shell_flags)
 
         propagate_state(self.hstrm09)
-        # self.product_flash02.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
-        # propagate_state(self.hstrm10)
+        self.product_flash02.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
+        propagate_state(self.hstrm10)
         self.cmp02.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         propagate_state(self.hstrm11)
 
