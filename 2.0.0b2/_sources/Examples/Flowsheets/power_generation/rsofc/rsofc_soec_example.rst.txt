@@ -1,0 +1,1489 @@
+Design flowsheet for the SOEC mode of a reversible Solid Oxide Cell
+===================================================================
+
+Process Flow Diagram
+~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    from IPython.core.display import SVG
+    SVG(filename='rsofc_soec_mode_PFD.svg')
+
+
+
+
+.. image:: output_2_0.svg
+
+
+
+1. Introduction
+---------------
+
+The figure above shows the process flow diagram of the rSOC (reversible
+solid oxide cell) plant in SOEC (solid oxide electrolysis cell) mode.
+The plant consists of five major sections: the ASU (air separation
+unit), the SOEC power island, the CPU (CO2 purification unit), the HRSG
+(heat recovery steam generator) and steam cycle.
+
+In the SOEC mode, the rSOC operates by using steam as fuel to produce
+Hydrogen on its fuel side (cathode side), while air is used as sweep gas
+to remove diffused oxygen from its air side (anode side). To provide air
+to the air side of the rSOC, ambient air is compressed in an air blower
+and preheated via two preheaters to reach the required temperature to
+sweep through the air side. The oxygen rich air stream which exits the
+air side of the rSOC is used to preheat the fresh air feed in the first
+air preheater, subsequently it is split in a splitter and used to
+preheat oxygen from the ASU in the oxygen preheater and natural gas feed
+in the natural gas preheater. Finally, the oxygen rich air streams from
+both the oxygen and natural gas preheaters are sent to the HRSG where
+they are further cooled before release to the atmosphere.
+
+This flowsheet example provides an off-design model for the rSOC in SOEC
+mode for hydrogen production up to **5 kg/s** with 98% CO2 capture.
+
+2. Import Required Modules
+--------------------------
+
+-  **pyomo environment**. The pyomo environment
+-  **rsofc_soec_flowsheet**. Contains functions for the work flow of
+   building and solving the flowsheet. See the rsofc_soec_flowsheet.py
+   file for more details.
+-  **rsofc_costing**. Contains costing methods for the soec and sofc
+   operating modes of the reversible sofc. See the rsofc_costing.py file
+   for more details.
+
+.. code:: ipython3
+
+    import pyomo.environ as pyo
+    import rsofc_soec_flowsheet as rsoec
+    import rsofc_costing as rsofc_cost
+
+3. Build and initialize the flowsheet
+-------------------------------------
+
+-  A pyomo concrete model is built
+-  The **get_model** function in the **rsofc_soec_flowsheet.py** file
+   takes the concrete model as an argument then sets up a flowsheet
+   called **m.soec_fs**, and all the required unit models to it.
+   Finally, the completed flowsheet is initialized. The concrete model
+   and solver options are then returned.
+
+.. code:: ipython3
+
+    m = pyo.ConcreteModel()
+    m, solver = rsoec.get_model(m)
+
+4. Base case optimization example
+---------------------------------
+
+An example of optimizing the variable operating costs of the model at
+its base case production of 5 kg/s using the **base_case_optimization**
+function is shown below. The model also has functions to run a base case
+simulation (**base_case_simulation**) and optimize the variable
+operating cost of the process over the production range of 1 to 5 kg/s
+(**optimize_model**)
+
+.. code:: ipython3
+
+    rsoec.tags_inputs_opt_vars(m.soec_fs)  # this function adds tags for the optimization variables
+    rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
+    rsoec.base_case_optimization(m, solver)
+
+
+.. parsed-literal::
+
+    1000.0*(g/kg)*(0.002*soec_fs.hydrogen_product_rate[0.0]*kg/mol)
+    h2_product_rate_mass : Size=1
+        Key : Value
+        0.0 : 10.140202103656495
+    Hydrogen product rate 2.500 kmol/s.
+    Ipopt 3.13.2: nlp_scaling_method=user-scaling
+    tol=0.0001
+    bound_push=1e-05
+    linear_solver=ma57
+    max_iter=500
+    ma27_pivtol=0.001
+    ma57_pivtol=1e-05
+    ma57_pivtolmax=0.1
+    option_file_name=/tmp/tmpgocpfno2_ipopt.opt
+    
+    Using option file "/tmp/tmpgocpfno2_ipopt.opt".
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma57.
+    
+    Number of nonzeros in equality constraint Jacobian...:    11690
+    Number of nonzeros in inequality constraint Jacobian.:       24
+    Number of nonzeros in Lagrangian Hessian.............:     6630
+    
+    Reallocating memory for MA57: lfact (222344)
+    Total number of variables............................:     2697
+                         variables with only lower bounds:      484
+                    variables with lower and upper bounds:     1460
+                         variables with only upper bounds:       34
+    Total number of equality constraints.................:     2685
+    Total number of inequality constraints...............:       11
+            inequality constraints with only lower bounds:        4
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        7
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  8.1999537e+03 3.93e+03 2.00e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  8.1113424e+03 3.48e+03 2.41e+02  -1.0 1.77e+04    -  8.77e-05 2.15e-02f  1
+       2  6.4310368e+03 2.81e+06 2.25e+04  -1.0 2.23e+04    -  9.58e-03 4.20e-01f  1
+       3  6.2536115e+03 2.60e+06 2.07e+04  -1.0 1.30e+04    -  2.40e-01 7.61e-02h  1
+       4  6.2328387e+03 2.57e+06 2.05e+04  -1.0 1.81e+03  -2.0 2.66e-02 1.06e-02h  1
+       5  6.2324573e+03 2.57e+06 2.05e+04  -1.0 1.80e+03  -1.6 1.14e-02 1.96e-04h  1
+       6  6.2118581e+03 2.55e+06 2.02e+04  -1.0 2.50e+03  -2.1 4.20e-04 1.05e-02h  1
+       7  6.2101747e+03 2.54e+06 2.02e+04  -1.0 1.91e+04    -  7.05e-04 7.45e-04h  1
+       8  6.1898055e+03 2.52e+06 2.00e+04  -1.0 2.47e+03  -1.6 1.55e-01 1.06e-02h  1
+       9  6.1571164e+03 2.48e+06 1.97e+04  -1.0 2.44e+03  -2.1 1.31e-02 1.72e-02h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10  6.1343356e+03 2.45e+06 1.95e+04  -1.0 1.81e+04    -  1.68e-02 1.06e-02h  1
+      11  6.1336712e+03 2.45e+06 1.95e+04  -1.0 2.37e+03  -2.6 1.04e-01 3.57e-04h  1
+      12  5.9214596e+03 2.29e+06 1.72e+04  -1.0 2.34e+04    -  1.19e-03 1.02e-01h  1
+    Reallocating memory for MA57: lfact (233505)
+      13  5.8826775e+03 2.25e+06 1.68e+04  -1.0 1.76e+04    -  5.70e-02 2.18e-02h  1
+      14  5.8667938e+03 2.23e+06 1.69e+04  -1.0 1.05e+04    -  4.23e-01 8.90e-03h  1
+      15  5.8521561e+03 2.21e+06 1.68e+04  -1.0 4.95e+03  -3.1 6.42e-03 8.31e-03h  1
+      16  5.8508149e+03 2.21e+06 1.68e+04  -1.0 2.30e+03  -1.7 8.27e-04 7.87e-04h  1
+      17  5.8479438e+03 2.21e+06 1.70e+04  -1.0 1.52e+04  -2.2 2.36e-02 1.71e-03h  1
+      18  5.8000506e+03 2.14e+06 1.62e+04  -1.0 3.89e+03  -2.7 1.52e-03 2.75e-02h  1
+      19  5.7816682e+03 2.12e+06 1.59e+04  -1.0 1.90e+03  -3.2 2.25e-03 1.18e-02h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      20  4.8828392e+03 9.20e+05 1.98e+05  -1.0 1.86e+03  -3.6 1.07e-01 5.82e-01h  1
+      21  4.8632742e+03 8.92e+05 1.92e+05  -1.0 7.40e+02  -1.4 1.11e-02 3.05e-02h  1
+      22  4.8519757e+03 8.76e+05 1.88e+05  -1.0 7.15e+02  -1.9 1.97e-02 1.81e-02h  1
+      23  4.8514500e+03 8.75e+05 1.88e+05  -1.0 7.04e+02  -1.5 4.64e-04 8.61e-04h  1
+      24  4.7943668e+03 7.94e+05 1.69e+05  -1.0 7.02e+02  -1.0 1.94e-02 9.23e-02h  1
+      25  4.7071697e+03 6.70e+05 1.40e+05  -1.0 6.37e+02  -1.5 1.08e-01 1.56e-01h  1
+      26  4.6475892e+03 5.85e+05 1.22e+05  -1.0 5.36e+02  -1.1 2.29e-01 1.26e-01h  1
+      27  4.6116264e+03 5.34e+05 1.11e+05  -1.0 4.68e+02  -1.6 5.06e-01 8.78e-02h  1
+      28  4.6031157e+03 5.22e+05 1.08e+05  -1.0 4.26e+02  -1.1 6.89e-01 2.26e-02h  1
+      29  4.5047101e+03 3.81e+05 1.32e+05  -1.0 4.17e+02  -1.6 8.48e-01 2.68e-01h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      30  4.5035838e+03 3.80e+05 2.04e+05  -1.0 3.04e+02  -1.2 5.36e-01 4.19e-03h  1
+      31  4.2394026e+03 5.92e+05 5.57e+05  -1.0 3.03e+02  -1.7 2.88e-01 9.89e-01h  1
+      32  4.2387442e+03 4.37e+05 4.38e+05  -1.0 3.61e+02  -2.1 3.37e-01 2.65e-01h  1
+      33  4.2361226e+03 1.80e+04 4.88e+06  -1.0 3.57e+02  -2.6 1.16e-02 9.91e-01h  1
+      34  4.2353444e+03 6.20e+03 5.97e+05  -1.0 1.86e+02  -3.1 9.46e-01 6.42e-01h  1
+      35  4.2340642e+03 7.53e+02 7.54e+05  -1.0 9.40e+01  -2.7 5.49e-01 1.00e+00h  1
+      36  4.2298758e+03 2.08e+04 5.73e+06  -1.0 2.62e+01  -3.1 3.18e-01 1.00e+00h  1
+      37  4.2225375e+03 1.51e+05 2.65e+06  -1.0 1.69e+02  -3.6 5.38e-01 3.43e-01h  1
+      38  4.2175989e+03 1.52e+04 3.57e+05  -1.0 3.19e+01  -3.2 8.65e-01 1.00e+00h  1
+      39  4.2045699e+03 1.85e+05 2.43e+05  -1.0 1.08e+02  -3.7 3.20e-01 7.03e-01h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      40  4.2011768e+03 1.14e+05 6.67e+04  -1.0 4.14e+01  -3.2 7.25e-01 4.72e-01h  1
+      41  4.2015660e+03 6.59e+04 4.33e+04  -1.0 2.22e+01  -2.8 3.50e-01 1.00e+00h  1
+      42  4.1976433e+03 3.52e+05 1.95e+04  -1.0 4.69e+01  -3.3 5.50e-01 1.00e+00h  1
+      43  4.1884661e+03 6.15e+06 1.47e+04  -1.0 1.24e+02  -3.8 2.44e-01 1.00e+00h  1
+      44  4.1883355e+03 8.97e+05 9.54e+01  -1.0 2.36e+01  -1.5 1.00e+00 9.95e-01h  1
+      45  4.1883304e+03 8.55e+05 9.10e+01  -1.0 7.20e+00  -2.0 1.00e+00 4.66e-02h  1
+      46  4.1879249e+03 6.85e+04 1.37e+03  -1.0 9.57e+01  -2.5 5.23e-01 8.85e-01h  1
+      47  4.1875539e+03 1.38e+03 2.38e+02  -1.0 9.95e+00  -2.1 6.47e-01 1.00e+00h  1
+      48  4.1869362e+03 4.52e+03 1.40e+01  -1.0 6.80e+00  -2.5 7.09e-01 1.00e+00h  1
+      49  4.1853450e+03 1.92e+05 5.77e+01  -1.0 3.43e+01  -3.0 3.14e-01 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      50  4.1804865e+03 2.96e+05 3.44e+01  -1.0 6.58e+01  -3.5 7.80e-01 1.00e+00h  1
+      51  4.1660807e+03 1.15e+07 1.24e+03  -1.0 1.95e+02  -4.0 1.87e-01 1.00e+00h  1
+      52  4.1242037e+03 2.93e+06 3.15e+02  -1.0 5.61e+02  -4.5 9.02e-01 1.00e+00h  1
+      53  4.1226421e+03 2.86e+06 3.08e+02  -1.0 8.16e+02  -4.9 6.60e-01 2.29e-02h  1
+      54  4.0999684e+03 6.67e+05 1.64e+03  -1.0 3.20e+02  -4.5 1.00e+00 1.00e+00h  1
+      55  4.0981025e+03 6.35e+05 1.54e+03  -1.0 6.29e+02  -5.0 9.43e-01 4.67e-02h  1
+      56  4.0958165e+03 5.38e+05 9.58e+02  -1.0 3.95e+02  -4.6 1.78e-01 2.47e-01h  1
+      57  4.0941357e+03 7.07e+04 5.94e+02  -1.0 9.14e+01  -4.1 2.82e-01 7.00e-01h  1
+      58  4.0817813e+03 7.31e+04 5.56e+03  -1.0 1.08e+05    -  4.37e-03 3.59e-02H  1
+      59  4.0419956e+03 6.01e+05 3.56e+04  -1.0 8.15e+04    -  9.44e-02 7.79e-02h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      60  4.0416894e+03 5.95e+05 3.52e+04  -1.0 3.60e+03    -  8.59e-02 1.08e-02h  1
+      61  4.0401526e+03 4.32e+05 2.59e+04  -1.0 2.36e+03    -  4.18e-02 2.79e-01h  1
+      62  4.0407677e+03 3.53e+05 2.11e+04  -1.0 9.58e+02    -  2.31e-01 1.83e-01h  1
+      63  4.0412829e+03 2.79e+05 1.67e+04  -1.0 5.78e+02    -  1.00e+00 2.08e-01h  1
+      64  4.0430305e+03 1.22e+05 7.41e+03  -1.0 7.62e+02    -  7.42e-01 5.61e-01h  1
+      65  4.0437884e+03 2.25e+04 1.46e+03  -1.0 5.93e+02    -  2.12e-01 8.25e-01h  1
+      66  4.0446822e+03 2.99e+02 3.27e+01  -1.0 1.27e+02    -  1.00e+00 1.00e+00h  1
+      67  4.0439541e+03 3.68e+02 4.27e+01  -1.0 2.01e+02    -  1.00e+00 1.00e+00h  1
+      68  4.0438190e+03 3.05e+01 1.37e+00  -1.0 2.27e+01    -  1.00e+00 1.00e+00h  1
+      69  4.0438160e+03 4.77e+00 1.10e-01  -1.0 5.34e+00    -  1.00e+00 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      70  4.0438172e+03 3.11e-01 3.66e-03  -1.0 1.87e+00    -  1.00e+00 1.00e+00h  1
+      71  4.0429683e+03 4.88e+02 2.10e+06  -1.7 2.99e+02    -  7.37e-01 1.00e+00h  1
+      72  4.0427042e+03 2.58e+02 9.26e+04  -1.7 7.78e+01    -  1.00e+00 7.04e-01h  1
+      73  4.0427638e+03 2.27e+01 2.24e+02  -1.7 1.61e+01    -  1.00e+00 1.00e+00h  1
+      74  4.0427379e+03 3.03e+00 9.88e+00  -1.7 1.70e+00    -  1.00e+00 1.00e+00h  1
+      75  4.0427365e+03 8.60e-03 3.10e-02  -1.7 8.64e-02    -  1.00e+00 1.00e+00h  1
+      76  4.0425975e+03 8.61e+00 6.57e+05  -3.8 7.12e+01    -  9.07e-01 5.76e-01f  1
+      77  4.0425932e+03 7.88e+00 6.42e+05  -3.8 3.32e+02    -  5.45e-02 3.00e-02h  1
+      78  4.0425181e+03 2.62e+00 5.79e+01  -3.8 2.86e+01    -  1.00e+00 1.00e+00h  1
+      79  4.0425180e+03 1.61e-02 3.56e-04  -3.8 2.21e-01    -  1.00e+00 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      80  4.0425180e+03 9.54e-07 1.57e-09  -3.8 7.65e-03    -  1.00e+00 1.00e+00h  1
+      81  4.0425164e+03 6.43e-03 6.20e-01  -5.0 6.13e-01    -  1.00e+00 1.00e+00h  1
+      82  4.0425164e+03 2.98e-05 2.85e-09  -5.0 1.06e+00    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 82
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   4.0425164299061639e+03    4.0425164299061639e+03
+    Dual infeasibility......:   2.8516996693798813e-09    9.0925039163220004e-06
+    Constraint violation....:   2.9812211276758612e-05    2.9812211276758612e-05
+    Complementarity.........:   9.0909160772986056e-06    9.0909160772986056e-06
+    Overall NLP error.......:   2.9812211276758612e-05    2.9812211276758612e-05
+    
+    
+    Number of objective function evaluations             = 84
+    Number of objective gradient evaluations             = 83
+    Number of equality constraint evaluations            = 84
+    Number of inequality constraint evaluations          = 84
+    Number of equality constraint Jacobian evaluations   = 83
+    Number of inequality constraint Jacobian evaluations = 83
+    Number of Lagrangian Hessian evaluations             = 82
+    Total CPU secs in IPOPT (w/o function evaluations)   =      7.072
+    Total CPU secs in NLP function evaluations           =      2.424
+    
+    EXIT: Optimal Solution Found.
+
+
+5. Results
+----------
+
+a. Input and optimization variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    rsoec.display_input_tags(m.soec_fs)
+
+
+.. parsed-literal::
+
+    
+    soec_outlet_o2_frac
+        O2 side outlet O2 mole fraction
+        display units: None
+        native units: None
+        value 0.350, fixed: False
+    
+    air_blower_flow
+        Air blower flow (provides air to soec air side)
+        display units: None
+        native units: mol/s
+        value 5697.756 mol/s, fixed: False
+    
+    combustor_temperature
+        Combustor temperature
+        display units: K
+        native units: K
+        value 1259.143 K, fixed: False
+    
+    preheat_fg_split_to_oxygen
+        Split frac. of soec air to air preheater, rest goes to NG heater
+        display units: None
+        native units: None
+        value 0.528, fixed: False
+    
+    soec_h2_split_to_product
+        Split frac. of soec h2 to product, rest goes to recycle
+        display units: None
+        native units: None
+        value 0.500, fixed: False
+    
+    oxygen_preheater_delta_T_in
+        Air preheater inlet approach temperature
+        display units: K
+        native units: K
+        value 10.000 K, fixed: False
+    
+    ng_preheater_delta_T_in
+        NG preheater inlet approach temperature
+        display units: K
+        native units: K
+        value 10.001 K, fixed: False
+    
+    air_preheater_1_delta_T_in
+        air_preheater_1 inlet approach temperature
+        display units: K
+        native units: K
+        value 10.000 K, fixed: False
+    
+    air_preheater_2_delta_T_in
+        air_preheater_2 inlet approach temperature
+        display units: K
+        native units: K
+        value 235.993 K, fixed: False
+    
+    soc_cell_potential
+        soc cell potential
+        display units: V
+        native units: V
+        value 1.2510 V, fixed: False
+    
+    condenser_outlet_temperature
+        Condenser outlet temperature (controls CO2 product purity from CPU)
+        display units: K
+        native units: K
+        value 310.879 K, fixed: False
+    
+    hydrogen_product_rate
+        Rate of hydrogen production
+        display units: kmol/s
+        native units: mol/s
+        value 2.500 kmol/s, fixed: True
+    
+    n_cells
+        Number of SOEC cells
+        display units: None
+        native units: None
+        value 3,220,000, fixed: True
+    
+    feed_water_flow
+        Feed water flow (provides steam to soec fuel side)
+        display units: None
+        native units: mol/s
+        value 3125.313 mol/s, fixed: False
+    
+    sweep_air_flow
+        Air flow to soec air side
+        display units: None
+        native units: mol/s
+        value 2380.214 mol/s, fixed: False
+    
+
+
+b. Stream tables
+~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    stream_table = rsoec.stream_tables(m.soec_fs)
+    stream_table=stream_table.fillna("")  # replace NaN with blank
+    display(stream_table)
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>flow_mass, kg/s</th>
+          <th>flow_mol, mol/s</th>
+          <th>flow_vol, m**3/s</th>
+          <th>temperature, K</th>
+          <th>pressure, Pa</th>
+          <th>vapor_frac</th>
+          <th>mole_frac_Ar</th>
+          <th>mole_frac_CO</th>
+          <th>mole_frac_CO2</th>
+          <th>mole_frac_H2</th>
+          <th>mole_frac_H2O</th>
+          <th>mole_frac_N2</th>
+          <th>mole_frac_O2</th>
+          <th>mole_frac_CH4</th>
+          <th>mole_frac_C2H6</th>
+          <th>mole_frac_C3H8</th>
+          <th>mole_frac_C4H10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>CPU_translator_in</th>
+          <td>19.357068</td>
+          <td>716.204182</td>
+          <td>17.800365</td>
+          <td>310.878871</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>IC_1_OUT</th>
+          <td>68.682089</td>
+          <td>2380.214335</td>
+          <td>56.988820</td>
+          <td>310.930000</td>
+          <td>1.079750e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>STAGE_1_OUT</th>
+          <td>68.682089</td>
+          <td>2380.214335</td>
+          <td>52.848180</td>
+          <td>297.543684</td>
+          <td>1.114220e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>STAGE_2_OUT</th>
+          <td>68.682089</td>
+          <td>2380.214335</td>
+          <td>50.226824</td>
+          <td>331.676372</td>
+          <td>1.306860e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>a00</th>
+          <td>164.411163</td>
+          <td>5697.756329</td>
+          <td>134.722480</td>
+          <td>288.150000</td>
+          <td>1.013250e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>a01</th>
+          <td>164.411163</td>
+          <td>5697.756329</td>
+          <td>127.764150</td>
+          <td>296.663174</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>a02</th>
+          <td>164.411163</td>
+          <td>5697.756329</td>
+          <td>419.616358</td>
+          <td>974.332162</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>a03</th>
+          <td>164.411163</td>
+          <td>5697.756329</td>
+          <td>440.640762</td>
+          <td>1023.149973</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>ba00</th>
+          <td>68.682089</td>
+          <td>2380.214335</td>
+          <td>56.279763</td>
+          <td>288.150000</td>
+          <td>1.013250e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>ba01</th>
+          <td>68.682089</td>
+          <td>2380.214335</td>
+          <td>48.360706</td>
+          <td>310.930000</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>ba02</th>
+          <td>15.392573</td>
+          <td>480.796393</td>
+          <td>9.768722</td>
+          <td>310.930000</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.003065</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.001914</td>
+          <td>0.995021</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>ba03</th>
+          <td>15.392573</td>
+          <td>480.796393</td>
+          <td>13.562943</td>
+          <td>431.696780</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.003065</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.001914</td>
+          <td>0.995021</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+        </tr>
+        <tr>
+          <th>bng00</th>
+          <td>3.944779</td>
+          <td>228.773361</td>
+          <td>6.035597</td>
+          <td>330.000000</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.01</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.016</td>
+          <td>0.0</td>
+          <td>0.931</td>
+          <td>0.032</td>
+          <td>0.007</td>
+          <td>0.004</td>
+        </tr>
+        <tr>
+          <th>bng01</th>
+          <td>3.944779</td>
+          <td>228.773361</td>
+          <td>7.895596</td>
+          <td>431.696589</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.01</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.016</td>
+          <td>0.0</td>
+          <td>0.931</td>
+          <td>0.032</td>
+          <td>0.007</td>
+          <td>0.004</td>
+        </tr>
+        <tr>
+          <th>bng02</th>
+          <td>19.337352</td>
+          <td>709.569754</td>
+          <td>24.489204</td>
+          <td>431.696700</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002077</td>
+          <td></td>
+          <td>0.003224</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.006455</td>
+          <td>0.674215</td>
+          <td>0.300165</td>
+          <td>0.010317</td>
+          <td>0.002257</td>
+          <td>0.00129</td>
+        </tr>
+        <tr>
+          <th>cmb_mix_in</th>
+          <td>15.392573</td>
+          <td>480.796393</td>
+          <td>13.562943</td>
+          <td>431.696780</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.003065</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.001914</td>
+          <td>0.995021</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>cmb_out</th>
+          <td>19.357068</td>
+          <td>716.204182</td>
+          <td>72.096264</td>
+          <td>1259.143021</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+        </tr>
+        <tr>
+          <th>fg01</th>
+          <td>19.357068</td>
+          <td>716.204182</td>
+          <td>72.096264</td>
+          <td>1259.143021</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>fg02</th>
+          <td>19.357068</td>
+          <td>716.204182</td>
+          <td>56.361101</td>
+          <td>984.332369</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>fg03</th>
+          <td>19.357068</td>
+          <td>716.204182</td>
+          <td>23.189571</td>
+          <td>405.000000</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>fg04</th>
+          <td>19.356958</td>
+          <td>716.204182</td>
+          <td>0.024734</td>
+          <td>310.878871</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h01</th>
+          <td>32.598035</td>
+          <td>6249.891405</td>
+          <td>465.944411</td>
+          <td>986.325214</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.8</td>
+          <td>0.2</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h02</th>
+          <td>16.299301</td>
+          <td>3125.000067</td>
+          <td>232.976258</td>
+          <td>986.325214</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.8</td>
+          <td>0.2</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h03</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>56.470505</td>
+          <td>298.750613</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h04</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>56.356957</td>
+          <td>298.150000</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h05</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>28.066486</td>
+          <td>419.667048</td>
+          <td>3.110800e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h06</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>20.273843</td>
+          <td>303.150000</td>
+          <td>3.110800e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h07</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>10.106486</td>
+          <td>426.676604</td>
+          <td>8.797342e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h08</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>7.180621</td>
+          <td>303.150000</td>
+          <td>8.797342e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h09</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>3.591657</td>
+          <td>426.831805</td>
+          <td>2.487888e+06</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h10</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>2.551483</td>
+          <td>303.150000</td>
+          <td>2.487888e+06</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>hr01</th>
+          <td>16.298734</td>
+          <td>3124.891338</td>
+          <td>232.968152</td>
+          <td>986.325214</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.8</td>
+          <td>0.2</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>hr02</th>
+          <td>16.298734</td>
+          <td>3124.891338</td>
+          <td>241.666091</td>
+          <td>1023.149972</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.8</td>
+          <td>0.2</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o01</th>
+          <td>204.408692</td>
+          <td>6947.757329</td>
+          <td>516.925359</td>
+          <td>984.332212</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o02</th>
+          <td>204.388251</td>
+          <td>6947.062553</td>
+          <td>516.873667</td>
+          <td>984.332212</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o03</th>
+          <td>204.388251</td>
+          <td>6947.062553</td>
+          <td>231.935600</td>
+          <td>441.697260</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o04</th>
+          <td>96.416758</td>
+          <td>3277.161207</td>
+          <td>109.411762</td>
+          <td>441.697260</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o05</th>
+          <td>107.971493</td>
+          <td>3669.901346</td>
+          <td>122.523839</td>
+          <td>441.697260</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o06</th>
+          <td>107.971493</td>
+          <td>3669.901346</td>
+          <td>118.449368</td>
+          <td>427.008832</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o07</th>
+          <td>96.416758</td>
+          <td>3277.161207</td>
+          <td>106.967667</td>
+          <td>431.830407</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>out01</th>
+          <td>53.289516</td>
+          <td>1899.417942</td>
+          <td>38.591984</td>
+          <td>310.930000</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.010753</td>
+          <td></td>
+          <td>0.000376</td>
+          <td></td>
+          <td>0.012406</td>
+          <td>0.968434</td>
+          <td>0.008031</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>out02</th>
+          <td>107.971493</td>
+          <td>3669.901346</td>
+          <td>112.344266</td>
+          <td>405.000000</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>out03</th>
+          <td>96.416758</td>
+          <td>3277.161207</td>
+          <td>100.321572</td>
+          <td>405.000000</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>out08</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>1.360748</td>
+          <td>416.005824</td>
+          <td>6.479000e+06</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s00</th>
+          <td>56.303382</td>
+          <td>3125.312599</td>
+          <td>0.056359</td>
+          <td>288.750000</td>
+          <td>1.013250e+05</td>
+          <td>0.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s01</th>
+          <td>56.303382</td>
+          <td>3125.312599</td>
+          <td>0.056359</td>
+          <td>288.750613</td>
+          <td>1.100000e+05</td>
+          <td>0.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s02</th>
+          <td>56.303382</td>
+          <td>3125.312599</td>
+          <td>31.751615</td>
+          <td>375.442168</td>
+          <td>1.100000e+05</td>
+          <td>0.363528</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s03</th>
+          <td>56.303382</td>
+          <td>3125.312599</td>
+          <td>241.635386</td>
+          <td>1023.149972</td>
+          <td>1.100000e+05</td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s04</th>
+          <td>56.297751</td>
+          <td>3125.000067</td>
+          <td>241.674499</td>
+          <td>1023.149972</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.0</td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s05</th>
+          <td>72.596485</td>
+          <td>6249.891405</td>
+          <td>483.340590</td>
+          <td>1023.149972</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.399993</td>
+          <td>0.600007</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s06</th>
+          <td>164.411192</td>
+          <td>5697.757329</td>
+          <td>440.640839</td>
+          <td>1023.149973</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+c. Print results table
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    result_variables = rsoec.initialize_results(m.soec_fs)
+    results_table = rsoec.results_table_dataframe(result_variables)
+    print('========================== Overall Results ========================')
+    print()
+    print(results_table)
+
+
+.. parsed-literal::
+
+    ========================== Overall Results ========================
+    
+                                Variable    Value Units
+      soec_fs.hydrogen_product_rate[0.0]  2500.00 mol/s
+        soec_fs.h2_compressor_power[0.0]    35.13    MW
+              soec_fs.soec_power_DC[0.0]   603.51    MW
+              soec_fs.soec_power_AC[0.0]   622.17    MW
+             soec_fs.HRSG_heat_duty[0.0]    22.00    MW
+          soec_fs.ASU_HP_steam_heat[0.0]     2.59    MW
+           soec_fs.steam_cycle_heat[0.0]    19.41    MW
+          soec_fs.steam_cycle_power[0.0]     7.39    MW
+           soec_fs.steam_cycle_loss[0.0]    12.01    MW
+        soec_fs.feedwater_pump_work[0.0]     0.14    MW
+       soec_fs.condensate_pump_work[0.0]     0.00    MW
+    soec_fs.steam_turbine_auxiliary[0.0]     0.01    MW
+              soec_fs.misc_BOP_load[0.0]     0.08    MW
+         soec_fs.cooling_water_duty[0.0]    56.34    MW
+     soec_fs.cooling_water_flowrate[0.0]   823.85  lb/s
+      soec_fs.circulating_pump_work[0.0]     0.12    MW
+         soec_fs.cooling_tower_load[0.0]     0.06    MW
+             soec_fs.auxiliary_load[0.0]    45.24    MW
+         soec_fs.transformer_losses[0.0]     0.16    MW
+                  soec_fs.net_power[0.0]   660.18    MW
+             soec_fs.HHV_efficiency[0.0]     6.58  None
+               soec_fs.CO2_captured[0.0] 37012.92  kg/h
+              soec_fs.CO2_emissions[0.0]  -755.27  kg/h
+     soec_fs.CO2_capture_efficiency[0.0]     0.98  None
+
+

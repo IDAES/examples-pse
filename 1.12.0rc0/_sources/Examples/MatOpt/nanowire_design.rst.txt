@@ -1,0 +1,253 @@
+Nanowire Design
+===============
+
+This notebook serves as an example application of the MatOpt framework.
+We consider an example optimization problem of designing a semiconductor
+compound nanowire.
+
+Importing Packages
+------------------
+
+We start by importing several standard Python modules for convienience.
+
+.. code:: ipython3
+
+    import numpy as np
+    from copy import deepcopy
+
+Next, we import MatOpt.
+
+.. code:: ipython3
+
+    from idaes.apps.matopt import *
+
+Representing Materials
+----------------------
+
+To begin, we define a **Lattice** object. For semiconductor materials,
+**WurtziteLattice** is an appropriate type of lattice. This object will
+serve to define neighbor connections and helps us generically create
+other objects. We construct our lattice from a class method constructor
+that aligns the resulting lattice with certain orientations expressed by
+hexagonal Miller Indices.
+
+.. code:: ipython3
+
+    IAD = 3.7265 # Angstrom
+    orientation = '0001'
+    lattice = WurtziteLattice.alignedWith(IAD, orientation)
+
+Next, we define a **Shape** object that we will use to specify a design
+space. Additionally, in this example our design space is linearly
+periodic, so we will define a **Tiling** object to hold information
+about the periodicity. In this example, **Cylinder** and
+**LinearTiling** are the appropriate types, respectively.
+
+Note that we shift the shape of our design space slightly, in order to
+avoid confusion about which lattice sites (out of those that lie
+perfectly on the shape facet) should be included.
+
+.. code:: ipython3
+
+    nAtomRadius = 6
+    nAtomUnitLength = 2
+    origin = np.zeros(3, dtype=float)
+    axisDirection = np.array([0, 0, 1], dtype=float)
+    radius = lattice.getShellSpacing(orientation) * (nAtomRadius - 1)
+    height = lattice.getLayerSpacing(orientation) * lattice.getUniqueLayerCount(orientation) * nAtomUnitLength
+    shape = Cylinder(origin, radius, height, axisDirection)
+    shape.shift(-0.001 * shape.Vh)
+    tiling = LinearTiling.fromCylindricalShape(shape)
+
+Given the parameters for a design space, we can construct a **Canvas**
+object to hold information about lattice locations and nearest
+neighbors. In this example, the object is first constructed from
+``lattice`` and ``shape`` and then made periodic with ``tiling``. A
+Canvas can be constructed and manipulated via user-defined algorithms.
+
+.. code:: ipython3
+
+    canvas = Canvas.fromLatticeAndShape(lattice, shape)
+    canvas.makePeriodic(tiling, lattice.getNeighbors)
+
+The ``canvas`` object holds information about the design space and the
+lattice sites, but it does not specify any material building block
+information. In this example, we are considering an InAs nanowire. To
+represent material configurations, we will use a **Design** object. We
+first construct an empty Design from ``canvas`` and then place **Atom**
+(i.e., building block) objects into this Design via methods provided by
+``lattice``.
+
+To debug our work so far, we can create material structure files to load
+and plot with standard visualization tools. Here, we create a PDB
+(protein data bank format, www.rcsb.org) file for the Design object.
+These files can be plotted with visualization packages such as AtomEye
+or OVITO.
+
+.. code:: ipython3
+
+    design = Design(canvas)
+    lattice.setDesign(design, Atom('In'), Atom('As'))
+    design.toPDB('canvas.pdb')
+
+Building a Model
+----------------
+
+In this example, we will build a model that maximizes the cohesive
+energy of the nanowire as an indicator of it’s thermal stability. To
+begin, we start by creating a **MatOptModel** object to hold information
+about the model. Notice that we use a list of empty atoms as our set of
+building blocks because we will use a cohesive energy function for
+semiconductor materials that is indepedent of atom types. Thus, we do
+not need to specify the types of building blocks in our model.
+
+.. code:: ipython3
+
+    m = MatOptModel(canvas, [Atom('')])
+
+By default, several basic variables are pre-defined. See the first
+example, ***Monometallic_Nanocluster_Design.ipynb*** for a description
+of basic variables, expressions, and constraint rules.
+
+First, we fix the core layers of the nanowire specified by the ratio of
+the core radius and the canvas radius.
+
+.. code:: ipython3
+
+    coreRatio = 0.2
+    CoreLayers = [i for i, p in enumerate(canvas.Points) if p[0] ** 2 + p[1] ** 2 < (coreRatio * radius) ** 2]
+    m.Yi.rules.append(FixedTo(1, sites=CoreLayers))
+
+Next, we introduce constraints that require atoms to be placed on top of
+each other radially, avoiding hollow pockets below the surface.
+
+.. code:: ipython3
+
+    CanvasMinusCoreLayers = [i for i, p in enumerate(canvas.Points) if i not in CoreLayers]
+    NeighborsInside = [[j for j in canvas.NeighborhoodIndexes[i] if (
+            j is not None and canvas.Points[j][0] ** 2 + canvas.Points[j][1] ** 2 <
+            p[0] ** 2 + p[1] ** 2 - DBL_TOL)] for i, p in enumerate(canvas.Points)]
+    m.Yi.rules.append(ImpliesNeighbors(concs=(m.Yi, GreaterThan(1)),
+                                       sites=CanvasMinusCoreLayers,
+                                       neighborhoods=NeighborsInside))
+
+Next, we define a descriptor for each site’s contribution to the overall
+cohesion as a function of each site’s coordination environment. We
+derive this individual atom contribution from the Khor-Das Sarma-type
+empirical potential energy function. The parameters come from the
+literature.
+
+.. code:: ipython3
+
+    CNBounds = (0, 4)
+    p = -0.22479870084561238
+    q = -0.9092660150083058
+    alpha = -0.3684513
+    BPs = list(range(CNBounds[0], CNBounds[1] + 1))
+    Vals = [(p * pow(cn, 1 - alpha) - q * cn) for cn in BPs]
+    m.addSitesDescriptor('Vi', bounds=(min(Vals), max(Vals)),
+                         rules=PiecewiseLinear(values=Vals, breakpoints=BPs, input_desc=m.Ci, con_type='UB'))
+
+Next, we define the cohesive energy as a sum of contributions from all
+``Vi`` descriptors.
+
+.. code:: ipython3
+
+    size = 216
+    m.addGlobalDescriptor('Ecoh', rules=EqualTo(SumSites(desc=m.Vi,coefs=(1.0 / size))))
+
+Finally, we add constraints on the size and composition of the resulting
+designs.
+
+.. code:: ipython3
+
+    m.addGlobalDescriptor('Size', bounds=(size, size), rules=EqualTo(SumSites(desc=m.Yi)))
+
+Solving the Model
+-----------------
+
+Given a fully formed Pyomo model, we have several capabilities to
+optimize and visualize the solution. In this example, we simply call the
+``maximize`` method to optimize the cohesive energy.
+
+.. code:: ipython3
+
+    optimalDesign = None
+    try:
+        optimalDesign = m.maximize(m.Ecoh, tilim=360, solver='cplex')
+    except:
+        print('MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)')
+
+
+.. parsed-literal::
+
+    
+    Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
+      with Simplex, Mixed Integer & Barrier Optimizers
+    5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
+    Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+    
+    Type 'help' for a list of available commands.
+    Type 'help' followed by a command name for more
+    information on commands.
+    
+    CPLEX> Logfile 'cplex.log' closed.
+    Logfile '/tmp/tmp57zyoek2.cplex.log' open.
+    CPLEX> New value for absolute mixed integer optimality gap tolerance: 0
+    CPLEX> New value for mixed integer optimality gap tolerance: 0
+    CPLEX> New value for time limit in seconds: 360
+    CPLEX> Problem '/tmp/tmpz06u7bfy.pyomo.lp' read.
+    Read time = 0.01 sec. (0.81 ticks)
+    CPLEX> Problem name         : /tmp/tmpz06u7bfy.pyomo.lp
+    Objective sense      : Maximize
+    Variables            :    3439  [Nneg: 1,  Fix: 1,  Box: 520,  Free: 1,
+                                     Binary: 2400,  General Integer: 516]
+    Objective nonzeros   :       1
+    Linear constraints   :    9119  [Less: 6516,  Greater: 2080,  Equal: 523]
+      Nonzeros           :   22127
+      RHS nonzeros       :    3498
+    
+    Variables            : Min LB: 0.000000         Max UB: 216.0000       
+    Objective nonzeros   : Min   : 1.000000         Max   : 1.000000       
+    Linear constraints   :
+      Nonzeros           : Min   : 0.004629630      Max   : 1.000000       
+      RHS nonzeros       : Min   : 0.1308177        Max   : 16.00000       
+    CPLEX> CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
+    
+    Error termination, CPLEX Error  1016.
+    Solution time =    0.00 sec.
+    Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+    
+    CPLEX> CPLEX Error  1217: No solution exists.
+    No file written.
+    CPLEX> ERROR: evaluating object as numeric value: obj
+            (object: <class 'pyomo.core.base.objective.ScalarObjective'>)
+        No value for uninitialized NumericValue object obj
+    MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+
+
+Processing Solutions
+--------------------
+
+Once the model is solved, we can plot the resulting design. In this
+case, we will first label atoms with their identities and then replicate
+the design four times to better visualize the periodic pattern.
+
+.. code:: ipython3
+
+    if optimalDesign is not None:
+        for i, p in enumerate(optimalDesign.Canvas.Points):
+            if optimalDesign.Contents[i] is not None:
+                if lattice.isASite(p):
+                    optimalDesign.setContent(i, Atom('In'))
+                elif lattice.isBSite(p):
+                    optimalDesign.setContent(i, Atom('As'))
+        optimalDesign.toPDB('result.pdb')
+        periodicDesign = deepcopy(optimalDesign)
+        for k in range(4):
+            for i, p in enumerate(optimalDesign.Canvas.Points):
+                periodicDesign.add(p + (k + 1) * shape.Vh, optimalDesign.Contents[i])
+        for k in range(4):
+            for i, p in enumerate(optimalDesign.Canvas.Points):
+                periodicDesign.add(p - (k + 1) * shape.Vh, optimalDesign.Contents[i])
+        periodicDesign.toPDB('periodic_result.pdb')

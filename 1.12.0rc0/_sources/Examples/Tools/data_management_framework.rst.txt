@@ -1,0 +1,930 @@
+Data Management Framework Tutorial
+==================================
+
+ This tutorial will introduce you to the use of the IDAES Data
+Management Framework (DMF). The purpose of the DMF is to give IDAES
+users an easy and consistent way to manage the data they use and create,
+with a particular focus on (a) the ability to annotate all data items
+with a combination of pre-defined and user-defined metadata, and (b) the
+ability to link between data items to record relationships between them.
+
+In this tutorial, you will learn: \* Basic DMF terms and concepts \* How
+to create a new DMF instance \* How to add your data to the DMF \* How
+to set up *relations* to show dependencies and provenance of resources
+\* How to find, load, and remove data from the DMF
+
+Conventions
+-----------
+
+The typographic conventions used in this tutorial are as follows.
+
+Names of files will be in “double quotes”, new terms will be in
+*italics*, and keywords and source code snippets will be in
+``fixed-width type``.
+
+Sections that offer additional detail that may be skipped are set off in
+blocks like this:
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+::
+
+    &#9998; <b>Details:</b>
+    Detailed information goes here...
+
+.. raw:: html
+
+   </div>
+
+Basic concepts
+--------------
+
+This section describes the DMF conceptually, introducing standard terms
+used in this context. The terms are summarized at the end of the
+section.
+
+Workspaces
+~~~~~~~~~~
+
+The DMF is designed to support multiple users, or multiple different
+projects for the same user. Different users or projects are isolated
+from each other through the concept of a DMF *workspace*. Each DMF
+instance is initialized with a given workspace, and all its DMF
+operations are confined to that workspace.
+
+For the default (and only, at this time) storage engine, the a directory
+in the filesystem is used for each workspace. As long as file
+permissions allow it, multiple users can share the same workspace, but
+note that there is no authentication required to modify DMF contents, so
+users must take care to coordinate their actions.
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+::
+
+    &#9998; <b>Details:</b>
+    There is a global configuration stored in the user's home directory in a file called ".dmf".<br/>
+    This file records, among other things, the 'current' workspace. This avoids having to specify the workspace
+    with every command from the command-line interface.
+
+.. raw:: html
+
+   </div>
+
+Resources and relations
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The DMF is designed to store *resources*, which can be any sort of
+digital data, and to allow users to add structured metadata to describe
+the author, date, and origin of those resources. Users can explicitly
+register the *relations*, or named connections, between resources in the
+DMF, and use these to navigate between resources.
+
+Files
+~~~~~
+
+Usually, but not always, each resource will be associated with one or
+more files, such as a data file, an image, or a spreadsheet. These files
+are by default copied into the DMF’s workspace at the time the resource
+is added. After this, the file may be changed or deleted without
+affecting the DMF. There is an option to instead refer to the location
+of the file (in the filesystem). This has the advantage of efficiency –
+no data is copied – and will also, for better or worse, let the file’s
+contents change even as the resource ID stays the same. In this case, it
+is considered the user’s problem to protect the file from being moved or
+deleted.
+
+Terms
+~~~~~
+
+-  *resource*: Digital data, with attached metadata, that is managed by
+   the DMF
+-  *relation*: Connection between two resources, which has a named type.
+   Connections are directional in their sense – resource A “derived
+   from” resource B – but can be navigated in both the “in” and “out”
+   direction.
+-  *JSON*: Short for JavaScript Object Notation, this is a standard way
+   to format structured data. See https://json.org for more information.
+
+Initialization
+--------------
+
+Physically, the default (and currently only) storage engine of the DMF
+is a simple directory on the disk. This directory corresponds t
+*workspace*.
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+::
+
+    &#9998; <b>Details:</b>
+
+In the workspace directory, there are two files and a sub-directory:
+
+.. raw:: html
+
+   <ul>
+
+.. raw:: html
+
+   <li>
+
+“config.yaml”: Workspace configuration information.
+
+.. raw:: html
+
+   <li>
+
+“resourcedb.json”: Metadata for all resources (JSON format)
+
+.. raw:: html
+
+   <li>
+
+“files/”: Data files associated with resources
+
+.. raw:: html
+
+   </ul>
+
+.. raw:: html
+
+   </div>
+
+.. code:: ipython3
+
+    from idaes.dmf import DMF  # import main class
+    import shutil, os
+    
+    workspace_dir = "my_workspace"
+    # clean slate: remove anything from previous runs
+    if os.path.exists(workspace_dir):
+        shutil.rmtree(workspace_dir)
+    # create our workspace
+    dmf = DMF(workspace_dir, create=True)  # create means 'create the directory'
+
+
+.. parsed-literal::
+
+    2021-11-30 19:29:00,267 [INFO] idaes.dmf.workspace: Create new configuration at '/tmp/tmpf1za7ln1/my_workspace/config.yaml'
+    2021-11-30 19:29:00,269 [INFO] idaes.dmf.dmfbase: Saving configuration location to: /home/lbianchi/.dmf
+
+
+IDAES model setup
+~~~~~~~~~~~~~~~~~
+
+In this example, we will work with the Flash unit model introduced in
+the ‘Flash_Unit’ tutorial. We will use the DMF to store, and connect,
+the inputs, model, and results. The following block of code creates the
+Flash unit model and its containing flowsheet block. Refer to the
+tutorial for details. Note that we add the level of indirection to make
+this a Python string, so we can save the code easily as a *resource*.
+
+.. code:: ipython3
+
+    model_setup = """
+    from pyomo.environ import ConcreteModel, SolverFactory, Constraint, value
+    from idaes.core import FlowsheetBlock
+    from idaes.generic_models.properties.activity_coeff_models.BTX_activity_coeff_VLE \
+        import BTXParameterBlock
+    from idaes.generic_models.unit_models import Flash
+    m = ConcreteModel()
+    m.fs = FlowsheetBlock(default={"dynamic": False})
+    m.fs.properties = BTXParameterBlock(default={"valid_phase": ('Liq', 'Vap'),
+                                                "activity_coeff_model": "Ideal",
+                                                "state_vars": "FTPz"})
+    m.fs.flash = Flash(default={"property_package": m.fs.properties})
+    """
+    exec(model_setup)
+
+Adding resources
+----------------
+
+Using the Python API, the user adds resources to the DMF by either
+creating an instance of the ``Resource`` class, and adding it, or
+implicitly creating and adding a resource in one step by importing a
+file. One resource can also refer to multiple files. There is standard
+metadata that describes who, what, when, and how a resource was created.
+In addition, arbitrary structured data can be added in a “data” section
+of each resource.
+
+When adding, the basic workflow is: 0. Initialize DMF 1. Create/add
+resources 2. Create relations between these resources (more detail
+later) 3. Update the DMF to save all the relations
+
+We have already initialized the DMF. So, now we create and add some
+resources. First, the Flash code:
+
+.. code:: ipython3
+
+    from idaes.dmf.resource import Resource, ResourceTypes
+    
+    # Add the Flash code block as a resource
+    flash_code = Resource(type_=ResourceTypes.code, value={
+        "codes": [{
+            "type": "block",
+            "language": "python",
+            "desc": "Create Flash unit model and containing flowsheet",
+            "inline": model_setup
+        }],
+        "name": "flash_code"
+    })
+    dmf.add(flash_code)
+
+
+
+
+.. parsed-literal::
+
+    'fa2784479cd94dcdaab7656907e99a35'
+
+
+
+Now we put the values that will be fed to the Flash unit model inlet
+into another resource.
+
+.. code:: ipython3
+
+    # Put inlet values into a dict
+    inlet_values = {
+        "flow_mol": 1,
+        "temperature": 368,
+        "pressure": 101325,
+        "mole_frac_comp": {
+            "benzene": 0.5,
+            "toluene": 0.5
+        }
+    }
+    # Save the inlet values as another resource
+    inlet_params = Resource(type_=ResourceTypes.data, value={"data": {"unit": "Flash", "inlet_values": inlet_values}})
+    dmf.add(inlet_params)
+
+
+
+
+.. parsed-literal::
+
+    '8d0da1b6431541aeacdb0af74e97d32f'
+
+
+
+Create a relation
+~~~~~~~~~~~~~~~~~
+
+Once created, resources are connected to each other, where needed, by
+creating *relations* between them. The DMF defines a few types of
+possible relations:
+
+-  *derived*: object is derived from subject
+-  *contains*: subject contains the object
+-  *uses*: subject uses the object
+-  *version*: object is a (new) version of the subject
+
+The terms *subject* and *object*, above, describe the direction of the
+relation with respect to the two resources. To take a simple example,
+imagine I have resources that represent a shoebox and a pair of shoes.
+To represent the relationship of the shoebox containing the shoes, then
+the shoebox is the subject and the shoes are the object of the relation
+“contains”.
+
+Relations, unlike resources, are not added directly to the DMF. Instead
+they are created with a method that also requires both resources to be
+provided, and then you call ``update()`` to save them. The relation is
+represented in both the subject and object of the relation. For example,
+given the shoes resource from the example above, one can find that they
+are the object of the “contains” relation with a shoebox resource.
+
+We can connect the two resources we just created with the relation
+“uses”, in the sense of the Flash unit model using the inlet values. The
+Flash unit code is the subject, and the inlet values are the object, of
+this relation.
+
+.. code:: ipython3
+
+    from idaes.dmf.resource import create_relation, Predicates
+    
+    create_relation(flash_code, Predicates.uses, inlet_params)
+    dmf.update()  # sync to DMF storage
+
+
+
+
+.. parsed-literal::
+
+    2
+
+
+
+Now, we finish constructing the Flash unit with the parameter values,
+then solve the model.
+
+For good measure, we save the status of the solution in another
+resource, and connect that to the flash model with the *derived*
+relation.
+
+.. code:: ipython3
+
+    import idaes.logger as idaeslog
+    
+    # Set inlet values using dict created above
+    for key, value in inlet_values.items():
+        if key == "mole_frac_comp":
+            for chem, frac in value.items():
+                m.fs.flash.inlet.mole_frac_comp[0, chem].fix(frac) 
+        else:
+            getattr(m.fs.flash.inlet, key).fix(value)
+    
+    # Finish Flash unit setup
+    m.fs.flash.heat_duty.fix(0)
+    m.fs.flash.deltaP.fix(0)
+    m.fs.flash.initialize(outlvl=idaeslog.WARNING)  # quiet
+    
+    # Solve the model
+    solver = SolverFactory('ipopt')
+    status = solver.solve(m, tee=False)  # also, quiet
+    print(status)
+    
+    # Save the result in the DMF
+    result_rsrc = Resource(type_=ResourceTypes.data, value={"data":{"status": str(status), "solver": "ipopt"}})
+    dmf.add(result_rsrc)
+    create_relation(flash_code, Predicates.derived, result_rsrc)
+    dmf.update()
+
+
+.. parsed-literal::
+
+    
+    Problem: 
+    - Lower bound: -inf
+      Upper bound: inf
+      Number of objectives: 1
+      Number of constraints: 41
+      Number of variables: 41
+      Sense: unknown
+    Solver: 
+    - Status: ok
+      Message: Ipopt 3.13.2\x3a Optimal Solution Found
+      Termination condition: optimal
+      Id: 0
+      Error rc: 0
+      Time: 0.005987882614135742
+    Solution: 
+    - number of solutions: 0
+      number of solutions displayed: 0
+    
+
+
+
+
+.. parsed-literal::
+
+    3
+
+
+
+Searching for resources
+-----------------------
+
+To retrieve and use previously added items from the DMF, you need to
+first locate them. There are four primary ways to do locate a resource:
+\* Find by resource ID: Of course, this is fast, but you first need to
+know the identifier. \* Find by query: You can search by any of the
+fields in the resource. \* Find by name: A special case of find by
+query, you can search on the ‘name’ you gave the resource. \* Find by
+relations: Given one resource, you can search for other resources to
+which it is related.
+
+Finding resources by ID
+~~~~~~~~~~~~~~~~~~~~~~~
+
+We first show how to retrieve a resource by its ID. The method is a
+generator because an ID prefix is allowed, so you need to look at the
+first (and only) result explicitly.
+
+.. code:: ipython3
+
+    # use id from resource above
+    rsrc = list(dmf.find_by_id(flash_code.id))[0]
+    print(rsrc.v["codes"][0]["inline"])
+
+
+.. parsed-literal::
+
+    
+    from pyomo.environ import ConcreteModel, SolverFactory, Constraint, value
+    from idaes.core import FlowsheetBlock
+    from idaes.generic_models.properties.activity_coeff_models.BTX_activity_coeff_VLE     import BTXParameterBlock
+    from idaes.generic_models.unit_models import Flash
+    m = ConcreteModel()
+    m.fs = FlowsheetBlock(default={"dynamic": False})
+    m.fs.properties = BTXParameterBlock(default={"valid_phase": ('Liq', 'Vap'),
+                                                "activity_coeff_model": "Ideal",
+                                                "state_vars": "FTPz"})
+    m.fs.flash = Flash(default={"property_package": m.fs.properties})
+    
+
+
+Finding resources by query
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The query syntax that is supported is a filter that is in the style of
+the filters used by the MongoDB database engine. To simplify the common
+case, a ``name`` parameter is also provided to find resources by name.
+For the purposes of this tutorial, we will show the use of both methods.
+
+First, let’s find the Flash inlet parameters by looking for the value of
+“unit” in the “data” section. Note that this type of search requires
+that you know something about the structure of the metadata inside a
+resource.
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+::
+
+    &#9998; <b>Details:</b>
+
+A full description of possible fields (i.e., a schema) for a resource is
+in idaes.dmf.resource.RESOURCE_SCHEMA. The syntax for this description
+is a standard called JSON Schema.
+
+.. raw:: html
+
+   </div>
+
+For the purposes of understanding this query, you need to know 3 things:
+1. The query itself is contained in a Python dict given to the
+``filter_dict`` parameter of the ``find_one()`` method. 2. You can
+search for nested fields, such as the “unit” field in the “data”
+section, by using dots between the field names. 3. By putting a tilde
+(“~”) before the value, the value will be treated like a regular
+expression. Here, we use this to find anything with the word “flash” in
+it, without worrying about upper and lower case.
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+::
+
+    &#9998; <b>Details:</b> By default, resources in which <em>any</em> item of the
+    provided list matches an item in the resource, will match. To ask for <em>all</em> of the provided
+    list items to match, add "!" after the key, e.g. "datafiles!".
+
+.. raw:: html
+
+   </div>
+
+.. code:: ipython3
+
+    import re
+    
+    rsrc = dmf.find_one(filter_dict={"type": "data", "data.unit": "~.*flash.*"}, re_flags=re.IGNORECASE)
+    display(rsrc.v)
+
+
+
+.. parsed-literal::
+
+    {'id_': '8d0da1b6431541aeacdb0af74e97d32f',
+     'type': 'data',
+     'aliases': [],
+     'collaborators': [],
+     'created': 1638329340.336017,
+     'modified': 1638329340.336017,
+     'creator': {'name': 'lbianchi'},
+     'data': {'unit': 'Flash',
+      'inlet_values': {'flow_mol': 1,
+       'temperature': 368,
+       'pressure': 101325,
+       'mole_frac_comp': {'benzene': 0.5, 'toluene': 0.5}}},
+     'datafiles': [],
+     'datafiles_dir': '/tmp/tmpf1za7ln1/my_workspace/files/3f014024da814d53bc1d323772c7a71c',
+     'desc': '',
+     'relations': [{'predicate': 'uses',
+       'identifier': 'fa2784479cd94dcdaab7656907e99a35',
+       'role': 'object'}],
+     'tags': [],
+     'version_info': {'created': 1638329340.336017,
+      'version': [0, 0, 0],
+      'name': ''},
+     'doc_id': 2}
+
+
+Findin resources by name
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Finding by name is relatively simple, you just pass the ``name``
+parameter to the ``find()`` or ``find_one()`` method. Note that the name
+must match exactly what was placed there.
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+::
+
+    &#9998; <b>Details:</b> Searching by name is really just a special case of searching
+    by 'alias'. Each resource has a list of string aliases (names) and tags that are associated
+    with it. The first alias is designated as the name of the resource.
+
+.. raw:: html
+
+   </div>
+
+.. code:: ipython3
+
+    # Find the Flash code resource by its name
+    rsrc = list(dmf.find(name="flash_code"))[0]
+    print("Result metadata:")
+    display(rsrc.v)
+
+
+.. parsed-literal::
+
+    Result metadata:
+
+
+
+.. parsed-literal::
+
+    {'id_': 'fa2784479cd94dcdaab7656907e99a35',
+     'type': 'code',
+     'aliases': ['flash_code'],
+     'collaborators': [],
+     'created': 1638329340.327555,
+     'modified': 1638329340.327555,
+     'creator': {'name': 'lbianchi'},
+     'data': {},
+     'datafiles': [],
+     'datafiles_dir': '/tmp/tmpf1za7ln1/my_workspace/files/459fce049aaa439198140467feefed3f',
+     'desc': '',
+     'relations': [{'predicate': 'uses',
+       'identifier': '8d0da1b6431541aeacdb0af74e97d32f',
+       'role': 'subject'},
+      {'predicate': 'derived',
+       'identifier': '79f27e7656c347b7b5a0e02aa841d2ad',
+       'role': 'subject'}],
+     'tags': [],
+     'version_info': {'created': 1638329340.327555,
+      'version': [0, 0, 0],
+      'name': ''},
+     'codes': [{'type': 'block',
+       'language': 'python',
+       'desc': 'Create Flash unit model and containing flowsheet',
+       'inline': '\nfrom pyomo.environ import ConcreteModel, SolverFactory, Constraint, value\nfrom idaes.core import FlowsheetBlock\nfrom idaes.generic_models.properties.activity_coeff_models.BTX_activity_coeff_VLE     import BTXParameterBlock\nfrom idaes.generic_models.unit_models import Flash\nm = ConcreteModel()\nm.fs = FlowsheetBlock(default={"dynamic": False})\nm.fs.properties = BTXParameterBlock(default={"valid_phase": (\'Liq\', \'Vap\'),\n                                            "activity_coeff_model": "Ideal",\n                                            "state_vars": "FTPz"})\nm.fs.flash = Flash(default={"property_package": m.fs.properties})\n'}],
+     'doc_id': 1}
+
+
+Finding resources by relations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Finally, you can also find a resource by navigating to it from an
+existing resource. For example, we can find all the resources that are
+connected to our Flash unit model. This will discover: \* Flash code ─
+uses → Flash inlet parameters \* Flash code ─ derived → Status of solve
+
+.. code:: ipython3
+
+    for depth, triple, meta in dmf.find_related(rsrc,  # <-- this was the flash code we found above 
+                                                outgoing=True,  # <-- look at outgoing edges
+                                                meta=["type", "data"]): # <-- extract this metadata
+        if meta["type"] == ResourceTypes.data:
+            data = meta["data"]
+            if "status" in data:
+                print(f"{triple.predicate} --> Status:")
+                print(data["status"])
+            elif "inlet_values" in data:
+                print(f"{triple.predicate} --> inlet values:")
+                display(data["inlet_values"])
+
+
+.. parsed-literal::
+
+    uses --> inlet values:
+
+
+
+.. parsed-literal::
+
+    {'flow_mol': 1,
+     'temperature': 368,
+     'pressure': 101325,
+     'mole_frac_comp': {'benzene': 0.5, 'toluene': 0.5}}
+
+
+.. parsed-literal::
+
+    derived --> Status:
+    
+    Problem: 
+    - Lower bound: -inf
+      Upper bound: inf
+      Number of objectives: 1
+      Number of constraints: 41
+      Number of variables: 41
+      Sense: unknown
+    Solver: 
+    - Status: ok
+      Message: Ipopt 3.13.2\x3a Optimal Solution Found
+      Termination condition: optimal
+      Id: 0
+      Error rc: 0
+      Time: 0.005987882614135742
+    Solution: 
+    - number of solutions: 0
+      number of solutions displayed: 0
+    
+
+
+Working with files
+------------------
+
+A resource provides a relatively simple way to access any related files,
+with the ``get_datafiles()`` method. In the simplest case, this returns
+a list of ``pathlib.Path`` objects that can be used however the user
+desires. If you pass in a “mode”, then the method will attempt to open
+files in that mode and return a Python file object instead.
+
+To illustrate this, let’s create a resource for this notebook itself, as
+a file. Then, we can find a special code block in the notebook, showing
+that we can actually read the resulting file.
+
+.. code:: ipython3
+
+    # Add a new resource for the notebook file
+    notebook = dmf.new(file="data_management_framework.ipynb")
+    
+    # Special:Start
+    for fp in notebook.get_datafiles(mode="r"):
+        text = fp.read()
+        start, end = text.find("Special:Start"), text.rfind("Special:End")
+        block = text[start:end]
+        print(block[block.find("for"):])
+    # Special:End
+
+
+.. parsed-literal::
+
+    for fp in notebook.get_datafiles(mode=\"r\"):\n",
+        "    text = fp.read()\n",
+        "    start, end = text.find(\"Special:Start\"), text.rfind(\"Special:End\")\n",
+        "    block = text[start:end]\n",
+        "    print(block[block.find(\"for\"):])\n",
+        "# 
+
+
+Removing resources
+------------------
+
+Resources can be removed using either their unique identifier (found in
+the “.id” attribute), or *en masse* using a search expression, as you
+would give to the ``find()`` method. The latter is not recommended
+unless you know what you are doing.
+
+.. code:: ipython3
+
+    # uncomment and run this to remove the notebook resource
+    # dmf.remove(notebook.id)
+
+Jupyter “magics”
+----------------
+
+To make working with the DMF in Jupyter Notebooks a little easier, a few
+Jupyter “magics” have been defined. Magics are special keywords that are
+prefixed with a ‘%’, that call underlying Python code. There are a
+number of built-in magics that you can see
+`here <https://ipython.readthedocs.io/en/stable/interactive/magics.html>`__.
+
+The magics defined for the DMF are: \* ``%dmf workspaces``: List all
+possible workspaces (does not require %dmf init) \* ``%dmf init``: Call
+this to set the DMF workspace used by all other magics \*
+``%dmf status``: Show information about current DMF status \*
+``%dmf list``: List contents of current workspace \* ``%dmf help``: Show
+help on an object or method for IDAES
+
+Below are some examples of using these magics.
+
+.. code:: ipython3
+
+    # Need to import this to register the magics with your Jupyter Notebook
+    from idaes.dmf import magics
+
+.. code:: ipython3
+
+    %dmf workspaces
+
+
+
++----------------+------+-------------+
+| Path           | Name | Description |
++================+======+=============+
+| ./my_workspace | none | none        |
++----------------+------+-------------+
+
+
+
+
+.. parsed-literal::
+
+    '1 workspace(s) found'
+
+
+
+.. code:: ipython3
+
+    %dmf init my_workspace
+
+
+.. parsed-literal::
+
+    2021-11-30 19:29:00,579 [INFO] idaes.dmf.dmfbase: Saving configuration location to: /home/lbianchi/.dmf
+
+
+
+*Success!* Using workspace at “my_workspace”
+
+
+.. code:: ipython3
+
+    %dmf status
+
+
+
+Configuration
+-------------
+
+-  \_id: 2cdc5a84ddc04cf3807fc00f558feae5
+-  created: 2021-11-30T19:29:00.579161
+-  modified: 2021-11-30T19:29:00.579161
+-  name: my_workspace
+
+
+.. code:: ipython3
+
+    %dmf list
+
+
+
++---+--------------+--------+-----------------+-----------------------+
+| I | Name(s)      | Type   | Modified        | Description           |
+| D |              |        |                 |                       |
++===+==============+========+=================+=======================+
+| f | flash_code   | code   | 1638329340.3275 |                       |
+| a |              |        | 55              |                       |
+| 2 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| a |              |        |                 |                       |
+| a |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 8 |              | data   | 1638329340.3360 |                       |
+| d |              |        | 17              |                       |
+| 0 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| e |              |        |                 |                       |
+| a |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| f |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 7 |              | data   | 1638329340.4969 |                       |
+| 9 |              |        | 49              |                       |
+| f |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| d |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 5 |              | notebo | 1638329340.5279 | data_management_frame |
+| 9 |              | ok     | 38              | work.ipynb            |
+| f |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+
+
+
+
+.. parsed-literal::
+
+    True
+
+
+
+Thank you!
+==========
+
+That’s the end of the tutorial. Thanks for your interest.
+
+For more information on the DMF APIs and command-line interfaces, see
+the `DMF section of the IDAES
+documentation <https://idaes-pse.readthedocs.io/en/stable/user_guide/components/dmf/index.html>`__.
+

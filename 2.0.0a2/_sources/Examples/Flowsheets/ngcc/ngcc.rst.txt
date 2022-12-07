@@ -1,0 +1,283 @@
+NGCC Baseline and Turndown
+==========================
+
+This notebook runs a series of net electric power outputs from 650 MW to
+160 MW (about 100% to 25%) for an NGCC with 97% CO2 capture. The NGCC
+model is based on the NETL report “Cost and Performance Baseline for
+Fossil Energy Plants Volume 1: Bituminous Coal and Natural Gas to
+Electricity.” Sept 2019, Case B31B
+(https://www.netl.doe.gov/projects/files/CostAndPerformanceBaselineForFossilEnergyPlantsVol1BitumCoalAndNGtoElectBBRRev4-1_092419.pdf).
+
+Imports
+-------
+
+Import the modules that will be used.
+
+.. code:: ipython3
+
+    import os
+    import numpy as np
+    import pandas as pd
+    from IPython.core.display import SVG
+    import pyomo.environ as pyo
+    import idaes
+    from idaes.core.solvers import use_idaes_solver_configuration_defaults
+    import idaes.core.util.scaling as iscale
+    import idaes.core.util as iutil
+    import ngcc
+    import pytest
+
+Make Output Directories
+-----------------------
+
+This notebook can produce a large number of output files. To make it
+easier to manage, some subdirectories are used to organize output. This
+ensures that the directories exist.
+
+.. code:: ipython3
+
+    def make_directory(path):
+        """Make a directory if it doesn't exist"""
+        try:
+            os.mkdir(path)
+        except FileExistsError:
+            pass
+        
+    make_directory("data")
+    make_directory("data_pfds")
+    make_directory("data_tabulated")
+
+Global Solver Settings
+----------------------
+
+Use the IDAES configuration system for solver settings. These will apply
+to all Ipopt instances created, including the ones created in
+initialization methods.
+
+.. code:: ipython3
+
+    use_idaes_solver_configuration_defaults()
+    idaes.cfg.ipopt.options.nlp_scaling_method = "user-scaling"
+    idaes.cfg.ipopt.options.linear_solver = "ma57"
+    idaes.cfg.ipopt.options.OF_ma57_automatic_scaling = "yes"
+    idaes.cfg.ipopt.options.ma57_pivtol = 1e-5
+    idaes.cfg.ipopt.options.ma57_pivtolmax = 0.1
+    solver = pyo.SolverFactory("ipopt")
+
+Create the NGCC model
+---------------------
+
+Create the NGCC model and initialize it or read the saved initialization
+if available. The base initialized NGCC model is configured to match the
+baseline report with 90% capture using a Cansolv system.
+
+.. code:: ipython3
+
+    m = pyo.ConcreteModel()
+    m.fs = ngcc.NgccFlowsheet(default={"dynamic":False})
+    iscale.calculate_scaling_factors(m)
+    m.fs.initialize(
+        load_from="ngcc_init.json.gz",
+        save_to="ngcc_init.json.gz",
+    )
+    res = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    2022-06-09 18:06:10 [INFO] idaes.init.fs: NGCC load initial from ngcc_init.json.gz
+    Ipopt 3.13.2: nlp_scaling_method=user-scaling
+    tol=1e-06
+    linear_solver=ma57
+    ma57_pivtol=1e-05
+    ma57_pivtolmax=0.1
+    option_file_name=/tmp/tmp9c1km68e_ipopt.opt
+    
+    Using option file "/tmp/tmp9c1km68e_ipopt.opt".
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma57.
+    
+    Number of nonzeros in equality constraint Jacobian...:     7661
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:     5310
+    
+    Total number of variables............................:     2404
+                         variables with only lower bounds:       87
+                    variables with lower and upper bounds:     1447
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:     2404
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 3.50e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    Reallocating memory for MA57: lfact (111440)
+       1  0.0000000e+00 3.49e-01 8.68e+03  -1.0 2.71e+03    -  9.90e-01 9.90e-01h  1
+       2  0.0000000e+00 3.20e-03 3.48e+02  -1.0 2.26e+03    -  9.89e-01 9.91e-01h  1
+       3  0.0000000e+00 1.16e-04 1.03e+03  -1.0 4.07e+02    -  9.90e-01 1.00e+00h  1
+       4  0.0000000e+00 1.03e-05 8.96e+03  -1.0 3.55e+01    -  9.90e-01 1.00e+00h  1
+       5  0.0000000e+00 9.10e-07 5.99e+00  -1.0 3.14e+00    -  9.99e-01 1.00e+00h  1
+    
+    Number of Iterations....: 5
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   9.0953116449465909e-07    9.0953116449465909e-07
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   9.0953116449465909e-07    9.0953116449465909e-07
+    
+    
+    Number of objective function evaluations             = 6
+    Number of objective gradient evaluations             = 6
+    Number of equality constraint evaluations            = 6
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 6
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 5
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.268
+    Total CPU secs in NLP function evaluations           =      2.432
+    
+    EXIT: Optimal Solution Found.
+
+
+Show PFDs with baseline results
+-------------------------------
+
+This displays PFDs in the notebook, and saves them to files. The full
+NGCC model is too big to show well in a single PFD, so it is broken into
+the three main sections, gas turbine, heat recovery steam generator
+(HRSG), and steam turbine.
+
+.. code:: ipython3
+
+    def display_pfd():
+        print("\n\nGas Trubine Section\n")
+        display(SVG(m.fs.gt.write_pfd()))
+        print("\n\nHRSG Section\n")
+        display(SVG(m.fs.hrsg.write_pfd()))
+        print("\n\nSteam Turbine Section\n")
+        display(SVG(m.fs.st.write_pfd()))
+    
+    display_pfd()
+    
+    m.fs.gt.write_pfd(fname="data_pfds/gt_baseline.svg")
+    m.fs.hrsg.write_pfd(fname="data_pfds/hrsg_baseline.svg")
+    m.fs.st.write_pfd(fname="data_pfds/st_baseline.svg")
+
+
+.. parsed-literal::
+
+    
+    
+    Gas Trubine Section
+    
+
+
+
+.. image:: output_10_1.svg
+
+
+.. parsed-literal::
+
+    
+    
+    HRSG Section
+    
+
+
+
+.. image:: output_10_3.svg
+
+
+.. parsed-literal::
+
+    
+    
+    Steam Turbine Section
+    
+
+
+
+.. image:: output_10_5.svg
+
+
+Test key model outputs against NETL baseline
+--------------------------------------------
+
+.. code:: ipython3
+
+    #Assert results approximatly agree with baseline reoprt
+    assert pyo.value(m.fs.net_power_mw[0]) == pytest.approx(646)
+    assert pyo.value(m.fs.gross_power[0]) == pytest.approx(-690e6, rel=0.001)
+    assert pyo.value(100*m.fs.lhv_efficiency[0]) == pytest.approx(52.8, abs=0.1)
+    assert pyo.value(m.fs.total_variable_cost_rate[0]/m.fs.net_power_mw[0]) == pytest.approx(37.2799, rel=0.01)
+    assert pyo.value(m.fs.fuel_cost_rate[0]/m.fs.net_power_mw[0]) == pytest.approx(31.6462, rel=0.01)
+    assert pyo.value(m.fs.other_variable_cost_rate[0]/m.fs.net_power_mw[0]) == pytest.approx(5.63373, rel=0.01)
+    assert pyo.value(m.fs.gt.gt_power[0]) == pytest.approx(-477e6, rel=0.001)
+
+Run turndown cases 5 MW interval
+--------------------------------
+
+Here we set the CO2 capture rate to 97% and set the specific reboiler
+duty to PZ advanced solvent system. The minimum power is 160 MW net,
+which corresponds to a bit under 25%. This is roughly the minimum load
+for the NGCC modeled. Results are tabulated for tags in the tags_output
+tag group in a Pandas data frame.
+
+To run the series, change run_series to True. Running the turndown
+series takes a while, unless previous saved results are available.
+
+.. code:: ipython3
+
+    run_series=False
+    if run_series:
+        idaes.cfg.ipopt.options.tol = 1e-6
+        idaes.cfg.ipopt.options.max_iter = 50
+        solver = pyo.SolverFactory("ipopt")
+    
+        m.fs.cap_specific_reboiler_duty.fix(2.4e6)
+        m.fs.cap_fraction.fix(0.97)
+        powers = np.linspace(650, 160, int((650 - 160)/5) + 1)
+        powers = list(powers)
+        powers.insert(1, 646)
+    
+        df = pd.DataFrame(columns=m.fs.tags_output.table_heading())
+    
+        for p in powers:
+            print(p)
+            fname = f"data/ngcc_{int(p)}.json.gz"
+            if os.path.exists(fname):
+                iutil.from_json(m, fname=fname, wts=iutil.StoreSpec(suffix=False))
+            else:
+                m.fs.net_power_mw.fix(p)
+                res = solver.solve(m, tee=True, symbolic_solver_labels=True)
+                if not pyo.check_optimal_termination(res):
+                    break
+                iutil.to_json(m, fname=fname)
+            df.loc[m.fs.tags_output["net_power"].value] = m.fs.tags_output.table_row(numeric=True)
+    
+        df.to_csv("data_tabulated/ngcc.csv")
+        df
+

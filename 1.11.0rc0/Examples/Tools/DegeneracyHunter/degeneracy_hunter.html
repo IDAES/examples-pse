@@ -1,0 +1,1292 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Degeneracy Hunter Examples &mdash; IDAES v1.11.0rc0 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Degeneracy Hunter Examples</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../../_sources/Examples/Tools/DegeneracyHunter/degeneracy_hunter.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="degeneracy-hunter-examples">
+<h1>Degeneracy Hunter Examples<a class="headerlink" href="#degeneracy-hunter-examples" title="Permalink to this headline">¶</a></h1>
+<p>Created by Prof. Alex Dowling (<a class="reference external" href="mailto:adowling&#37;&#52;&#48;nd&#46;edu">adowling<span>&#64;</span>nd<span>&#46;</span>edu</a>) at the University of
+Notre Dame.</p>
+<p>This notebook shows how to use the following Degeneracy Hunter features
+using two motivating examples: * Inspect constraint violations and
+bounds of a Pyomo model * Compute the Irreducible Degenerate Set (IDS)
+for a Pyomo model * Demonstrates the Ipopt performance benefits from
+removing a single redundant constraint</p>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<p>We start by importing Pyomo and Degeneracy Hunter.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_diagnostics</span> <span class="kn">import</span> <span class="n">DegeneracyHunter</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-1-well-behaved-nonlinear-program">
+<h2>Example 1: Well-Behaved Nonlinear Program<a class="headerlink" href="#example-1-well-behaved-nonlinear-program" title="Permalink to this headline">¶</a></h2>
+<p>Consider the following “well-behaved” nonlinear optimization problem.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*} \min_{\mathbf{x}} \quad &amp; \sum_{i=\{0,...,4\}} x_i^2\\
+\mathrm{s.t.} \quad &amp; x_0 + x_1 - x_3 \geq 10 \\
+&amp; x_0 \times x_3 + x_1 \geq 0 \\
+&amp; x_4 \times x_3 + x_0 \times x_3 + x_4 = 0
+\end{align*}\end{split}\]</div>
+<p>This problem is feasible, well-initialized, and standard constraint
+qualifications hold. As expected, we have no trouble solving this
+problem.</p>
+<div class="section" id="define-the-model-in-pyomo">
+<h3>Define the model in Pyomo<a class="headerlink" href="#define-the-model-in-pyomo" title="Permalink to this headline">¶</a></h3>
+<p>We start by defining the optimization problem in Pyomo.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)])</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">I</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span><span class="n">initialize</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">con1</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">con2</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">con3</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">I</span><span class="p">))</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="n">Set</span> <span class="n">Declarations</span>
+    <span class="n">I</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Ordered</span><span class="o">=</span><span class="n">Insertion</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Dimen</span> <span class="p">:</span> <span class="n">Domain</span> <span class="p">:</span> <span class="n">Size</span> <span class="p">:</span> <span class="n">Members</span>
+        <span class="kc">None</span> <span class="p">:</span>     <span class="mi">1</span> <span class="p">:</span>    <span class="n">Any</span> <span class="p">:</span>    <span class="mi">5</span> <span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">}</span>
+
+<span class="mi">1</span> <span class="n">Var</span> <span class="n">Declarations</span>
+    <span class="n">x</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="n">I</span>
+        <span class="n">Key</span> <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Value</span> <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Stale</span> <span class="p">:</span> <span class="n">Domain</span>
+          <span class="mi">0</span> <span class="p">:</span>   <span class="o">-</span><span class="mi">10</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>    <span class="mi">10</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+          <span class="mi">1</span> <span class="p">:</span>   <span class="o">-</span><span class="mi">10</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>    <span class="mi">10</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+          <span class="mi">2</span> <span class="p">:</span>   <span class="o">-</span><span class="mi">10</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>    <span class="mi">10</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+          <span class="mi">3</span> <span class="p">:</span>   <span class="o">-</span><span class="mi">10</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>    <span class="mi">10</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+          <span class="mi">4</span> <span class="p">:</span>   <span class="o">-</span><span class="mi">10</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>    <span class="mi">10</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+
+<span class="mi">1</span> <span class="n">Objective</span> <span class="n">Declarations</span>
+    <span class="n">obj</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Active</span> <span class="p">:</span> <span class="n">Sense</span>    <span class="p">:</span> <span class="n">Expression</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="kc">True</span> <span class="p">:</span> <span class="n">minimize</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="mi">3</span> <span class="n">Constraint</span> <span class="n">Declarations</span>
+    <span class="n">con1</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>  <span class="mf">10.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>  <span class="o">+</span><span class="n">Inf</span> <span class="p">:</span>   <span class="kc">True</span>
+    <span class="n">con2</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>             <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="mf">0.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">:</span>  <span class="o">+</span><span class="n">Inf</span> <span class="p">:</span>   <span class="kc">True</span>
+    <span class="n">con3</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>                         <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="mf">0.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">0.0</span> <span class="p">:</span>   <span class="kc">True</span>
+
+<span class="mi">6</span> <span class="n">Declarations</span><span class="p">:</span> <span class="n">I</span> <span class="n">x</span> <span class="n">con1</span> <span class="n">con2</span> <span class="n">con3</span> <span class="n">obj</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="evaluate-the-initial-point">
+<h3>Evaluate the initial point<a class="headerlink" href="#evaluate-the-initial-point" title="Permalink to this headline">¶</a></h3>
+<p>Initialization is extremely important for nonlinear optimization
+problems. By setting the Ipopt option <code class="docutils literal notranslate"><span class="pre">max_iter</span></code> to zero, we can
+inspect the initial point.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Specify Ipopt as the solver</span>
+<span class="n">opt</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+
+<span class="c1"># Specifying an iteration limit of 0 allows us to inspect the initial point</span>
+<span class="n">opt</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_iter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c1"># &quot;Solving&quot; the model with an iteration limit of 0 load the initial point and applies</span>
+<span class="c1"># any preprocessors (e.g., enforces bounds)</span>
+<span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Create Degeneracy Hunter object</span>
+<span class="c1"># The Degeneracy Hunter algorithm needs a MILP solver</span>
+<span class="c1"># Here we specify CBC, an open source solver</span>
+<span class="n">dh</span> <span class="o">=</span> <span class="n">DegeneracyHunter</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;cbc&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: max_iter=0
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:        3
+Number of nonzeros in inequality constraint Jacobian.:        6
+Number of nonzeros in Lagrangian Hessian.............:        7
+
+Total number of variables............................:        5
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        5
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        1
+Total number of inequality constraints...............:        2
+        inequality constraints with only lower bounds:        2
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  5.0000000e+00 9.00e+00 2.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   5.0000000000000000e+00    5.0000000000000000e+00
+Dual infeasibility......:   2.0000000000000000e+00    2.0000000000000000e+00
+Constraint violation....:   8.9999999000000006e+00    8.9999999000000006e+00
+Complementarity.........:   1.1000000099999999e+01    1.1000000099999999e+01
+Overall NLP error.......:   1.1000000099999999e+01    1.1000000099999999e+01
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 1
+Number of inequality constraint evaluations          = 1
+Number of equality constraint Jacobian evaluations   = 1
+Number of inequality constraint Jacobian evaluations = 1
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Maximum Number of Iterations Exceeded.
+WARNING: Loading a SolverResults object with a warning status into
+    model.name=&quot;unknown&quot;;
+      - termination condition: maxIterations
+      - message from solver: Ipopt 3.13.2x3a Maximum Number of Iterations
+        Exceeded.</pre>
+<p>We expect the exit status <code class="docutils literal notranslate"><span class="pre">Maximum</span> <span class="pre">Number</span> <span class="pre">of</span> <span class="pre">Iterations</span> <span class="pre">Exceeded</span></code>
+because we told Ipopt to take zero iterations (only evaluate the initial
+point).</p>
+</div>
+<div class="section" id="identify-the-constraint-residuals-larger-than-0-1">
+<h3>Identify the constraint residuals larger than 0.1<a class="headerlink" href="#identify-the-constraint-residuals-larger-than-0-1" title="Permalink to this headline">¶</a></h3>
+<p>When developing nonlinear optimization models, one often wants to know:
+“what constraints are violated at the initial point (or more generally
+the point the solver terminated) within a given tolerance?” Degeneracy
+Hunter makes this very easy by provided a simple interface to several
+IDAES utility functions.</p>
+<p>The following line of code will print out all constraints with residuals
+larger than <code class="docutils literal notranslate"><span class="pre">0.1</span></code>:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dh</span><span class="o">.</span><span class="n">check_residuals</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">All</span> <span class="n">constraints</span> <span class="k">with</span> <span class="n">residuals</span> <span class="n">larger</span> <span class="n">than</span> <span class="mf">0.1</span> <span class="p">:</span>
+
+<span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>   <span class="o">|</span><span class="n">residual</span><span class="o">|</span> <span class="o">=</span> <span class="mf">9.0</span>
+<span class="n">con1</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+    <span class="kc">None</span> <span class="p">:</span>  <span class="mf">10.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>  <span class="o">+</span><span class="n">Inf</span> <span class="p">:</span>   <span class="kc">True</span>
+<span class="n">variable</span>    <span class="n">lower</span>   <span class="n">value</span>   <span class="n">upper</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">1.0</span>     <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">1.0</span>     <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">1.0</span>     <span class="mi">10</span>
+
+<span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>   <span class="o">|</span><span class="n">residual</span><span class="o">|</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">con3</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>                         <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+    <span class="kc">None</span> <span class="p">:</span>   <span class="mf">0.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">0.0</span> <span class="p">:</span>   <span class="kc">True</span>
+<span class="n">variable</span>    <span class="n">lower</span>   <span class="n">value</span>   <span class="n">upper</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">1.0</span>     <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">1.0</span>     <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">1.0</span>     <span class="mi">10</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7f298429bb20</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7f298429bc40</span><span class="o">&gt;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Important: Ipopt does several preprocessing steps when we executed it
+with zero iterations. When checking the initial point, it is strongly
+recommended to call Ipopt with zero iterations first. Otherwise, you
+will not be analyzing the initial point Ipopt starts with.</p>
+</div>
+<div class="section" id="identify-all-variables-within-1-of-their-bounds">
+<h3>Identify all variables within 1 of their bounds<a class="headerlink" href="#identify-all-variables-within-1-of-their-bounds" title="Permalink to this headline">¶</a></h3>
+<p>Another common question when developing optimization models is, “Which
+variables are within their bounds by a given tolerance?” Below is the
+syntax:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dh</span><span class="o">.</span><span class="n">check_variable_bounds</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">No</span> <span class="n">variables</span> <span class="n">within</span> <span class="mf">1.0</span> <span class="p">(</span><span class="n">absolute</span><span class="p">)</span> <span class="n">of</span> <span class="n">their</span> <span class="n">bounds</span><span class="o">.</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">component_set</span><span class="o">.</span><span class="n">ComponentSet</span> <span class="n">at</span> <span class="mh">0x7f2983ffcac0</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="solve-the-optimization-problem">
+<h3>Solve the optimization problem<a class="headerlink" href="#solve-the-optimization-problem" title="Permalink to this headline">¶</a></h3>
+<p>Now we can solve the optimization problem. We first set the number of
+iterations to 50 and then resolve with Ipopt.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opt</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_iter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: max_iter=50
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:        3
+Number of nonzeros in inequality constraint Jacobian.:        6
+Number of nonzeros in Lagrangian Hessian.............:        7
+
+Total number of variables............................:        5
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        5
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        1
+Total number of inequality constraints...............:        2
+        inequality constraints with only lower bounds:        2
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  5.0000000e+00 9.00e+00 2.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  5.5940309e+00 8.19e+00 2.58e+00  -1.0 4.12e+00    -  3.29e-01 9.99e-02h  1
+   2  4.3446689e+01 2.13e+00 2.10e+00  -1.0 3.67e+00    -  7.64e-01 1.00e+00h  1
+   3  5.0854561e+01 6.80e-01 1.02e+00  -1.0 1.02e+00   0.0 9.34e-01 1.00e+00h  1
+   4  4.9204340e+01 4.73e-01 1.26e+00  -1.0 1.78e+00    -  1.00e+00 1.00e+00f  1
+   5  4.8955163e+01 9.44e-01 1.57e+00  -1.0 4.62e+00  -0.5 1.00e+00 3.51e-01f  2
+   6  4.5850988e+01 8.92e-01 1.56e+00  -1.0 2.14e+00  -0.1 1.00e+00 7.67e-01f  1
+   7  4.5704084e+01 1.19e+00 1.75e+00  -1.0 4.73e+00    -  1.00e+00 2.50e-01f  3
+   8  4.5331671e+01 1.31e+00 3.01e+00  -1.0 1.56e+01    -  7.20e-01 5.98e-02f  4
+   9  4.1480725e+01 7.76e-03 1.98e-01  -1.0 4.94e-01    -  1.00e+00 1.00e+00f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  4.1177584e+01 1.30e-03 8.56e-03  -2.5 1.48e-01    -  1.00e+00 1.00e+00f  1
+  11  4.1157407e+01 7.91e-06 1.09e-05  -3.8 9.88e-03    -  1.00e+00 1.00e+00h  1
+  12  4.1157067e+01 2.59e-10 1.57e-09  -5.7 1.30e-04    -  1.00e+00 1.00e+00h  1
+  13  4.1157063e+01 2.24e-14 1.63e-13  -8.6 1.52e-06    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 13
+
+                                   (scaled)                 (unscaled)
+Objective...............:   4.1157063321491172e+01    4.1157063321491172e+01
+Dual infeasibility......:   1.6278818285040336e-13    1.6278818285040336e-13
+Constraint violation....:   2.2426505097428162e-14    2.2426505097428162e-14
+Complementarity.........:   2.5065697306197698e-09    2.5065697306197698e-09
+Overall NLP error.......:   2.5065697306197698e-09    2.5065697306197698e-09
+
+
+Number of objective function evaluations             = 24
+Number of objective gradient evaluations             = 14
+Number of equality constraint evaluations            = 24
+Number of inequality constraint evaluations          = 24
+Number of equality constraint Jacobian evaluations   = 14
+Number of inequality constraint Jacobian evaluations = 14
+Number of Lagrangian Hessian evaluations             = 13
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.</pre>
+<pre class="literal-block">{'Problem': [{'Lower bound': -inf, 'Upper bound': inf, 'Number of objectives': 1, 'Number of constraints': 3, 'Number of variables': 5, 'Sense': 'unknown'}], 'Solver': [{'Status': 'ok', 'Message': 'Ipopt 3.13.2\x3a Optimal Solution Found', 'Termination condition': 'optimal', 'Id': 0, 'Error rc': 0, 'Time': 0.009085655212402344}], 'Solution': [OrderedDict([('number of solutions', 0), ('number of solutions displayed', 0)])]}</pre>
+<p>As expected, Ipopt has no trouble solving this optimization problem.</p>
+</div>
+<div class="section" id="check-if-any-constraint-residuals-are-large-than-1e-14">
+<h3>Check if any constraint residuals are large than 1E-14<a class="headerlink" href="#check-if-any-constraint-residuals-are-large-than-1e-14" title="Permalink to this headline">¶</a></h3>
+<p>Let’s now inspect the new solution to see which (if any) constraints
+have residuals larger than 10<span class="math notranslate nohighlight">\(^{-14}\)</span>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dh</span><span class="o">.</span><span class="n">check_residuals</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">1E-14</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">All</span> <span class="n">constraints</span> <span class="k">with</span> <span class="n">residuals</span> <span class="n">larger</span> <span class="n">than</span> <span class="mf">1e-14</span> <span class="p">:</span>
+
+<span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>   <span class="o">|</span><span class="n">residual</span><span class="o">|</span> <span class="o">=</span> <span class="mf">9.97185747309004e-08</span>
+<span class="n">con1</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+    <span class="kc">None</span> <span class="p">:</span>  <span class="mf">10.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>  <span class="o">+</span><span class="n">Inf</span> <span class="p">:</span>   <span class="kc">True</span>
+<span class="n">variable</span>    <span class="n">lower</span>   <span class="n">value</span>   <span class="n">upper</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">1.4516741106008322</span>      <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">5.061595738300216</span>       <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="o">-</span><span class="mf">3.4867300513803765</span>     <span class="mi">10</span>
+
+<span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>   <span class="o">|</span><span class="n">residual</span><span class="o">|</span> <span class="o">=</span> <span class="mf">7.942586144338293e-09</span>
+<span class="n">con2</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>             <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+    <span class="kc">None</span> <span class="p">:</span>   <span class="mf">0.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">:</span>  <span class="o">+</span><span class="n">Inf</span> <span class="p">:</span>   <span class="kc">True</span>
+<span class="n">variable</span>    <span class="n">lower</span>   <span class="n">value</span>   <span class="n">upper</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">5.061595738300216</span>       <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">1.4516741106008322</span>      <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="o">-</span><span class="mf">3.4867300513803765</span>     <span class="mi">10</span>
+
+<span class="n">count</span> <span class="o">=</span> <span class="mi">2</span>   <span class="o">|</span><span class="n">residual</span><span class="o">|</span> <span class="o">=</span> <span class="mf">2.2426505097428162e-14</span>
+<span class="n">con3</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>                         <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+    <span class="kc">None</span> <span class="p">:</span>   <span class="mf">0.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">0.0</span> <span class="p">:</span>   <span class="kc">True</span>
+<span class="n">variable</span>    <span class="n">lower</span>   <span class="n">value</span>   <span class="n">upper</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="o">-</span><span class="mf">1.128125759356881</span>      <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="o">-</span><span class="mf">3.4867300513803765</span>     <span class="mi">10</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>                 <span class="o">-</span><span class="mi">10</span>     <span class="mf">1.4516741106008322</span>      <span class="mi">10</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7f298429bb20</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7f298429b880</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7f298429bc40</span><span class="o">&gt;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>As expected, all of the constraints are satisfied, even with this fairly
+tight tolerance.</p>
+</div>
+<div class="section" id="identify-all-variables-within-1e-5-of-their-bounds">
+<h3>Identify all variables within 1E-5 of their bounds<a class="headerlink" href="#identify-all-variables-within-1e-5-of-their-bounds" title="Permalink to this headline">¶</a></h3>
+<p>Finally, let’s check if any of the variables are near their bounds at
+the new solution.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dh</span><span class="o">.</span><span class="n">check_variable_bounds</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">1E-5</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">No</span> <span class="n">variables</span> <span class="n">within</span> <span class="mf">1e-05</span> <span class="p">(</span><span class="n">absolute</span><span class="p">)</span> <span class="n">of</span> <span class="n">their</span> <span class="n">bounds</span><span class="o">.</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">component_set</span><span class="o">.</span><span class="n">ComponentSet</span> <span class="n">at</span> <span class="mh">0x7f2983ff1cd0</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Great, no variables are near their bounds. If a variable was at its
+bound, it is important the inspect the model and confirm the bound is
+physically sensible/what you intended.</p>
+</div>
+<div class="section" id="check-the-rank-of-the-constraint-jacobian-at-the-solution">
+<h3>Check the rank of the constraint Jacobian at the solution<a class="headerlink" href="#check-the-rank-of-the-constraint-jacobian-at-the-solution" title="Permalink to this headline">¶</a></h3>
+<p>The main feature of Degeneracy Hunter is to check if an optimization
+problem is poorly formulated. Let’s see what happens when we check the
+rank on a carefully formulated optimization problem:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dh</span><span class="o">.</span><span class="n">check_rank_equality_constraints</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Checking</span> <span class="n">rank</span> <span class="n">of</span> <span class="n">Jacobian</span> <span class="n">of</span> <span class="n">equality</span> <span class="n">constraints</span><span class="o">...</span>
+<span class="n">Model</span> <span class="n">contains</span> <span class="mi">1</span> <span class="n">equality</span> <span class="n">constraints</span> <span class="ow">and</span> <span class="mi">5</span> <span class="n">variables</span><span class="o">.</span>
+<span class="n">Model</span> <span class="n">needs</span> <span class="n">at</span> <span class="n">least</span> <span class="mi">2</span> <span class="n">equality</span> <span class="n">constraints</span> <span class="n">to</span> <span class="n">check</span> <span class="n">rank</span><span class="o">.</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="example-2-linear-program-with-redundant-equality-constraints">
+<h2>Example 2: Linear Program with Redundant Equality Constraints<a class="headerlink" href="#example-2-linear-program-with-redundant-equality-constraints" title="Permalink to this headline">¶</a></h2>
+<p>Now let’s apply Degeneracy Hunter to a poorly formulated optimization
+problem:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*} \min_{\mathbf{x}} \quad &amp; \sum_{i=\{1,...,3\}} x_i \\
+\mathrm{s.t.}~~&amp; x_1 + x_2 \geq 1 \\
+&amp; x_1 + x_2 + x_3 = 1 \\
+&amp; x_2 - 2 x_3 \leq 1 \\
+&amp; x_1 + x_3 \geq 1 \\
+&amp; x_1 + x_2 + x_3 = 1 \\
+\end{align*}\end{split}\]</div>
+<p>Notice the two equality constraints are redundant. This means the
+constraint qualifications (e.g., LICQ) do not hold which has three
+important implications: 1. The optimal solution may not be
+mathematically well-defined (e.g., the dual variables are not unique) 2.
+The calculations performed by the optimization solver may become
+numerically poorly scaled 3. Theoretical convergence properties of
+optimization algorithms may not hold</p>
+<p>The absolute best defense against this is to detect degenerate equations
+and reformulate the model to remove them; this is the primary purpose of
+Degeneracy Hunter. Let’s see it in action.</p>
+<div class="section" id="id1">
+<h3>Define the model in Pyomo<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">example2</span><span class="p">(</span><span class="n">with_degenerate_constraint</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Create the Pyomo model for Example 2</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        with_degenerate_constraint: Boolean, if True, include the redundant linear constraint</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        m2: Pyomo model</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">m2</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+
+    <span class="n">m2</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">)])</span>
+
+    <span class="n">m2</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">I</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">),</span><span class="n">initialize</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="n">m2</span><span class="o">.</span><span class="n">con1</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">m2</span><span class="o">.</span><span class="n">con2</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">m2</span><span class="o">.</span><span class="n">con3</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">m2</span><span class="o">.</span><span class="n">con4</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">with_degenerate_constraint</span><span class="p">:</span>
+        <span class="n">m2</span><span class="o">.</span><span class="n">con5</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">m2</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">I</span><span class="p">))</span>
+
+    <span class="n">m2</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">m2</span>
+
+<span class="c1"># Create the Pyomo model for Example 2 including the redundant constraint</span>
+<span class="n">m2</span> <span class="o">=</span> <span class="n">example2</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="n">Set</span> <span class="n">Declarations</span>
+    <span class="n">I</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Ordered</span><span class="o">=</span><span class="n">Insertion</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Dimen</span> <span class="p">:</span> <span class="n">Domain</span> <span class="p">:</span> <span class="n">Size</span> <span class="p">:</span> <span class="n">Members</span>
+        <span class="kc">None</span> <span class="p">:</span>     <span class="mi">1</span> <span class="p">:</span>    <span class="n">Any</span> <span class="p">:</span>    <span class="mi">3</span> <span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
+
+<span class="mi">1</span> <span class="n">Var</span> <span class="n">Declarations</span>
+    <span class="n">x</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="n">I</span>
+        <span class="n">Key</span> <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Value</span> <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Stale</span> <span class="p">:</span> <span class="n">Domain</span>
+          <span class="mi">1</span> <span class="p">:</span>     <span class="mi">0</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>     <span class="mi">5</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+          <span class="mi">2</span> <span class="p">:</span>     <span class="mi">0</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>     <span class="mi">5</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+          <span class="mi">3</span> <span class="p">:</span>     <span class="mi">0</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>     <span class="mi">5</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+
+<span class="mi">1</span> <span class="n">Objective</span> <span class="n">Declarations</span>
+    <span class="n">obj</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Active</span> <span class="p">:</span> <span class="n">Sense</span>    <span class="p">:</span> <span class="n">Expression</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="kc">True</span> <span class="p">:</span> <span class="n">minimize</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+<span class="mi">5</span> <span class="n">Constraint</span> <span class="n">Declarations</span>
+    <span class="n">con1</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>        <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="p">:</span>  <span class="o">+</span><span class="n">Inf</span> <span class="p">:</span>   <span class="kc">True</span>
+    <span class="n">con2</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>   <span class="kc">True</span>
+    <span class="n">con3</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>          <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>  <span class="o">-</span><span class="n">Inf</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>   <span class="kc">True</span>
+    <span class="n">con4</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>        <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>  <span class="o">+</span><span class="n">Inf</span> <span class="p">:</span>   <span class="kc">True</span>
+    <span class="n">con5</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>   <span class="kc">True</span>
+
+<span class="mi">8</span> <span class="n">Declarations</span><span class="p">:</span> <span class="n">I</span> <span class="n">x</span> <span class="n">con1</span> <span class="n">con2</span> <span class="n">con3</span> <span class="n">con4</span> <span class="n">con5</span> <span class="n">obj</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>Evaluate the initial point<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Specifying an iteration limit of 0 allows us to inspect the initial point</span>
+<span class="n">opt</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_iter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c1"># &quot;Solving&quot; the model with an iteration limit of 0 load the initial point and applies</span>
+<span class="c1"># any preprocessors (e.g., enforces bounds)</span>
+<span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Create Degeneracy Hunter object</span>
+<span class="c1"># The Degeneracy Hunter algorithm needs a MILP solver</span>
+<span class="c1"># Here we specify CBC, an open source solver</span>
+<span class="n">dh2</span> <span class="o">=</span> <span class="n">DegeneracyHunter</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;cbc&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: max_iter=0
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:        6
+Number of nonzeros in inequality constraint Jacobian.:        6
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Total number of variables............................:        3
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        3
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        2
+Total number of inequality constraints...............:        3
+        inequality constraints with only lower bounds:        2
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        1
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  3.0000000e+00 2.00e+00 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   3.0000000000000000e+00    3.0000000000000000e+00
+Dual infeasibility......:   1.0000000000000000e+00    1.0000000000000000e+00
+Constraint violation....:   2.0000000000000000e+00    2.0000000000000000e+00
+Complementarity.........:   4.0000000499999997e+00    4.0000000499999997e+00
+Overall NLP error.......:   4.0000000499999997e+00    4.0000000499999997e+00
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 1
+Number of inequality constraint evaluations          = 1
+Number of equality constraint Jacobian evaluations   = 1
+Number of inequality constraint Jacobian evaluations = 1
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Maximum Number of Iterations Exceeded.
+WARNING: Loading a SolverResults object with a warning status into
+    model.name=&quot;unknown&quot;;
+      - termination condition: maxIterations
+      - message from solver: Ipopt 3.13.2x3a Maximum Number of Iterations
+        Exceeded.</pre>
+</div>
+<div class="section" id="identify-constraints-with-residuals-greater-than-0-1-at-the-initial-point">
+<h3>Identify constraints with residuals greater than 0.1 at the initial point<a class="headerlink" href="#identify-constraints-with-residuals-greater-than-0-1-at-the-initial-point" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dh2</span><span class="o">.</span><span class="n">check_residuals</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">All</span> <span class="n">constraints</span> <span class="k">with</span> <span class="n">residuals</span> <span class="n">larger</span> <span class="n">than</span> <span class="mf">0.1</span> <span class="p">:</span>
+
+<span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>   <span class="o">|</span><span class="n">residual</span><span class="o">|</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="n">con2</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+    <span class="kc">None</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>   <span class="kc">True</span>
+<span class="n">variable</span>    <span class="n">lower</span>   <span class="n">value</span>   <span class="n">upper</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>                 <span class="mi">0</span>       <span class="mf">1.0</span>     <span class="mi">5</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>                 <span class="mi">0</span>       <span class="mf">1.0</span>     <span class="mi">5</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>                 <span class="mi">0</span>       <span class="mf">1.0</span>     <span class="mi">5</span>
+
+<span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>   <span class="o">|</span><span class="n">residual</span><span class="o">|</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="n">con5</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+    <span class="kc">None</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>   <span class="kc">True</span>
+<span class="n">variable</span>    <span class="n">lower</span>   <span class="n">value</span>   <span class="n">upper</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>                 <span class="mi">0</span>       <span class="mf">1.0</span>     <span class="mi">5</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>                 <span class="mi">0</span>       <span class="mf">1.0</span>     <span class="mi">5</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>                 <span class="mi">0</span>       <span class="mf">1.0</span>     <span class="mi">5</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7f2a8980a700</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7f2a8980a820</span><span class="o">&gt;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="solve-the-optimization-problem-and-extract-the-solution">
+<h3>Solve the optimization problem and extract the solution<a class="headerlink" href="#solve-the-optimization-problem-and-extract-the-solution" title="Permalink to this headline">¶</a></h3>
+<p>Now let’s solve the optimization problem.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opt</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_iter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">I</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;x[&quot;</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;]=&quot;</span><span class="p">,</span><span class="n">m2</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]())</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: max_iter=50
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:        6
+Number of nonzeros in inequality constraint Jacobian.:        6
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Total number of variables............................:        3
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        3
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        2
+Total number of inequality constraints...............:        3
+        inequality constraints with only lower bounds:        2
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        1
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  3.0000000e+00 2.00e+00 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  1.3934810e+00 3.93e-01 2.17e-01  -1.0 1.23e+00    -  7.90e-01 8.03e-01h  1
+   2  1.0184419e+00 1.84e-02 1.26e-02  -1.7 7.02e-01    -  9.41e-01 9.53e-01h  1
+   3  1.0011246e+00 1.12e-03 3.82e-02  -2.5 1.50e-02    -  1.00e+00 9.39e-01h  1
+   4  1.0006914e+00 6.91e-04 3.12e+00  -2.5 3.17e-03    -  1.00e+00 3.85e-01h  1
+   5  1.0002664e+00 2.66e-04 4.35e+00  -2.5 1.12e-03    -  1.00e+00 6.15e-01h  1
+   6  1.0001115e+00 1.12e-04 1.07e+01  -2.5 4.99e-04    -  1.00e+00 5.82e-01h  1
+   7  1.0000788e+00 7.88e-05 4.33e+01  -2.5 1.88e-04    -  1.00e+00 2.94e-01f  2
+   8  1.0000153e+00 1.53e-05 2.19e+01  -2.5 6.85e-05    -  1.00e+00 8.08e-01h  1
+   9  1.0000118e+00 1.18e-05 2.78e+02  -2.5 3.47e-05    -  1.00e+00 2.45e-01f  2
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  1.0000014e+00 1.44e-06 2.83e-08  -2.5 7.79e-06    -  1.00e+00 1.00e+00h  1
+  11  1.0000000e+00 1.39e-09 1.84e-11  -5.7 2.56e-06    -  1.00e+00 1.00e+00h  1
+  12  1.0000000e+00 1.39e-09 1.24e+02  -8.6 1.16e-08    -  1.00e+00 9.54e-07h 21
+  13  9.9999999e-01 9.82e-09 1.14e-13  -8.6 1.33e-08    -  1.00e+00 1.00e+00s 22
+  14  9.9999999e-01 9.96e-09 6.46e-14  -8.6 2.29e-10    -  1.00e+00 1.00e+00s 22
+  15  9.9999999e-01 9.96e-09 1.82e+02  -9.0 4.00e-11    -  1.00e+00 9.54e-07h 21
+  16  9.9999999e-01 1.00e-08 1.52e-13  -9.0 5.89e-11    -  1.00e+00 1.00e+00s 22
+
+Number of Iterations....: 16
+
+                                   (scaled)                 (unscaled)
+Objective...............:   9.9999999000238915e-01    9.9999999000238915e-01
+Dual infeasibility......:   1.5188693260016487e-13    1.5188693260016487e-13
+Constraint violation....:   9.9976108502985994e-09    9.9976108502985994e-09
+Complementarity.........:   9.2217032157601989e-10    9.2217032157601989e-10
+Overall NLP error.......:   9.9976108502985994e-09    9.9976108502985994e-09
+
+
+Number of objective function evaluations             = 111
+Number of objective gradient evaluations             = 17
+Number of equality constraint evaluations            = 111
+Number of inequality constraint evaluations          = 111
+Number of equality constraint Jacobian evaluations   = 17
+Number of inequality constraint Jacobian evaluations = 17
+Number of Lagrangian Hessian evaluations             = 16
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+x[ 1 ]= 1.0000000099975996
+x[ 2 ]= 0.0
+x[ 3 ]= 0.0</pre>
+<p>We got lucky here. Ipopt implements several algorithmic and numerical
+safeguards to handle (mildy) degenerate equations. Nevertheless, notice
+the last column of the Ipopt output labeled <code class="docutils literal notranslate"><span class="pre">ls</span></code>. This is the number
+of linesearch evaluations. For iterations 0 to 11, <code class="docutils literal notranslate"><span class="pre">ls</span></code> is 1, which
+means Ipopt is taking full steps. For iterations 12 to 16, however,
+<code class="docutils literal notranslate"><span class="pre">ls</span></code> is greater than 20. This means Ipopt is struggling (a little) to
+converge to the solution.</p>
+</div>
+<div class="section" id="check-the-rank-of-the-jacobian-of-the-equality-constraints">
+<h3>Check the rank of the Jacobian of the equality constraints<a class="headerlink" href="#check-the-rank-of-the-jacobian-of-the-equality-constraints" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_deficient</span> <span class="o">=</span> <span class="n">dh2</span><span class="o">.</span><span class="n">check_rank_equality_constraints</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Checking</span> <span class="n">rank</span> <span class="n">of</span> <span class="n">Jacobian</span> <span class="n">of</span> <span class="n">equality</span> <span class="n">constraints</span><span class="o">...</span>
+<span class="n">Model</span> <span class="n">contains</span> <span class="mi">2</span> <span class="n">equality</span> <span class="n">constraints</span> <span class="ow">and</span> <span class="mi">3</span> <span class="n">variables</span><span class="o">.</span>
+<span class="n">Computing</span> <span class="n">the</span> <span class="mi">1</span> <span class="n">smallest</span> <span class="n">singular</span> <span class="n">value</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="n">Smallest</span> <span class="n">singular</span> <span class="n">value</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+<span class="mf">0.000E+00</span>
+</pre></div>
+</div>
+<p>A singular value near 0 indicates the Jacobian of the equality
+constraints is rank deficient. For each near-zero singular value, there
+is likely one degenerate constraint.</p>
+</div>
+<div class="section" id="identify-candidate-degenerate-constraints">
+<h3>Identify candidate degenerate constraints<a class="headerlink" href="#identify-candidate-degenerate-constraints" title="Permalink to this headline">¶</a></h3>
+<p>Degeneracy Hunter first identifies candidate degenerate equations.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds2</span> <span class="o">=</span> <span class="n">dh2</span><span class="o">.</span><span class="n">find_candidate_equations</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block"><strong>* Searching for a Single Degenerate Set *</strong>
+Building MILP model...
+2 Set Declarations
+    C : Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :    Any :    2 : {0, 1}
+    V : Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :    Any :    3 : {0, 1, 2}
+
+4 Var Declarations
+    abs_nu : Size=2, Index=C
+        Key : Lower : Value : Upper        : Fixed : Stale : Domain
+          0 :     0 :  None : 100000.00001 : False :  True :  Reals
+          1 :     0 :  None : 100000.00001 : False :  True :  Reals
+    nu : Size=2, Index=C
+        Key : Lower         : Value : Upper        : Fixed : Stale : Domain
+          0 : -100000.00001 :   1.0 : 100000.00001 : False : False :  Reals
+          1 : -100000.00001 :   1.0 : 100000.00001 : False : False :  Reals
+    y_neg : Size=2, Index=C
+        Key : Lower : Value : Upper : Fixed : Stale : Domain
+          0 :     0 :  None :     1 : False :  True : Binary
+          1 :     0 :  None :     1 : False :  True : Binary
+    y_pos : Size=2, Index=C
+        Key : Lower : Value : Upper : Fixed : Stale : Domain
+          0 :     0 :  None :     1 : False :  True : Binary
+          1 :     0 :  None :     1 : False :  True : Binary
+
+1 Constraint Declarations
+    pos_xor_neg : Size=0, Index=C, Active=True
+        Key : Lower : Body : Upper : Active
+
+7 Declarations: C V nu y_pos y_neg abs_nu pos_xor_neg
+Solving MILP model...
+Welcome to the CBC MILP Solver
+Version: 2.10.4
+Build Date: May 25 2021
+
+command line - /home/lbianchi/.idaes/bin/cbc -printingOptions all -import /tmp/tmpqh4wntd8.pyomo.lp -stat=1 -solve -solu /tmp/tmpqh4wntd8.pyomo.soln (default strategy 1)
+Option for printingOptions changed from normal to all
+Presolve 9 (-8) rows, 7 (-2) columns and 20 (-15) elements
+Statistics for presolved model
+Original problem has 4 integers (4 of which binary)
+Presolved problem has 4 integers (4 of which binary)
+==== 5 zero objective 2 different
+5 variables have objective of 0
+2 variables have objective of 1
+==== absolute objective values 2 different
+5 variables have objective of 0
+2 variables have objective of 1
+==== for integers 4 zero objective 1 different
+4 variables have objective of 0
+==== for integers absolute objective values 1 different
+4 variables have objective of 0
+===== end objective counts
+
+
+Problem has 9 rows, 7 columns (2 with objective) and 20 elements
+Column breakdown:
+0 of type 0.0-&gt;inf, 2 of type 0.0-&gt;up, 0 of type lo-&gt;inf,
+1 of type lo-&gt;up, 0 of type free, 0 of type fixed,
+0 of type -inf-&gt;0.0, 0 of type -inf-&gt;up, 4 of type 0.0-&gt;1.0
+Row breakdown:
+0 of type E 0.0, 0 of type E 1.0, 0 of type E -1.0,
+0 of type E other, 0 of type G 0.0, 1 of type G 1.0,
+0 of type G other, 4 of type L 0.0, 0 of type L 1.0,
+4 of type L other, 0 of type Range 0.0-&gt;1.0, 0 of type Range other,
+0 of type Free
+Continuous objective value is 0 - 0.00 seconds
+Cgl0003I 0 fixed, 0 tightened bounds, 2 strengthened rows, 0 substitutions
+Cgl0004I processed model has 9 rows, 7 columns (4 integer (4 of which binary)) and 22 elements
+Cbc0038I Initial state - 2 integers unsatisfied sum - 1
+Cbc0038I Pass   1: suminf.    0.00000 (0) obj. 1.99999e-05 iterations 3
+Cbc0038I Solution found of 1.99999e-05
+Cbc0038I Relaxing continuous gives 2e-05
+Cbc0038I Rounding solution of 1.99999e-05 is better than previous of 2e-05
+
+Cbc0038I Before mini branch and bound, 2 integers at bound fixed and 0 continuous
+Cbc0038I Full problem 9 rows 7 columns, reduced to 7 rows 5 columns
+Cbc0038I Mini branch and bound did not improve solution (0.00 seconds)
+Cbc0038I Round again with cutoff of 8.99991e-06
+Cbc0038I Pass   2: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 2
+Cbc0038I Pass   3: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass   4: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 1
+Cbc0038I Pass   5: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass   6: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass   7: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass   8: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass   9: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  10: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  11: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  12: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 1
+Cbc0038I Pass  13: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  14: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 1
+Cbc0038I Pass  15: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  16: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  17: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  18: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 5
+Cbc0038I Pass  19: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 1
+Cbc0038I Pass  20: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  21: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  22: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  23: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  24: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  25: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  26: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 2
+Cbc0038I Pass  27: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 2
+Cbc0038I Pass  28: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+Cbc0038I Pass  29: suminf.    1.00000 (3) obj. 8.99991e-06 iterations 3
+Cbc0038I Pass  30: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 2
+Cbc0038I Pass  31: suminf.    1.00000 (3) obj. 8.99991e-06 iterations 2
+Cbc0038I No solution found this major pass
+Cbc0038I Before mini branch and bound, 0 integers at bound fixed and 0 continuous
+Cbc0038I Full problem 9 rows 7 columns, reduced to 9 rows 7 columns
+Cbc0038I Mini branch and bound did not improve solution (0.00 seconds)
+Cbc0038I After 0.00 seconds - Feasibility pump exiting with objective of 1.99999e-05 - took 0.00 seconds
+Cbc0012I Integer solution of 2e-05 found by feasibility pump after 0 iterations and 0 nodes (0.00 seconds)
+Cbc0038I Full problem 9 rows 7 columns, reduced to 7 rows 5 columns
+Cbc0006I The LP relaxation is infeasible or too expensive
+Cbc0031I 2 added rows had average density of 2
+Cbc0013I At root node, 2 cuts changed objective from 0 to 1e-05 in 3 passes
+Cbc0014I Cut generator 0 (Probing) - 2 row cuts average 1.0 elements, 2 column cuts (2 active)  in 0.000 seconds - new frequency is 1
+Cbc0014I Cut generator 1 (Gomory) - 2 row cuts average 2.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is 1
+Cbc0014I Cut generator 2 (Knapsack) - 0 row cuts average 0.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is -100
+Cbc0014I Cut generator 3 (Clique) - 0 row cuts average 0.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is -100
+Cbc0014I Cut generator 4 (MixedIntegerRounding2) - 0 row cuts average 0.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is -100
+Cbc0014I Cut generator 5 (FlowCover) - 0 row cuts average 0.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is -100
+Cbc0014I Cut generator 6 (TwoMirCuts) - 2 row cuts average 2.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is 1
+Cbc0001I Search completed - best objective 2.000000000000001e-05, took 6 iterations and 0 nodes (0.00 seconds)
+Cbc0035I Maximum depth 0, 0 variables fixed on reduced cost
+Cuts at root node changed objective from 0 to 1e-05
+Probing was tried 3 times and created 4 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+Gomory was tried 2 times and created 2 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+Knapsack was tried 2 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+Clique was tried 2 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+MixedIntegerRounding2 was tried 2 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+FlowCover was tried 2 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+TwoMirCuts was tried 2 times and created 2 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+ZeroHalf was tried 1 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+
+Result - Optimal solution found
+
+Objective value:                0.00002000
+Enumerated nodes:               0
+Total iterations:               6
+Time (CPU seconds):             0.00
+Time (Wallclock seconds):       0.00
+
+Total time (CPU seconds):       0.00   (Wallclock seconds):       0.00</pre>
+</div>
+<div class="section" id="find-irreducible-degenerate-sets-ids">
+<h3>Find irreducible degenerate sets (IDS)<a class="headerlink" href="#find-irreducible-degenerate-sets-ids" title="Permalink to this headline">¶</a></h3>
+<p>Next, Degeneracy Hunter enumerates through the candidate equations. For
+each candidate equation, Degenerate Hunter solves a MILP to compute the
+irreducible degenerate set that must contain the candidate equation.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ids</span> <span class="o">=</span> <span class="n">dh2</span><span class="o">.</span><span class="n">find_irreducible_degenerate_sets</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block"><strong>* Searching for Irreducible Degenerate Sets *</strong>
+Building MILP model...
+Solving MILP 1 of 2 ...
+Solving MILP 2 of 2 ...
+
+Irreducible Degenerate Set 0
+nu  Constraint Name
+1.0          con2
+-1.0         con5
+
+Irreducible Degenerate Set 1
+nu  Constraint Name
+-1.0         con2
+1.0          con5</pre>
+</div>
+<div class="section" id="reformulate-example-2">
+<h3>Reformulate Example 2<a class="headerlink" href="#reformulate-example-2" title="Permalink to this headline">¶</a></h3>
+<p>Now let’s reformulate the model by skipping/removing the redundant
+equality constraint:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*} \min_{\mathbf{x}} \quad &amp; \sum_{i=\{1,...,3\}} x_i \\
+\mathrm{s.t.}~~&amp; x_1 + x_2 \geq 1 \\
+&amp; x_1 + x_2 + x_3 = 1 \\
+&amp; x_2 - 2 x_3 \leq 1 \\
+&amp; x_1 + x_3 \geq 1
+\end{align*}\end{split}\]</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m2b</span> <span class="o">=</span> <span class="n">example2</span><span class="p">(</span><span class="n">with_degenerate_constraint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="n">Set</span> <span class="n">Declarations</span>
+    <span class="n">I</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Ordered</span><span class="o">=</span><span class="n">Insertion</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Dimen</span> <span class="p">:</span> <span class="n">Domain</span> <span class="p">:</span> <span class="n">Size</span> <span class="p">:</span> <span class="n">Members</span>
+        <span class="kc">None</span> <span class="p">:</span>     <span class="mi">1</span> <span class="p">:</span>    <span class="n">Any</span> <span class="p">:</span>    <span class="mi">3</span> <span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
+
+<span class="mi">1</span> <span class="n">Var</span> <span class="n">Declarations</span>
+    <span class="n">x</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="n">I</span>
+        <span class="n">Key</span> <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Value</span> <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Stale</span> <span class="p">:</span> <span class="n">Domain</span>
+          <span class="mi">1</span> <span class="p">:</span>     <span class="mi">0</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>     <span class="mi">5</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+          <span class="mi">2</span> <span class="p">:</span>     <span class="mi">0</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>     <span class="mi">5</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+          <span class="mi">3</span> <span class="p">:</span>     <span class="mi">0</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>     <span class="mi">5</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+
+<span class="mi">1</span> <span class="n">Objective</span> <span class="n">Declarations</span>
+    <span class="n">obj</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Active</span> <span class="p">:</span> <span class="n">Sense</span>    <span class="p">:</span> <span class="n">Expression</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="kc">True</span> <span class="p">:</span> <span class="n">minimize</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+<span class="mi">4</span> <span class="n">Constraint</span> <span class="n">Declarations</span>
+    <span class="n">con1</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>        <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="p">:</span>  <span class="o">+</span><span class="n">Inf</span> <span class="p">:</span>   <span class="kc">True</span>
+    <span class="n">con2</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>   <span class="kc">True</span>
+    <span class="n">con3</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>          <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>  <span class="o">-</span><span class="n">Inf</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span>   <span class="kc">True</span>
+    <span class="n">con4</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Key</span>  <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Body</span>        <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Active</span>
+        <span class="kc">None</span> <span class="p">:</span>   <span class="mf">1.0</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">:</span>  <span class="o">+</span><span class="n">Inf</span> <span class="p">:</span>   <span class="kc">True</span>
+
+<span class="mi">7</span> <span class="n">Declarations</span><span class="p">:</span> <span class="n">I</span> <span class="n">x</span> <span class="n">con1</span> <span class="n">con2</span> <span class="n">con3</span> <span class="n">con4</span> <span class="n">obj</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="solve-the-reformulated-model">
+<h3>Solve the reformulated model<a class="headerlink" href="#solve-the-reformulated-model" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opt</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;max_iter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m2b</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m2b</span><span class="o">.</span><span class="n">I</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;x[&quot;</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;]=&quot;</span><span class="p">,</span><span class="n">m</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]())</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: max_iter=50
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:        3
+Number of nonzeros in inequality constraint Jacobian.:        6
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Total number of variables............................:        3
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        3
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        1
+Total number of inequality constraints...............:        3
+        inequality constraints with only lower bounds:        2
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        1
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  3.0000000e+00 2.00e+00 6.30e-01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  1.3934810e+00 3.93e-01 1.34e-01  -1.0 1.23e+00    -  7.90e-01 8.03e-01f  1
+   2  1.0184419e+00 1.84e-02 9.15e-03  -1.7 7.02e-01    -  9.41e-01 9.53e-01h  1
+   3  1.0011246e+00 1.12e-03 3.88e-02  -2.5 1.50e-02    -  1.00e+00 9.39e-01h  1
+   4  1.0006914e+00 6.91e-04 3.12e+00  -2.5 3.17e-03    -  1.00e+00 3.85e-01h  1
+   5  1.0002664e+00 2.66e-04 4.35e+00  -2.5 1.12e-03    -  1.00e+00 6.15e-01h  1
+   6  1.0001115e+00 1.12e-04 1.07e+01  -2.5 5.00e-04    -  1.00e+00 5.81e-01h  1
+   7  1.0000788e+00 7.88e-05 4.34e+01  -2.5 1.88e-04    -  1.00e+00 2.93e-01f  2
+   8  1.0000154e+00 1.54e-05 2.26e+01  -2.5 6.89e-05    -  1.00e+00 8.04e-01h  1
+   9  1.0000118e+00 1.18e-05 2.98e+02  -2.5 3.64e-05    -  1.00e+00 2.33e-01f  2
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  1.0000020e+00 2.04e-06 1.33e+02  -2.5 9.72e-06    -  1.00e+00 8.28e-01h  1
+  11  1.0000016e+00 1.61e-06 2.26e+03  -2.5 4.79e-06    -  1.00e+00 2.12e-01f  2
+  12  1.0000002e+00 2.46e-07 8.72e+02  -2.5 1.20e-06    -  1.00e+00 8.47e-01h  1
+  13  1.0000002e+00 1.95e-07 1.71e+04  -2.5 7.02e-07    -  1.00e+00 2.09e-01f  2
+  14  1.0000000e+00 1.54e-08 3.23e+03  -2.5 1.50e-07    -  1.00e+00 9.21e-01h  1
+  15  1.0000000e+00 1.15e-08 9.99e+04  -2.5 6.89e-08    -  1.00e+00 2.54e-01f  2
+  16  1.0000000e+00 2.22e-16 2.83e-08  -2.5 8.21e-09    -  1.00e+00 1.00e+00h  1
+  17  1.0000000e+00 2.22e-16 4.14e-11  -8.6 8.25e-16    -  1.00e+00 1.00e+00   0
+
+Number of Iterations....: 17
+
+                                   (scaled)                 (unscaled)
+Objective...............:   9.9999999999999978e-01    9.9999999999999978e-01
+Dual infeasibility......:   4.1425156707686206e-11    4.1425156707686206e-11
+Constraint violation....:   2.2204460492503131e-16    2.2204460492503131e-16
+Complementarity.........:   2.6658012082875325e-09    2.6658012082875325e-09
+Overall NLP error.......:   2.6658012082875325e-09    2.6658012082875325e-09
+
+
+Number of objective function evaluations             = 23
+Number of objective gradient evaluations             = 18
+Number of equality constraint evaluations            = 23
+Number of inequality constraint evaluations          = 23
+Number of equality constraint Jacobian evaluations   = 18
+Number of inequality constraint Jacobian evaluations = 18
+Number of Lagrangian Hessian evaluations             = 17
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+x[ 1 ]= 5.061595738300216
+x[ 2 ]= 9.184026563775058e-26
+x[ 3 ]= -3.4867300513803765</pre>
+<p>We get the same answer as before, but careful inspection of the Ipopt
+output reveals a subtle improvement. Notice <code class="docutils literal notranslate"><span class="pre">ls</span></code> is only 1 or 2 for
+all of the iterations, in contrast to more than 20 for the original
+model. This means Ipopt is taking (nearly) full steps for all
+iterations.</p>
+<p>Let’s also compare the number of function evaluations.</p>
+<p>Original model (using Ipopt 3.13.2 with <code class="docutils literal notranslate"><span class="pre">ma27</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Number</span> <span class="n">of</span> <span class="n">objective</span> <span class="n">function</span> <span class="n">evaluations</span>             <span class="o">=</span> <span class="mi">111</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">objective</span> <span class="n">gradient</span> <span class="n">evaluations</span>             <span class="o">=</span> <span class="mi">17</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">equality</span> <span class="n">constraint</span> <span class="n">evaluations</span>            <span class="o">=</span> <span class="mi">111</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">inequality</span> <span class="n">constraint</span> <span class="n">evaluations</span>          <span class="o">=</span> <span class="mi">111</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">equality</span> <span class="n">constraint</span> <span class="n">Jacobian</span> <span class="n">evaluations</span>   <span class="o">=</span> <span class="mi">17</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">inequality</span> <span class="n">constraint</span> <span class="n">Jacobian</span> <span class="n">evaluations</span> <span class="o">=</span> <span class="mi">17</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">Lagrangian</span> <span class="n">Hessian</span> <span class="n">evaluations</span>             <span class="o">=</span> <span class="mi">16</span>
+</pre></div>
+</div>
+<p>Reformulated model (using Ipopt 3.13.2 with <code class="docutils literal notranslate"><span class="pre">ma27</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Number</span> <span class="n">of</span> <span class="n">objective</span> <span class="n">function</span> <span class="n">evaluations</span>             <span class="o">=</span> <span class="mi">23</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">objective</span> <span class="n">gradient</span> <span class="n">evaluations</span>             <span class="o">=</span> <span class="mi">18</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">equality</span> <span class="n">constraint</span> <span class="n">evaluations</span>            <span class="o">=</span> <span class="mi">23</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">inequality</span> <span class="n">constraint</span> <span class="n">evaluations</span>          <span class="o">=</span> <span class="mi">23</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">equality</span> <span class="n">constraint</span> <span class="n">Jacobian</span> <span class="n">evaluations</span>   <span class="o">=</span> <span class="mi">18</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">inequality</span> <span class="n">constraint</span> <span class="n">Jacobian</span> <span class="n">evaluations</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">Lagrangian</span> <span class="n">Hessian</span> <span class="n">evaluations</span>             <span class="o">=</span> <span class="mi">17</span>
+</pre></div>
+</div>
+<p>Removing a <strong>single redundant constraint</strong> reduced the number of
+objective and constraint evaluations by a <strong>factor of 5</strong>!</p>
+<p>Often degenerate equations have a much worse impact on large-scale
+problems; for example, degenerate equations can cause Ipopt to require
+many more iterations or terminate at an infeasible point.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

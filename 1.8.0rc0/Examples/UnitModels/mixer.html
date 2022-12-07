@@ -1,0 +1,595 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Tutorial: Mixer Unit Model with Ideal Property Package &mdash; IDAES v1.8.0rc0 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Tutorial: Mixer Unit Model with Ideal Property Package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/Examples/UnitModels/mixer.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="tutorial-mixer-unit-model-with-ideal-property-package">
+<h1>Tutorial: Mixer Unit Model with Ideal Property Package<a class="headerlink" href="#tutorial-mixer-unit-model-with-ideal-property-package" title="Permalink to this headline">¶</a></h1>
+<p><img alt="image0" src="../../_images/mixer.svg" /></p>
+<div class="section" id="learning-outcomes">
+<h2>Learning Outcomes<a class="headerlink" href="#learning-outcomes" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Demonstrate use of the Mixer unit model in IDAES</p></li>
+<li><p>Demonstrate different options available</p></li>
+</ul>
+</div>
+<div class="section" id="problem-statement">
+<h2>Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this headline">¶</a></h2>
+<p>In this example, we will be mixing liquid benzene and liquid toluene
+streams to form a mixture. The inlet conditions are as follows:</p>
+<p><strong>Stream 1:</strong></p>
+<p>Benzene Flow Rate = 100 mol/s</p>
+<p>Pressure = 101325 Pa</p>
+<p>Temperature = 353 K</p>
+<p><strong>Stream 2</strong></p>
+<p>Toluene Flow Rate = 100 mol/s</p>
+<p>Pressure = 202650 Pa</p>
+<p>Temperature = 356 K</p>
+<p>We will look at two cases in this tutorial:</p>
+<ul class="simple">
+<li><p>Case 1: Specify the number of inlets to the mixer, and set the
+<code class="docutils literal notranslate"><span class="pre">momentum_mixing</span></code> type set to “minimize”</p></li>
+<li><p>Case 2: Specify the inlet names, and set <code class="docutils literal notranslate"><span class="pre">momentum_mixing</span></code> type set
+to “equality” (in this case, pressure will be specified for only one
+inlet stream)</p></li>
+</ul>
+<p><strong>Note: When the momentum mixing type is set to ‘minimize’, the mixed
+stream pressure takes the minimum value among all inlet stream
+pressures. When the momentum mixing type is set to ‘equality’, the mixed
+stream, along with all inlet streams have the same value of pressure.</strong></p>
+<p>For more details, please refer to the IDAES documentation:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable">https://idaes-pse.readthedocs.io/en/stable</a></p>
+</div>
+<div class="section" id="setting-up-the-problem-in-idaes">
+<h2>Setting up the problem in IDAES<a class="headerlink" href="#setting-up-the-problem-in-idaes" title="Permalink to this headline">¶</a></h2>
+<p>In the following cell, we will be importing the necessary components
+from Pyomo and IDAES.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import objects from pyomo package</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">SolverFactory</span><span class="p">,</span> <span class="n">value</span>
+
+<span class="c1"># Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+
+<span class="c1"># Import the mixer unit model</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.unit_models</span> <span class="kn">import</span> <span class="n">Mixer</span><span class="p">,</span> <span class="n">MomentumMixingType</span>
+
+<span class="c1"># Import idaes logger to set output levels</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+
+<span class="c1"># Import the BTX_ideal property package to create a properties block for the flowsheet</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.activity_coeff_models</span> <span class="kn">import</span> <span class="n">BTX_activity_coeff_VLE</span>
+
+<span class="c1"># Import the degrees_of_freedom function from the idaes.core.util.model_statistics package</span>
+<span class="c1"># DOF = Number of Model Variables - Number of Model Constraints</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+
+<span class="c1"># Create the ConcreteModel and the FlowsheetBlock objects, and attach the flowsheet block to it.</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span> <span class="c1"># dynamic or ss flowsheet needs to be specified here</span>
+
+<span class="c1"># Add properties parameter block to the flowsheet with specifications</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">BTX_activity_coeff_VLE</span><span class="o">.</span><span class="n">BTXParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;valid_phase&quot;</span><span class="p">:</span> <span class="s1">&#39;Liq&#39;</span><span class="p">,</span>
+                                                                    <span class="s2">&quot;activity_coeff_model&quot;</span><span class="p">:</span>
+                                                                    <span class="s2">&quot;Ideal&quot;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="case-1">
+<h2>Case 1:<a class="headerlink" href="#case-1" title="Permalink to this headline">¶</a></h2>
+<p>Specify the number of inlets to the mixer, and set the
+<code class="docutils literal notranslate"><span class="pre">momentum_mixing</span></code> type set to “minimize”.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create an instance of the mixer unit, attaching it to the flowsheet</span>
+<span class="c1"># Specify that the property package to be used with the mixer is the</span>
+<span class="c1"># one we created earlier, the number of mixer inlets is 2, and momentum</span>
+<span class="c1"># mixing type is minimize</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span> <span class="o">=</span> <span class="n">Mixer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span>
+                                   <span class="s2">&quot;num_inlets&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span>
+                                   <span class="s2">&quot;momentum_mixing_type&quot;</span><span class="p">:</span><span class="n">MomentumMixingType</span><span class="o">.</span><span class="n">minimize</span><span class="p">})</span>
+
+<span class="c1"># Call the degrees_of_freedom function, get initial DOF</span>
+<span class="n">DOF_initial</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The initial degrees of freedom is: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_initial</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">initial</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="ow">is</span><span class="p">:</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>For case 1, we chose to specify only the number of inlets and names were
+not specified. When this option is selected, the inlets are named as
+“inlet_1”, “inlet_2” and so on depending on the number of inlets
+specified. In the following cell, we will use this naming convention to
+specify the inlet conditions.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fix the inlet conditions</span>
+
+<span class="c1"># Benzene stream</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_1</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># converting to mol/s as unit basis is mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_1</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span> <span class="c1"># Pa</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_1</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">353</span><span class="p">)</span> <span class="c1"># K</span>
+
+<span class="c1"># Toluene stream</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_2</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># converting to mol/s as unit basis is mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_2</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_2</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_2</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">202650</span><span class="p">)</span> <span class="c1"># Pa</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">inlet_2</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">356</span><span class="p">)</span> <span class="c1"># K</span>
+
+<span class="c1"># Call the degrees_of_freedom function, get final DOF</span>
+<span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The final degrees of freedom is: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_final</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="ow">is</span><span class="p">:</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<div class="section" id="flowsheet-initialization">
+<h3>Flowsheet Initialization<a class="headerlink" href="#flowsheet-initialization" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize the flowsheet, and set the output at WARNING</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="obtaining-simulation-results">
+<h3>Obtaining Simulation Results<a class="headerlink" href="#obtaining-simulation-results" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Solve the simulation using ipopt</span>
+<span class="c1"># Note: If the degrees of freedom = 0, we have a square problem</span>
+<span class="n">opt</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       68
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       19
+
+Total number of variables............................:       25
+                     variables with only lower bounds:        3
+                variables with lower and upper bounds:        8
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       25
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.58e+02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 3.58e+00 1.00e-02  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+   2  0.0000000e+00 3.54e-02 1.98e-03  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+   3  0.0000000e+00 7.28e-12 1.32e+01  -1.0 9.90e-07    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   2.0968859831870735e-12    7.2759576141834259e-12
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   2.0968859831870735e-12    7.2759576141834259e-12
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+</pre>
+</div>
+<div class="section" id="view-results">
+<h3>View Results<a class="headerlink" href="#view-results" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display output report</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">mixer_1</span>                                                          <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                            <span class="n">inlet_1</span>  <span class="n">inlet_2</span>   <span class="n">Outlet</span>
+    <span class="n">flow_mol</span>                   <span class="mi">100</span>      <span class="mi">100</span>      <span class="mf">200.00</span>
+    <span class="n">mole_frac_comp</span> <span class="n">benzene</span>       <span class="mi">1</span>        <span class="mi">0</span>     <span class="mf">0.50000</span>
+    <span class="n">mole_frac_comp</span> <span class="n">toluene</span>       <span class="mi">0</span>        <span class="mi">1</span>     <span class="mf">0.50000</span>
+    <span class="n">temperature</span>                <span class="mi">353</span>      <span class="mi">356</span>      <span class="mf">354.61</span>
+    <span class="n">pressure</span>                <span class="mi">101325</span>   <span class="mi">202650</span>  <span class="mf">1.0133e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="case-2">
+<h2>Case 2<a class="headerlink" href="#case-2" title="Permalink to this headline">¶</a></h2>
+<p>For case 2, we will specify the inlet names for the two inlets, and set
+<code class="docutils literal notranslate"><span class="pre">momentum_mixing</span></code> type set to “equality” (in this case, pressure will
+be specified for only one inlet stream). We will name the 2 inlets as
+“benzene_inlet” and “toluene_inlet”.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create an instance of another mixer unit, attaching it to the same flowsheet.</span>
+<span class="c1"># Specify that the property package to be used with the mixer is the one we created earlier,</span>
+<span class="c1"># inlet list is specified but names are specified, and momentum mixing type is equality</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span> <span class="o">=</span> <span class="n">Mixer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span>
+                              <span class="s2">&quot;inlet_list&quot;</span><span class="p">:[</span><span class="s2">&quot;benzene_inlet&quot;</span><span class="p">,</span><span class="s2">&quot;toluene_inlet&quot;</span><span class="p">],</span>
+                              <span class="s2">&quot;momentum_mixing_type&quot;</span><span class="p">:</span><span class="n">MomentumMixingType</span><span class="o">.</span><span class="n">equality</span><span class="p">})</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check the required degrees of freedom</span>
+<span class="n">DOF_init</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The initial degrees of freedom is: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_init</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">initial</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="ow">is</span><span class="p">:</span> <span class="mi">9</span>
+</pre></div>
+</div>
+<p>We see that the degrees of freedom has dropped by 1 to 9 when compared
+with case 1. This is because we selected the <code class="docutils literal notranslate"><span class="pre">momentum_mixing_type</span></code> as
+<code class="docutils literal notranslate"><span class="pre">MomentumMixingType.equality</span></code> which basically adds a constraint that
+equates the pressure between all inlets and the outlet. Therefore, when
+we specify the inlet confitions in the next cell, we will define the
+pressure for only the <code class="docutils literal notranslate"><span class="pre">benzene_inlet</span></code> stream.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fix the stream inlet conditions</span>
+
+<span class="c1"># Benzene stream</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">benzene_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># converting to mol/s as unit basis is mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">benzene_inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">benzene_inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">benzene_inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span> <span class="c1"># Pa , Another option is m1.fs.mixer2.inlet2.pressure.fix(202650)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">benzene_inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">353</span><span class="p">)</span> <span class="c1"># K</span>
+
+<span class="c1"># Toluene stream</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">toluene_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># converting to mol/s as unit basis is mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">toluene_inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">toluene_inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">toluene_inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">356</span><span class="p">)</span> <span class="c1"># K</span>
+
+<span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The final degrees of freedom is: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_final</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="ow">is</span><span class="p">:</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<div class="section" id="id1">
+<h3>Flowsheet Initialization<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Initialize the flowsheet, and set the output at WARNING</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>Obtaining Simulation Results<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Solve the simulation using ipopt</span>
+<span class="c1"># Note: If the degrees of freedom = 0, we have a square problem</span>
+<span class="n">opt</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       66
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       18
+
+Total number of variables............................:       24
+                     variables with only lower bounds:        4
+                variables with lower and upper bounds:        8
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       24
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.58e+02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 3.58e+00 1.00e-02  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+   2  0.0000000e+00 3.54e-02 1.98e-03  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+   3  0.0000000e+00 7.28e-12 1.32e+01  -1.0 9.90e-07    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   2.0968859831870735e-12    7.2759576141834259e-12
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   2.0968859831870735e-12    7.2759576141834259e-12
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+</pre>
+</div>
+<div class="section" id="id3">
+<h3>View Results<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display a readable report</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">mixer_2</span>                                                          <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                            <span class="n">benzene_inlet</span>  <span class="n">toluene_inlet</span>   <span class="n">Outlet</span>
+    <span class="n">flow_mol</span>                      <span class="mi">100</span>           <span class="mf">100.00</span>       <span class="mf">200.00</span>
+    <span class="n">mole_frac_comp</span> <span class="n">benzene</span>          <span class="mi">1</span>           <span class="mf">0.0000</span>      <span class="mf">0.50000</span>
+    <span class="n">mole_frac_comp</span> <span class="n">toluene</span>          <span class="mi">0</span>           <span class="mf">1.0000</span>      <span class="mf">0.50000</span>
+    <span class="n">temperature</span>                   <span class="mi">353</span>           <span class="mf">356.00</span>       <span class="mf">354.61</span>
+    <span class="n">pressure</span>                   <span class="mi">101325</span>       <span class="mf">1.0132e+05</span>   <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

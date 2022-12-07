@@ -1,0 +1,1729 @@
+Using the Data Management Framework in IDAES to store data and parameters
+-------------------------------------------------------------------------
+
+In the previous two notebooks, we saw how to use the ``parmest`` tool
+with IDAES models (unit models or the state block) to estimate the
+binary interaction parameters for the NRTL model with benzene and
+toluene as components. In this module, we will specifically see how to
+use the Data Management Framework (DMF) in IDAES that enables data
+provenance. Specifically, this module will demonstrate storing estimated
+parameters and also the associated datasets that were used in estimating
+those parameters. In this example, we will be using the
+``Parameter_estimation_NRTL_using_unit_model`` notebook.
+
+We will complete the following tasks: \* Split the dataset into two
+sub-datasets and use this to estimate the binary interaction parameters
+\* Use DMF to store the estimated parameters with the data source that
+was used
+
+Key links to documentation:
+---------------------------
+
+-  DMF -
+   https://idaes-pse.readthedocs.io/en/stable/user_guide/components/dmf/index.html?highlight=dmf
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+Inline Exercise: import ``ConcreteModel`` from Pyomo, ``FlowsheetBlock``
+and ``Flash`` from IDAES.
+
+.. raw:: html
+
+   </div>
+
+.. code:: ipython3
+
+    # Todo: import ConcreteModel from pyomo.environ
+    from pyomo.environ import ConcreteModel, value
+    
+    # Todo: import FlowsheetBlock from idaes.core
+    from idaes.core import FlowsheetBlock
+    
+    # Todo: import Flash unit model from idaes.generic_models.unit_models
+    from idaes.generic_models.unit_models import Flash
+
+
+In the next cell, we will be importing the parameter block that we will
+be using in this module and the idaes logger.
+
+.. code:: ipython3
+
+    from idaes.generic_models.properties.activity_coeff_models.\
+        BTX_activity_coeff_VLE import BTXParameterBlock
+    import idaes.logger as idaeslog
+
+In the next cell, we import ``parmest`` from Pyomo and the ``pandas``
+package. We need ``pandas`` as ``parmest`` uses ``pandas.dataframe`` for
+handling the input data and the results.
+
+.. code:: ipython3
+
+    import pyomo.contrib.parmest.parmest as parmest
+    import pandas as pd
+
+Setting up an initialized model
+-------------------------------
+
+We need to provide a method that returns an initialized model to the
+``parmest`` tool in Pyomo.
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+Inline Exercise: Using what you have learned from previous modules, fill
+in the missing code below to return an initialized IDAES model.
+
+.. raw:: html
+
+   </div>
+
+.. code:: ipython3
+
+    def NRTL_model(data):
+        
+        #Todo: Create a ConcreteModel object
+        m = ConcreteModel()
+        
+        #Todo: Create FlowsheetBlock object
+        m.fs = FlowsheetBlock(default={"dynamic": False})
+        
+    
+        #Todo: Create a properties parameter object with the following options:
+        # "valid_phase": ('Liq', 'Vap')
+        # "activity_coeff_model": 'NRTL'
+        m.fs.properties = BTXParameterBlock(default={"valid_phase":
+                                                     ('Liq', 'Vap'),
+                                                     "activity_coeff_model":
+                                                     'NRTL'})
+        m.fs.flash = Flash(default={"property_package": m.fs.properties})
+    
+        # Initialize at a certain inlet condition
+        m.fs.flash.inlet.flow_mol.fix(1)
+        m.fs.flash.inlet.temperature.fix(368)
+        m.fs.flash.inlet.pressure.fix(101325)
+        m.fs.flash.inlet.mole_frac_comp[0, "benzene"].fix(0.5)
+        m.fs.flash.inlet.mole_frac_comp[0, "toluene"].fix(0.5)
+    
+        # Set Flash unit specifications
+        m.fs.flash.heat_duty.fix(0)
+        m.fs.flash.deltaP.fix(0)
+    
+        # Fix NRTL specific variables
+        # alpha values (set at 0.3)
+        m.fs.properties.\
+            alpha["benzene", "benzene"].fix(0)
+        m.fs.properties.\
+            alpha["benzene", "toluene"].fix(0.3)
+        m.fs.properties.\
+            alpha["toluene", "toluene"].fix(0)
+        m.fs.properties.\
+            alpha["toluene", "benzene"].fix(0.3)
+    
+        # initial tau values
+        m.fs.properties.\
+            tau["benzene", "benzene"].fix(0)
+        m.fs.properties.\
+            tau["benzene", "toluene"].fix(-0.9)
+        m.fs.properties.\
+            tau["toluene", "toluene"].fix(0)
+        m.fs.properties.\
+            tau["toluene", "benzene"].fix(1.4)
+    
+        # Initialize the flash unit
+        m.fs.flash.initialize(outlvl=idaeslog.INFO_LOW)
+    
+        # Fix at actual temperature
+        m.fs.flash.inlet.temperature.fix(float(data["temperature"]))
+    
+        # Set bounds on variables to be estimated
+        m.fs.properties.\
+            tau["benzene", "toluene"].setlb(-5)
+        m.fs.properties.\
+            tau["benzene", "toluene"].setub(5)
+    
+        m.fs.properties.\
+            tau["toluene", "benzene"].setlb(-5)
+        m.fs.properties.\
+            tau["toluene", "benzene"].setub(5)
+    
+        # Return initialized flash model
+        return m
+
+
+Parameter estimation using parmest
+----------------------------------
+
+In addition to providing a method to return an initialized model, the
+``parmest`` tool needs the following:
+
+-  List of variable names to be estimated
+-  Dataset with multiple scenarios
+-  Expression to compute the sum of squared errors
+
+In this example, we only estimate the binary interaction parameter
+(``tau_ij``). Given that this variable is usually indexed as
+``tau_ij = Var(component_list, component_list)``, there are 2*2=4
+degrees of freedom. However, when i=j, the binary interaction parameter
+is 0. Therefore, in this problem, we estimate the binary interaction
+parameter for the following variables only:
+
+-  fs.properties.tau[‘benzene’, ‘toluene’]
+-  fs.properties.tau[‘toluene’, ‘benzene’]
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+Inline Exercise: Create a list called ``variable_name`` with the
+above-mentioned variables declared as strings.
+
+.. raw:: html
+
+   </div>
+
+.. code:: ipython3
+
+    # Todo: Create a list of vars to estimate
+    variable_name = ["fs.properties.tau['benzene', 'toluene']",
+                     "fs.properties.tau['toluene', 'benzene']"]
+
+
+Pyomo’s ``parmest`` tool supports the following data formats: - pandas
+dataframe - list of dictionaries - list of json file names.
+
+Please see the documentation for more details.
+
+For this example, we load data from the csv file
+``BT_NRTL_dataset.csv``. The dataset consists of fifty data points which
+provide the mole fraction of benzene in the vapor and liquid phase as a
+function of temperature.
+
+.. code:: ipython3
+
+    # Load all data from csv
+    data = pd.read_csv('BT_NRTL_dataset.csv')
+    
+    # Display the dataset
+    display(data)
+    
+    # Split the data set into two data sets
+    data_subset_1 = data.loc[0:24]
+    display(data_subset_1)
+    
+    data_subset_2 = data.loc[25:49].reset_index()
+    display(data_subset_2)
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>temperature</th>
+          <th>liq_benzene</th>
+          <th>vap_benzene</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>365.500000</td>
+          <td>0.480953</td>
+          <td>0.692110</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>365.617647</td>
+          <td>0.462444</td>
+          <td>0.667699</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>365.735294</td>
+          <td>0.477984</td>
+          <td>0.692441</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>365.852941</td>
+          <td>0.440547</td>
+          <td>0.640336</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>365.970588</td>
+          <td>0.427421</td>
+          <td>0.623328</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>366.088235</td>
+          <td>0.442725</td>
+          <td>0.647796</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>366.205882</td>
+          <td>0.434374</td>
+          <td>0.637691</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td>366.323529</td>
+          <td>0.444642</td>
+          <td>0.654933</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td>366.441176</td>
+          <td>0.427132</td>
+          <td>0.631229</td>
+        </tr>
+        <tr>
+          <th>9</th>
+          <td>366.558824</td>
+          <td>0.446301</td>
+          <td>0.661743</td>
+        </tr>
+        <tr>
+          <th>10</th>
+          <td>366.676471</td>
+          <td>0.438004</td>
+          <td>0.651591</td>
+        </tr>
+        <tr>
+          <th>11</th>
+          <td>366.794118</td>
+          <td>0.425320</td>
+          <td>0.634814</td>
+        </tr>
+        <tr>
+          <th>12</th>
+          <td>366.911765</td>
+          <td>0.439435</td>
+          <td>0.658047</td>
+        </tr>
+        <tr>
+          <th>13</th>
+          <td>367.029412</td>
+          <td>0.435655</td>
+          <td>0.654539</td>
+        </tr>
+        <tr>
+          <th>14</th>
+          <td>367.147059</td>
+          <td>0.401350</td>
+          <td>0.604987</td>
+        </tr>
+        <tr>
+          <th>15</th>
+          <td>367.264706</td>
+          <td>0.397862</td>
+          <td>0.601703</td>
+        </tr>
+        <tr>
+          <th>16</th>
+          <td>367.382353</td>
+          <td>0.415821</td>
+          <td>0.630930</td>
+        </tr>
+        <tr>
+          <th>17</th>
+          <td>367.500000</td>
+          <td>0.420667</td>
+          <td>0.640380</td>
+        </tr>
+        <tr>
+          <th>18</th>
+          <td>367.617647</td>
+          <td>0.391683</td>
+          <td>0.598214</td>
+        </tr>
+        <tr>
+          <th>19</th>
+          <td>367.735294</td>
+          <td>0.404903</td>
+          <td>0.620432</td>
+        </tr>
+        <tr>
+          <th>20</th>
+          <td>367.852941</td>
+          <td>0.409563</td>
+          <td>0.629626</td>
+        </tr>
+        <tr>
+          <th>21</th>
+          <td>367.970588</td>
+          <td>0.389488</td>
+          <td>0.600722</td>
+        </tr>
+        <tr>
+          <th>22</th>
+          <td>368.000000</td>
+          <td>0.396789</td>
+          <td>0.612483</td>
+        </tr>
+        <tr>
+          <th>23</th>
+          <td>368.088235</td>
+          <td>0.398162</td>
+          <td>0.616106</td>
+        </tr>
+        <tr>
+          <th>24</th>
+          <td>368.205882</td>
+          <td>0.362340</td>
+          <td>0.562505</td>
+        </tr>
+        <tr>
+          <th>25</th>
+          <td>368.323529</td>
+          <td>0.386958</td>
+          <td>0.602680</td>
+        </tr>
+        <tr>
+          <th>26</th>
+          <td>368.441176</td>
+          <td>0.363643</td>
+          <td>0.568210</td>
+        </tr>
+        <tr>
+          <th>27</th>
+          <td>368.558824</td>
+          <td>0.368118</td>
+          <td>0.577072</td>
+        </tr>
+        <tr>
+          <th>28</th>
+          <td>368.676471</td>
+          <td>0.384098</td>
+          <td>0.604078</td>
+        </tr>
+        <tr>
+          <th>29</th>
+          <td>368.794118</td>
+          <td>0.353605</td>
+          <td>0.557925</td>
+        </tr>
+        <tr>
+          <th>30</th>
+          <td>368.911765</td>
+          <td>0.346474</td>
+          <td>0.548445</td>
+        </tr>
+        <tr>
+          <th>31</th>
+          <td>369.029412</td>
+          <td>0.350741</td>
+          <td>0.556996</td>
+        </tr>
+        <tr>
+          <th>32</th>
+          <td>369.147059</td>
+          <td>0.362347</td>
+          <td>0.577286</td>
+        </tr>
+        <tr>
+          <th>33</th>
+          <td>369.264706</td>
+          <td>0.362578</td>
+          <td>0.579519</td>
+        </tr>
+        <tr>
+          <th>34</th>
+          <td>369.382353</td>
+          <td>0.340765</td>
+          <td>0.546411</td>
+        </tr>
+        <tr>
+          <th>35</th>
+          <td>369.500000</td>
+          <td>0.337462</td>
+          <td>0.542857</td>
+        </tr>
+        <tr>
+          <th>36</th>
+          <td>369.617647</td>
+          <td>0.355729</td>
+          <td>0.574083</td>
+        </tr>
+        <tr>
+          <th>37</th>
+          <td>369.735294</td>
+          <td>0.348679</td>
+          <td>0.564513</td>
+        </tr>
+        <tr>
+          <th>38</th>
+          <td>369.852941</td>
+          <td>0.338187</td>
+          <td>0.549284</td>
+        </tr>
+        <tr>
+          <th>39</th>
+          <td>369.970588</td>
+          <td>0.324360</td>
+          <td>0.528514</td>
+        </tr>
+        <tr>
+          <th>40</th>
+          <td>370.088235</td>
+          <td>0.310753</td>
+          <td>0.507964</td>
+        </tr>
+        <tr>
+          <th>41</th>
+          <td>370.205882</td>
+          <td>0.311037</td>
+          <td>0.510055</td>
+        </tr>
+        <tr>
+          <th>42</th>
+          <td>370.323529</td>
+          <td>0.311263</td>
+          <td>0.512055</td>
+        </tr>
+        <tr>
+          <th>43</th>
+          <td>370.441176</td>
+          <td>0.308081</td>
+          <td>0.508437</td>
+        </tr>
+        <tr>
+          <th>44</th>
+          <td>370.558824</td>
+          <td>0.308224</td>
+          <td>0.510293</td>
+        </tr>
+        <tr>
+          <th>45</th>
+          <td>370.676471</td>
+          <td>0.318148</td>
+          <td>0.528399</td>
+        </tr>
+        <tr>
+          <th>46</th>
+          <td>370.794118</td>
+          <td>0.308334</td>
+          <td>0.513728</td>
+        </tr>
+        <tr>
+          <th>47</th>
+          <td>370.911765</td>
+          <td>0.317937</td>
+          <td>0.531410</td>
+        </tr>
+        <tr>
+          <th>48</th>
+          <td>371.029412</td>
+          <td>0.289149</td>
+          <td>0.484824</td>
+        </tr>
+        <tr>
+          <th>49</th>
+          <td>371.147059</td>
+          <td>0.298637</td>
+          <td>0.502318</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>temperature</th>
+          <th>liq_benzene</th>
+          <th>vap_benzene</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>365.500000</td>
+          <td>0.480953</td>
+          <td>0.692110</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>365.617647</td>
+          <td>0.462444</td>
+          <td>0.667699</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>365.735294</td>
+          <td>0.477984</td>
+          <td>0.692441</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>365.852941</td>
+          <td>0.440547</td>
+          <td>0.640336</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>365.970588</td>
+          <td>0.427421</td>
+          <td>0.623328</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>366.088235</td>
+          <td>0.442725</td>
+          <td>0.647796</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>366.205882</td>
+          <td>0.434374</td>
+          <td>0.637691</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td>366.323529</td>
+          <td>0.444642</td>
+          <td>0.654933</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td>366.441176</td>
+          <td>0.427132</td>
+          <td>0.631229</td>
+        </tr>
+        <tr>
+          <th>9</th>
+          <td>366.558824</td>
+          <td>0.446301</td>
+          <td>0.661743</td>
+        </tr>
+        <tr>
+          <th>10</th>
+          <td>366.676471</td>
+          <td>0.438004</td>
+          <td>0.651591</td>
+        </tr>
+        <tr>
+          <th>11</th>
+          <td>366.794118</td>
+          <td>0.425320</td>
+          <td>0.634814</td>
+        </tr>
+        <tr>
+          <th>12</th>
+          <td>366.911765</td>
+          <td>0.439435</td>
+          <td>0.658047</td>
+        </tr>
+        <tr>
+          <th>13</th>
+          <td>367.029412</td>
+          <td>0.435655</td>
+          <td>0.654539</td>
+        </tr>
+        <tr>
+          <th>14</th>
+          <td>367.147059</td>
+          <td>0.401350</td>
+          <td>0.604987</td>
+        </tr>
+        <tr>
+          <th>15</th>
+          <td>367.264706</td>
+          <td>0.397862</td>
+          <td>0.601703</td>
+        </tr>
+        <tr>
+          <th>16</th>
+          <td>367.382353</td>
+          <td>0.415821</td>
+          <td>0.630930</td>
+        </tr>
+        <tr>
+          <th>17</th>
+          <td>367.500000</td>
+          <td>0.420667</td>
+          <td>0.640380</td>
+        </tr>
+        <tr>
+          <th>18</th>
+          <td>367.617647</td>
+          <td>0.391683</td>
+          <td>0.598214</td>
+        </tr>
+        <tr>
+          <th>19</th>
+          <td>367.735294</td>
+          <td>0.404903</td>
+          <td>0.620432</td>
+        </tr>
+        <tr>
+          <th>20</th>
+          <td>367.852941</td>
+          <td>0.409563</td>
+          <td>0.629626</td>
+        </tr>
+        <tr>
+          <th>21</th>
+          <td>367.970588</td>
+          <td>0.389488</td>
+          <td>0.600722</td>
+        </tr>
+        <tr>
+          <th>22</th>
+          <td>368.000000</td>
+          <td>0.396789</td>
+          <td>0.612483</td>
+        </tr>
+        <tr>
+          <th>23</th>
+          <td>368.088235</td>
+          <td>0.398162</td>
+          <td>0.616106</td>
+        </tr>
+        <tr>
+          <th>24</th>
+          <td>368.205882</td>
+          <td>0.362340</td>
+          <td>0.562505</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>index</th>
+          <th>temperature</th>
+          <th>liq_benzene</th>
+          <th>vap_benzene</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>25</td>
+          <td>368.323529</td>
+          <td>0.386958</td>
+          <td>0.602680</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>26</td>
+          <td>368.441176</td>
+          <td>0.363643</td>
+          <td>0.568210</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>27</td>
+          <td>368.558824</td>
+          <td>0.368118</td>
+          <td>0.577072</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>28</td>
+          <td>368.676471</td>
+          <td>0.384098</td>
+          <td>0.604078</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>29</td>
+          <td>368.794118</td>
+          <td>0.353605</td>
+          <td>0.557925</td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td>30</td>
+          <td>368.911765</td>
+          <td>0.346474</td>
+          <td>0.548445</td>
+        </tr>
+        <tr>
+          <th>6</th>
+          <td>31</td>
+          <td>369.029412</td>
+          <td>0.350741</td>
+          <td>0.556996</td>
+        </tr>
+        <tr>
+          <th>7</th>
+          <td>32</td>
+          <td>369.147059</td>
+          <td>0.362347</td>
+          <td>0.577286</td>
+        </tr>
+        <tr>
+          <th>8</th>
+          <td>33</td>
+          <td>369.264706</td>
+          <td>0.362578</td>
+          <td>0.579519</td>
+        </tr>
+        <tr>
+          <th>9</th>
+          <td>34</td>
+          <td>369.382353</td>
+          <td>0.340765</td>
+          <td>0.546411</td>
+        </tr>
+        <tr>
+          <th>10</th>
+          <td>35</td>
+          <td>369.500000</td>
+          <td>0.337462</td>
+          <td>0.542857</td>
+        </tr>
+        <tr>
+          <th>11</th>
+          <td>36</td>
+          <td>369.617647</td>
+          <td>0.355729</td>
+          <td>0.574083</td>
+        </tr>
+        <tr>
+          <th>12</th>
+          <td>37</td>
+          <td>369.735294</td>
+          <td>0.348679</td>
+          <td>0.564513</td>
+        </tr>
+        <tr>
+          <th>13</th>
+          <td>38</td>
+          <td>369.852941</td>
+          <td>0.338187</td>
+          <td>0.549284</td>
+        </tr>
+        <tr>
+          <th>14</th>
+          <td>39</td>
+          <td>369.970588</td>
+          <td>0.324360</td>
+          <td>0.528514</td>
+        </tr>
+        <tr>
+          <th>15</th>
+          <td>40</td>
+          <td>370.088235</td>
+          <td>0.310753</td>
+          <td>0.507964</td>
+        </tr>
+        <tr>
+          <th>16</th>
+          <td>41</td>
+          <td>370.205882</td>
+          <td>0.311037</td>
+          <td>0.510055</td>
+        </tr>
+        <tr>
+          <th>17</th>
+          <td>42</td>
+          <td>370.323529</td>
+          <td>0.311263</td>
+          <td>0.512055</td>
+        </tr>
+        <tr>
+          <th>18</th>
+          <td>43</td>
+          <td>370.441176</td>
+          <td>0.308081</td>
+          <td>0.508437</td>
+        </tr>
+        <tr>
+          <th>19</th>
+          <td>44</td>
+          <td>370.558824</td>
+          <td>0.308224</td>
+          <td>0.510293</td>
+        </tr>
+        <tr>
+          <th>20</th>
+          <td>45</td>
+          <td>370.676471</td>
+          <td>0.318148</td>
+          <td>0.528399</td>
+        </tr>
+        <tr>
+          <th>21</th>
+          <td>46</td>
+          <td>370.794118</td>
+          <td>0.308334</td>
+          <td>0.513728</td>
+        </tr>
+        <tr>
+          <th>22</th>
+          <td>47</td>
+          <td>370.911765</td>
+          <td>0.317937</td>
+          <td>0.531410</td>
+        </tr>
+        <tr>
+          <th>23</th>
+          <td>48</td>
+          <td>371.029412</td>
+          <td>0.289149</td>
+          <td>0.484824</td>
+        </tr>
+        <tr>
+          <th>24</th>
+          <td>49</td>
+          <td>371.147059</td>
+          <td>0.298637</td>
+          <td>0.502318</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+Set up DMF
+~~~~~~~~~~
+
+-  Perform imports
+-  Create a new workspace in a temporary directory under ``~/.idaes``.
+   You can modify this path if you need to.
+-  Set that workspace as the default to use for ``%dmf`` “magics” in
+   this Jupyter Notebook
+
+.. code:: ipython3
+
+    # DMF imports
+    from pathlib import Path
+    from idaes.dmf import DMF, magics
+    from idaes.dmf.resource import Resource, create_relation, Predicates
+    # use or create idaes "dotfile" in home directory
+    wspath = Path("~/.idaes").expanduser()
+    if not wspath.exists():
+        wspath.mkdir()
+    # use/create a subdirectory as a DMF workspace for the workshop
+    wspath = wspath / "workshop_workspace"
+    _dmf = DMF(path=wspath, create=not wspath.exists())
+    
+    %dmf init ~/.idaes/workshop_workspace
+
+
+.. parsed-literal::
+
+    2021-06-04 13:56:18,289 [INFO] idaes.dmf.dmfbase: Saving configuration location to: /home/lbianchi/.dmf
+    2021-06-04 13:56:18,291 [INFO] idaes.dmf.dmfbase: Saving configuration location to: /home/lbianchi/.dmf
+
+
+
+*Success!* Using workspace at “/home/lbianchi/.idaes/workshop_workspace”
+
+
+Show contents of DMF workspace
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This shows what is currently in the DMF workspace. If you ran this
+notebook earlier with the same workspace location, you will see the DMF
+resources you created at that time. Otherwise it will be empty.
+
+.. code:: ipython3
+
+    # Show current contents of DMF workspace
+    %dmf list
+
+
+
++---+--------------+--------+-----------------+-----------------------+
+| I | Name(s)      | Type   | Modified        | Description           |
+| D |              |        |                 |                       |
++===+==============+========+=================+=======================+
+| d | BT NRTL      | data   | 1610587068.0346 | BT_NRTL_dataset.csv   |
+| 1 | dataset      |        | 56              |                       |
+| 2 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 2 | BT NRTL      | data   | 1610587068.0377 | BT_NRTL_dataset_split |
+| f | split1       |        | 04              | 1.csv                 |
+| 0 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 0 | BT NRTL      | data   | 1610587068.0396 | BT_NRTL_dataset_split |
+| 2 | split2       |        | 32              | 2.csv                 |
+| 1 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| f |              |        |                 |                       |
+| d |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| f |              |        |                 |                       |
+| f |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| e |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 4 | BT NRTL est  | json   | 1614290364.4125 | Solution for data     |
+| f | param1       |        | 25              | subset 1              |
+| a |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| b |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 2 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 9 | BT NRTL est  | json   | 1614290364.4172 | Solution for data     |
+| a | param2       |        | 35              | subset 2              |
+| d |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| f |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+
+
+
+
+.. parsed-literal::
+
+    True
+
+
+
+.. code:: ipython3
+
+    # Base dataset
+    name = "BT NRTL dataset"
+    ds_base = _dmf.find_one(name=name)
+    if not ds_base:
+        ds_base = _dmf.new(file="BT_NRTL_dataset.csv", name=name)
+        
+    # Splits
+    ds_splits, new_relations = [], False
+    for i in (1, 2):
+        name = f'BT NRTL split{i}'
+        df = data_subset_1 if i == 1 else data_subset_2
+        df_file = f'BT_NRTL_dataset_split{i}.csv'
+        df.to_csv(df_file)
+        dss = _dmf.find_one(name=name)
+        if not dss:
+            dss = _dmf.new(file=df_file, name=name)
+            create_relation(dss, Predicates.derived, ds_base)
+            new_relations = True
+        ds_splits.append(dss)
+    
+    # Update if relations were added
+    if new_relations:
+        _dmf.update()
+    
+    print("done")
+
+
+.. parsed-literal::
+
+    done
+
+
+List DMF objects
+~~~~~~~~~~~~~~~~
+
+Check if the raw data and splits are recorded in the DMF. Note that if
+you ran this notebook earlier, the estimated parameters will also be
+listed. This is a feature, not a bug!
+
+.. code:: ipython3
+
+    _dmf.resource_count
+    %dmf list
+
+
+
++---+--------------+--------+-----------------+-----------------------+
+| I | Name(s)      | Type   | Modified        | Description           |
+| D |              |        |                 |                       |
++===+==============+========+=================+=======================+
+| d | BT NRTL      | data   | 1610587068.0346 | BT_NRTL_dataset.csv   |
+| 1 | dataset      |        | 56              |                       |
+| 2 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 2 | BT NRTL      | data   | 1610587068.0377 | BT_NRTL_dataset_split |
+| f | split1       |        | 04              | 1.csv                 |
+| 0 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 0 | BT NRTL      | data   | 1610587068.0396 | BT_NRTL_dataset_split |
+| 2 | split2       |        | 32              | 2.csv                 |
+| 1 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| f |              |        |                 |                       |
+| d |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| f |              |        |                 |                       |
+| f |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| e |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 4 | BT NRTL est  | json   | 1614290364.4125 | Solution for data     |
+| f | param1       |        | 25              | subset 1              |
+| a |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| b |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 2 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 9 | BT NRTL est  | json   | 1614290364.4172 | Solution for data     |
+| a | param2       |        | 35              | subset 2              |
+| d |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| c |              |        |                 |                       |
+| d |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| f |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+
+
+
+
+.. parsed-literal::
+
+    True
+
+
+
+We need to provide a method to return an expression to compute the sum
+of squared errors that will be used as the objective in solving the
+parameter estimation problem. For this problem, the error will be
+computed for the mole fraction of benzene in the vapor and liquid phase
+between the model prediction and data.
+
+.. raw:: html
+
+   <div class="alert alert-block alert-info">
+
+Inline Exercise: Complete the following cell by adding an expression to
+compute the sum of square errors.
+
+.. raw:: html
+
+   </div>
+
+.. code:: ipython3
+
+    # Create method to return an expression that computes the sum of squared error
+    def SSE(m, data):
+        expr = ((float(data["vap_benzene"]) -
+                 m.fs.flash.vap_outlet.mole_frac_comp[0, "benzene"])**2 +
+                (float(data["liq_benzene"]) -
+                 m.fs.flash.liq_outlet.mole_frac_comp[0, "benzene"])**2)
+        return expr*1E4
+
+.. raw:: html
+
+   <div class="alert alert-block alert-warning">
+
+Note: Notice that we have scaled the expression up by a factor of 10000
+as the SSE computed here will be an extremely small number given that we
+are using the difference in mole fraction in our expression. A
+well-scaled objective will help improve solve robustness when using
+IPOPT.
+
+.. raw:: html
+
+   </div>
+
+We are now ready to set up the parameter estimation problem. We will
+create a parameter estimation object called ``pest``. As shown below, we
+pass the method that returns an initialized model, dataset, list of
+variable names to estimate, and the SSE expression to the Estimator
+object. ``tee=True`` will print the solver output after solving the
+parameter estimation problem.
+
+.. code:: ipython3
+
+    # Initialize a parameter estimation object for data subset 1
+    pest_data_subset_1 = parmest.Estimator(NRTL_model, data_subset_1, variable_name, SSE, tee=True)
+    
+    # Initialize a parameter estimation object for data subset 2
+    pest_data_subset_2 = parmest.Estimator(NRTL_model, data_subset_2, variable_name, SSE, tee=True)
+    
+    # Run parameter estimation using data subset 1
+    obj_value_1, parameters_1 = pest_data_subset_1.theta_est()
+    
+    # Run parameter estimation using data subset 2
+    obj_value_2, parameters_2 = pest_data_subset_2.theta_est()
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:     5471
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:     3000
+    
+    Total number of variables............................:     1475
+                         variables with only lower bounds:       75
+                    variables with lower and upper bounds:      300
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:     1473
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  3.6585381e+01 4.44e+02 3.92e-04  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  5.7607669e+00 9.87e+02 4.72e+01  -1.0 1.09e+04    -  9.74e-01 1.00e+00h  1
+       2  5.7776147e+00 7.41e+02 3.52e+01  -1.0 2.91e+02    -  9.90e-01 2.50e-01h  3
+       3  5.8325386e+00 5.56e+02 2.64e+01  -1.0 2.18e+02    -  9.94e-01 2.50e-01h  3
+       4  5.8283364e+00 1.51e+02 3.92e-01  -1.0 1.89e+02    -  1.00e+00 1.00e+00h  1
+       5  5.8199744e+00 3.85e+01 5.39e-02  -1.7 4.04e+01    -  1.00e+00 1.00e+00h  1
+       6  5.8196517e+00 2.06e-03 5.69e-05  -2.5 2.82e+00    -  1.00e+00 1.00e+00h  1
+       7  5.8196447e+00 1.44e-02 1.70e-05  -3.8 9.50e-01    -  1.00e+00 1.00e+00h  1
+       8  5.8196446e+00 4.26e-05 5.03e-08  -5.7 5.26e-02    -  1.00e+00 1.00e+00h  1
+       9  5.8196446e+00 6.78e-09 7.99e-12  -8.6 6.56e-04    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 9
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   5.8196446303001963e+00    5.8196446303001963e+00
+    Dual infeasibility......:   7.9938278219060521e-12    7.9938278219060521e-12
+    Constraint violation....:   2.3519505149390404e-11    6.7811924964189529e-09
+    Complementarity.........:   2.5065613214987046e-09    2.5065613214987046e-09
+    Overall NLP error.......:   2.5065613214987046e-09    6.7811924964189529e-09
+    
+    
+    Number of objective function evaluations             = 16
+    Number of objective gradient evaluations             = 10
+    Number of equality constraint evaluations            = 16
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 10
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 9
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.029
+    Total CPU secs in NLP function evaluations           =      0.013
+    
+    EXIT: Optimal Solution Found.
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:     5471
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:     3000
+    
+    Total number of variables............................:     1475
+                         variables with only lower bounds:       75
+                    variables with lower and upper bounds:      300
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:     1473
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  8.4756656e+01 5.63e+02 8.01e-04  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  4.0330350e+00 1.50e+03 1.21e+02  -1.0 1.37e+04    -  9.64e-01 1.00e+00f  1
+       2  3.8935033e+00 6.64e+01 2.60e+02  -1.0 4.40e+02  -4.0 9.90e-01 1.00e+00h  1
+       3  3.8629745e+00 7.24e+00 6.29e+01  -1.0 1.03e+02    -  9.93e-01 1.00e+00h  1
+       4  3.8314208e+00 2.00e+01 4.48e-01  -1.0 1.54e+02    -  1.00e+00 1.00e+00h  1
+       5  3.8434226e+00 1.23e-01 6.95e-02  -1.7 1.02e+02    -  1.00e+00 1.00e+00h  1
+       6  3.8430227e+00 4.30e-01 4.94e-04  -2.5 2.73e+01    -  1.00e+00 1.00e+00h  1
+       7  3.8430156e+00 9.16e-03 8.78e-06  -3.8 4.15e+00    -  1.00e+00 1.00e+00h  1
+       8  3.8430156e+00 3.00e-05 2.88e-08  -5.7 2.33e-01    -  1.00e+00 1.00e+00h  1
+       9  3.8430156e+00 4.80e-09 4.54e-12  -8.6 2.91e-03    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 9
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   3.8430156306795809e+00    3.8430156306795809e+00
+    Dual infeasibility......:   4.5441983509419970e-12    4.5441983509419970e-12
+    Constraint violation....:   1.6640682137955790e-11    4.8021320253610611e-09
+    Complementarity.........:   2.5065158439147049e-09    2.5065158439147049e-09
+    Overall NLP error.......:   2.5065158439147049e-09    4.8021320253610611e-09
+    
+    
+    Number of objective function evaluations             = 10
+    Number of objective gradient evaluations             = 10
+    Number of equality constraint evaluations            = 10
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 10
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 9
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.031
+    Total CPU secs in NLP function evaluations           =      0.011
+    
+    EXIT: Optimal Solution Found.
+    
+
+Let us display the results by running the next cell.
+
+.. code:: ipython3
+
+    print("----Using Data Subset 1----")
+    print()
+    print("The SSE at the optimal solution is %0.6f" % (obj_value_1*1e-4))
+    print()
+    print("The values for the parameters are as follows:")
+    for k,v in parameters_1.items():
+        print(k, "=", v)
+    
+    print()
+    print("----Using Data Subset 2----")
+    print()
+    print("The SSE at the optimal solution is %0.6f" % (obj_value_2*1e-4))
+    print()
+    print("The values for the parameters are as follows:")
+    for k,v in parameters_2.items():
+        print(k, "=", v)
+
+
+.. parsed-literal::
+
+    ----Using Data Subset 1----
+    
+    The SSE at the optimal solution is 0.000582
+    
+    The values for the parameters are as follows:
+    fs.properties.tau[benzene,toluene] = -0.9065254436087805
+    fs.properties.tau[toluene,benzene] = 1.445496062577278
+    
+    ----Using Data Subset 2----
+    
+    The SSE at the optimal solution is 0.000384
+    
+    The values for the parameters are as follows:
+    fs.properties.tau[benzene,toluene] = -1.0206321701187535
+    fs.properties.tau[toluene,benzene] = 1.6669609459318069
+
+
+.. code:: ipython3
+
+    print(parameters_1)
+
+
+.. parsed-literal::
+
+    {'fs.properties.tau[benzene,toluene]': -0.9065254436087805, 'fs.properties.tau[toluene,benzene]': 1.445496062577278}
+
+
+.. code:: ipython3
+
+    import re
+    
+    def get_tau(d, chem1, chem2):
+        found_key = None
+        for key in d:
+            if re.match(fr"fs\.properties\.tau.*{chem1}.*{chem2}.*", key):
+                found_key = key
+                break
+        if found_key is None:
+            raise KeyError(f"Did not find any key for fs.properties.tau with '{chem1}' followed by '{chem2}'")
+        return d[found_key]
+    
+    # reformulate in simpler form using get_tau() function to be robust to formatting details of the keys
+    # returned by theta_est() above.
+    dmf_params = {}
+    for n, p_n in ((1, parameters_1), (2, parameters_2)):
+        for chem1, chem2 in (('benzene', 'toluene'), ('toluene', 'benzene')):
+            dmf_params[f"{n}:{chem1[0]}{chem2[0]}"] = get_tau(p_n, chem1, chem2)
+
+Save parameters in DMF
+~~~~~~~~~~~~~~~~~~~~~~
+
+The estimated parameters will be saved in the DMF and a “relation” will
+be recorded that remembers which data split each set of estimated
+parameters came from. When we’re done the relations in the DMF will look
+like this:
+
+::
+
+    BT NRTL dataset
+        │
+        ├───◀─┤derived│ BT NRTL split2 ◀─┤derived│ BT NRTL est param2
+        │
+        └───◀─┤derived│ BT NRTL split1 ◀─┤derived│ BT NRTL est param1
+
+.. code:: ipython3
+
+    # save to DMF
+    # create resources
+    name = "BT NRTL est param1"
+    ds_s1 = _dmf.find_one(name=name)
+    if not ds_s1:
+        ds_s1 = _dmf.new(name=name, desc="Solution for data subset 1", data={'SSE': obj_value_1, 'parameters': 
+                                                                             {'tau': {'benzene,toluene': dmf_params["1:bt"],
+                                                                                      'toluene,benzene': dmf_params["1:tb"]}}})
+        create_relation(ds_s1, Predicates.derived, ds_splits[0])
+    name = "BT NRTL est param2"
+    ds_s2 = _dmf.find_one(name=name)
+    if not ds_s2:
+        ds_s2 = _dmf.new(name=name, desc="Solution for data subset 2", data={'SSE': obj_value_2, 'parameters': 
+                                                                             {'tau': {'benzene,toluene': dmf_params["2:bt"],
+                                                                                      'toluene,benzene': dmf_params["2:tb"]}}})
+    
+        create_relation(ds_s2, Predicates.derived, ds_splits[1])
+    # save relations (prints number of objects processed)
+    _dmf.update()
+
+
+
+
+.. parsed-literal::
+
+    5
+
+
+
+Using the Estimated Parameters
+------------------------------
+
+In the notebook `Flash Unit Model using
+NRTL <../ParamEst/DMF_2_flash_unit_Model_with_NRTL_solution.ipynb>`__,
+we will see how the parameters that were estimated will be used to
+simulate a flash unit model with NRTL property package.
+

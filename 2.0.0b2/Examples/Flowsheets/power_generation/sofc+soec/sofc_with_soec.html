@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOFC + SOEC Model &mdash; IDAES v2.0.0b2 Examples</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">SOFC + SOEC Model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/Examples/Flowsheets/power_generation/sofc+soec/sofc_with_soec.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sofc-soec-model">
+<h1>SOFC + SOEC Model<a class="headerlink" href="#sofc-soec-model" title="Permalink to this heading">¶</a></h1>
+<p>This notebook contains a solid oxide fuel cell (SOFC) coupled with a
+solid oxide electrolysis cell (SOEC) system. Both components can be run
+at partial load, between 200 - 680 MW for the SOFC and between 1 - 5
+kg/s hydrogen production for the SOEC. The systems are coupled
+physically and electrically. The SOFC anode exhaust can be supplied to
+make steam for the SOEC or to power a bottoming steam cycle. Electricity
+from the SOFC is used to power the SOEC and balance of plant. If there
+is excess it can be supplied to the grid. The SOFC is modeled with
+surrogate equations generated from the SOFC example flowsheet. The
+surrogates contain one input, the SOFC direct current power. The
+surrogates are used to calculate the SOFC anode exhaust flowrate,
+temperature, and composition, the SOFC balance of plant load, and
+natural gas use.</p>
+<section id="module-imports">
+<h2>Module Imports<a class="headerlink" href="#module-imports" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">from</span> <span class="nn">IPython.core.display</span> <span class="kn">import</span> <span class="n">SVG</span>
+
+<span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span>
+<span class="kn">from</span> <span class="nn">pyomo.util.infeasible</span> <span class="kn">import</span> <span class="n">log_infeasible_constraints</span>
+
+<span class="kn">import</span> <span class="nn">idaes</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">use_idaes_solver_configuration_defaults</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util</span> <span class="k">as</span> <span class="nn">iutil</span>
+
+<span class="kn">from</span> <span class="nn">sofc_with_soec</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_model</span><span class="p">,</span>
+    <span class="n">initialize</span><span class="p">,</span>
+    <span class="n">add_tags</span><span class="p">,</span>
+    <span class="n">write_pfd</span><span class="p">,</span>
+    <span class="n">make_stream_table</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sofc_soec_costing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_capital_cost</span><span class="p">,</span>
+    <span class="n">get_fixed_costs</span><span class="p">,</span>
+    <span class="n">get_variable_costs</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="make-output-directories">
+<h2>Make Output Directories<a class="headerlink" href="#make-output-directories" title="Permalink to this heading">¶</a></h2>
+<p>This notebook can produce a large number of output files. To make it
+easier to manage, some subdirectories are used to organize output. This
+ensures that the directories exist.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make a directory if it doesn&#39;t exist</span>
+<span class="k">def</span> <span class="nf">make_directory</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_pfds&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_tabulated&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="global-solver-settings">
+<h2>Global Solver Settings<a class="headerlink" href="#global-solver-settings" title="Permalink to this heading">¶</a></h2>
+<p>Use the IDAES configuration system for solver settings. These will apply
+to all Ipopt instances created, including the ones created in
+initialization methods.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">use_idaes_solver_configuration_defaults</span><span class="p">()</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">nlp_scaling_method</span> <span class="o">=</span> <span class="s2">&quot;user-scaling&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="s2">&quot;ma57&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">OF_ma57_automatic_scaling</span> <span class="o">=</span> <span class="s2">&quot;yes&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ma57_pivtol</span> <span class="o">=</span> <span class="mf">1e-5</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ma57_pivtolmax</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">bound_push</span> <span class="o">=</span> <span class="mf">1e-20</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s2">&quot;ipopt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="create-the-sofc-soec-model">
+<h2>Create the SOFC + SOEC model<a class="headerlink" href="#create-the-sofc-soec-model" title="Permalink to this heading">¶</a></h2>
+<p>Create the SOFC + SOEC model and initialize it or read the saved
+initialization if available.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_base_sofc_soec_model</span><span class="p">(</span><span class="n">solve</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">get_model</span><span class="p">()</span>
+    <span class="n">save_name</span> <span class="o">=</span> <span class="s2">&quot;sofc_soec_init.json.gz&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_name</span><span class="p">):</span>
+        <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_name</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading initialized model from json&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">initialize</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">solve</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">m</span>
+</pre></div>
+</div>
+</section>
+<section id="design-optimization">
+<h2>Design Optimization<a class="headerlink" href="#design-optimization" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add_optimization_constraints</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+    <span class="c1"># make sure the delta T on the hydrogen side is 40K or less (it is</span>
+    <span class="c1"># squared so one constraint covers both positive and negative delta T)</span>
+    <span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">delta_T_h_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+        <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mi">16</span>
+
+    <span class="c1"># make sure the delta T on the oxygen side is 40K or less</span>
+    <span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">delta_T_o_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">oxygen_inlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">-</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">oxygen_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mi">16</span>
+
+    <span class="c1"># make sure the oxygen inlet and hydrogen outlet are 40K or less apart</span>
+    <span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">delta_T_1_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">oxygen_inlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">-</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+        <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mi">16</span>
+
+    <span class="c1"># make sure the hydrogen inlet and oxygen outlet are 40K or less apart</span>
+    <span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">delta_T_2_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">oxygen_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mi">16</span>
+
+    <span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">average_current_density_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">solid_oxide_cell</span><span class="o">.</span><span class="n">average_current_density</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">1000</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">8</span>
+
+    <span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">positive_steam_cycle</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">steam_cycle_heat_duty</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">get_base_sofc_soec_model</span><span class="p">()</span>
+
+<span class="c1"># add costs</span>
+<span class="n">get_capital_cost</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="n">get_fixed_costs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="n">get_variable_costs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+<span class="c1"># set up design optimization problem</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">annualized_tasc</span> <span class="o">+</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_fixed_OM_cost</span> <span class="o">+</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_variable_OM_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">1000</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># add design and operating constraints</span>
+<span class="n">add_optimization_constraints</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">oxygen_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">1030</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">fuel_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">1030</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">oxygen_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;O2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">0.35</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_single_pass_water_conversion</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">0.90</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">0.20</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">h2_condenser</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">350</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">fg_flash</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">350</span><span class="p">)</span>
+
+<span class="c1"># unfix decision vars</span>
+<span class="n">decision_vars</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">def</span> <span class="nf">make_decision_var</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">):</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="n">lb</span><span class="p">)</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="n">ub</span><span class="p">)</span>
+    <span class="n">decision_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">],</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">potential_cell</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1.26</span><span class="p">,</span> <span class="mf">1.38</span><span class="p">)</span> <span class="c1"># already free</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_single_pass_water_conversion</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">1020</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="mf">2e6</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>  <span class="c1"># already free</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">tube_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">boiler</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>  <span class="c1"># already free</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">oxycombustor</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_hx</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>  <span class="c1"># already free</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_hx</span><span class="o">.</span><span class="n">shell_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">oxycombustor_mix</span><span class="o">.</span><span class="n">gas_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">50000</span><span class="p">)</span>
+
+<span class="n">save_name</span> <span class="o">=</span> <span class="s2">&quot;sofc_soec_design_opt.json.gz&quot;</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_name</span><span class="p">):</span>
+    <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_name</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading optimized design from json&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_name</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Loading initialized model from json
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+bound_push=1e-20
+option_file_name=/tmp/tmpnzq9zeju_ipopt.opt
+
+Using option file &quot;/tmp/tmpnzq9zeju_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    11433
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     8138
+
+Total number of variables............................:     2583
+                     variables with only lower bounds:      483
+                variables with lower and upper bounds:     1385
+                     variables with only upper bounds:       38
+Total number of equality constraints.................:     2583
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 4.99e-02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (215994)
+Reallocating memory for MA57: lfact (228600)
+   1  0.0000000e+00 1.60e-03 1.06e+05  -1.0 3.43e+00    -  9.89e-01 1.00e+00h  1
+   2  0.0000000e+00 1.23e-08 1.65e+03  -1.0 1.27e-02    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 2
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.2309229191487248e-08    1.2309229191487248e-08
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.2309229191487248e-08    1.2309229191487248e-08
+
+
+Number of objective function evaluations             = 3
+Number of objective gradient evaluations             = 3
+Number of equality constraint evaluations            = 3
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 3
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 2
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.325
+Total CPU secs in NLP function evaluations           =      0.323
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+bound_push=1e-20
+option_file_name=/tmp/tmpgxlsib3b_ipopt.opt
+
+Using option file &quot;/tmp/tmpgxlsib3b_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    12367
+Number of nonzeros in inequality constraint Jacobian.:       20
+Number of nonzeros in Lagrangian Hessian.............:     8817
+
+Reallocating memory for MA57: lfact (242598)
+Total number of variables............................:     2732
+                     variables with only lower bounds:      486
+                variables with lower and upper bounds:     1524
+                     variables with only upper bounds:       38
+Total number of equality constraints.................:     2722
+Total number of inequality constraints...............:        6
+        inequality constraints with only lower bounds:        2
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        4
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  3.0896827e+02 1.64e+01 3.37e+02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  3.0113696e+02 6.95e+01 1.02e+07  -1.0 2.34e+02    -  6.94e-06 1.00e+00f  1
+   2  3.0557467e+02 1.09e+01 9.06e+06  -1.0 4.49e+02   0.0 1.14e-01 1.38e-01h  1
+   3  3.0567142e+02 9.04e+00 9.05e+06  -1.0 5.08e+01  -0.5 1.10e-02 4.43e-01h  1
+   4  3.0566460e+02 8.32e+00 1.41e+06  -1.0 1.34e+01  -0.1 8.51e-01 8.00e-02h  1
+   5  3.0554032e+02 2.26e+00 3.47e+05  -1.0 1.53e+01  -0.5 7.35e-01 1.00e+00f  1
+   6  3.0542610e+02 1.76e-02 1.26e+04  -1.0 3.07e+00  -1.0 9.64e-01 1.00e+00h  1
+   7  3.0541868e+02 7.16e-03 1.26e+02  -1.0 6.39e-01  -1.5 9.90e-01 1.00e+00f  1
+   8  3.0516343e+02 9.72e-02 7.95e+04  -1.7 2.14e+00  -2.0 9.90e-01 1.00e+00f  1
+   9  3.0475149e+02 1.60e-01 6.85e+03  -1.7 4.48e+00  -2.4 9.96e-01 7.02e-01f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  3.0404161e+02 5.06e-02 5.45e+03  -1.7 1.20e+01  -2.9 1.00e+00 7.06e-01f  1
+  11  3.0252064e+02 1.40e-01 6.31e+02  -1.7 2.25e+01  -3.4 1.00e+00 1.00e+00f  1
+  12  3.0283729e+02 9.37e-02 1.65e+03  -1.7 1.52e+01  -3.9 1.00e+00 1.00e+00f  1
+  13  3.0195960e+02 3.06e-01 1.28e+04  -1.7 3.25e+01  -4.3 1.00e+00 1.00e+00f  1
+  14  3.0088023e+02 1.38e+00 4.28e+04  -1.7 6.83e+01  -4.8 9.52e-01 1.00e+00h  1
+  15  2.9994015e+02 4.31e+00 2.10e+07  -1.7 1.01e+02  -5.3 1.00e+00 7.46e-01h  1
+  16  2.9884065e+02 6.17e+03 9.19e+06  -1.7 8.68e+05    -  5.67e-01 5.63e-01h  1
+  17  2.9870960e+02 5.94e+03 8.65e+06  -1.7 1.24e+06    -  5.20e-01 5.87e-02h  1
+  18  2.9735939e+02 1.43e+04 7.95e+05  -1.7 7.93e+05    -  3.09e-01 1.00e+00h  1
+  19  2.9720777e+02 7.02e+03 4.08e+05  -1.7 5.32e+04    -  6.61e-01 5.10e-01h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  20  2.9722427e+02 1.94e+01 8.35e+04  -1.7 3.76e+04    -  4.97e-01 1.00e+00h  1
+  21  2.9721400e+02 2.55e-01 1.05e+04  -1.7 3.48e+03    -  6.03e-01 1.00e+00h  1
+  22  2.9721410e+02 1.59e-03 1.19e+04  -1.7 2.77e+02    -  5.82e-01 1.00e+00h  1
+  23  2.9721456e+02 4.76e-06 1.92e+03  -1.7 2.45e+01    -  5.87e-01 1.00e+00f  1
+  24  2.9721394e+02 6.23e-07 2.03e+03  -1.7 8.88e+00    -  5.85e-01 1.00e+00f  1
+  25  2.9721428e+02 2.41e-06 3.31e+02  -1.7 1.74e+01    -  5.85e-01 1.00e+00f  1
+  26  2.9721328e+02 6.69e-07 3.50e+02  -1.7 9.19e+00    -  5.84e-01 1.00e+00f  1
+  27  2.9721268e+02 1.86e-05 5.71e+01  -1.7 4.85e+01    -  5.81e-01 1.00e+00f  1
+  28  2.9671747e+02 3.10e+00 4.41e+05  -2.5 1.97e+04    -  8.78e-01 6.21e-01f  1
+  29  2.9651911e+02 2.29e+00 1.21e+05  -2.5 4.81e+03    -  4.25e-01 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  30  2.9652725e+02 3.67e-03 7.55e+04  -2.5 6.81e+02    -  3.75e-01 1.00e+00h  1
+  31  2.9639726e+02 1.76e-01 6.13e+04  -2.5 4.72e+03    -  1.88e-01 1.00e+00f  1
+  32  2.9179869e+02 2.48e+02 5.92e+04  -2.5 1.77e+05    -  3.35e-02 1.00e+00f  1
+  33  2.9388468e+02 2.53e+00 3.51e-01  -2.5 2.07e+01  -5.8 1.00e+00 1.00e+00h  1
+  34  2.9301080e+02 1.49e+02 2.55e+00  -2.5 3.57e+05    -  1.00e+00 3.92e-01h  1
+  35  2.9332498e+02 5.26e-01 4.33e-02  -2.5 7.33e+03    -  1.00e+00 1.00e+00h  1
+  36  2.9327314e+02 2.04e+00 1.20e-03  -2.5 1.66e+04    -  1.00e+00 1.00e+00h  1
+  37  2.9327313e+02 1.53e-03 2.63e-07  -2.5 4.64e+02    -  1.00e+00 1.00e+00h  1
+  38  2.9319146e+02 3.13e-01 5.26e+03  -3.8 4.48e+02    -  1.00e+00 9.81e-01f  1
+  39  2.9319679e+02 1.04e-03 3.40e-02  -3.8 2.03e+02    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  40  2.9319634e+02 3.54e-07 3.38e-04  -3.8 6.90e+00    -  1.00e+00 1.00e+00h  1
+  41  2.9319360e+02 7.08e-04 3.32e+03  -5.7 4.65e+01    -  1.00e+00 7.77e-01f  1
+  42  2.9319332e+02 5.96e-05 3.61e-02  -5.7 1.10e+01    -  1.00e+00 1.00e+00h  1
+Reallocating memory for MA57: lfact (256630)
+  43  2.9319331e+02 1.51e-09 1.92e-07  -5.7 1.23e-01    -  1.00e+00 1.00e+00h  1
+  44  2.9319329e+02 1.63e-07 6.52e-01  -7.0 5.63e-01    -  1.00e+00 9.96e-01h  1
+  45  2.9319329e+02 1.86e-09 1.39e-09  -7.0 3.86e-03    -  1.00e+00 1.00e+00f  1
+
+Number of Iterations....: 45
+
+                                   (scaled)                 (unscaled)
+Objective...............:   2.9319329311621965e+02    2.9319329311621965e+02
+Dual infeasibility......:   1.3907308416729383e-09    9.1724223676311124e-08
+Constraint violation....:   1.8626451492309570e-09    1.8626451492309570e-09
+Complementarity.........:   9.0982545789316247e-08    9.0982545789316247e-08
+Overall NLP error.......:   9.0982545789316247e-08    9.1724223676311124e-08
+
+
+Number of objective function evaluations             = 46
+Number of objective gradient evaluations             = 46
+Number of equality constraint evaluations            = 46
+Number of inequality constraint evaluations          = 46
+Number of equality constraint Jacobian evaluations   = 46
+Number of inequality constraint Jacobian evaluations = 46
+Number of Lagrangian Hessian evaluations             = 45
+Total CPU secs in IPOPT (w/o function evaluations)   =      3.016
+Total CPU secs in NLP function evaluations           =      8.587
+
+EXIT: Optimal Solution Found.</pre>
+</section>
+<section id="show-pfds-with-design-optimization-results">
+<h2>Show PFDs with design optimization results<a class="headerlink" href="#show-pfds-with-design-optimization-results" title="Permalink to this heading">¶</a></h2>
+<p>This displays PFDs in the notebook, and saves them to files.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">write_pfd</span><span class="p">(</span><span class="n">m</span><span class="p">)))</span>
+<span class="n">write_pfd</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s2">&quot;data_pfds/sofc_soec_results.svg&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_13_0.svg" src="../../../../_images/output_13_0.svg" /><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># assert that flowsheet values have not changed from prior runs</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;out&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.8302</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">5635.58</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">potential_cell</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.3026</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">990.00</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">1101995</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">100.00</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1137.15</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">boiler</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">4865.23</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">9999.99</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decision Variable Results&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feed recycle = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;out&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sweep flowrate = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> mol/s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOEC potential = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">potential_cell</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> V&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feed trim heater temperature = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> K&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of cells = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sweep hx 1 area = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> ft^2&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sweep hx 2 area = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> ft^2&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Boiler area = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">boiler</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> ft^2&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feed hx area = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> ft^2&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Natural gas flowrate = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">oxycombustor_mix</span><span class="o">.</span><span class="n">gas_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> mol/s&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Capital Costs&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOFC modules = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc_modules</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOFC balance of plant = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc_bop</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOEC modules = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOEC balance of plant = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">soec_bop_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hydrogen Compressor = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cmp01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Oxycombustor = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">oxycombustor</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Air separation unit = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">asu_split</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Carbon purification unit = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cpu_cost</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feedwater and misc. BOP systems = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">feedwater_bop_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HRSG, ductwork, and stack = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">hrsg_ductwork_and_stack_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Steam turbine generator = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">steam_turbine_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cooling water system = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">cooling_water_system_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Electric equipment = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">accessory_electric_plant_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Instrumentation and control = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">instrumentation_and_control_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Improvements to site = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">improvements_to_site_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Buildings and structures = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">buildings_and_structures_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Plant Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Overnight Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_overnight_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total As Spent Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_as_spent_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annualized TASC = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">annualized_tasc</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fixed and Variable O&amp;M Costs&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annual operating labor = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">annual_operating_labor_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Maintenance labor = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">maintenance_labor_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Admin &amp; support labor = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">admin_and_support_labor_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Property taxes &amp; insurance = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">property_taxes_and_insurance</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Maintenance material cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">maintenance_material_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOFC replacement cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">sofc_replacement_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOFC replacement cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">soec_replacement_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Fixed O&amp;M Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_fixed_OM_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Variable O&amp;M Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_variable_OM_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>------------------------------------------
+Decision Variable Results
+------------------------------------------
+Feed recycle = 0.8302182349390419
+Sweep flowrate = 5635.5840476953545 mol/s
+SOEC potential = 1.3026545751526992 V
+Feed trim heater temperature = 990.0000112464168 K
+Number of cells = 1101995.0230871164
+Sweep hx 1 area = 100.00003477701021 ft^2
+Sweep hx 2 area = 1137.1569684437095 ft^2
+Boiler area = 4865.233245889867 ft^2
+Feed hx area = 9999.999486214741 ft^2
+Natural gas flowrate = 1.1972315968968457e-06 mol/s
+
+
+------------------------------------------
+Capital Costs
+------------------------------------------
+SOFC modules = MM$233.582
+SOFC balance of plant = MM$31.5456
+SOEC modules = MM$73.78628076084406
+SOEC balance of plant = MM$34.51835756579969
+Hydrogen Compressor = MM$21.101265162179303
+Oxycombustor = MM$18.354599318124865
+Air separation unit = MM$79.22249574756025
+Carbon purification unit = MM$84.15785143974657
+Feedwater and misc. BOP systems = MM$66.9453628472775
+HRSG, ductwork, and stack = MM$6.83139001652793
+Steam turbine generator = MM$22.779132728016606
+Cooling water system = MM$21.706297993044576
+Electric equipment = MM$108.83021948476281
+Instrumentation and control = MM$23.58494987122456
+Improvements to site = MM$29.64851361953984
+Buildings and structures = MM$8.344202907339561
+
+
+Total Plant Cost = MM$864.9385194619883
+Total Overnight Cost = MM$1046.575608549006
+Total As Spent Cost = MM$1143.9071401440633
+Annualized TASC = MM$80.87423480818528/year
+
+
+------------------------------------------
+Fixed and Variable O&amp;M Costs
+------------------------------------------
+Annual operating labor = MM$3.5075040000000004/year
+Maintenance labor = MM$6.573532747911112/year
+Admin &amp; support labor = MM$2.520259186977778/year
+Property taxes &amp; insurance = MM$17.298770389239767/year
+Maintenance material cost = MM$9.860299121866666/year
+SOFC replacement cost = MM$16.582344/year
+SOFC replacement cost = MM$4.712681716232053/year
+Total Fixed O&amp;M Cost = MM$61.05539116222738/year
+Total Variable O&amp;M Cost = MM$146.24400819775175/year
+</pre></div>
+</div>
+</section>
+<section id="run-partial-load">
+<h2>Run Partial Load<a class="headerlink" href="#run-partial-load" title="Permalink to this heading">¶</a></h2>
+<p>This runs the SOFC at partial load from 680 MW to 200 MW at 20 MW
+intervals and the SOEC from 5 kg/s to 1 kg/s at 0.5 kg/s intervals.
+Results are tabulated for tags in the tags_output tag group in a Pandas
+data frame.</p>
+<p>To run the series, change run_series to True. Running the turndown
+series takes ~2 hours, unless previous saved results are available.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">run_series</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">if</span> <span class="n">run_series</span><span class="p">:</span>
+    <span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="mf">1e-6</span>
+    <span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mu_init</span> <span class="o">=</span> <span class="mf">1e-3</span>
+    <span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s2">&quot;ipopt&quot;</span><span class="p">)</span>
+
+    <span class="c1"># rebuild the model since capital costs are already fixed</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">get_base_sofc_soec_model</span><span class="p">(</span><span class="n">solve</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">get_variable_costs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">add_optimization_constraints</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+    <span class="c1"># load in optimized design</span>
+    <span class="n">save_name</span> <span class="o">=</span> <span class="s2">&quot;sofc_soec_design_opt.json.gz&quot;</span>
+    <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_name</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+    <span class="c1"># fix the design vars</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">boiler</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feed_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">other_variable_costs</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span>
+        <span class="n">expr</span><span class="o">=</span><span class="p">(</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_variable_OM_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+            <span class="p">(</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">1000</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">add_tags</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_tags_output</span><span class="o">.</span><span class="n">table_heading</span><span class="p">())</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">680</span><span class="p">,</span> <span class="mi">199</span><span class="p">,</span> <span class="o">-</span><span class="mi">20</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;power: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="si">}</span><span class="s2">, hydrogen: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc_power</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">hydrogen_product_rate</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+
+            <span class="n">fname</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;data/sofc+soec_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">.json.gz&quot;</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+                <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">symbolic_solver_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">pyo</span><span class="o">.</span><span class="n">check_optimal_termination</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+                    <span class="k">break</span>
+                <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">)</span>
+
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">_tags_output</span><span class="p">[</span><span class="s2">&quot;net_power&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_tags_output</span><span class="o">.</span><span class="n">table_row</span><span class="p">(</span><span class="n">numeric</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/sofc+soec.csv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

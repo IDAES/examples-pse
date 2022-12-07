@@ -1,0 +1,836 @@
+Reaction Property Packages in IDAES
+===================================
+
+.. container:: alert alert-block alert-info
+
+   Note: Reaction property packages are closely related to, and
+   dependent on, thermophysical property packages and it is advised the
+   readers start with understanding these.
+
+Similar to thermophysical property packages, reaction property packages
+in IDAES are used to define the set of parameters, variables and
+constraints associated with a specific set of chemical reactions that a
+user wishes to model. One of the features of the IDAES Integrated
+Platform is the ability for modelers to create their own property
+“packages” to calculate these properties, allowing them to customize the
+level of complexity and rigor to suit each application. This tutorial
+will introduce you to the basics of creating property packages for
+calculating reaction properties within the IDAES Core Modeling
+Framework.
+
+Relationship with Thermophysical Property Packages
+--------------------------------------------------
+
+Reaction properties depend on the state of the system, such as the
+temperature, pressure and composition of the material. All of these
+properties are defined in the thermophysical property package, thus
+reaction property packages are closely tied to thermophysical property
+packages; indeed, a given reaction package is often tied to a single
+specific thermophysical property package. Reaction packages need to be
+used with a thermophysical property package which defines the expected
+set of components and the expected forms and units for the state
+variables.
+
+As such, developers of reaction packages should have a specific
+thermophysical property package in mind when developing a reaction
+property package, and to tailor the reaction package to the
+thermophysical property package.
+
+Types of Reactions
+------------------
+
+Within the IDAES Core Modeling Framework, chemical reactions are divided
+into two categories:
+
+1. Equilibrium based reactions, where extent of reaction is determined
+   by satisfying a constraint relating the concentration of species
+   within the system, and
+2. Rate based reactions, where extent of reaction depends on some
+   characteristic of the reactor unit. Despite the name, this category
+   is also used to represent stoichiometric and yield based reactions.
+
+Steps in Creating a Reaction Property Package
+---------------------------------------------
+
+Creating a new property package can be broken down into the following
+steps, which will be demonstrated in the next part of this tutorial.
+
+1. Defining the **units of measurement** for the property package.
+2. Defining the **properties supported** by the property package and the
+   associated metadata.
+3. Defining the **equilibrium reactions** of interest.
+4. Defining the **equilibrium reactions** of interest.
+5. Defining the **parameters** related to the reactions of interest.
+6. Creating **variables and constraints** to describe the reactions of
+   interest.
+7. Creating an **initialization routine** for the reaction property
+   package.
+8. Defining **interface methods** used to couple the property package
+   with unit models.
+
+Tutorial Example
+================
+
+For this tutorial, we will be building a upon the property package from
+the thermophysical property example. In that example, we constructed a
+thermophysical property package that could be used to model a process
+for the hydrodealkylation of toluene to form benzene. This process
+involves five key chemical species:
+
+-  toluene
+-  benzene
+-  hydrogen
+-  methane
+-  diphenyl
+
+In this tutorial, we will write a reaction property package to define
+the reactions associated with the HDA process:
+
+.. math::
+
+
+   \text{Toluene} + \text{Hydrogen} \rightarrow \text{Benzene} + \text{Methane}
+
+.. math::
+
+
+   2 \text{Benzene} \rightleftharpoons \text{Hydrogen} + \text{Diphenyl}
+
+A Note on this Tutorial
+-----------------------
+
+The ``build`` methods in the reaction property package classes are
+generally written as a single, long method. However, to break the code
+into manageable pieces for discussion, in this tutorial we will create a
+number of smaller sub-methods that will then be called as part of the
+``build`` method. This is done entirely for presentation purposes, and
+model developers should not feel compelled to write their models this
+way.
+
+An example of how the example in this tutorial would be written without
+sub-methods can be found in the same folder with the name
+``reaction_property_example.py``.
+
+Components of a Reaction Property Package
+-----------------------------------------
+
+Similar to thermophysical property packages, reaction property packages
+consist of three parts, which are written as Python ``classes``. These
+components are:
+
+-  The ``Reaction Parameter Block`` class, which contains all the global
+   parameters associated with the reaction property package,
+-  The ``Reaction Block Data`` class, which contains the instructions on
+   how to calculate all the properties at a given state, and,
+-  The ``Reaction Block`` class, which is used to construct indexed sets
+   of ``Reaction Block Data`` objects and contains methods for acting on
+   all multiple ``Reaction Block Data`` objects at once (such as
+   initialization).
+
+It is not necessary to understand the reason for the distinction between
+the ``Reaction Block`` and ``Reaction Block Data`` classes. Suffice to
+say that this is due to the need to replicate the underlying component
+structure of Pyomo, and that the ``Reaction Block`` represents the
+indexed ``Block`` representing a set of states across a given indexing
+set (most often time), and the ``Reaction Block Data`` represents the
+individual elements of the indexed ``Block``.
+
+Importing Libraries
+-------------------
+
+Before we begin writing the actual ``classes`` however, we need to
+import all the necessary components from the Pyomo and IDAES modeling
+libraries. To begin with, we are going to need a number of components
+from the Pyomo modeling environment to construct the variables,
+constraints and parameters that will make up the property package, and
+we will also make use of the Pyomo units of measurement tools to define
+the units of our properties. We will also make use of a number of
+components and supporting methods from the IDAES modeling framework and
+libraries.
+
+Rather than describe the purpose of all of these here, we shall just
+import all of them here and discuss their use as they arise in the
+example.
+
+.. code:: ipython3
+
+    # Import Pyomo libraries
+    from pyomo.environ import (Constraint,
+                               exp,
+                               Param,
+                               Set,
+                               units as pyunits,
+                               Var)
+    
+    # Import IDAES cores
+    from idaes.core import (declare_process_block_class,
+                            MaterialFlowBasis,
+                            ReactionParameterBlock,
+                            ReactionBlockDataBase,
+                            ReactionBlockBase)
+    from idaes.core.util.constants import Constants as const
+    import idaes.logger as idaeslog
+
+The Reaction Parameter Block
+============================
+
+We will begin by constructing the ``Reaction Parameter Block`` for our
+example. This serves as the central point of reference for all aspects
+of the reaction property package, and needs to define a number of things
+about the package. These are summarized below:
+
+-  Units of measurement
+-  What reaction properties are supported and how they are implemented
+-  All the global parameters necessary for calculating properties
+-  A reference to the associated ``Reaction Block`` class, so that
+   construction of the ``Reaction Block`` components can be automated
+   from the ``Reaction Parameter Block``
+
+Step 1: Define Units of Measurement and Property Metadata
+---------------------------------------------------------
+
+The first step is to define the units of measurement for the property
+package, which will in turn be inherited by any unit model using this
+property package. The IDAES Core Modeling Framework requires that the
+units of measurement defined for a reaction property package be
+identical to those used in the thermophysical property package it is
+associated with (this is to avoid any chance of confusion regarding
+units when setting up the balance equations).
+
+In order to set the base units, we use the same approach as for
+thermophysical property packages; we create a dictionary which has each
+of the base quantities as a key, and provide a Pyomo recognized unit as
+the value as shown in the cell below.
+
+Much like thermophysical property packages, we also need to define
+metadata regarding the reaction properties supported by our package. For
+this example, we have three supported properties:
+
+-  a rate constant (``k_rxn``),
+-  an equilibrium constant (``k_eq``), and
+-  a reaction rate term (``rate_reaction``).
+
+The cell below shows how to define the units of measurement and
+properties metadata for this example.
+
+.. code:: ipython3
+
+    units_metadata = {'time': pyunits.s,
+                      'length': pyunits.m,
+                      'mass': pyunits.kg,
+                      'amount': pyunits.mol,
+                      'temperature': pyunits.K}
+    
+    properties_metadata = {'k_rxn': {'method': None},
+                           'k_eq': {'method': None},
+                           'reaction_rate': {'method': None}}
+
+Next, we need to define the rate-based reactions of interest and the
+associated stoichiometry. For this, we need to define two things:
+
+-  a ``Set`` of names for the rate-based reaction, and
+-  a ``dict`` containing the stoichiometric coefficients for all the
+   rate-based reactions.
+
+In this example, we have only one rate-based reaction, which is the
+conversion of toluene to benzene; we will call this reaction ``R1``.
+Thus, we create a Pyomo ``Set`` component and initialize it with the
+list of rate-based reactions (``[“R1”]``) as shown in the following
+cell.
+
+Next, we create a ``dict`` object for the stoichiometric coefficients.
+This ``dict`` needs to provide coefficients for all combinations of
+reaction, phase and component present in the system, even for those
+components which do not take part in a reaction. This is required as
+``ControlVolumes`` create generation terms for all
+reaction-phase-component combinations, and need a stoichiometric
+coefficient for each of these. In this ``dict``, the keys need to have
+the form of a tuple with three parts:
+
+1. the reaction name,
+2. the phase name, and
+3. the component name,
+
+whilst the value is the stoichiometric coefficient for that key
+combination. See the example in the cell below; in this example we have
+1 reaction (``R1``), 1 phase (``Vap``, as defined in the thermophysical
+property package) and 5 components (``benzene``, ``toluene``,
+``hydrogen``, ``methane`` and ``diphenyl``), thus the resulting dict has
+``1x1x5`` entries.
+
+.. code:: ipython3
+
+    def define_kinetic_reactions(self):
+        # Rate Reaction Index
+        self.rate_reaction_idx = Set(initialize=["R1"])
+    
+        # Rate Reaction Stoichiometry
+        self.rate_reaction_stoichiometry = {("R1", "Vap", "benzene"): 1,
+                                            ("R1", "Vap", "toluene"): -1,
+                                            ("R1", "Vap", "hydrogen"): -1,
+                                            ("R1", "Vap", "methane"): 1,
+                                            ("R1", "Vap", "diphenyl"): 0}
+
+Next, we need to do the same thing for the equilibrium-based reactions.
+The format is the same as for rate-based reactions, as shown in the cell
+below.
+
+.. code:: ipython3
+
+    def define_equilibrium_reactions(self):
+        # Equilibrium Reaction Index
+        self.equilibrium_reaction_idx = Set(initialize=["E1"])
+    
+        # Equilibrium Reaction Stoichiometry
+        self.equilibrium_reaction_stoichiometry = {
+            ("E1", "Vap", "benzene"): -2,
+            ("E1", "Vap", "toluene"): 0,
+            ("E1", "Vap", "hydrogen"): 1,
+            ("E1", "Vap", "methane"): 0,
+            ("E1", "Vap", "diphenyl"): 1}
+
+Finally, we need to define any global parameters related to the
+reactions of interest. For this example, we will assume that the
+rate-based reactions follow the Arrhenius equation, thus we need to
+declare a pre-exponential factor
+(:math:`A=1.25\times10^{-9} \text{ mol}/\text{m}^3/\text{s}/\text{Pa}^2`)
+and an activation energy parameter
+(:math:`E_a=3800 \text{ J}/\text{mol}`). We will not declare any
+parameters for the equilibrium-based reactions at this point; this will
+be done in the individual ``ReactionBlocks``.
+
+.. code:: ipython3
+
+    def define_parameters(self):
+        # Arrhenius Constant
+        self.arrhenius = Param(default=1.25e-9,
+                               doc="Arrhenius constant",
+                               units=pyunits.mol/pyunits.m**3/pyunits.s/pyunits.Pa**2)
+    
+        # Activation Energy
+        self.energy_activation = Param(default=3800,
+                                       doc="Activation energy",
+                                       units=pyunits.J/pyunits.mol)
+
+Declaring the Reaction Parameter Block
+--------------------------------------
+
+Now that the various parts of the Reaction Parameter Block have been
+declared, we can assemble the actual ``class`` that will assemble these
+components in a flowsheet. The steps for declaring a new
+``ReactionParameterBlock`` class which are:
+
+1. Declaring the new class and inheriting from the
+   ``ReactionParameterBlock`` base class
+2. Writing the ``build`` method for our ``class``
+3. Creating a ``define_metadata`` method for the class.
+
+Each of these steps are shown in the code example below.
+
+First, we need to declare our new class and give it a unique name. In
+this example, we will call our new class ``HDAReactionParameterBlock``.
+The first two lines of the example below show how we declare our new
+class using the ``declare_process_block_decorator`` and inheriting from
+the ``ReactionParameterBlock`` base class from the IDAES Core model
+libraries. Inheriting from the ``ReactionParameterBlock`` brings us
+access to all the necessary features required by the IDAES modeling
+framework, whilst the ``declare_process_block_class`` decorator performs
+some boilerplate operations to replicate the expected object structure
+of Pyomo. Further details on these components can be found in the IDAES
+documentation.
+
+Next, we need to declare the ``build`` method that will be used to
+construct our Reaction Parameter Block. The first step in any ``build``
+method is to call ``super().build()``, which will trigger the ``build``
+method of the base class that the current class inherits from – this is
+important since this is how we automate construction of any underlying
+components required by the modeling framework and ensure that everything
+integrates smoothly. Next, a ``ReactionParameterBlock`` needs to contain
+a pointer to the related ``ReactionBlock`` (which we will look at next)
+– this is used to allow us to build instances of the ``ReactionBlock``
+by only knowing the ``ReactionParameterBlock`` we wish to use. To do
+this, we create an attribute named ``_reaction_block_class`` attached to
+our class with a pointer to the ``ReactionBlock`` class; in this case
+``self._reaction_block_class = HDAReactionBlock``, where
+``HDAReactionBlock`` is the name of the yet to be declared
+``ReactionBlock``. Finally, the ``build`` method needs to construct the
+actual parameters required for the property package, which we do here by
+calling the sub-methods written previously.
+
+The final step in creating the ``ReactionParameterBlock`` class is to
+declare a ``classmethod`` named ``define_metadata`` which takes two
+arguments; a class (``cls``) and an instance of that class (``obj``).
+This method in turn needs to call two pre-defined methods (inherited
+from the underlying base classes):
+
+-  ``obj.add_properties()`` is used to set the metadata regarding the
+   supported reaction properties, and here we pass the
+   ``properties_metadata`` dict we created earlier as an argument.
+-  ``obj.add_default_units()`` sets the default units metadata for the
+   reaction property package, and here we pass the ``units_metadata``
+   ``dict`` we created earlier as an argument.
+
+.. code:: ipython3
+
+    @declare_process_block_class("HDAReactionParameterBlock")
+    class HDAReactionParameterData(ReactionParameterBlock):
+        """
+        Reaction Parameter Block Class
+        """
+    
+        def build(self):
+            '''
+            Callable method for Block construction.
+            '''
+            super(HDAReactionParameterData, self).build()
+    
+            self._reaction_block_class = HDAReactionBlock
+            
+            define_kinetic_reactions(self)
+            define_equilibrium_reactions(self)
+            define_parameters(self)
+    
+        @classmethod
+        def define_metadata(cls, obj):
+            obj.add_properties(properties_metadata)
+            obj.add_default_units(units_metadata)
+
+Reaction Block
+==============
+
+After the Reaction Parameter Block class has been created, the next step
+is to write the code necessary to create the Reaction Blocks that will
+be used through out the flowsheet. Similar to State Blocks for
+thermophysical properties, Reaction Blocks also require two Python
+``classes`` to construct (for a discussion on why, see the related
+example for creating custom thermophysical property packages).
+
+For this example, we will begin by describing the content of the
+``ReactionBlockData`` objects, as this is where we create the variables
+and constraints that describe how to calculate the thermophysical
+properties of the material. After that, we will discuss how to create
+the class that contains methods to be applied to the
+``IndexedReactionBlock`` as a whole.
+
+State Variables
+---------------
+
+Like thermophysical property calculations, reaction properties also
+depend on the material state variables such as temperature and pressure.
+However, the state variables are declared as a part of the State Block,
+and it does not make sense to duplicate them here. Due to this, Reaction
+Blocks are always associated with a State Block representing the
+material at the same point in space and time, and the Reaction Block
+contains a pointer to the equivalent State Block. This allows the
+Reaction Block to access the state variables, and any other
+thermophysical property the State Block supports, in order to perform
+reaction property calculations. The State Block can be accessed using
+the ``state_ref`` property of the Reaction Block.
+
+Step 1. Define Property Variables
+---------------------------------
+
+The first thing we need to do when creating our Reaction Block is create
+Pyomo components to represent the properties of interest. In this
+example, we have three properties we need to define:
+
+1. the rate constant for the rate-based reaction: ``k_rxn``,
+2. a variable for the rate of reaction at the current state,
+   ``rate_reaction``, and
+3. the equilibrium constant for the equilibrium-based reaction,
+   ``k_eq``.
+
+The declaration of these is shown in the cell below. Note that for this
+example we are assuming the equilibrium constant does not vary, and have
+thus declared it as a Pyomo ``Param``.
+
+.. code:: ipython3
+
+    def define_variables_and_parameters(self):
+        self.k_rxn = Var(initialize=7e-10,
+                        doc="Rate constant",
+                        units=pyunits.mol/pyunits.m**3/pyunits.s/pyunits.Pa**2)
+    
+        self.reaction_rate = Var(self.params.rate_reaction_idx,
+                                 initialize=0,
+                                 doc="Rate of reaction",
+                                 units=pyunits.mol/pyunits.m**3/pyunits.s)
+    
+        self.k_eq = Param(initialize=10000,
+                          doc="Equlibrium constant",
+                          units=pyunits.Pa)
+
+Step 2. Define Constraints for the Rate-Based Reactions
+-------------------------------------------------------
+
+Next, we need to define the ``Constraints`` which describe the
+rate-based reaction. First, we use the Arrhenius equation to calculate
+the rate constant, :math:`k_{rxn} = A \times e^{-E_a/(RT)}`. For this
+calculation, :math:`A` and :math:`E_a` come from the associated Reaction
+Parameter Block (``self.params``), :math:`T` comes from the associated
+State Block (``self.state_ref.temperature``) and the gas constant
+:math:`R` can be found in the IDAES ``Constants`` class.
+
+After the rate constant, we need to declare the form of the rate
+expression as well. In this case, we are dealing with a gas phase
+reaction so
+:math:`r = k_{rxn} \times x_{toluene} \times x_{hydrogen} \times P^2`,
+where :math:`P` is the system pressure. :math:`x_{toluene}`,
+:math:`x_{hydrogen}` and :math:`P` are all state variables, and can be
+accessed from the associated State Block.
+
+The cell below shows how we declare these two constraints.
+
+.. code:: ipython3
+
+    def define_rate_expression(self):
+        self.arrhenius_equation = Constraint(
+                expr=self.k_rxn == self.params.arrhenius * exp(
+                    -self.params.energy_activation /
+                    (const.gas_constant*self.state_ref.temperature)))
+    
+        def rate_rule(b, r):
+            return b.reaction_rate[r] == (
+                        b.k_rxn *
+                        b.state_ref.mole_frac_comp["toluene"] *
+                        b.state_ref.mole_frac_comp["hydrogen"] *
+                        b.state_ref.pressure**2)
+        self.rate_expression = Constraint(self.params.rate_reaction_idx,
+                                          rule=rate_rule)
+
+Step 3. Define Constraints for the Equilibrium-Based Reactions
+--------------------------------------------------------------
+
+Similar to those for the rate-based reactions, we also need to define
+constraints for the equilibrium-based reactions in the system. In this
+case, the constraint will take the form of an equality that will force
+the compositions in the system to satisfy the given equilibrium
+constant. For this example, we have the following equilibrium
+constraint:
+
+.. math::
+
+
+   k_{eq} = \frac{x_{diphenyl} \times x_{hydrogen} \times P^2}{x_{benzene} \times P}
+
+Note that :math:`P` appears in both the numerator and denominator to
+make it clear that this is a ratio of partial pressures, and because we
+will rearrange this constraint when creating the actual Pyomo component
+in order to avoid potential singularities. This is shown in the cell
+below.
+
+.. code:: ipython3
+
+    def define_equilibrium_expression(self):
+        self.equilibrium_constraint = Constraint(
+            expr=self.k_eq *
+            self.state_ref.mole_frac_comp["benzene"] *
+            self.state_ref.pressure ==
+            self.state_ref.mole_frac_comp["diphenyl"] *
+            self.state_ref.mole_frac_comp["hydrogen"] *
+            self.state_ref.pressure**2)
+
+Creating the Reaction Block class
+=================================
+
+These are all the variables and constraints that need to be declared for
+this example. All that remains is to declare the ``_ReactionBlock`` and
+``ReactionBlock`` classes to complete our reaction property package.
+This process is much the same as for the thermophysical property package
+example, and will only be covered briefly here.
+
+The ``_ReactionBlock`` class
+----------------------------
+
+For this example, the ``_ReactionBlock`` class is very simple, and
+contains only a placeholder ``initialize`` method. As all the state
+variables are held separately in the associated State Block and the
+constraints within the reaction package are fairly simple, it is
+sufficient to not initialize the reaction properties before solving.
+However, a placeholder method still needs to be created, as the IDAES
+framework assumes all components will have an ``initialize`` method;
+however, this method need only consist of a ``pass`` statement.
+
+.. container:: alert alert-block alert-info
+
+   Note: In more complex reaction systems, it is likely that a proper
+   initialization routine would need to be implemented. Developers of
+   these should be aware that equilibrium constraints will need to be
+   deactivated during initialization, as the state variables
+   (i.e. compositions) will be fixed in the State Block. Thus, trying to
+   solve for the system with equilibrium constraints present will result
+   in an over-specified problem.
+
+The ``ReactionBlock`` class
+---------------------------
+
+Once the ``_ReactionBlock`` class has been declared, the overall
+``ReactionBlock`` class can be declared as shown below. Once again, we
+define a ``build`` method which calls the sub-methods we created earlier
+in order to construct an instance of the Reaction Block. The
+``ReactionBlock`` class also needs to define a
+``get_reaction_rate_basis`` method, which should return an instance of
+the ``MaterialFlowBasis`` ``Enum``; this is used by the IDAES framework
+to determine if conversion between mass and mole basis is required.
+
+.. code:: ipython3
+
+    class _HDAReactionBlock(ReactionBlockBase):
+        def initialize(blk, outlvl=idaeslog.NOTSET, **kwargs):
+            init_log = idaeslog.getInitLogger(blk.name, outlvl, tag="properties")
+            init_log.info('Initialization Complete.')
+    
+    @declare_process_block_class("HDAReactionBlock",
+                                 block_class=_HDAReactionBlock)
+    class HDAReactionBlockData(ReactionBlockDataBase):
+        def build(self):
+    
+            super(HDAReactionBlockData, self).build()
+            
+            define_variables_and_parameters(self)
+            define_rate_expression(self)
+            define_equilibrium_expression(self)
+        
+        def get_reaction_rate_basis(b):
+            return MaterialFlowBasis.molar
+
+Demonstration
+=============
+
+In order to demonstrate our new Reaction Property package in practice,
+we will now use it to build and solve a CSTR. First, we will need to
+import some more components from Pyomo and IDAES to use when building
+the flowsheet.
+
+.. code:: ipython3
+
+    from pyomo.environ import ConcreteModel
+    from pyomo.util.check_units import assert_units_consistent
+    
+    from idaes.core import FlowsheetBlock
+    from idaes.core.solvers import get_solver
+    from idaes.models.unit_models import CSTR
+    
+    from thermophysical_property_example import HDAParameterBlock
+    
+    from idaes.core.util.model_statistics import degrees_of_freedom
+
+Next, we can construct a Pyomo ``ConcreteModel`` and IDAES
+``FlowsheetBlock`` as usual. We then attach an instance of the
+associated thermophysical property package (imported as
+``HDAParameterBlock``) and our new reaction property package to the
+flowsheet, and then construct a CSTR using these property packages.
+
+.. code:: ipython3
+
+    m = ConcreteModel()
+    
+    m.fs = FlowsheetBlock(dynamic=False)
+    
+    m.fs.thermo_params = HDAParameterBlock()
+    m.fs.reaction_params = HDAReactionParameterBlock(
+        property_package=m.fs.thermo_params)
+    
+    m.fs.reactor = CSTR(
+        property_package=m.fs.thermo_params,
+        reaction_package=m.fs.reaction_params,
+        has_equilibrium_reactions=True)
+
+If all went well, we should see no errors when constructing the
+flowsheet above. To be sure, let us print the degrees of freedom in our
+flowsheet model as shown below; we should see 9 degrees of freedom.
+
+.. code:: ipython3
+
+    print("Degrees of Freedom: ", degrees_of_freedom(m))
+
+
+.. parsed-literal::
+
+    Degrees of Freedom:  9
+
+
+The 9 degrees of freedom are the flowrate, temperature, pressure and
+mole fractions (5) of the inlet stream, as well as the reactor volume.
+We will fix them to some default values as shown below. Once we are
+done, we will also print the degrees of freedom again to ensure we have
+fixed enough variables.
+
+.. code:: ipython3
+
+    m.fs.reactor.inlet.flow_mol.fix(100)
+    m.fs.reactor.inlet.temperature.fix(500)
+    m.fs.reactor.inlet.pressure.fix(350000)
+    m.fs.reactor.inlet.mole_frac_comp[0, "benzene"].fix(0.1)
+    m.fs.reactor.inlet.mole_frac_comp[0, "toluene"].fix(0.4)
+    m.fs.reactor.inlet.mole_frac_comp[0, "hydrogen"].fix(0.4)
+    m.fs.reactor.inlet.mole_frac_comp[0, "methane"].fix(0.1)
+    m.fs.reactor.inlet.mole_frac_comp[0, "diphenyl"].fix(0.0)
+    
+    m.fs.reactor.volume.fix(1)
+    
+    print("Degrees of Freedom: ", degrees_of_freedom(m))
+
+
+.. parsed-literal::
+
+    Degrees of Freedom:  0
+
+
+Now that we have defined our example problem, we can initialize and
+solve the flowsheet. This is done in the cell below, which should result
+in an optimal solution.
+
+.. code:: ipython3
+
+    m.fs.reactor.initialize(state_args={
+        "flow_mol": 100,
+        "mole_frac_comp": {
+            "benzene": 0.15,
+            "toluene": 0.35,
+            "hydrogen": 0.35,
+            "methane": 0.15,
+            "diphenyl": 0.01},
+        "temperature": 600,
+        "pressure": 350000})
+    
+    solver = get_solver()
+    results = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor.control_volume.properties_in: Properties Initialized optimal - Optimal Solution Found.
+    2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor.control_volume.properties_out: Properties Initialized optimal - Optimal Solution Found.
+    2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor.control_volume.reactions: Initialization Complete.
+    2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor.control_volume: Initialization Complete
+    2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor: Initialization Complete: optimal - Optimal Solution Found
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:       67
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:       23
+    
+    Total number of variables............................:       24
+                         variables with only lower bounds:        5
+                    variables with lower and upper bounds:        3
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:       24
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 1.30e-08 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    
+    Number of Iterations....: 0
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   8.8593591389494380e-12    1.3038516044616699e-08
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   8.8593591389494380e-12    1.3038516044616699e-08
+    
+    
+    Number of objective function evaluations             = 1
+    Number of objective gradient evaluations             = 1
+    Number of equality constraint evaluations            = 1
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 1
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 0
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+
+
+Now that our model has solved, let us use the ``report()`` method for
+the CSRT to have a look at what happened in the reactor. We should see
+that the outlet mole fraction of benzene is now around 0.160 and the
+mole fraction of diphenyl is 0.014; thus, our reactor has successfully
+generated benzene from toluene. In the process, the reaction has also
+generated a lot of heat, which has raised the temperature of the gas
+from 500 K to 790.2 K.
+
+.. code:: ipython3
+
+    m.fs.reactor.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.reactor                                                          Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key    : Value  : Units      : Fixed : Bounds
+        Volume : 1.0000 : meter ** 3 :  True : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                    Units         Inlet     Outlet  
+        flow_mol                 mole / second     100.00     100.00
+        mole_frac_comp benzene   dimensionless    0.10000    0.15963
+        mole_frac_comp toluene   dimensionless    0.40000    0.31243
+        mole_frac_comp methane   dimensionless    0.10000    0.18757
+        mole_frac_comp hydrogen  dimensionless    0.40000    0.32640
+        mole_frac_comp diphenyl  dimensionless     0.0000   0.013973
+        temperature                     kelvin     500.00     790.21
+        pressure                        pascal 3.5000e+05 3.5000e+05
+    ====================================================================================
+
+
+Finally, as a quick check of model consistency, let us assert that the
+units of measurement in our model are consistent (the units of the rate
+constant and pre-exponential factor are rather complex).
+
+.. code:: ipython3
+
+    assert_units_consistent(m)
+
+Concluding Remarks
+==================
+
+The above example has hopefully introduced you to the basic requirements
+for creating your own custom reaction property packages. However, it is
+probably clear that it requires a significant amount of effort to write
+your own property packages, thus users are encouraged to look into the
+IDAES Modular Reactions Framework if they are not already familiar with
+this.
+
+The IDAES Modular Reactions Framework is designed to automatically
+generate user-defined reaction property packages for common reaction
+forms based on a single configuration file. Users provide a list of
+reactions of interest (both rate- and equilibrium-based), and select
+from a library of common reaction forms, and the Modular Reaction
+Framework then does the hard work of assembling the necessary code to
+construct the desired model.

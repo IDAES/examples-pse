@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reaction Property Packages in IDAES &mdash; IDAES v2.0.0a3 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Reaction Property Packages in IDAES</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/Advanced/CustomProperties/custom_reaction_property_packages.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="reaction-property-packages-in-idaes">
+<h1>Reaction Property Packages in IDAES<a class="headerlink" href="#reaction-property-packages-in-idaes" title="Permalink to this heading">¶</a></h1>
+<div class="alert alert-block alert-info docutils container">
+<p>Note: Reaction property packages are closely related to, and
+dependent on, thermophysical property packages and it is advised the
+readers start with understanding these.</p>
+</div>
+<p>Similar to thermophysical property packages, reaction property packages
+in IDAES are used to define the set of parameters, variables and
+constraints associated with a specific set of chemical reactions that a
+user wishes to model. One of the features of the IDAES Integrated
+Platform is the ability for modelers to create their own property
+“packages” to calculate these properties, allowing them to customize the
+level of complexity and rigor to suit each application. This tutorial
+will introduce you to the basics of creating property packages for
+calculating reaction properties within the IDAES Core Modeling
+Framework.</p>
+<section id="relationship-with-thermophysical-property-packages">
+<h2>Relationship with Thermophysical Property Packages<a class="headerlink" href="#relationship-with-thermophysical-property-packages" title="Permalink to this heading">¶</a></h2>
+<p>Reaction properties depend on the state of the system, such as the
+temperature, pressure and composition of the material. All of these
+properties are defined in the thermophysical property package, thus
+reaction property packages are closely tied to thermophysical property
+packages; indeed, a given reaction package is often tied to a single
+specific thermophysical property package. Reaction packages need to be
+used with a thermophysical property package which defines the expected
+set of components and the expected forms and units for the state
+variables.</p>
+<p>As such, developers of reaction packages should have a specific
+thermophysical property package in mind when developing a reaction
+property package, and to tailor the reaction package to the
+thermophysical property package.</p>
+</section>
+<section id="types-of-reactions">
+<h2>Types of Reactions<a class="headerlink" href="#types-of-reactions" title="Permalink to this heading">¶</a></h2>
+<p>Within the IDAES Core Modeling Framework, chemical reactions are divided
+into two categories:</p>
+<ol class="arabic simple">
+<li><p>Equilibrium based reactions, where extent of reaction is determined
+by satisfying a constraint relating the concentration of species
+within the system, and</p></li>
+<li><p>Rate based reactions, where extent of reaction depends on some
+characteristic of the reactor unit. Despite the name, this category
+is also used to represent stoichiometric and yield based reactions.</p></li>
+</ol>
+</section>
+<section id="steps-in-creating-a-reaction-property-package">
+<h2>Steps in Creating a Reaction Property Package<a class="headerlink" href="#steps-in-creating-a-reaction-property-package" title="Permalink to this heading">¶</a></h2>
+<p>Creating a new property package can be broken down into the following
+steps, which will be demonstrated in the next part of this tutorial.</p>
+<ol class="arabic simple">
+<li><p>Defining the <strong>units of measurement</strong> for the property package.</p></li>
+<li><p>Defining the <strong>properties supported</strong> by the property package and the
+associated metadata.</p></li>
+<li><p>Defining the <strong>equilibrium reactions</strong> of interest.</p></li>
+<li><p>Defining the <strong>equilibrium reactions</strong> of interest.</p></li>
+<li><p>Defining the <strong>parameters</strong> related to the reactions of interest.</p></li>
+<li><p>Creating <strong>variables and constraints</strong> to describe the reactions of
+interest.</p></li>
+<li><p>Creating an <strong>initialization routine</strong> for the reaction property
+package.</p></li>
+<li><p>Defining <strong>interface methods</strong> used to couple the property package
+with unit models.</p></li>
+</ol>
+</section>
+</section>
+<section id="tutorial-example">
+<h1>Tutorial Example<a class="headerlink" href="#tutorial-example" title="Permalink to this heading">¶</a></h1>
+<p>For this tutorial, we will be building a upon the property package from
+the thermophysical property example. In that example, we constructed a
+thermophysical property package that could be used to model a process
+for the hydrodealkylation of toluene to form benzene. This process
+involves five key chemical species:</p>
+<ul class="simple">
+<li><p>toluene</p></li>
+<li><p>benzene</p></li>
+<li><p>hydrogen</p></li>
+<li><p>methane</p></li>
+<li><p>diphenyl</p></li>
+</ul>
+<p>In this tutorial, we will write a reaction property package to define
+the reactions associated with the HDA process:</p>
+<div class="math notranslate nohighlight">
+\[\text{Toluene} + \text{Hydrogen} \rightarrow \text{Benzene} + \text{Methane}\]</div>
+<div class="math notranslate nohighlight">
+\[2 \text{Benzene} \rightleftharpoons \text{Hydrogen} + \text{Diphenyl}\]</div>
+<section id="a-note-on-this-tutorial">
+<h2>A Note on this Tutorial<a class="headerlink" href="#a-note-on-this-tutorial" title="Permalink to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">build</span></code> methods in the reaction property package classes are
+generally written as a single, long method. However, to break the code
+into manageable pieces for discussion, in this tutorial we will create a
+number of smaller sub-methods that will then be called as part of the
+<code class="docutils literal notranslate"><span class="pre">build</span></code> method. This is done entirely for presentation purposes, and
+model developers should not feel compelled to write their models this
+way.</p>
+<p>An example of how the example in this tutorial would be written without
+sub-methods can be found in the same folder with the name
+<code class="docutils literal notranslate"><span class="pre">reaction_property_example.py</span></code>.</p>
+</section>
+<section id="components-of-a-reaction-property-package">
+<h2>Components of a Reaction Property Package<a class="headerlink" href="#components-of-a-reaction-property-package" title="Permalink to this heading">¶</a></h2>
+<p>Similar to thermophysical property packages, reaction property packages
+consist of three parts, which are written as Python <code class="docutils literal notranslate"><span class="pre">classes</span></code>. These
+components are:</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Parameter</span> <span class="pre">Block</span></code> class, which contains all the global
+parameters associated with the reaction property package,</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span> <span class="pre">Data</span></code> class, which contains the instructions on
+how to calculate all the properties at a given state, and,</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span></code> class, which is used to construct indexed sets
+of <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span> <span class="pre">Data</span></code> objects and contains methods for acting on
+all multiple <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span> <span class="pre">Data</span></code> objects at once (such as
+initialization).</p></li>
+</ul>
+<p>It is not necessary to understand the reason for the distinction between
+the <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span></code> and <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span> <span class="pre">Data</span></code> classes. Suffice to
+say that this is due to the need to replicate the underlying component
+structure of Pyomo, and that the <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span></code> represents the
+indexed <code class="docutils literal notranslate"><span class="pre">Block</span></code> representing a set of states across a given indexing
+set (most often time), and the <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span> <span class="pre">Data</span></code> represents the
+individual elements of the indexed <code class="docutils literal notranslate"><span class="pre">Block</span></code>.</p>
+</section>
+<section id="importing-libraries">
+<h2>Importing Libraries<a class="headerlink" href="#importing-libraries" title="Permalink to this heading">¶</a></h2>
+<p>Before we begin writing the actual <code class="docutils literal notranslate"><span class="pre">classes</span></code> however, we need to
+import all the necessary components from the Pyomo and IDAES modeling
+libraries. To begin with, we are going to need a number of components
+from the Pyomo modeling environment to construct the variables,
+constraints and parameters that will make up the property package, and
+we will also make use of the Pyomo units of measurement tools to define
+the units of our properties. We will also make use of a number of
+components and supporting methods from the IDAES modeling framework and
+libraries.</p>
+<p>Rather than describe the purpose of all of these here, we shall just
+import all of them here and discuss their use as they arise in the
+example.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import Pyomo libraries</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Constraint</span><span class="p">,</span>
+                           <span class="n">exp</span><span class="p">,</span>
+                           <span class="n">Param</span><span class="p">,</span>
+                           <span class="n">Set</span><span class="p">,</span>
+                           <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span><span class="p">,</span>
+                           <span class="n">Var</span><span class="p">)</span>
+
+<span class="c1"># Import IDAES cores</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="p">(</span><span class="n">declare_process_block_class</span><span class="p">,</span>
+                        <span class="n">MaterialFlowBasis</span><span class="p">,</span>
+                        <span class="n">ReactionParameterBlock</span><span class="p">,</span>
+                        <span class="n">ReactionBlockDataBase</span><span class="p">,</span>
+                        <span class="n">ReactionBlockBase</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.constants</span> <span class="kn">import</span> <span class="n">Constants</span> <span class="k">as</span> <span class="n">const</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="the-reaction-parameter-block">
+<h1>The Reaction Parameter Block<a class="headerlink" href="#the-reaction-parameter-block" title="Permalink to this heading">¶</a></h1>
+<p>We will begin by constructing the <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Parameter</span> <span class="pre">Block</span></code> for our
+example. This serves as the central point of reference for all aspects
+of the reaction property package, and needs to define a number of things
+about the package. These are summarized below:</p>
+<ul class="simple">
+<li><p>Units of measurement</p></li>
+<li><p>What reaction properties are supported and how they are implemented</p></li>
+<li><p>All the global parameters necessary for calculating properties</p></li>
+<li><p>A reference to the associated <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span></code> class, so that
+construction of the <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Block</span></code> components can be automated
+from the <code class="docutils literal notranslate"><span class="pre">Reaction</span> <span class="pre">Parameter</span> <span class="pre">Block</span></code></p></li>
+</ul>
+<section id="step-1-define-units-of-measurement-and-property-metadata">
+<h2>Step 1: Define Units of Measurement and Property Metadata<a class="headerlink" href="#step-1-define-units-of-measurement-and-property-metadata" title="Permalink to this heading">¶</a></h2>
+<p>The first step is to define the units of measurement for the property
+package, which will in turn be inherited by any unit model using this
+property package. The IDAES Core Modeling Framework requires that the
+units of measurement defined for a reaction property package be
+identical to those used in the thermophysical property package it is
+associated with (this is to avoid any chance of confusion regarding
+units when setting up the balance equations).</p>
+<p>In order to set the base units, we use the same approach as for
+thermophysical property packages; we create a dictionary which has each
+of the base quantities as a key, and provide a Pyomo recognized unit as
+the value as shown in the cell below.</p>
+<p>Much like thermophysical property packages, we also need to define
+metadata regarding the reaction properties supported by our package. For
+this example, we have three supported properties:</p>
+<ul class="simple">
+<li><p>a rate constant (<code class="docutils literal notranslate"><span class="pre">k_rxn</span></code>),</p></li>
+<li><p>an equilibrium constant (<code class="docutils literal notranslate"><span class="pre">k_eq</span></code>), and</p></li>
+<li><p>a reaction rate term (<code class="docutils literal notranslate"><span class="pre">rate_reaction</span></code>).</p></li>
+</ul>
+<p>The cell below shows how to define the units of measurement and
+properties metadata for this example.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">units_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">,</span>
+                  <span class="s1">&#39;length&#39;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="p">,</span>
+                  <span class="s1">&#39;mass&#39;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">kg</span><span class="p">,</span>
+                  <span class="s1">&#39;amount&#39;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">,</span>
+                  <span class="s1">&#39;temperature&#39;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">}</span>
+
+<span class="n">properties_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;k_rxn&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+                       <span class="s1">&#39;k_eq&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+                       <span class="s1">&#39;reaction_rate&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}}</span>
+</pre></div>
+</div>
+<p>Next, we need to define the rate-based reactions of interest and the
+associated stoichiometry. For this, we need to define two things:</p>
+<ul class="simple">
+<li><p>a <code class="docutils literal notranslate"><span class="pre">Set</span></code> of names for the rate-based reaction, and</p></li>
+<li><p>a <code class="docutils literal notranslate"><span class="pre">dict</span></code> containing the stoichiometric coefficients for all the
+rate-based reactions.</p></li>
+</ul>
+<p>In this example, we have only one rate-based reaction, which is the
+conversion of toluene to benzene; we will call this reaction <code class="docutils literal notranslate"><span class="pre">R1</span></code>.
+Thus, we create a Pyomo <code class="docutils literal notranslate"><span class="pre">Set</span></code> component and initialize it with the
+list of rate-based reactions (<code class="docutils literal notranslate"><span class="pre">[“R1”]</span></code>) as shown in the following
+cell.</p>
+<p>Next, we create a <code class="docutils literal notranslate"><span class="pre">dict</span></code> object for the stoichiometric coefficients.
+This <code class="docutils literal notranslate"><span class="pre">dict</span></code> needs to provide coefficients for all combinations of
+reaction, phase and component present in the system, even for those
+components which do not take part in a reaction. This is required as
+<code class="docutils literal notranslate"><span class="pre">ControlVolumes</span></code> create generation terms for all
+reaction-phase-component combinations, and need a stoichiometric
+coefficient for each of these. In this <code class="docutils literal notranslate"><span class="pre">dict</span></code>, the keys need to have
+the form of a tuple with three parts:</p>
+<ol class="arabic simple">
+<li><p>the reaction name,</p></li>
+<li><p>the phase name, and</p></li>
+<li><p>the component name,</p></li>
+</ol>
+<p>whilst the value is the stoichiometric coefficient for that key
+combination. See the example in the cell below; in this example we have
+1 reaction (<code class="docutils literal notranslate"><span class="pre">R1</span></code>), 1 phase (<code class="docutils literal notranslate"><span class="pre">Vap</span></code>, as defined in the thermophysical
+property package) and 5 components (<code class="docutils literal notranslate"><span class="pre">benzene</span></code>, <code class="docutils literal notranslate"><span class="pre">toluene</span></code>,
+<code class="docutils literal notranslate"><span class="pre">hydrogen</span></code>, <code class="docutils literal notranslate"><span class="pre">methane</span></code> and <code class="docutils literal notranslate"><span class="pre">diphenyl</span></code>), thus the resulting dict has
+<code class="docutils literal notranslate"><span class="pre">1x1x5</span></code> entries.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">define_kinetic_reactions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="c1"># Rate Reaction Index</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">rate_reaction_idx</span> <span class="o">=</span> <span class="n">Set</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;R1&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Rate Reaction Stoichiometry</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">rate_reaction_stoichiometry</span> <span class="o">=</span> <span class="p">{(</span><span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">):</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">):</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;diphenyl&quot;</span><span class="p">):</span> <span class="mi">0</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Next, we need to do the same thing for the equilibrium-based reactions.
+The format is the same as for rate-based reactions, as shown in the cell
+below.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">define_equilibrium_reactions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="c1"># Equilibrium Reaction Index</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium_reaction_idx</span> <span class="o">=</span> <span class="n">Set</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;E1&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Equilibrium Reaction Stoichiometry</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium_reaction_stoichiometry</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">(</span><span class="s2">&quot;E1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">):</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">&quot;E1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">):</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">&quot;E1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">&quot;E1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">):</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">&quot;E1&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;diphenyl&quot;</span><span class="p">):</span> <span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Finally, we need to define any global parameters related to the
+reactions of interest. For this example, we will assume that the
+rate-based reactions follow the Arrhenius equation, thus we need to
+declare a pre-exponential factor
+(<span class="math notranslate nohighlight">\(A=1.25\times10^{-9} \text{ mol}/\text{m}^3/\text{s}/\text{Pa}^2\)</span>)
+and an activation energy parameter
+(<span class="math notranslate nohighlight">\(E_a=3800 \text{ J}/\text{mol}\)</span>). We will not declare any
+parameters for the equilibrium-based reactions at this point; this will
+be done in the individual <code class="docutils literal notranslate"><span class="pre">ReactionBlocks</span></code>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">define_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="c1"># Arrhenius Constant</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">arrhenius</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.25e-9</span><span class="p">,</span>
+                           <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;Arrhenius constant&quot;</span><span class="p">,</span>
+                           <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Activation Energy</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">energy_activation</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">3800</span><span class="p">,</span>
+                                   <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;Activation energy&quot;</span><span class="p">,</span>
+                                   <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="declaring-the-reaction-parameter-block">
+<h2>Declaring the Reaction Parameter Block<a class="headerlink" href="#declaring-the-reaction-parameter-block" title="Permalink to this heading">¶</a></h2>
+<p>Now that the various parts of the Reaction Parameter Block have been
+declared, we can assemble the actual <code class="docutils literal notranslate"><span class="pre">class</span></code> that will assemble these
+components in a flowsheet. The steps for declaring a new
+<code class="docutils literal notranslate"><span class="pre">ReactionParameterBlock</span></code> class which are:</p>
+<ol class="arabic simple">
+<li><p>Declaring the new class and inheriting from the
+<code class="docutils literal notranslate"><span class="pre">ReactionParameterBlock</span></code> base class</p></li>
+<li><p>Writing the <code class="docutils literal notranslate"><span class="pre">build</span></code> method for our <code class="docutils literal notranslate"><span class="pre">class</span></code></p></li>
+<li><p>Creating a <code class="docutils literal notranslate"><span class="pre">define_metadata</span></code> method for the class.</p></li>
+</ol>
+<p>Each of these steps are shown in the code example below.</p>
+<p>First, we need to declare our new class and give it a unique name. In
+this example, we will call our new class <code class="docutils literal notranslate"><span class="pre">HDAReactionParameterBlock</span></code>.
+The first two lines of the example below show how we declare our new
+class using the <code class="docutils literal notranslate"><span class="pre">declare_process_block_decorator</span></code> and inheriting from
+the <code class="docutils literal notranslate"><span class="pre">ReactionParameterBlock</span></code> base class from the IDAES Core model
+libraries. Inheriting from the <code class="docutils literal notranslate"><span class="pre">ReactionParameterBlock</span></code> brings us
+access to all the necessary features required by the IDAES modeling
+framework, whilst the <code class="docutils literal notranslate"><span class="pre">declare_process_block_class</span></code> decorator performs
+some boilerplate operations to replicate the expected object structure
+of Pyomo. Further details on these components can be found in the IDAES
+documentation.</p>
+<p>Next, we need to declare the <code class="docutils literal notranslate"><span class="pre">build</span></code> method that will be used to
+construct our Reaction Parameter Block. The first step in any <code class="docutils literal notranslate"><span class="pre">build</span></code>
+method is to call <code class="docutils literal notranslate"><span class="pre">super().build()</span></code>, which will trigger the <code class="docutils literal notranslate"><span class="pre">build</span></code>
+method of the base class that the current class inherits from – this is
+important since this is how we automate construction of any underlying
+components required by the modeling framework and ensure that everything
+integrates smoothly. Next, a <code class="docutils literal notranslate"><span class="pre">ReactionParameterBlock</span></code> needs to contain
+a pointer to the related <code class="docutils literal notranslate"><span class="pre">ReactionBlock</span></code> (which we will look at next)
+– this is used to allow us to build instances of the <code class="docutils literal notranslate"><span class="pre">ReactionBlock</span></code>
+by only knowing the <code class="docutils literal notranslate"><span class="pre">ReactionParameterBlock</span></code> we wish to use. To do
+this, we create an attribute named <code class="docutils literal notranslate"><span class="pre">_reaction_block_class</span></code> attached to
+our class with a pointer to the <code class="docutils literal notranslate"><span class="pre">ReactionBlock</span></code> class; in this case
+<code class="docutils literal notranslate"><span class="pre">self._reaction_block_class</span> <span class="pre">=</span> <span class="pre">HDAReactionBlock</span></code>, where
+<code class="docutils literal notranslate"><span class="pre">HDAReactionBlock</span></code> is the name of the yet to be declared
+<code class="docutils literal notranslate"><span class="pre">ReactionBlock</span></code>. Finally, the <code class="docutils literal notranslate"><span class="pre">build</span></code> method needs to construct the
+actual parameters required for the property package, which we do here by
+calling the sub-methods written previously.</p>
+<p>The final step in creating the <code class="docutils literal notranslate"><span class="pre">ReactionParameterBlock</span></code> class is to
+declare a <code class="docutils literal notranslate"><span class="pre">classmethod</span></code> named <code class="docutils literal notranslate"><span class="pre">define_metadata</span></code> which takes two
+arguments; a class (<code class="docutils literal notranslate"><span class="pre">cls</span></code>) and an instance of that class (<code class="docutils literal notranslate"><span class="pre">obj</span></code>).
+This method in turn needs to call two pre-defined methods (inherited
+from the underlying base classes):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">obj.add_properties()</span></code> is used to set the metadata regarding the
+supported reaction properties, and here we pass the
+<code class="docutils literal notranslate"><span class="pre">properties_metadata</span></code> dict we created earlier as an argument.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">obj.add_default_units()</span></code> sets the default units metadata for the
+reaction property package, and here we pass the <code class="docutils literal notranslate"><span class="pre">units_metadata</span></code>
+<code class="docutils literal notranslate"><span class="pre">dict</span></code> we created earlier as an argument.</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@declare_process_block_class</span><span class="p">(</span><span class="s2">&quot;HDAReactionParameterBlock&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">HDAReactionParameterData</span><span class="p">(</span><span class="n">ReactionParameterBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reaction Parameter Block Class</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Callable method for Block construction.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HDAReactionParameterData</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reaction_block_class</span> <span class="o">=</span> <span class="n">HDAReactionBlock</span>
+
+        <span class="n">define_kinetic_reactions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">define_equilibrium_reactions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">define_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">define_metadata</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">add_properties</span><span class="p">(</span><span class="n">properties_metadata</span><span class="p">)</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">add_default_units</span><span class="p">(</span><span class="n">units_metadata</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="reaction-block">
+<h1>Reaction Block<a class="headerlink" href="#reaction-block" title="Permalink to this heading">¶</a></h1>
+<p>After the Reaction Parameter Block class has been created, the next step
+is to write the code necessary to create the Reaction Blocks that will
+be used through out the flowsheet. Similar to State Blocks for
+thermophysical properties, Reaction Blocks also require two Python
+<code class="docutils literal notranslate"><span class="pre">classes</span></code> to construct (for a discussion on why, see the related
+example for creating custom thermophysical property packages).</p>
+<p>For this example, we will begin by describing the content of the
+<code class="docutils literal notranslate"><span class="pre">ReactionBlockData</span></code> objects, as this is where we create the variables
+and constraints that describe how to calculate the thermophysical
+properties of the material. After that, we will discuss how to create
+the class that contains methods to be applied to the
+<code class="docutils literal notranslate"><span class="pre">IndexedReactionBlock</span></code> as a whole.</p>
+<section id="state-variables">
+<h2>State Variables<a class="headerlink" href="#state-variables" title="Permalink to this heading">¶</a></h2>
+<p>Like thermophysical property calculations, reaction properties also
+depend on the material state variables such as temperature and pressure.
+However, the state variables are declared as a part of the State Block,
+and it does not make sense to duplicate them here. Due to this, Reaction
+Blocks are always associated with a State Block representing the
+material at the same point in space and time, and the Reaction Block
+contains a pointer to the equivalent State Block. This allows the
+Reaction Block to access the state variables, and any other
+thermophysical property the State Block supports, in order to perform
+reaction property calculations. The State Block can be accessed using
+the <code class="docutils literal notranslate"><span class="pre">state_ref</span></code> property of the Reaction Block.</p>
+</section>
+<section id="step-1-define-property-variables">
+<h2>Step 1. Define Property Variables<a class="headerlink" href="#step-1-define-property-variables" title="Permalink to this heading">¶</a></h2>
+<p>The first thing we need to do when creating our Reaction Block is create
+Pyomo components to represent the properties of interest. In this
+example, we have three properties we need to define:</p>
+<ol class="arabic simple">
+<li><p>the rate constant for the rate-based reaction: <code class="docutils literal notranslate"><span class="pre">k_rxn</span></code>,</p></li>
+<li><p>a variable for the rate of reaction at the current state,
+<code class="docutils literal notranslate"><span class="pre">rate_reaction</span></code>, and</p></li>
+<li><p>the equilibrium constant for the equilibrium-based reaction,
+<code class="docutils literal notranslate"><span class="pre">k_eq</span></code>.</p></li>
+</ol>
+<p>The declaration of these is shown in the cell below. Note that for this
+example we are assuming the equilibrium constant does not vary, and have
+thus declared it as a Pyomo <code class="docutils literal notranslate"><span class="pre">Param</span></code>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">define_variables_and_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">k_rxn</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mf">7e-10</span><span class="p">,</span>
+                    <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;Rate constant&quot;</span><span class="p">,</span>
+                    <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">reaction_rate</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">rate_reaction_idx</span><span class="p">,</span>
+                             <span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                             <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;Rate of reaction&quot;</span><span class="p">,</span>
+                             <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">k_eq</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+                      <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;Equlibrium constant&quot;</span><span class="p">,</span>
+                      <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-define-constraints-for-the-rate-based-reactions">
+<h2>Step 2. Define Constraints for the Rate-Based Reactions<a class="headerlink" href="#step-2-define-constraints-for-the-rate-based-reactions" title="Permalink to this heading">¶</a></h2>
+<p>Next, we need to define the <code class="docutils literal notranslate"><span class="pre">Constraints</span></code> which describe the
+rate-based reaction. First, we use the Arrhenius equation to calculate
+the rate constant, <span class="math notranslate nohighlight">\(k_{rxn} = A \times e^{-E_a/(RT)}\)</span>. For this
+calculation, <span class="math notranslate nohighlight">\(A\)</span> and <span class="math notranslate nohighlight">\(E_a\)</span> come from the associated Reaction
+Parameter Block (<code class="docutils literal notranslate"><span class="pre">self.params</span></code>), <span class="math notranslate nohighlight">\(T\)</span> comes from the associated
+State Block (<code class="docutils literal notranslate"><span class="pre">self.state_ref.temperature</span></code>) and the gas constant
+<span class="math notranslate nohighlight">\(R\)</span> can be found in the IDAES <code class="docutils literal notranslate"><span class="pre">Constants</span></code> class.</p>
+<p>After the rate constant, we need to declare the form of the rate
+expression as well. In this case, we are dealing with a gas phase
+reaction so
+<span class="math notranslate nohighlight">\(r = k_{rxn} \times x_{toluene} \times x_{hydrogen} \times P^2\)</span>,
+where <span class="math notranslate nohighlight">\(P\)</span> is the system pressure. <span class="math notranslate nohighlight">\(x_{toluene}\)</span>,
+<span class="math notranslate nohighlight">\(x_{hydrogen}\)</span> and <span class="math notranslate nohighlight">\(P\)</span> are all state variables, and can be
+accessed from the associated State Block.</p>
+<p>The cell below shows how we declare these two constraints.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">define_rate_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">arrhenius_equation</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+            <span class="n">expr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_rxn</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">arrhenius</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span>
+                <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">energy_activation</span> <span class="o">/</span>
+                <span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">gas_constant</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">state_ref</span><span class="o">.</span><span class="n">temperature</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">rate_rule</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">b</span><span class="o">.</span><span class="n">reaction_rate</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span>
+                    <span class="n">b</span><span class="o">.</span><span class="n">k_rxn</span> <span class="o">*</span>
+                    <span class="n">b</span><span class="o">.</span><span class="n">state_ref</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;toluene&quot;</span><span class="p">]</span> <span class="o">*</span>
+                    <span class="n">b</span><span class="o">.</span><span class="n">state_ref</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;hydrogen&quot;</span><span class="p">]</span> <span class="o">*</span>
+                    <span class="n">b</span><span class="o">.</span><span class="n">state_ref</span><span class="o">.</span><span class="n">pressure</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">rate_expression</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">rate_reaction_idx</span><span class="p">,</span>
+                                      <span class="n">rule</span><span class="o">=</span><span class="n">rate_rule</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-3-define-constraints-for-the-equilibrium-based-reactions">
+<h2>Step 3. Define Constraints for the Equilibrium-Based Reactions<a class="headerlink" href="#step-3-define-constraints-for-the-equilibrium-based-reactions" title="Permalink to this heading">¶</a></h2>
+<p>Similar to those for the rate-based reactions, we also need to define
+constraints for the equilibrium-based reactions in the system. In this
+case, the constraint will take the form of an equality that will force
+the compositions in the system to satisfy the given equilibrium
+constant. For this example, we have the following equilibrium
+constraint:</p>
+<div class="math notranslate nohighlight">
+\[k_{eq} = \frac{x_{diphenyl} \times x_{hydrogen} \times P^2}{x_{benzene} \times P}\]</div>
+<p>Note that <span class="math notranslate nohighlight">\(P\)</span> appears in both the numerator and denominator to
+make it clear that this is a ratio of partial pressures, and because we
+will rearrange this constraint when creating the actual Pyomo component
+in order to avoid potential singularities. This is shown in the cell
+below.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">define_equilibrium_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium_constraint</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+        <span class="n">expr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_eq</span> <span class="o">*</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_ref</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;benzene&quot;</span><span class="p">]</span> <span class="o">*</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_ref</span><span class="o">.</span><span class="n">pressure</span> <span class="o">==</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_ref</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;diphenyl&quot;</span><span class="p">]</span> <span class="o">*</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_ref</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;hydrogen&quot;</span><span class="p">]</span> <span class="o">*</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_ref</span><span class="o">.</span><span class="n">pressure</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="creating-the-reaction-block-class">
+<h1>Creating the Reaction Block class<a class="headerlink" href="#creating-the-reaction-block-class" title="Permalink to this heading">¶</a></h1>
+<p>These are all the variables and constraints that need to be declared for
+this example. All that remains is to declare the <code class="docutils literal notranslate"><span class="pre">_ReactionBlock</span></code> and
+<code class="docutils literal notranslate"><span class="pre">ReactionBlock</span></code> classes to complete our reaction property package.
+This process is much the same as for the thermophysical property package
+example, and will only be covered briefly here.</p>
+<section id="the-reactionblock-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">_ReactionBlock</span></code> class<a class="headerlink" href="#the-reactionblock-class" title="Permalink to this heading">¶</a></h2>
+<p>For this example, the <code class="docutils literal notranslate"><span class="pre">_ReactionBlock</span></code> class is very simple, and
+contains only a placeholder <code class="docutils literal notranslate"><span class="pre">initialize</span></code> method. As all the state
+variables are held separately in the associated State Block and the
+constraints within the reaction package are fairly simple, it is
+sufficient to not initialize the reaction properties before solving.
+However, a placeholder method still needs to be created, as the IDAES
+framework assumes all components will have an <code class="docutils literal notranslate"><span class="pre">initialize</span></code> method;
+however, this method need only consist of a <code class="docutils literal notranslate"><span class="pre">pass</span></code> statement.</p>
+<div class="alert alert-block alert-info docutils container">
+<p>Note: In more complex reaction systems, it is likely that a proper
+initialization routine would need to be implemented. Developers of
+these should be aware that equilibrium constraints will need to be
+deactivated during initialization, as the state variables
+(i.e. compositions) will be fixed in the State Block. Thus, trying to
+solve for the system with equilibrium constraints present will result
+in an over-specified problem.</p>
+</div>
+</section>
+<section id="id1">
+<h2>The <code class="docutils literal notranslate"><span class="pre">ReactionBlock</span></code> class<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
+<p>Once the <code class="docutils literal notranslate"><span class="pre">_ReactionBlock</span></code> class has been declared, the overall
+<code class="docutils literal notranslate"><span class="pre">ReactionBlock</span></code> class can be declared as shown below. Once again, we
+define a <code class="docutils literal notranslate"><span class="pre">build</span></code> method which calls the sub-methods we created earlier
+in order to construct an instance of the Reaction Block. The
+<code class="docutils literal notranslate"><span class="pre">ReactionBlock</span></code> class also needs to define a
+<code class="docutils literal notranslate"><span class="pre">get_reaction_rate_basis</span></code> method, which should return an instance of
+the <code class="docutils literal notranslate"><span class="pre">MaterialFlowBasis</span></code> <code class="docutils literal notranslate"><span class="pre">Enum</span></code>; this is used by the IDAES framework
+to determine if conversion between mass and mole basis is required.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">_HDAReactionBlock</span><span class="p">(</span><span class="n">ReactionBlockBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">blk</span><span class="p">,</span> <span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">NOTSET</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">init_log</span> <span class="o">=</span> <span class="n">idaeslog</span><span class="o">.</span><span class="n">getInitLogger</span><span class="p">(</span><span class="n">blk</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">outlvl</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;properties&quot;</span><span class="p">)</span>
+        <span class="n">init_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Initialization Complete.&#39;</span><span class="p">)</span>
+
+<span class="nd">@declare_process_block_class</span><span class="p">(</span><span class="s2">&quot;HDAReactionBlock&quot;</span><span class="p">,</span>
+                             <span class="n">block_class</span><span class="o">=</span><span class="n">_HDAReactionBlock</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">HDAReactionBlockData</span><span class="p">(</span><span class="n">ReactionBlockDataBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">HDAReactionBlockData</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+        <span class="n">define_variables_and_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">define_rate_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">define_equilibrium_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_reaction_rate_basis</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MaterialFlowBasis</span><span class="o">.</span><span class="n">molar</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="demonstration">
+<h1>Demonstration<a class="headerlink" href="#demonstration" title="Permalink to this heading">¶</a></h1>
+<p>In order to demonstrate our new Reaction Property package in practice,
+we will now use it to build and solve a CSTR. First, we will need to
+import some more components from Pyomo and IDAES to use when building
+the flowsheet.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span>
+<span class="kn">from</span> <span class="nn">pyomo.util.check_units</span> <span class="kn">import</span> <span class="n">assert_units_consistent</span>
+
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">get_solver</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models</span> <span class="kn">import</span> <span class="n">CSTR</span>
+
+<span class="kn">from</span> <span class="nn">thermophysical_property_example</span> <span class="kn">import</span> <span class="n">HDAParameterBlock</span>
+
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+</pre></div>
+</div>
+<p>Next, we can construct a Pyomo <code class="docutils literal notranslate"><span class="pre">ConcreteModel</span></code> and IDAES
+<code class="docutils literal notranslate"><span class="pre">FlowsheetBlock</span></code> as usual. We then attach an instance of the
+associated thermophysical property package (imported as
+<code class="docutils literal notranslate"><span class="pre">HDAParameterBlock</span></code>) and our new reaction property package to the
+flowsheet, and then construct a CSTR using these property packages.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span> <span class="o">=</span> <span class="n">HDAParameterBlock</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reaction_params</span> <span class="o">=</span> <span class="n">HDAReactionParameterBlock</span><span class="p">(</span>
+    <span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span> <span class="o">=</span> <span class="n">CSTR</span><span class="p">(</span>
+    <span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+    <span class="n">reaction_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reaction_params</span><span class="p">,</span>
+    <span class="n">has_equilibrium_reactions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If all went well, we should see no errors when constructing the
+flowsheet above. To be sure, let us print the degrees of freedom in our
+flowsheet model as shown below; we should see 9 degrees of freedom.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Degrees of Freedom: &quot;</span><span class="p">,</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Degrees</span> <span class="n">of</span> <span class="n">Freedom</span><span class="p">:</span>  <span class="mi">9</span>
+</pre></div>
+</div>
+<p>The 9 degrees of freedom are the flowrate, temperature, pressure and
+mole fractions (5) of the inlet stream, as well as the reactor volume.
+We will fix them to some default values as shown below. Once we are
+done, we will also print the degrees of freedom again to ensure we have
+fixed enough variables.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">350000</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.4</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.4</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;diphenyl&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">volume</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Degrees of Freedom: &quot;</span><span class="p">,</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Degrees</span> <span class="n">of</span> <span class="n">Freedom</span><span class="p">:</span>  <span class="mi">0</span>
+</pre></div>
+</div>
+<p>Now that we have defined our example problem, we can initialize and
+solve the flowsheet. This is done in the cell below, which should result
+in an optimal solution.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">state_args</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">&quot;flow_mol&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="s2">&quot;mole_frac_comp&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;benzene&quot;</span><span class="p">:</span> <span class="mf">0.15</span><span class="p">,</span>
+        <span class="s2">&quot;toluene&quot;</span><span class="p">:</span> <span class="mf">0.35</span><span class="p">,</span>
+        <span class="s2">&quot;hydrogen&quot;</span><span class="p">:</span> <span class="mf">0.35</span><span class="p">,</span>
+        <span class="s2">&quot;methane&quot;</span><span class="p">:</span> <span class="mf">0.15</span><span class="p">,</span>
+        <span class="s2">&quot;diphenyl&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">},</span>
+    <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mi">600</span><span class="p">,</span>
+    <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="mi">350000</span><span class="p">})</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">()</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor.control_volume.properties_in: Properties Initialized optimal - Optimal Solution Found.
+2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor.control_volume.properties_out: Properties Initialized optimal - Optimal Solution Found.
+2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor.control_volume.reactions: Initialization Complete.
+2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor.control_volume: Initialization Complete
+2022-09-13 00:23:56 [INFO] idaes.init.fs.reactor: Initialization Complete: optimal - Optimal Solution Found
+Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       67
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       23
+
+Total number of variables............................:       24
+                     variables with only lower bounds:        5
+                variables with lower and upper bounds:        3
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       24
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 1.30e-08 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   8.8593591389494380e-12    1.3038516044616699e-08
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   8.8593591389494380e-12    1.3038516044616699e-08
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 1
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 1
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.</pre>
+<p>Now that our model has solved, let us use the <code class="docutils literal notranslate"><span class="pre">report()</span></code> method for
+the CSRT to have a look at what happened in the reactor. We should see
+that the outlet mole fraction of benzene is now around 0.160 and the
+mole fraction of diphenyl is 0.014; thus, our reactor has successfully
+generated benzene from toluene. In the process, the reaction has also
+generated a lot of heat, which has raised the temperature of the gas
+from 500 K to 790.2 K.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reactor</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">reactor</span>                                                          <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>    <span class="p">:</span> <span class="n">Value</span>  <span class="p">:</span> <span class="n">Units</span>      <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+    <span class="n">Volume</span> <span class="p">:</span> <span class="mf">1.0000</span> <span class="p">:</span> <span class="n">meter</span> <span class="o">**</span> <span class="mi">3</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                <span class="n">Units</span>         <span class="n">Inlet</span>     <span class="n">Outlet</span>
+    <span class="n">flow_mol</span>                 <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>     <span class="mf">100.00</span>     <span class="mf">100.00</span>
+    <span class="n">mole_frac_comp</span> <span class="n">benzene</span>   <span class="n">dimensionless</span>    <span class="mf">0.10000</span>    <span class="mf">0.15963</span>
+    <span class="n">mole_frac_comp</span> <span class="n">toluene</span>   <span class="n">dimensionless</span>    <span class="mf">0.40000</span>    <span class="mf">0.31243</span>
+    <span class="n">mole_frac_comp</span> <span class="n">methane</span>   <span class="n">dimensionless</span>    <span class="mf">0.10000</span>    <span class="mf">0.18757</span>
+    <span class="n">mole_frac_comp</span> <span class="n">hydrogen</span>  <span class="n">dimensionless</span>    <span class="mf">0.40000</span>    <span class="mf">0.32640</span>
+    <span class="n">mole_frac_comp</span> <span class="n">diphenyl</span>  <span class="n">dimensionless</span>     <span class="mf">0.0000</span>   <span class="mf">0.013973</span>
+    <span class="n">temperature</span>                     <span class="n">kelvin</span>     <span class="mf">500.00</span>     <span class="mf">790.21</span>
+    <span class="n">pressure</span>                        <span class="n">pascal</span> <span class="mf">3.5000e+05</span> <span class="mf">3.5000e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+<p>Finally, as a quick check of model consistency, let us assert that the
+units of measurement in our model are consistent (the units of the rate
+constant and pre-exponential factor are rather complex).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">assert_units_consistent</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="concluding-remarks">
+<h1>Concluding Remarks<a class="headerlink" href="#concluding-remarks" title="Permalink to this heading">¶</a></h1>
+<p>The above example has hopefully introduced you to the basic requirements
+for creating your own custom reaction property packages. However, it is
+probably clear that it requires a significant amount of effort to write
+your own property packages, thus users are encouraged to look into the
+IDAES Modular Reactions Framework if they are not already familiar with
+this.</p>
+<p>The IDAES Modular Reactions Framework is designed to automatically
+generate user-defined reaction property packages for common reaction
+forms based on a single configuration file. Users provide a list of
+reactions of interest (both rate- and equilibrium-based), and select
+from a library of common reaction forms, and the Modular Reaction
+Framework then does the hard work of assembling the necessary code to
+construct the desired model.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

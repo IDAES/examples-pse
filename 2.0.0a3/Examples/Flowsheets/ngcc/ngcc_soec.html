@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Flowsheet for NGCC + SOEC with Steam Integration &mdash; IDAES v2.0.0a3 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Design Flowsheet for NGCC + SOEC with Steam Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/Flowsheets/ngcc/ngcc_soec.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="design-flowsheet-for-ngcc-soec-with-steam-integration">
+<h1>Design Flowsheet for NGCC + SOEC with Steam Integration<a class="headerlink" href="#design-flowsheet-for-ngcc-soec-with-steam-integration" title="Permalink to this heading">¶</a></h1>
+<p>This flowsheet example provides an off-design model for integration of
+an SOEC for hydrogen production with an NGCC. The NGCC nominally
+produces 650 MW net, and includeds 97% CO2 capture. A detailed SOEC unit
+model is used here.</p>
+<section id="import-required-modules">
+<h2>Import Required Modules<a class="headerlink" href="#import-required-modules" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">from</span> <span class="nn">IPython.core.display</span> <span class="kn">import</span> <span class="n">SVG</span>
+<span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">use_idaes_solver_configuration_defaults</span>
+<span class="kn">import</span> <span class="nn">idaes</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util.scaling</span> <span class="k">as</span> <span class="nn">iscale</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util</span> <span class="k">as</span> <span class="nn">iutil</span>
+<span class="kn">import</span> <span class="nn">ngcc_soec_costing</span> <span class="c1">### changed name of costing module</span>
+<span class="kn">import</span> <span class="nn">ngcc_soec</span>
+</pre></div>
+</div>
+</section>
+<section id="make-output-directories">
+<h2>Make Output Directories<a class="headerlink" href="#make-output-directories" title="Permalink to this heading">¶</a></h2>
+<p>This notebook can produce a large number of output files. To make it
+easier to manage, some subdirectories are used to orginize output. This
+ensures that the drectories exist.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_directory</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make a directory if it doesn&#39;t exist&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_pfds&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_tabulated&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="set-global-solver-options">
+<h2>Set Global Solver Options<a class="headerlink" href="#set-global-solver-options" title="Permalink to this heading">¶</a></h2>
+<p>Setting global solver options applies them to any solver created
+subsequently, including the ones used for initialization. The user
+scaling option disables Ipopt’s automatic scaling and allows it to use
+user provided variable scaling.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">use_idaes_solver_configuration_defaults</span><span class="p">()</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">nlp_scaling_method</span> <span class="o">=</span> <span class="s2">&quot;user-scaling&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="s2">&quot;ma57&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">OF_ma57_automatic_scaling</span> <span class="o">=</span> <span class="s2">&quot;yes&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ma57_pivtol</span> <span class="o">=</span> <span class="mf">1e-5</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ma57_pivtolmax</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s2">&quot;ipopt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="create-and-initialize-the-ngcc-soec-model">
+<h2>Create and Initialize the NGCC + SOEC Model<a class="headerlink" href="#create-and-initialize-the-ngcc-soec-model" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">ngcc_soec</span><span class="o">.</span><span class="n">NgccSoecFlowsheet</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span><span class="kc">False</span><span class="p">})</span>
+<span class="n">iscale</span><span class="o">.</span><span class="n">calculate_scaling_factors</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+    <span class="n">load_from</span><span class="o">=</span><span class="s2">&quot;ngcc_soec_init.json.gz&quot;</span><span class="p">,</span>
+    <span class="n">save_to</span><span class="o">=</span><span class="s2">&quot;ngcc_soec_init.json.gz&quot;</span>
+<span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">fuel_cost</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">4.42</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">cap_specific_reboiler_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">2.4e6</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">cap_fraction</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.97</span><span class="p">)</span>
+
+<span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">ngcc_soec_costing</span><span class="o">.</span><span class="n">add_results_for_costing</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1">### need to calculate more results to be used by power plant costing</span>
+<span class="n">ngcc_soec_costing</span><span class="o">.</span><span class="n">get_ngcc_soec_capital_cost</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="c1">### changed name of costing function</span>
+
+<span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/ipykernel_2878/1904360453.py:2)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/ngcc_soec.py:47)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/ngcc.py:152)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:94)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:98)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:102)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:107)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:113)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:116)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:119)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:123)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:130)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:137)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:144)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:151)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:158)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:165)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:173)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:179)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:187)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:195)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:203)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:211)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:219)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:227)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:236)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:244)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:252)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:259)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/gas_turbine.py:266)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/ngcc.py:159)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:85)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:96)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:110)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:119)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:123)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:132)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:141)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:149)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:156)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:170)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:174)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:180)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:187)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:201)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:208)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:222)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:231)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:245)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:254)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:261)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:275)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:289)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:303)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:317)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:331)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:345)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:359)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:366)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:375)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:389)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:403)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/hrsg.py:417)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/ngcc.py:166)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/steam_turbine.py:61)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/steam_turbine.py:73)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/steam_turbine.py:81)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/steam_turbine.py:88)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/steam_turbine.py:92)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/steam_turbine.py:105)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/steam_turbine.py:113)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/steam_turbine.py:116)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/steam_turbine.py:124)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/ngcc.py:175)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/ngcc_soec.py:54)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:57)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:61)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:65)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:185)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-package
+    s/idaes/models_extra/power_generation/unit_models/soc_submodels/solid_oxid
+    e_module_simple.py:139)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-package
+    s/idaes/models_extra/power_generation/unit_models/soc_submodels/solid_oxid
+    e_cell.py:339)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-package
+    s/idaes/models_extra/power_generation/unit_models/soc_submodels/solid_oxid
+    e_cell.py:353)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-package
+    s/idaes/models_extra/power_generation/unit_models/soc_submodels/solid_oxid
+    e_cell.py:441)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-package
+    s/idaes/models_extra/power_generation/unit_models/soc_submodels/solid_oxid
+    e_cell.py:461)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-package
+    s/idaes/models_extra/power_generation/unit_models/soc_submodels/solid_oxid
+    e_cell.py:481)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-package
+    s/idaes/models_extra/power_generation/unit_models/soc_submodels/solid_oxid
+    e_cell.py:502)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-package
+    s/idaes/models_extra/power_generation/unit_models/soc_submodels/solid_oxid
+    e_cell.py:523)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:208)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:215)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:222)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:235)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:248)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:252)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:258)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:262)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:269)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:276)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:279)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:282)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:285)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:291)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:297)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:323)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:326)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:329)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:330)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:333)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:334)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:337)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:338)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /tmp/tmptgyg6x8d/soec.py:341)
+2022-09-13 00:27:36 [INFO] idaes.init.fs.ngcc: NGCC load initial from ngcc_init.json.gz
+2022-09-13 00:27:36 [INFO] idaes.init.fs.soec: SOEC load initial from soec_init.json.gz
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmpnzom7767_ipopt.opt
+
+Using option file &quot;/tmp/tmpnzom7767_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    18517
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:    14416
+
+Total number of variables............................:     4177
+                     variables with only lower bounds:      362
+                variables with lower and upper bounds:     2290
+                     variables with only upper bounds:       70
+Total number of equality constraints.................:     4177
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.50e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (335547)
+   1  0.0000000e+00 3.49e-01 1.12e+04  -1.0 3.06e+03    -  9.81e-01 9.90e-01h  1
+   2  0.0000000e+00 3.15e-03 5.17e+02  -1.0 3.02e+03    -  9.89e-01 9.91e-01h  1
+   3  0.0000000e+00 1.14e-06 9.98e+02  -1.0 3.73e+01    -  9.90e-01 1.00e+00h  1
+   4  0.0000000e+00 3.64e-11 8.96e+03  -1.0 7.71e-04    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 4
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   3.6379788070917130e-11    3.6379788070917130e-11
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   3.6379788070917130e-11    3.6379788070917130e-11
+
+
+Number of objective function evaluations             = 5
+Number of objective gradient evaluations             = 5
+Number of equality constraint evaluations            = 5
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 5
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 4
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.540
+Total CPU secs in NLP function evaluations           =      2.267
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmpupksf6ml_ipopt.opt
+
+Using option file &quot;/tmp/tmpupksf6ml_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    18518
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:    14417
+
+Total number of variables............................:     4177
+                     variables with only lower bounds:      362
+                variables with lower and upper bounds:     2290
+                     variables with only upper bounds:       70
+Total number of equality constraints.................:     4177
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.50e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (334632)
+   1  0.0000000e+00 3.39e+01 5.52e+04  -1.0 1.78e+06    -  9.09e-01 2.99e-02h  6
+   2  0.0000000e+00 3.29e+01 8.36e+04  -1.0 1.72e+06    -  9.74e-01 2.99e-02h  6
+   3  0.0000000e+00 3.19e+01 9.61e+04  -1.0 1.66e+06    -  9.77e-01 3.00e-02h  6
+   4  0.0000000e+00 3.09e+01 1.00e+05  -1.0 1.60e+06    -  9.88e-01 3.00e-02h  6
+   5  0.0000000e+00 3.00e+01 1.00e+05  -1.0 1.54e+06    -  9.89e-01 3.00e-02h  6
+   6  0.0000000e+00 2.91e+01 9.80e+04  -1.0 1.49e+06    -  1.00e+00 3.01e-02h  6
+   7  0.0000000e+00 2.82e+01 9.48e+04  -1.0 1.44e+06    -  1.00e+00 3.01e-02h  6
+   8  0.0000000e+00 2.74e+01 9.12e+04  -1.0 1.39e+06    -  1.00e+00 3.01e-02h  6
+   9  0.0000000e+00 2.66e+01 8.74e+04  -1.0 1.34e+06    -  1.00e+00 3.02e-02h  6
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  0.0000000e+00 2.58e+01 8.37e+04  -1.0 1.30e+06    -  1.00e+00 3.02e-02h  6
+  11  0.0000000e+00 6.07e+02 3.61e+06  -1.0 1.25e+06    -  1.00e+00 9.67e-01w  1
+  12  0.0000000e+00 8.86e+01 6.96e+05  -1.0 7.39e+04    -  9.54e-01 9.90e-01w  1
+  13  0.0000000e+00 1.29e-01 7.33e+03  -1.0 1.14e+04    -  9.87e-01 1.00e+00h  1
+  14  0.0000000e+00 6.15e-06 1.80e+01  -1.0 9.90e+01    -  1.00e+00 1.00e+00h  1
+  15  0.0000000e+00 1.20e-09 7.18e-04  -3.8 1.07e-02    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 15
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.1987140169367194e-09    1.1987140169367194e-09
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.1987140169367194e-09    1.1987140169367194e-09
+
+
+Number of objective function evaluations             = 90
+Number of objective gradient evaluations             = 16
+Number of equality constraint evaluations            = 90
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 16
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 15
+Total CPU secs in IPOPT (w/o function evaluations)   =      1.349
+Total CPU secs in NLP function evaluations           =     33.927
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmpj2cfjbq8_ipopt.opt
+
+Using option file &quot;/tmp/tmpj2cfjbq8_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    18518
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:    14417
+
+Total number of variables............................:     4177
+                     variables with only lower bounds:      362
+                variables with lower and upper bounds:     2290
+                     variables with only upper bounds:       70
+Total number of equality constraints.................:     4177
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.61e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (334652)
+   1  0.0000000e+00 2.08e+01 2.80e+07  -1.0 1.50e+05    -  9.81e-01 9.90e-01h  1
+   2  0.0000000e+00 1.60e+01 2.58e+07  -1.0 1.23e+05    -  5.54e-01 9.82e-01h  1
+   3  0.0000000e+00 5.72e-01 1.05e+06  -1.0 2.37e+04    -  9.74e-01 1.00e+00h  1
+   4  0.0000000e+00 2.07e-02 1.48e+04  -1.0 4.58e+03    -  9.87e-01 1.00e+00h  1
+   5  0.0000000e+00 2.58e-06 8.31e+02  -1.0 2.57e+01    -  9.90e-01 1.00e+00h  1
+   6  0.0000000e+00 2.46e-10 5.36e+00  -1.0 1.87e-03    -  9.94e-01 1.00e+00h  1
+
+Number of Iterations....: 6
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   2.4556356947869062e-10    2.4556356947869062e-10
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   2.4556356947869062e-10    2.4556356947869062e-10
+
+
+Number of objective function evaluations             = 7
+Number of objective gradient evaluations             = 7
+Number of equality constraint evaluations            = 7
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 7
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 6
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.670
+Total CPU secs in NLP function evaluations           =      3.170
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmp1fo8hdmd_ipopt.opt
+
+Using option file &quot;/tmp/tmp1fo8hdmd_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    18539
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:    14422
+
+Total number of variables............................:     4183
+                     variables with only lower bounds:      362
+                variables with lower and upper bounds:     2294
+                     variables with only upper bounds:       70
+Total number of equality constraints.................:     4183
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.61e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (353027)
+   1  0.0000000e+00 3.16e+01 1.70e+05  -1.0 3.11e+05    -  7.44e-01 1.24e-01h  4
+Reallocating memory for MA57: lfact (393643)
+   2  0.0000000e+00 2.77e+01 1.47e+05  -1.0 3.57e+05    -  7.99e-01 1.24e-01h  4
+   3  0.0000000e+00 2.43e+01 1.14e+05  -1.0 3.74e+05    -  7.96e-01 1.24e-01h  4
+   4  0.0000000e+00 2.13e+01 8.83e+04  -1.0 3.73e+05    -  8.06e-01 1.24e-01h  4
+   5  0.0000000e+00 2.69e+00 1.13e+06  -1.0 3.61e+05    -  8.43e-01 9.90e-01H  1
+   6  0.0000000e+00 7.59e-02 1.64e+04  -1.0 5.97e+03    -  9.90e-01 9.92e-01h  1
+   7  0.0000000e+00 1.23e-04 1.69e+03  -1.0 1.74e+02    -  9.90e-01 1.00e+00h  1
+   8  0.0000000e+00 1.33e-09 5.77e+03  -1.0 5.83e-02    -  9.93e-01 1.00e+00h  1
+
+Number of Iterations....: 8
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.3333192327991128e-09    1.3333192327991128e-09
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.3333192327991128e-09    1.3333192327991128e-09
+
+
+Number of objective function evaluations             = 29
+Number of objective gradient evaluations             = 9
+Number of equality constraint evaluations            = 29
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 9
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 8
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.966
+Total CPU secs in NLP function evaluations           =     11.555
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmp5mf398f3_ipopt.opt
+
+Using option file &quot;/tmp/tmp5mf398f3_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    18535
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:    14419
+
+Total number of variables............................:     4183
+                     variables with only lower bounds:      362
+                variables with lower and upper bounds:     2293
+                     variables with only upper bounds:       70
+Total number of equality constraints.................:     4183
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.57e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (353479)
+   1  0.0000000e+00 3.59e+00 1.26e+06  -1.0 3.65e+04    -  6.14e-01 9.90e-01h  1
+Reallocating memory for MA57: lfact (402027)
+   2  0.0000000e+00 1.28e+00 4.51e+05  -1.0 5.33e+04    -  8.73e-01 9.91e-01h  1
+   3  0.0000000e+00 2.61e-02 5.12e+03  -1.0 7.59e+03    -  9.86e-01 1.00e+00h  1
+   4  0.0000000e+00 9.93e-07 9.67e+03  -1.0 2.08e+01    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 4
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   9.9296084954403341e-07    9.9296084954403341e-07
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   9.9296084954403341e-07    9.9296084954403341e-07
+
+
+Number of objective function evaluations             = 5
+Number of objective gradient evaluations             = 5
+Number of equality constraint evaluations            = 5
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 5
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 4
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.653
+Total CPU secs in NLP function evaluations           =      2.178
+
+EXIT: Optimal Solution Found.
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmpoxon5o_o_ipopt.opt
+
+Using option file &quot;/tmp/tmpoxon5o_o_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    18524
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:    14419
+
+Total number of variables............................:     4183
+                     variables with only lower bounds:      362
+                variables with lower and upper bounds:     2293
+                     variables with only upper bounds:       70
+Total number of equality constraints.................:     4183
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.50e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (434298)
+Reallocating memory for MA57: lfact (471857)
+   1  0.0000000e+00 3.06e+01 1.24e+05  -1.0 3.52e+05    -  8.33e-01 1.24e-01h  4
+   2  0.0000000e+00 2.68e+01 1.21e+05  -1.0 3.02e+05    -  8.68e-01 1.24e-01h  4
+   3  0.0000000e+00 2.02e+01 5.05e+04  -1.0 2.61e+05    -  9.86e-01 2.48e-01h  3
+   4  0.0000000e+00 1.52e+01 5.07e+03  -1.0 1.98e+05    -  9.90e-01 2.48e-01h  3
+   5  0.0000000e+00 7.68e+00 8.80e+04  -1.0 1.49e+05    -  9.90e-01 4.95e-01h  2
+   6  0.0000000e+00 3.24e+00 8.38e+04  -1.0 7.56e+04    -  9.93e-01 9.90e-01h  1
+   7  0.0000000e+00 6.72e-02 3.36e+03  -1.0 9.01e+03    -  9.96e-01 9.95e-01h  1
+   8  0.0000000e+00 1.01e-03 1.46e+02  -1.0 1.26e+03    -  1.00e+00 1.00e+00h  1
+   9  0.0000000e+00 5.66e-07 5.62e-03  -1.7 8.05e+00    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 9
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   5.6644785217940807e-07    5.6644785217940807e-07
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   5.6644785217940807e-07    5.6644785217940807e-07
+
+
+Number of objective function evaluations             = 27
+Number of objective gradient evaluations             = 10
+Number of equality constraint evaluations            = 27
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 10
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 9
+Total CPU secs in IPOPT (w/o function evaluations)   =      1.396
+Total CPU secs in NLP function evaluations           =     11.735
+
+EXIT: Optimal Solution Found.
+2022-09-13 00:30:45 [INFO] idaes.init.fs: Initialization saved to ngcc_soec_init.json.gz
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmpqvly6v2v_ipopt.opt
+
+Using option file &quot;/tmp/tmpqvly6v2v_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    18524
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:    14419
+
+Total number of variables............................:     4183
+                     variables with only lower bounds:      362
+                variables with lower and upper bounds:     2293
+                     variables with only upper bounds:       70
+Total number of equality constraints.................:     4183
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.50e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (432531)
+Reallocating memory for MA57: lfact (469849)
+   1  0.0000000e+00 3.70e+00 4.49e+06  -1.0 7.72e+04    -  9.79e-01 9.90e-01h  1
+   2  0.0000000e+00 2.31e+00 1.62e+06  -1.0 5.96e+04    -  7.86e-01 9.91e-01h  1
+   3  0.0000000e+00 1.80e-01 6.68e+04  -1.0 1.69e+04    -  9.81e-01 1.00e+00h  1
+   4  0.0000000e+00 1.13e-04 9.01e+03  -1.0 4.31e+02    -  9.90e-01 1.00e+00h  1
+   5  0.0000000e+00 3.92e-08 8.91e+01  -1.0 5.39e-01    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 5
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   3.9222868508659303e-08    3.9222868508659303e-08
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   3.9222868508659303e-08    3.9222868508659303e-08
+
+
+Number of objective function evaluations             = 6
+Number of objective gradient evaluations             = 6
+Number of equality constraint evaluations            = 6
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 6
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 5
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.888
+Total CPU secs in NLP function evaluations           =      2.906
+
+EXIT: Optimal Solution Found.
+WARNING: DEPRECATED: The get_costing method is being deprecated in favor of
+    the new FlowsheetCostingBlock tools.  (deprecated in TBD) (called from
+    /tmp/ipykernel_2878/1904360453.py:16)
+WARNING: DEPRECATED: The get_costing method is being deprecated in favor of
+    the new FlowsheetCostingBlock tools.  (deprecated in TBD) (called from
+    /tmp/ipykernel_2878/1904360453.py:16)
+WARNING: DEPRECATED: The get_costing method is being deprecated in favor of
+    the new FlowsheetCostingBlock tools.  (deprecated in TBD) (called from
+    /home/runner/.conda/envs/idaes-env/lib/python3.8/site-
+    packages/pyomo/common/deprecation.py:119)
+WARNING: DEPRECATED: The get_costing method is being deprecated in favor of
+    the new FlowsheetCostingBlock tools.  (deprecated in TBD) (called from
+    /tmp/ipykernel_2878/1904360453.py:16)
+WARNING: DEPRECATED: The get_costing method is being deprecated in favor of
+    the new FlowsheetCostingBlock tools.  (deprecated in TBD) (called from
+    /tmp/ipykernel_2878/1904360453.py:16)
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmp49go7fh8_ipopt.opt
+
+Using option file &quot;/tmp/tmp49go7fh8_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    19241
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:    14764
+
+Total number of variables............................:     4323
+                     variables with only lower bounds:      371
+                variables with lower and upper bounds:     2424
+                     variables with only upper bounds:       70
+Total number of equality constraints.................:     4323
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.50e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (384375)
+   1  0.0000000e+00 1.16e+01 2.50e+06  -1.0 8.45e+04    -  7.97e-01 9.90e-01H  1
+   2  0.0000000e+00 5.93e+00 1.09e+08  -1.0 1.01e+05    -  9.80e-01 9.91e-01H  1
+   3  0.0000000e+00 1.18e-02 1.18e+06  -1.0 4.91e+02    -  9.90e-01 1.00e+00h  1
+   4  0.0000000e+00 7.65e-08 9.00e+03  -1.0 1.07e+00    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 4
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   7.6497599366120994e-08    7.6497599366120994e-08
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   7.6497599366120994e-08    7.6497599366120994e-08
+
+
+Number of objective function evaluations             = 9
+Number of objective gradient evaluations             = 5
+Number of equality constraint evaluations            = 9
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 5
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 4
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.669
+Total CPU secs in NLP function evaluations           =      3.865
+
+EXIT: Optimal Solution Found.</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">display_pfd</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Gas Turbine Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">HRSG Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Steam Turbine Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">SOEC Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">net_power_mw</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_turbine</span><span class="o">.</span><span class="n">throttle_valve</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">net_power_mw</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">_time</span><span class="p">,</span> <span class="n">Units</span><span class="o">=</span><span class="n">MW</span>
+    <span class="n">Key</span> <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Value</span>             <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Stale</span> <span class="p">:</span> <span class="n">Domain</span>
+    <span class="mf">0.0</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="mf">620.8431694819286</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+<span class="n">deltaP</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">_time</span><span class="p">,</span> <span class="n">ReferenceTo</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_turbine</span><span class="o">.</span><span class="n">throttle_valve</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">deltaP</span>
+    <span class="n">Key</span> <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Value</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Stale</span> <span class="p">:</span> <span class="n">Domain</span>
+    <span class="mf">0.0</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="o">-</span><span class="mf">3733612.0543055106</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">decision_vars</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">def</span> <span class="nf">make_decision_var</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">):</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="n">lb</span><span class="p">)</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="n">ub</span><span class="p">)</span>
+    <span class="n">decision_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+<span class="c1"># Add constraints for optimization</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_turbine</span><span class="o">.</span><span class="n">throttle_valve</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="o">-</span><span class="mf">1e5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;O2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">0.35</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">0.20</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">1030</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">1030</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_turbine_lp_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">2.9e5</span><span class="p">)</span>
+
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">makeup_water_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_pump</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">tube_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+<span class="c1"># make sure the delta T on the hydrogen side is 40K or less (it&#39;s</span>
+<span class="c1"># squared so one constraint covers both positive and negative delta T)</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delta_T_h_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mi">16</span>
+
+<span class="c1"># make sure the delta T on the oxygen side is 40K or less</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delta_T_o_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mi">16</span>
+
+<span class="c1"># make sure the oxygen inlet and hydrogen outlet are 40K or less apart</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delta_T_1_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mi">16</span>
+
+<span class="c1"># make sure the hydrogen inlet and oxygen outlet are 40K or less apart</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delta_T_2_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mi">16</span>
+
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">average_current_density_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">solid_oxide_cell</span><span class="o">.</span><span class="n">average_current_density</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">1000</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">8</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_pump</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">],</span> <span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.97</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">],</span> <span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_split</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;outlet1&quot;</span><span class="p">],</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">potential_cell</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1.26</span><span class="p">,</span> <span class="mf">1.38</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">1020</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">1020</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">1020</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="mf">2e6</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">7000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">7000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater01</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">7000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater02</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">7000</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj_design</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">total_variable_cost_rate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">variable_makeup_water_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+        <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">total_electric_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mf">1e6</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">+</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC</span><span class="o">*</span><span class="mf">1e6</span> <span class="o">*</span> <span class="mf">1.093</span> <span class="o">*</span> <span class="mf">0.0707</span> <span class="o">*</span> <span class="mf">1.341</span> <span class="o">/</span> <span class="mi">365</span> <span class="o">/</span> <span class="mi">24</span> <span class="c1"># anualized cap. + fixed O&amp;M for SOEC part</span>
+    <span class="p">)</span><span class="o">/</span><span class="mi">1000</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmp_87qfmqs_ipopt.opt
+
+Using option file &quot;/tmp/tmp_87qfmqs_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    19314
+Number of nonzeros in inequality constraint Jacobian.:       18
+Number of nonzeros in Lagrangian Hessian.............:    14889
+
+Reallocating memory for MA57: lfact (366103)
+Total number of variables............................:     4336
+                     variables with only lower bounds:      371
+                variables with lower and upper bounds:     2436
+                     variables with only upper bounds:       71
+Total number of equality constraints.................:     4324
+Total number of inequality constraints...............:        5
+        inequality constraints with only lower bounds:        1
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        4
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  5.1152890e+01 4.42e+02 1.28e+02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  5.1204458e+01 3.92e+02 1.14e+02  -1.0 1.32e+03    -  4.71e-01 1.14e-01h  1
+   2  5.1204839e+01 3.92e+02 3.30e+03  -1.0 8.68e+02    -  8.02e-01 1.29e-03h  1
+   3  5.1183543e+01 3.67e+02 6.68e+03  -1.0 7.17e+04    -  1.21e-01 6.28e-02h  1
+   4  5.1131592e+01 3.11e+02 5.46e+03  -1.0 6.79e+04    -  1.74e-01 1.54e-01h  1
+   5  5.1131349e+01 3.10e+02 1.24e+04  -1.0 7.67e+04    -  3.48e-01 3.58e-03h  1
+   6  5.0777141e+01 2.30e+02 2.71e+04  -1.0 1.57e+05    -  7.62e-01 2.57e-01h  1
+   7  4.9925920e+01 1.44e+02 6.54e+03  -1.0 1.16e+05    -  7.00e-01 3.72e-01h  1
+   8  4.9934314e+01 1.44e+02 5.84e+05  -1.0 4.04e+04  -4.0 2.01e-02 5.77e-04h  1
+   9  5.0119766e+01 1.43e+02 6.79e+05  -1.0 7.31e+04  -4.5 1.70e-02 1.23e-02f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  5.0120263e+01 1.42e+02 3.99e+06  -1.0 7.22e+04  -4.1 4.92e-02 4.93e-03h  1
+  11  5.0113884e+01 1.41e+02 6.19e+07  -1.0 7.18e+04  -3.6 2.96e-01 5.49e-03h  1
+  12  5.0090447e+01 1.40e+02 6.16e+07  -1.0 7.14e+04  -4.1 2.42e-02 5.47e-03h  1
+  13  5.0088336e+01 1.40e+02 5.96e+07  -1.0 7.10e+04  -4.6 4.84e-02 3.66e-03h  1
+  14  5.0087998e+01 1.40e+02 5.99e+07  -1.0 7.08e+04  -4.2 8.53e-02 1.71e-04h  1
+  15  5.0054040e+01 1.37e+02 5.29e+07  -1.0 7.08e+04  -4.6 1.64e-01 1.94e-02h  1
+  16  5.0025214e+01 1.34e+02 5.19e+07  -1.0 6.94e+04  -5.1 2.00e-02 2.05e-02h  2
+  17  4.9996504e+01 1.32e+02 2.88e+07  -1.0 6.80e+04  -5.6 4.45e-01 1.89e-02h  1
+  18  5.0006929e+01 1.19e+02 2.42e+07  -1.0 1.67e+05    -  1.53e-01 9.37e-02h  4
+  19  5.0102283e+01 1.79e+02 8.26e+06  -1.0 1.52e+05    -  6.90e-01 9.90e-01H  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  20  5.0099675e+01 1.68e+02 7.42e+06  -1.0 1.91e+03  -3.4 2.85e-01 5.99e-02h  1
+  21  5.0112865e+01 3.17e+00 1.97e+06  -1.0 2.26e+04    -  7.49e-01 9.94e-01h  1
+  22  5.0091958e+01 5.86e-01 6.43e+05  -1.0 9.77e+04    -  6.73e-01 1.00e+00F  1
+  23  5.0040974e+01 1.27e+01 4.12e+05  -1.0 2.67e+05    -  4.36e-01 1.00e+00F  1
+  24  4.9961248e+01 5.26e+01 1.16e+04  -1.0 4.06e+05    -  9.72e-01 1.00e+00H  1
+  25  4.9957928e+01 5.61e+01 5.26e+03  -1.0 2.00e+06    -  5.48e-01 1.28e-02h  7
+  26  4.9952717e+01 5.90e+01 2.09e+03  -1.0 2.38e+06    -  6.04e-01 9.87e-03h  7
+  27  4.8387728e+01 7.01e+03 2.00e+03  -1.0 2.03e+06    -  3.98e-02 4.69e-01f  1
+  28  4.8416122e+01 6.91e+03 1.99e+03  -1.0 1.12e+04  -3.8 6.81e-03 1.39e-02h  1
+  29  4.8412336e+01 6.85e+03 1.42e+03  -1.0 7.30e+05    -  2.86e-01 9.03e-03h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  30  4.8821790e+01 5.94e+03 1.42e+03  -1.0 8.49e+05    -  2.36e-03 1.36e-01h  1
+  31  4.8824765e+01 5.92e+03 1.41e+03  -1.0 6.42e+03  -4.3 4.10e-03 1.99e-03h  1
+  32  4.8851582e+01 5.86e+03 1.30e+03  -1.0 1.16e+04  -4.8 8.11e-02 1.12e-02h  1
+  33  4.8853101e+01 5.85e+03 1.28e+03  -1.0 1.32e+04  -5.3 1.13e-02 1.09e-03h  1
+  34  4.9522767e+01 4.73e+03 1.46e+03  -1.0 1.24e+04  -5.7 8.56e-02 1.91e-01h  1
+  35  4.9529176e+01 4.70e+03 1.86e+03  -1.0 1.37e+04  -6.2 6.76e-01 7.05e-03h  1
+  36  4.8467654e+01 3.55e+03 1.29e+03  -1.0 1.29e+06    -  3.05e-01 3.10e-01H  1
+  37  4.8474502e+01 3.32e+03 1.41e+03  -1.0 9.93e+03  -6.7 7.77e-01 6.44e-02h  1
+  38  4.8634274e+01 2.36e+03 9.18e+02  -1.0 1.35e+05    -  6.29e-01 2.93e-01h  1
+  39  4.9819510e+01 1.26e+03 1.06e+02  -1.0 3.95e+05    -  4.11e-01 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  40  5.0824815e+01 3.20e+04 2.95e+01  -1.0 2.04e+06    -  8.25e-01 1.00e+00h  1
+  41  5.1440670e+01 2.24e+04 2.03e+01  -1.0 1.57e+06    -  5.69e-01 4.64e-01h  1
+  42  5.1350893e+01 6.84e+02 1.85e+00  -1.0 4.11e+05    -  8.48e-01 1.00e+00h  1
+  43  5.2226886e+01 5.66e+03 1.77e+00  -1.0 4.03e+05    -  1.00e+00 1.00e+00h  1
+  44  5.1832892e+01 1.46e+03 8.79e-01  -1.0 2.14e+05    -  1.00e+00 1.00e+00h  1
+  45  5.1744804e+01 5.37e+01 2.69e-02  -1.0 4.06e+04    -  1.00e+00 1.00e+00h  1
+  46  5.1731204e+01 1.53e+00 4.64e-04  -1.0 6.62e+03    -  1.00e+00 1.00e+00h  1
+  47  5.1731018e+01 2.74e-04 1.01e-06  -1.0 8.95e+01    -  1.00e+00 1.00e+00h  1
+  48  5.0059421e+01 8.67e+03 6.84e+04  -3.8 1.46e+06    -  2.59e-01 3.27e-01f  1
+  49  4.9347429e+01 6.15e+03 6.79e+04  -3.8 6.56e+05    -  5.31e-01 3.82e-01h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  50  4.8570088e+01 9.24e+03 2.15e+04  -3.8 1.58e+06    -  5.05e-01 6.38e-01h  1
+  51  4.8198205e+01 1.22e+04 3.45e+04  -3.8 1.65e+06    -  6.00e-01 7.73e-01h  1
+  52  4.8289418e+01 6.12e+03 1.49e+04  -3.8 8.63e+05    -  7.72e-01 9.80e-01h  1
+  53  4.8306876e+01 1.63e+03 4.89e+01  -3.8 4.82e+05    -  1.00e+00 9.30e-01h  1
+  54  4.8308339e+01 3.64e+01 4.51e-04  -3.8 8.54e+04    -  1.00e+00 1.00e+00h  1
+  55  4.8308383e+01 3.47e-02 4.49e-06  -3.8 2.56e+03    -  1.00e+00 1.00e+00h  1
+  56  4.8308382e+01 2.57e-06 1.84e-09  -3.8 2.02e+01    -  1.00e+00 1.00e+00h  1
+  57  4.8306824e+01 1.79e+01 3.42e+00  -5.7 5.28e+04    -  9.96e-01 9.98e-01h  1
+  58  4.8306860e+01 1.92e-02 2.86e-07  -5.7 1.86e+03    -  1.00e+00 1.00e+00h  1
+  59  4.8306859e+01 1.58e-07 2.69e-10  -5.7 5.13e+00    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  60  4.8306842e+01 2.84e-03 2.14e-08  -7.0 6.67e+02    -  1.00e+00 1.00e+00h  1
+  61  4.8306842e+01 2.10e-09 1.56e-12  -7.0 2.93e-01    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 61
+
+                                   (scaled)                 (unscaled)
+Objective...............:   4.8306841856309219e+01    4.8306841856309219e+01
+Dual infeasibility......:   1.5597096134528707e-12    9.1252639190356706e-10
+Constraint violation....:   2.0954757928848267e-09    2.0954757928848267e-09
+Complementarity.........:   9.0909106981576757e-08    9.0909106981576757e-08
+Overall NLP error.......:   9.0909106981576757e-08    9.0909106981576757e-08
+
+
+Number of objective function evaluations             = 92
+Number of objective gradient evaluations             = 62
+Number of equality constraint evaluations            = 92
+Number of inequality constraint evaluations          = 92
+Number of equality constraint Jacobian evaluations   = 62
+Number of inequality constraint Jacobian evaluations = 62
+Number of Lagrangian Hessian evaluations             = 61
+Total CPU secs in IPOPT (w/o function evaluations)   =      6.759
+Total CPU secs in NLP function evaluations           =     44.182
+
+EXIT: Optimal Solution Found.</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">display_pfd</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Gas</span> <span class="n">Turbine</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_13_1.svg" src="../../../_images/output_13_1.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">HRSG</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_13_3.svg" src="../../../_images/output_13_3.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Steam</span> <span class="n">Turbine</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_13_5.svg" src="../../../_images/output_13_5.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOEC</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_13_7.svg" src="../../../_images/output_13_7.svg" /><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Print freed decision vars</span>
+<span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">decision_vars</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fixed Costs for Optimized Design&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+
+<span class="n">tpc</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC</span><span class="o">*</span><span class="mf">1e6</span><span class="p">)</span>  <span class="c1">### the main costing block is now under fs</span>
+<span class="n">tasc</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC</span><span class="o">*</span><span class="mf">1e6</span><span class="p">)</span><span class="o">*</span><span class="mf">1.21</span><span class="o">*</span><span class="mf">1.093</span>
+<span class="n">ac</span> <span class="o">=</span> <span class="n">tasc</span><span class="o">*</span><span class="mf">0.0707</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TPC = </span><span class="si">{</span><span class="n">tpc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TASC = </span><span class="si">{</span><span class="n">tasc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annualized TASC (MM$/yr) = </span><span class="si">{</span><span class="n">ac</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Parameters</span>
+<span class="n">n_op</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">hourly_rate</span> <span class="o">=</span> <span class="mf">38.50</span>
+<span class="n">labor_burden</span> <span class="o">=</span> <span class="mi">30</span>
+
+<span class="c1"># Fixed O&amp;M components</span>
+<span class="n">annual_op_labor</span> <span class="o">=</span> <span class="n">n_op</span> <span class="o">*</span> <span class="n">hourly_rate</span> <span class="o">*</span> <span class="mi">8760</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">labor_burden</span><span class="o">/</span><span class="mi">100</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span>
+<span class="n">maint_labor</span> <span class="o">=</span> <span class="n">tpc</span> <span class="o">*</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="mf">0.019</span> <span class="o">/</span> <span class="mf">1e6</span>
+<span class="n">maint_material</span> <span class="o">=</span> <span class="n">tpc</span> <span class="o">*</span> <span class="mf">0.6</span> <span class="o">*</span> <span class="mf">0.019</span> <span class="o">/</span> <span class="mf">1e6</span>
+<span class="n">admin_labor</span> <span class="o">=</span> <span class="mf">0.25</span><span class="o">*</span><span class="p">(</span><span class="n">annual_op_labor</span> <span class="o">+</span> <span class="n">maint_labor</span><span class="p">)</span>
+<span class="n">prop_tax_ins</span> <span class="o">=</span> <span class="mf">0.02</span><span class="o">*</span><span class="n">tpc</span><span class="o">/</span><span class="mf">1e6</span>
+<span class="n">soec_replace</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mf">4.2765</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fixed O&amp;M Costs&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;annual_op_labor (MM$/yr) = </span><span class="si">{</span><span class="n">annual_op_labor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;maint_labor (MM$/yr) = </span><span class="si">{</span><span class="n">maint_labor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;maint_material (MM$/yr) = </span><span class="si">{</span><span class="n">maint_material</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;admin_labor (MM$/yr) = </span><span class="si">{</span><span class="n">admin_labor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;prop_tax_ins (MM$/yr) = </span><span class="si">{</span><span class="n">prop_tax_ins</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;soec_replace (MM$/yr) = </span><span class="si">{</span><span class="n">soec_replace</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">total_fixed</span> <span class="o">=</span> <span class="n">annual_op_labor</span> <span class="o">+</span> <span class="n">maint_labor</span> <span class="o">+</span> <span class="n">maint_material</span> <span class="o">+</span> <span class="n">admin_labor</span> <span class="o">+</span> <span class="n">prop_tax_ins</span> <span class="o">+</span> <span class="n">soec_replace</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annualized Fixed O&amp;M = </span><span class="si">{</span><span class="n">total_fixed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SOEC TPC Breakdown&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+
+<span class="n">ngcc_soec_costing</span><span class="o">.</span><span class="n">display_capital_costs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="c1">### added new function to display the costs from power plant costing</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>fs.soec.sweep_recycle_split.split_fraction[0.0,out] 0.5000001138278999
+fs.soec.feed_recycle_split.split_fraction[0.0,out] 0.5000002922135844
+fs.soec.water_split.split_fraction[0.0,outlet1] 0.49982476079269317
+fs.soec.sweep_compressor.control_volume.properties_in[0.0].flow_mol 5652.815827590885
+fs.soec.soec_module.solid_oxide_cell.potential[0.0] 1.3276300859798433
+fs.soec.feed_heater.control_volume.properties_out[0.0].temperature 956.050113300929
+fs.soec.sweep_heater.control_volume.properties_out[0.0].temperature 956.0501145587164
+fs.soec.sweep_heater.control_volume.properties_out[0.0].temperature 956.0501145587164
+fs.soec.soec_module.number_cells 1087969.3736736323
+fs.soec.sweep_hx.area 6335.519416458839
+fs.soec.feed_hx01.area 6999.952537800733
+fs.soec.water_heater01.area 5894.944638219898
+fs.soec.water_heater02.area 6999.999287719759
+
+
+------------------------------------------
+Fixed Costs for Optimized Design
+------------------------------------------
+TPC = 1557305431.674426
+TASC = 2059583152.5523787
+Annualized TASC (MM$/yr) = 145.61252888545317
+Fixed O&amp;M Costs
+annual_op_labor (MM$/yr) = 3.507504
+maint_labor (MM$/yr) = 11.83552128072564
+maint_material (MM$/yr) = 17.75328192108846
+admin_labor (MM$/yr) = 3.83575632018141
+prop_tax_ins (MM$/yr) = 31.14610863348852
+soec_replace (MM$/yr) = 4.652701026515289
+Annualized Fixed O&amp;M = 72.73087318199931
+
+
+------------------------------------------
+SOEC TPC Breakdown
+------------------------------------------
+Total plant cost: $1557.31M
+Feedwater &amp; misc. BOP cost: $121.66M
+Carbon capture system cost: $782.03M
+Combustion turbine cost: $113.76M
+HRSG, ductwork, and stack cost: $95.89M
+Steam turbine cost: $75.69M
+Cooling water system cost: $52.20M
+Accessory plant electric cost: $85.83M
+Instrumentation and control cost: $25.29M
+Improvements to site cost: $28.38M
+Buildings and structures cost: $17.82M
+SOEC module cost: $72.85M
+Trim heater cost: $13.03M
+Hydrogen compressor cost: $21.10M
+Sweep turbomachinery cost: $9.77M
+Heat exchanger cost: $42.01M
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># lock in the design vars</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater01</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater02</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj_design</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj_op</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">total_variable_cost_rate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">variable_makeup_water_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+        <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">total_electric_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mf">1e6</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="p">)</span><span class="o">/</span><span class="mf">100.0</span>
+<span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+max_iter=200
+option_file_name=/tmp/tmphrbq6tpj_ipopt.opt
+
+Using option file &quot;/tmp/tmphrbq6tpj_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    19289
+Number of nonzeros in inequality constraint Jacobian.:       18
+Number of nonzeros in Lagrangian Hessian.............:    14850
+
+Reallocating memory for MA57: lfact (354275)
+Total number of variables............................:     4331
+                     variables with only lower bounds:      371
+                variables with lower and upper bounds:     2431
+                     variables with only upper bounds:       71
+Total number of equality constraints.................:     4324
+Total number of inequality constraints...............:        5
+        inequality constraints with only lower bounds:        1
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        4
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  2.9920041e+02 3.50e+01 1.28e+03  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  2.9913680e+02 3.32e+01 1.22e+03  -1.0 3.23e+03    -  5.54e-01 5.17e-02h  1
+   2  2.9914460e+02 3.28e+01 1.21e+03  -1.0 3.14e+04    -  3.19e-03 9.49e-03h  1
+   3  2.9917215e+02 3.19e+01 1.17e+03  -1.0 4.95e+04    -  1.92e-01 2.99e-02f  4
+   4  2.9919519e+02 3.10e+01 1.14e+03  -1.0 5.04e+04    -  4.19e-02 2.71e-02h  4
+   5  2.9921289e+02 3.03e+01 1.11e+03  -1.0 5.39e+04    -  6.03e-01 2.31e-02h  4
+   6  2.9923034e+02 2.96e+01 1.09e+03  -1.0 4.95e+04    -  1.48e-01 2.30e-02h  4
+   7  2.9927279e+02 2.79e+01 1.02e+03  -1.0 3.66e+04    -  8.70e-01 5.62e-02h  3
+   8  2.9978754e+02 1.06e+01 3.89e+02  -1.0 2.97e+04    -  9.73e-01 6.21e-01h  1
+   9  2.9972997e+02 1.00e+01 5.55e+02  -1.0 2.80e+04    -  8.02e-01 5.43e-02h  5
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  2.9863659e+02 6.45e-01 1.64e+03  -1.0 2.00e+04    -  5.74e-01 9.36e-01H  1
+  11  2.9858476e+02 2.66e-01 2.91e+01  -1.0 1.27e+04    -  9.86e-01 9.90e-01H  1
+  12  2.9861546e+02 2.72e-02 5.04e+02  -1.0 3.82e+03    -  9.90e-01 1.00e+00H  1
+  13  2.9860875e+02 7.53e-02 2.32e+03  -1.0 1.30e+03    -  1.00e+00 1.00e+00h  1
+  14  2.9860738e+02 3.00e-04 2.35e+00  -1.0 3.34e+01    -  1.00e+00 1.00e+00h  1
+  15  2.9822914e+02 1.15e+01 7.27e+04  -3.8 2.30e+04    -  7.71e-01 6.98e-01f  1
+  16  2.9803131e+02 3.51e+00 9.57e+04  -3.8 6.20e+03    -  3.03e-01 7.89e-01h  1
+Reallocating memory for MA57: lfact (376955)
+  17  2.9792173e+02 1.19e+00 3.30e+04  -3.8 2.77e+03    -  7.86e-01 6.85e-01h  1
+  18  2.9789065e+02 8.23e-01 2.37e+04  -3.8 2.23e+03    -  4.66e-01 3.06e-01h  1
+  19  2.9778476e+02 6.45e-01 1.45e+04  -3.8 4.93e+03    -  7.53e-01 7.28e-01h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  20  2.9778371e+02 1.79e-01 2.90e+03  -3.8 3.47e+02    -  3.32e-01 8.68e-01h  1
+  21  2.9779327e+02 3.90e-02 3.48e+01  -3.8 5.06e+02    -  1.00e+00 1.00e+00h  1
+  22  2.9779243e+02 9.25e-04 7.43e-01  -3.8 2.17e+01    -  1.00e+00 1.00e+00h  1
+  23  2.9779241e+02 4.84e-06 3.01e-02  -3.8 1.80e+00    -  1.00e+00 1.00e+00h  1
+  24  2.9779237e+02 1.46e-06 7.55e-06  -3.8 1.03e+00    -  1.00e+00 1.00e+00h  1
+  25  2.9779140e+02 4.27e-04 9.06e+02  -5.7 5.20e+01    -  9.85e-01 3.75e-01h  1
+  26  2.9779139e+02 1.51e-07 1.61e+02  -5.7 4.97e-01  -4.0 5.55e-01 1.00e+00h  1
+  27  2.9779138e+02 1.54e-07 3.60e+02  -5.7 4.41e+01    -  1.00e+00 1.02e-03h  2
+  28  2.9779095e+02 9.34e-06 7.29e-03  -5.7 1.44e+01    -  1.00e+00 1.00e+00h  1
+  29  2.9779095e+02 4.22e-10 4.45e-08  -5.7 2.82e-02    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  30  2.9779094e+02 4.42e-09 4.34e-04  -7.0 2.75e-01    -  1.00e+00 1.00e+00h  1
+  31  2.9779094e+02 4.66e-10 1.12e-11  -7.0 4.94e-04    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 31
+
+                                   (scaled)                 (unscaled)
+Objective...............:   2.9779094363245491e+02    2.9779094363245491e+02
+Dual infeasibility......:   1.1181907001034806e-11    1.0188512552413148e-09
+Constraint violation....:   4.6566128730773926e-10    4.6566128730773926e-10
+Complementarity.........:   9.0909212402146651e-08    9.0909212402146651e-08
+Overall NLP error.......:   9.0909212402146651e-08    9.0909212402146651e-08
+
+
+Number of objective function evaluations             = 68
+Number of objective gradient evaluations             = 32
+Number of equality constraint evaluations            = 68
+Number of inequality constraint evaluations          = 68
+Number of equality constraint Jacobian evaluations   = 32
+Number of inequality constraint Jacobian evaluations = 32
+Number of Lagrangian Hessian evaluations             = 31
+Total CPU secs in IPOPT (w/o function evaluations)   =      3.129
+Total CPU secs in NLP function evaluations           =     30.177
+
+EXIT: Optimal Solution Found.</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s2">&quot;data_pfds/gt_soec_base.svg&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s2">&quot;data_pfds/hrsg_soec_base.svg&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s2">&quot;data_pfds/st_soec_base.svg&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s2">&quot;data_pfds/soec_soec_base.svg&quot;</span><span class="p">)</span>
+<span class="n">display_pfd</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_gt.csv&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_st.csv&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">steam_streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_hrsg_steam.csv&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">flue_gas_streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_hrsg_gas.csv&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_soec.csv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Gas</span> <span class="n">Turbine</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_16_1.svg" src="../../../_images/output_16_1.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">HRSG</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_16_3.svg" src="../../../_images/output_16_3.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Steam</span> <span class="n">Turbine</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_16_5.svg" src="../../../_images/output_16_5.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOEC</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_16_7.svg" src="../../../_images/output_16_7.svg" /><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">run_samples</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">df</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">if</span> <span class="n">run_samples</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+    <span class="n">gt_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">480.</span><span class="p">,</span> <span class="mf">300.</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="mf">480.</span> <span class="o">-</span> <span class="mf">300.</span><span class="p">)</span><span class="o">/</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">hp_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="mf">5.</span> <span class="o">-</span> <span class="mf">0.75</span><span class="p">)</span><span class="o">/</span><span class="mf">0.25</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">tags_output</span><span class="o">.</span><span class="n">table_heading</span><span class="p">())</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">gt_powers</span><span class="p">:</span>
+        <span class="n">gpstr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">gp</span><span class="p">))</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">gt_power</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="o">-</span><span class="n">gp</span><span class="o">*</span><span class="mf">1e6</span><span class="p">)</span>
+        <span class="n">save_to_last</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">hp</span> <span class="ow">in</span> <span class="n">hp_powers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">hp</span> <span class="o">&gt;</span> <span class="mf">5.001</span> <span class="o">-</span> <span class="mf">0.25</span><span class="o">*</span><span class="p">(</span><span class="mi">480</span> <span class="o">-</span> <span class="n">gp</span><span class="p">)</span><span class="o">/</span><span class="mi">30</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">hydrogen_product_rate</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">hp</span><span class="p">)</span>
+            <span class="n">hpstr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">hp</span><span class="o">*</span><span class="mi">1000</span><span class="p">))</span>
+            <span class="n">save_to</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;data/ngcc_soec_</span><span class="si">{</span><span class="n">gpstr</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">hpstr</span><span class="si">}</span><span class="s2">.json.gz&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">save_to</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_to</span><span class="p">):</span>
+                <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_to</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">save_to_last</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">save_to_last</span> <span class="o">=</span> <span class="n">save_to</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">pyo</span><span class="o">.</span><span class="n">check_optimal_termination</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fail&quot;</span><span class="p">)</span>
+                    <span class="k">break</span>
+                <span class="k">if</span> <span class="n">save_to_last</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">save_to_last</span> <span class="o">=</span> <span class="n">save_to</span>
+                <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_to</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Overall net power: </span><span class="si">{</span><span class="o">-</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">total_electric_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2"> MW&quot;</span><span class="p">)</span>
+            <span class="c1">#for v in decision_vars:</span>
+            <span class="c1">#    print(f&quot;{v} {pyo.value(v)}&quot;)</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">tags_output</span><span class="o">.</span><span class="n">table_row</span><span class="p">(</span><span class="n">numeric</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># go to the closest part of the start of the next series.</span>
+        <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_to_last</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec.csv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

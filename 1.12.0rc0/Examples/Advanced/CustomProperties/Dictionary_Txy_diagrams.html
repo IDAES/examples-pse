@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create a dictionary and use Txy diagrams &mdash; IDAES v1.13.0dev0 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Create a dictionary and use Txy diagrams</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/Advanced/CustomProperties/Dictionary_Txy_diagrams.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="create-a-dictionary-and-use-txy-diagrams">
+<h1>Create a dictionary and use Txy diagrams<a class="headerlink" href="#create-a-dictionary-and-use-txy-diagrams" title="Permalink to this headline">¶</a></h1>
+<section id="introduction">
+<h2>1. Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This Notebook will do two essential things. The first is to create a
+property package dictionary for the generic property package and
+utilized the T-x-y diagrams for the generic properties. This dictionary
+will include parameters necessary for the sub-libraries of the generic
+property package. For example, it has critical properties required for
+vapor-liquid equilibrium and heat capacity parameters to calculate
+enthalpy and entropy. The property parameter dictionary can be later
+used to generate models and flowsheets.</p>
+<p>Secondly, we will utilize this dictionary to create a model and print a
+T-x-y diagram using IDAES.</p>
+<section id="tutorial-objectives">
+<h3>1.1 Tutorial objectives<a class="headerlink" href="#tutorial-objectives" title="Permalink to this headline">¶</a></h3>
+<p>The goals of this tutorial are:</p>
+<ul class="simple">
+<li><p>Create a parameter block directly on a jupyter notebook.</p></li>
+<li><p>Utilize the Generic Property Package, which provides a flexible
+platform for users to build property packages by calling upon
+libraries of modular sub-models to build up complex property
+calculations with the least effort possible.</p></li>
+<li><p>Demonstrate the use of Txy diagrams in the IDAES utilities.</p></li>
+</ul>
+</section>
+</section>
+<section id="problem-statement">
+<h2>2. Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this headline">¶</a></h2>
+<section id="setting-up-the-problem-in-idaes">
+<h3>2.1 Setting up the problem in IDAES<a class="headerlink" href="#setting-up-the-problem-in-idaes" title="Permalink to this headline">¶</a></h3>
+<p>In the next cell, we will be importing the necessary components from
+Pyomo and IDAES.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import objects from pyomo package</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span>
+
+<span class="c1"># Import idaes logger to set output levels</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+
+<span class="c1"># Import the Generic Parameter Block</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.generic.generic_property</span> <span class="kn">import</span> <span class="n">GenericParameterBlock</span>
+</pre></div>
+</div>
+</section>
+<section id="importing-property-sub-libraries">
+<h3>2.2 Importing property sub-libraries<a class="headerlink" href="#importing-property-sub-libraries" title="Permalink to this headline">¶</a></h3>
+<p>The IDAES generic property package calls upon libraries of modular
+sub-models to build up complex property calculations with the least
+effort possible. We have to import these libraries.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import Python libraries</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="c1"># Import Pyomo units</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span>
+
+<span class="c1"># Import IDAES cores</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">LiquidPhase</span><span class="p">,</span> <span class="n">VaporPhase</span><span class="p">,</span> <span class="n">Component</span>
+
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.state_definitions</span> <span class="kn">import</span> <span class="n">FTPx</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.eos.ideal</span> <span class="kn">import</span> <span class="n">Ideal</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.phase_equil</span> <span class="kn">import</span> <span class="n">SmoothVLE</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.phase_equil.bubble_dew</span> <span class="kn">import</span> \
+        <span class="n">IdealBubbleDew</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.phase_equil.forms</span> <span class="kn">import</span> <span class="n">fugacity</span>
+
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.pure</span> <span class="kn">import</span> <span class="n">Perrys</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.pure</span> <span class="kn">import</span> <span class="n">RPP4</span>
+</pre></div>
+</div>
+</section>
+<section id="creating-a-generic-property-parameter-block">
+<h3>2.3 Creating a generic property parameter block<a class="headerlink" href="#creating-a-generic-property-parameter-block" title="Permalink to this headline">¶</a></h3>
+<p>The next step is to give all the parameter information required for the
+sub-libraries. Here we will specify the base units of our model, the
+bounds on the state properties and the reference conditions of our
+properties.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">configuration</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># Specifying components</span>
+    <span class="s2">&quot;components&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;benzene&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">Component</span><span class="p">,</span>
+                    <span class="s2">&quot;elemental_composition&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">},</span>
+                    <span class="s2">&quot;dens_mol_liq_comp&quot;</span><span class="p">:</span> <span class="n">Perrys</span><span class="p">,</span>
+                    <span class="s2">&quot;enth_mol_liq_comp&quot;</span><span class="p">:</span> <span class="n">Perrys</span><span class="p">,</span>
+                    <span class="s2">&quot;enth_mol_ig_comp&quot;</span><span class="p">:</span> <span class="n">RPP4</span><span class="p">,</span>
+                    <span class="s2">&quot;pressure_sat_comp&quot;</span><span class="p">:</span> <span class="n">RPP4</span><span class="p">,</span>
+                    <span class="s2">&quot;phase_equilibrium_form&quot;</span><span class="p">:</span> <span class="p">{(</span><span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">):</span> <span class="n">fugacity</span><span class="p">},</span>
+                    <span class="s2">&quot;parameter_data&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;mw&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">78.1136E-3</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">kg</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                        <span class="s2">&quot;pressure_crit&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">48.9e5</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                        <span class="s2">&quot;temperature_crit&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">562.2</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                        <span class="s2">&quot;dens_mol_liq_comp_coeff&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0162</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**-</span><span class="mi">3</span><span class="p">),</span>  <span class="c1"># [2] pg. 2-98</span>
+                            <span class="s1">&#39;2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.2655</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                            <span class="s1">&#39;3&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">562.16</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>
+                            <span class="s1">&#39;4&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.28212</span><span class="p">,</span> <span class="kc">None</span><span class="p">)},</span>
+                        <span class="s2">&quot;cp_mol_ig_comp_coeff&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">3.392E1</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                            <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">4.739E-1</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span>
+                            <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">3.017E-4</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">3</span><span class="p">),</span>
+                            <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">7.130E-8</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">4</span><span class="p">)},</span>
+                        <span class="s2">&quot;cp_mol_liq_comp_coeff&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.29E2</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>  <span class="c1"># [2]</span>
+                            <span class="s1">&#39;2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.7E-1</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span>
+                            <span class="s1">&#39;3&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6.48E-4</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">3</span><span class="p">),</span>
+                            <span class="s1">&#39;4&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">4</span><span class="p">),</span>
+                            <span class="s1">&#39;5&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">5</span><span class="p">)},</span>
+                        <span class="s2">&quot;enth_mol_form_liq_comp_ref&quot;</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="mf">49.0e3</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">),</span>  <span class="c1"># [3]</span>
+                        <span class="s2">&quot;enth_mol_form_vap_comp_ref&quot;</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="mf">82.9e3</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">),</span>  <span class="c1"># [3]</span>
+                        <span class="s2">&quot;pressure_sat_comp_coeff&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">6.98273</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                                                    <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.33213</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                                                    <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.62863</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                                                    <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">3.33399</span><span class="p">,</span> <span class="kc">None</span><span class="p">)}}},</span>
+        <span class="s1">&#39;toluene&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">Component</span><span class="p">,</span>
+                    <span class="s2">&quot;elemental_composition&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span>
+                    <span class="s2">&quot;dens_mol_liq_comp&quot;</span><span class="p">:</span> <span class="n">Perrys</span><span class="p">,</span>
+                    <span class="s2">&quot;enth_mol_liq_comp&quot;</span><span class="p">:</span> <span class="n">Perrys</span><span class="p">,</span>
+                    <span class="s2">&quot;enth_mol_ig_comp&quot;</span><span class="p">:</span> <span class="n">RPP4</span><span class="p">,</span>
+                    <span class="s2">&quot;pressure_sat_comp&quot;</span><span class="p">:</span> <span class="n">RPP4</span><span class="p">,</span>
+                    <span class="s2">&quot;phase_equilibrium_form&quot;</span><span class="p">:</span> <span class="p">{(</span><span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">):</span> <span class="n">fugacity</span><span class="p">},</span>
+                    <span class="s2">&quot;parameter_data&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;mw&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">92.1405E-3</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">kg</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                        <span class="s2">&quot;pressure_crit&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">41e5</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                        <span class="s2">&quot;temperature_crit&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">591.8</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                        <span class="s2">&quot;dens_mol_liq_comp_coeff&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.8488</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**-</span><span class="mi">3</span><span class="p">),</span>  <span class="c1"># [2] pg. 2-98</span>
+                            <span class="s1">&#39;2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.26655</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                            <span class="s1">&#39;3&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">591.8</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>
+                            <span class="s1">&#39;4&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.2878</span><span class="p">,</span> <span class="kc">None</span><span class="p">)},</span>
+                        <span class="s2">&quot;cp_mol_ig_comp_coeff&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.435E1</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                            <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">5.125E-1</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span>
+                            <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.765E-4</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">3</span><span class="p">),</span>
+                            <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">4.911E-8</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">4</span><span class="p">)},</span>
+                        <span class="s2">&quot;cp_mol_liq_comp_coeff&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.40E2</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>  <span class="c1"># [2]</span>
+                            <span class="s1">&#39;2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.52E-1</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span>
+                            <span class="s1">&#39;3&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6.95E-4</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">3</span><span class="p">),</span>
+                            <span class="s1">&#39;4&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">4</span><span class="p">),</span>
+                            <span class="s1">&#39;5&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">kmol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="o">**</span><span class="mi">5</span><span class="p">)},</span>
+                        <span class="s2">&quot;enth_mol_form_liq_comp_ref&quot;</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="mf">12.0e3</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">),</span>  <span class="c1"># [3]</span>
+                        <span class="s2">&quot;enth_mol_form_vap_comp_ref&quot;</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="mf">50.1e3</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">),</span>  <span class="c1"># [3]</span>
+                        <span class="s2">&quot;pressure_sat_comp_coeff&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">7.28607</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>  <span class="c1"># [1]</span>
+                                                    <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.38091</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                                                    <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.83433</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                                                    <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.79168</span><span class="p">,</span> <span class="kc">None</span><span class="p">)}}}},</span>
+
+    <span class="c1"># Specifying phases</span>
+    <span class="s2">&quot;phases&quot;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;Liq&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">LiquidPhase</span><span class="p">,</span>
+                        <span class="s2">&quot;equation_of_state&quot;</span><span class="p">:</span> <span class="n">Ideal</span><span class="p">},</span>
+                <span class="s1">&#39;Vap&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">VaporPhase</span><span class="p">,</span>
+                        <span class="s2">&quot;equation_of_state&quot;</span><span class="p">:</span> <span class="n">Ideal</span><span class="p">}},</span>
+
+    <span class="c1"># Set base units of measurement</span>
+    <span class="s2">&quot;base_units&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">,</span>
+                   <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="p">,</span>
+                   <span class="s2">&quot;mass&quot;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">kg</span><span class="p">,</span>
+                   <span class="s2">&quot;amount&quot;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">,</span>
+                   <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">},</span>
+
+    <span class="c1"># Specifying state definition</span>
+    <span class="s2">&quot;state_definition&quot;</span><span class="p">:</span> <span class="n">FTPx</span><span class="p">,</span>
+    <span class="s2">&quot;state_bounds&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;flow_mol&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">),</span>
+                     <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">273.15</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">450</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>
+                     <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">5e4</span><span class="p">,</span> <span class="mf">1e5</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)},</span>
+    <span class="s2">&quot;pressure_ref&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1e5</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">),</span>
+    <span class="s2">&quot;temperature_ref&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">),</span>
+
+    <span class="c1"># Defining phase equilibria</span>
+    <span class="s2">&quot;phases_in_equilibrium&quot;</span><span class="p">:</span> <span class="p">[(</span><span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">)],</span>
+    <span class="s2">&quot;phase_equilibrium_state&quot;</span><span class="p">:</span> <span class="p">{(</span><span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">):</span> <span class="n">SmoothVLE</span><span class="p">},</span>
+    <span class="s2">&quot;bubble_dew_method&quot;</span><span class="p">:</span> <span class="n">IdealBubbleDew</span><span class="p">,</span>
+    <span class="s2">&quot;default_scaling_factors&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;mole_frac_comp[benzene]&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">}}</span>
+</pre></div>
+</div>
+</section>
+<section id="building-the-model">
+<h3>2.4 Building the model<a class="headerlink" href="#building-the-model" title="Permalink to this headline">¶</a></h3>
+<p>In the next cell, we will first create a model and attach a the property
+package.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the ConcreteModel</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+
+<span class="c1"># Attach the generic property package dictionary to the model</span>
+<span class="n">model</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">GenericParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">configuration</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2021</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span> <span class="mi">19</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mi">38</span> <span class="p">[</span><span class="n">WARNING</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">generic_models</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">pure</span><span class="o">.</span><span class="n">Perrys</span><span class="p">:</span> <span class="n">DEPRECATED</span> <span class="o">-</span> <span class="n">params</span><span class="o">.</span><span class="n">benzene</span> <span class="n">dens_mol_liq_comp_coeff</span> <span class="n">index</span> <span class="s1">&#39;eqn_type&#39;</span> <span class="n">should</span> <span class="n">be</span> <span class="n">specified</span><span class="p">,</span> <span class="n">defaulting</span> <span class="n">to</span> <span class="n">equation</span> <span class="n">form</span> <span class="mf">1.</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span> <span class="mi">19</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mi">38</span> <span class="p">[</span><span class="n">WARNING</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">generic_models</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">pure</span><span class="o">.</span><span class="n">Perrys</span><span class="p">:</span> <span class="n">DEPRECATED</span> <span class="o">-</span> <span class="n">params</span><span class="o">.</span><span class="n">toluene</span> <span class="n">dens_mol_liq_comp_coeff</span> <span class="n">index</span> <span class="s1">&#39;eqn_type&#39;</span> <span class="n">should</span> <span class="n">be</span> <span class="n">specified</span><span class="p">,</span> <span class="n">defaulting</span> <span class="n">to</span> <span class="n">equation</span> <span class="n">form</span> <span class="mf">1.</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="creating-txy-diagrams">
+<h2>3.0 Creating Txy diagrams<a class="headerlink" href="#creating-txy-diagrams" title="Permalink to this headline">¶</a></h2>
+<section id="import-the-txy-diagram-function">
+<h3>3.1 Import the TXY_diagram function<a class="headerlink" href="#import-the-txy-diagram-function" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.core.util.phase_equilibria</span> <span class="kn">import</span> <span class="n">Txy_diagram</span>
+</pre></div>
+</div>
+</section>
+<section id="calling-the-function">
+<h3>3.2 Calling the function<a class="headerlink" href="#calling-the-function" title="Permalink to this headline">¶</a></h3>
+<p>There will be a WARNING from missing scaling factors. This is normal as
+the Txy diagram function does not know the state definition being used.
+To learn more about the sacling factor be sure to reed the
+documentation/examples of the scaling tools.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Txy_diagram</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">,</span> <span class="mi">101325</span><span class="p">,</span> <span class="n">num_points</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span> <span class="n">temperature</span> <span class="o">=</span> <span class="mf">150.15</span><span class="p">,</span>  <span class="n">figure_name</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">print_legend</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">include_pressure</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+    <span class="n">solver_op</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;tol&#39;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">})</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2021</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span> <span class="mi">19</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mi">38</span> <span class="p">[</span><span class="n">WARNING</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">scaling</span><span class="p">:</span> <span class="n">Missing</span> <span class="n">scaling</span> <span class="n">factor</span> <span class="k">for</span> <span class="n">props</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mole_frac_comp</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span> <span class="mi">19</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mi">38</span> <span class="p">[</span><span class="n">WARNING</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">scaling</span><span class="p">:</span> <span class="n">Missing</span> <span class="n">scaling</span> <span class="n">factor</span> <span class="k">for</span> <span class="n">props</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mole_frac_comp</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span> <span class="mi">19</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mi">38</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">props</span><span class="p">:</span> <span class="n">Property</span> <span class="n">package</span> <span class="n">initialization</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">1</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.99</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">2</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.95</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">3</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.91</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">4</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.87</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">5</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.83</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">6</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.79</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">7</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.74</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">8</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.70</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">9</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.66</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">10</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.62</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">11</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.58</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">12</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.54</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">13</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.50</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">14</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.46</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">15</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.42</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">16</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.38</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">17</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.34</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">18</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.30</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">19</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.26</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">20</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.21</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">21</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.17</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">22</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.13</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">23</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.09</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">24</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">25</span>  <span class="n">Optimal</span><span class="o">.</span>  <span class="n">benzene</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.01</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_14_1.png" src="../../../_images/output_14_1.png" />
+<p>You can add precision to the plot by increasing the num_points, include
+a firgure_name in order to save figure in a file or include the pressure
+in the plot. You can also include more information from the solver by
+changing the print_level.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

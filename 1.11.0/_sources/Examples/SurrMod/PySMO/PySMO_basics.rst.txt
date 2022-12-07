@@ -1,0 +1,1366 @@
+PySMO Tutorial
+==============
+
+**Python-based Surrogate Modelling Objects** (PySMO) provides tools for
+generating different types of reduced order models. PySMO currently
+provides tools for sampling and surrogate model generation.
+
+Installation
+------------
+
+**PySMO** is installed by default as part of IDAES. For instructions on
+installing IDAES, see the `online
+documentation <https://idaes-pse.readthedocs.io/en/stable/>`__.
+
+One-Shot Sampling with PySMO
+----------------------------
+
+The PySMO package offers five common sampling methods for one-shot
+design:
+
+-  Latin Hypercube Sampling (LHS)
+-  Full-Factorial Sampling
+-  Halton Sampling
+-  Hammersley Sampling
+-  Centroidal voronoi tessellation (CVT) sampling
+
+PySMO provides two modes for data sampling: creation and selection. - In
+creation mode, PySMO creates a specified number of sample points from
+the bounds provided by the user. - In selection mode, PySMO selects a
+specified number of data points from a user-supplied dataset or file.
+
+Generating samples:
+~~~~~~~~~~~~~~~~~~~
+
+For demonstration purposes, let us consider a problem for which we need
+twenty-five (25) samples of temperature and pressure from within the
+ranges T = 273K - 373K, P = 1 MPa - 50 MPa. Let us generate these
+samples in PySMO.
+
+Step 1: Import PySMO’s sampling tool
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For this demonstration, we will attempt to generate the samples using
+the Hammersley sampling method.
+
+.. code:: ipython3
+
+    from idaes.surrogate.pysmo.sampling import HammersleySampling
+
+Step 2: Specify sampling information and initialize class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+All the sampling tools (except full-factorial sampling) require the same
+keyword arguments:
+
+::
+
+          -  data_input             : must be a list of lists containing the problem bounds (when creating points), 
+                                      or an input dataset (when selecting points from a dataset)
+          -  number_of_samples      : number of samples to be created or selected.
+          -  sampling_type          : "creation" or "selection".
+
+For full factorial sampling, the user needs to enter a list of points in
+each dimension in place of the number of samples. Full-factorial
+sampling requires other inputs - details may be found in the
+`documentation <https://idaes-pse.readthedocs.io/en/stable/surrogate/pysmo/index.html>`__.
+
+For our example, we will create the bounds and then initialize the class
+with the number of samples.
+
+.. code:: ipython3
+
+    bounds_info = [[273, 1],[373, 50]]
+    init_data = HammersleySampling(data_input=bounds_info, number_of_samples=25, sampling_type="creation")
+
+
+.. parsed-literal::
+
+    Sampling type:  creation 
+    
+
+
+Step 3: Create the samples
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The samples are created by calling the ``sample_points`` method on the
+initialized class.
+
+.. code:: ipython3
+
+    samples = init_data.sample_points()
+    print(samples)
+
+
+.. parsed-literal::
+
+    [[273.        1.     ]
+     [277.       25.5    ]
+     [281.       13.25   ]
+     [285.       37.75   ]
+     [289.        7.125  ]
+     [293.       31.625  ]
+     [297.       19.375  ]
+     [301.       43.875  ]
+     [305.        4.0625 ]
+     [309.       28.5625 ]
+     [313.       16.3125 ]
+     [317.       40.8125 ]
+     [321.       10.1875 ]
+     [325.       34.6875 ]
+     [329.       22.4375 ]
+     [333.       46.9375 ]
+     [337.        2.53125]
+     [341.       27.03125]
+     [345.       14.78125]
+     [349.       39.28125]
+     [353.        8.65625]
+     [357.       33.15625]
+     [361.       20.90625]
+     [365.       45.40625]
+     [369.        5.59375]]
+
+
+Simple as that, the samples have been created!
+
+Now, let us visualize the samples in a 2-D plot.
+
+Step 4: Visualize samples with matplotlib
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: ipython3
+
+    from matplotlib import pyplot as plt
+    plt.plot(samples[:, 0], samples[:, 1], 'o')
+    plt.xlabel(r'Temperature', fontsize=11)
+    plt.xlabel(r'Pressure', fontsize=11)
+    plt.xlim(272, 374)
+    plt.ylim(0, 50)
+    plt.show()
+
+
+
+.. image:: output_13_0.png
+
+
+Generating surrogates with PySMO
+--------------------------------
+
+PySMO currently provides tools for generating three types of surrogates:
+
+-  Polynomial surrogates
+-  Radial basis function (RBF) surrogates, and
+-  Kriging surrogates
+
+Details about thee various methods may be found in the
+`documentation <https://idaes-pse.readthedocs.io/en/stable/surrogate/pysmo/index.html>`__.
+
+Generating polynomial models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``PolynomialRegression`` class trains polynomial models from data.
+
+As an example, let us generate a surrogate for the Brainin function.
+
+The true Brainin function is given by the expression:
+
+:raw-latex:`\begin{gather}
+\hat{y}(x_{1},x_{2})=\left(x_{2}-\frac{5.1x_{1}^{2}}{4\pi^{2}}+\frac{5x_{1}}{\pi}-6\right)^{2}+10\left[\left(1-\frac{1}{8\pi}\right)\cos\left(x_{1}\right)+1\right]+5x_{1}\nonumber \\
+x_{1}\in\left[-5,10\right];x_{2}\in\left[0,15\right]
+\end{gather}`
+
+We have generated 30 points from the function and saved the information
+in a text file called “brainin_30.txt”. We will use this data to train a
+simple polynomial model. The data is in XY format, with the outputs
+:math:`y` in the third column.
+
+Step 1: Import and visualize the data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: ipython3
+
+    import numpy as np
+    brainin_data = np.loadtxt('brainin_30.txt')
+    print(brainin_data,'\n\nDataset shape:', brainin_data.shape)
+
+
+.. parsed-literal::
+
+    [[ 3.15107413e+00  4.17554078e+00  4.03815759e+00]
+     [ 1.36776386e+00  1.26716420e+01  8.60127077e+01]
+     [-4.92921716e+00  1.82353681e+00  2.41888089e+02]
+     [ 5.06123627e+00  1.23877913e+01  1.37242426e+02]
+     [-2.94940115e+00  8.62639994e+00  1.07587601e+01]
+     [ 8.36982931e+00  3.13803183e+00  7.24964869e+00]
+     [-2.22007671e+00  1.62565336e+00  7.71988248e+01]
+     [-1.70453761e+00  1.46793568e+01  3.99820398e+01]
+     [ 7.17524724e+00  2.57911519e+00  1.78453527e+01]
+     [ 7.24337123e+00  4.11110621e+00  2.36937839e+01]
+     [ 1.47556275e+00  1.41004473e+01  1.14292050e+02]
+     [ 7.26474068e+00  5.04167925e+00  2.96703147e+01]
+     [-2.36884319e+00  5.59248069e+00  2.71582680e+01]
+     [-4.91467239e+00  3.78639530e+00  1.84993457e+02]
+     [ 6.93493763e+00  2.28824569e-01  1.85302363e+01]
+     [ 3.98265065e+00  9.05706809e+00  5.75698037e+01]
+     [-3.42278472e+00  5.72915167e+00  5.30702398e+01]
+     [-4.45285915e+00  1.33561735e+01  1.27882794e+01]
+     [ 9.71381286e+00  8.99129832e-01  4.14567857e+00]
+     [ 8.35818917e+00  8.65352249e+00  5.34055688e+01]
+     [ 6.13719534e+00  9.45275905e+00  8.93001840e+01]
+     [ 3.72763289e+00  3.06586980e-01  4.42072359e+00]
+     [-1.84960133e+00  8.17027317e+00  8.83431235e+00]
+     [ 6.53672757e+00  3.76042844e+00  2.62862798e+01]
+     [-7.11564644e-01  1.27859263e+01  4.84986100e+01]
+     [ 9.62509740e+00  1.32727994e+01  1.13457908e+02]
+     [ 3.92617659e-01  8.98288419e+00  3.17439666e+01]
+     [ 3.21934175e-01  5.10285323e+00  1.92673649e+01]
+     [-2.32878516e+00  3.56541313e+00  5.02034858e+01]
+     [-4.32706576e+00  7.58147144e+00  6.60457721e+01]] 
+    
+    Dataset shape: (30, 3)
+
+
+Let us visualize the data:
+
+.. code:: ipython3
+
+    from mpl_toolkits.mplot3d import Axes3D 
+    from matplotlib import pyplot as plt
+    fig1 = plt.figure(figsize=(6, 4), tight_layout=True)
+    ax = fig1.add_subplot(111, projection='3d')
+    ax.scatter3D(brainin_data[:, 0], brainin_data[:, 1], brainin_data[:, 2], cmap=brainin_data[:, 2])
+    ax.set_xlabel(r'$x_{1}$', fontsize=11)
+    ax.set_ylabel(r'$x_{2}$', fontsize=11)
+    ax.set_zlabel(r'$y$', fontsize=11)
+
+
+
+
+.. parsed-literal::
+
+    Text(0.5, 0, '$y$')
+
+
+
+
+.. image:: output_19_1.png
+
+
+Step 2: Import the polynomial model tool
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: ipython3
+
+    from idaes.surrogate.pysmo.polynomial_regression import PolynomialRegression
+
+Step 3: Specify the regression settings and initialize the PolynomialRegression class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The PolynomialRegression class takes a keyword arguments:
+
+::
+
+      -  original_data_input           : The dataset for regression training. training_data is expected to contain xy_data, 
+                                         with the output values (y) in the last column.
+      -  regression_data_input         : same as above
+      -  maximum_polynomial_order      : maximum order of the polynomial to be generated  
+
+It also takes a number of optional arguments:
+
+::
+
+      - multinomials                  : True/False option for specifying second-order bi-variate terms. default is False
+      - training_split                : The training/cross-validation split of training data. Must be between 0 and 1. 
+                                        Default is 0.75
+      - fname                         : Filename for saving results (.pickle extension). 
+      - overwrite                     : Option determining whether any existing file with the same name supplied in 'fname'  
+                                        should be overwritten.
+
+For this example, let us consider a 4th order polynomial with
+interaction terms. We will split the data 80/20 betweeen training and
+cross-validation.
+
+.. code:: ipython3
+
+    poly_class = PolynomialRegression(original_data_input=brainin_data, regression_data_input=brainin_data, 
+                                      maximum_polynomial_order=4, multinomials=1, training_split=0.8, number_of_crossvalidations=10, overwrite=True)
+
+
+.. parsed-literal::
+
+    
+    ===========================Polynomial Regression===============================================
+    
+    No iterations will be run.
+    Default parameter estimation method is used.
+    Parameter estimation method:  pyomo 
+    
+
+
+Step 4: Extract variable names
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next, we extract Pyomo variable names from the dataset. This should be
+done always.
+
+.. code:: ipython3
+
+    vars = poly_class.get_feature_vector()
+
+We can view the variables using Pyomo’s pprint function:
+
+.. code:: ipython3
+
+    vars.pprint()
+
+
+.. parsed-literal::
+
+    IndexedParam : Size=2, Index={0, 1}, Domain=Any, Default=None, Mutable=True
+        Key : Value
+          0 :     0
+          1 :     0
+
+
+Step 5: Specify additional regression terms, if required.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is one of the unique features of PySMO - it allows the user to
+specify additional regression features if they want. The additional
+features must be specified in terms of the Pyomo variables created when
+calling the ``get_feature_vector()``
+
+For this example, let us create three additional features:
+:math:`x_{1}^{2}x_{2}^{2}`, :math:`exp(x_1)` and :math:`exp(x_2)`. We do
+this by calling the ``set_additional_terms`` function:
+
+.. code:: ipython3
+
+    from pyomo.environ import exp
+    poly_class.set_additional_terms([vars[0] * vars[0] * vars[1] * vars[1], exp(vars[0]), exp(vars[1])])
+
+That’s it - those features will now exist in the model.
+
+Note that ``set_additional_terms`` an optional call - the regression
+process works just fine without it.
+
+Step 6: Train the surrogate and view results
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next, we train the polynomial surrogate by calling ``training``:
+
+.. code:: ipython3
+
+    poly_class.training()
+
+
+.. parsed-literal::
+
+    No iterations will be run.
+    
+    Best surrogate model is of order 3  with a cross-val S.S. Error  of 19.737617
+    
+    ------------------------------------------------------------
+    The final coefficients of the regression terms are: 
+    
+    k               | 57.607003
+    (x_ 1 )^ 1      | -19.078561
+    (x_ 2 )^ 1      | -17.191563
+    (x_ 1 )^ 2      | 3.889924
+    (x_ 2 )^ 2      | 1.163328
+    (x_ 1 )^ 3      | -0.351928
+    (x_ 2 )^ 3      | 0.018398
+    x_ 1 .x_ 2      | 3.100135
+    
+    The coefficients of the extra terms in additional_regression_features are:
+    
+    Coeff. additional_regression_features[ 1 ]:  -0.017933
+    Coeff. additional_regression_features[ 2 ]:  0.004746
+    Coeff. additional_regression_features[ 3 ]:  -1.3e-05
+    
+    Regression model performance on training data:
+    Order:  3  / MAE: 6.154513  / MSE: 65.995248  / R^2: 0.978531
+    
+    Results saved in  solution.pickle
+
+
+
+
+.. parsed-literal::
+
+    
+    ========================================================================================================================
+    Results of polynomial regression run:
+    
+    Polynomial order                   : 3
+    Number of terms in polynomial model: 11
+    
+    Polynomial Expression:
+    --------------------------
+    
+    57.60700349333485 -19.07856084664722*IndexedParam[0] -17.19156303663504*IndexedParam[1] + 3.8899241750056777*IndexedParam[0]**2 + 1.1633280321366661*IndexedParam[1]**2 -0.35192841345421644*IndexedParam[0]**3 + 0.018398180895012814*IndexedParam[1]**3 + 3.100134835673003*(IndexedParam[1]*IndexedParam[0]) - 0.01793303721385922*(IndexedParam[0]*IndexedParam[0]*IndexedParam[1]*IndexedParam[1]) + 0.0047457110433976185*exp(IndexedParam[0]) - 1.297532026006687e-05*exp(IndexedParam[1])
+    --------------------------
+    
+    Model training errors:
+    -----------------------
+    Mean Squared Error (MSE)         : 65.99524781707669
+    Root Mean Squared Error (RMSE)   : 8.12374592273027
+    Mean Absolute error (MSE)        : 6.154513199233126
+    Goodness of fit (R2)             : 0.9785305338454608
+    
+    ========================================================================================================================
+
+
+
+The polynomial model seems to fit well based on the :math:`R^2`. It
+should be noted that the metrics are only an indication of how well of
+how well the model fit the training data - the user needs to verify the
+model’s performance on a test data set if possible.
+
+We can view the parity and residual plots for the fit:
+
+.. code:: ipython3
+
+    poly_class.parity_residual_plots()
+
+
+
+.. image:: output_35_0.png
+
+
+PySMO is also able to compute the confidence intervals on the regression
+coefficients obtained by calling ``confint_regression()``. This is left
+as an exercise for the user.
+
+Step 8 (Optional): Generate Pyomo expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the user wishes, they can generate the Pyomo expression for the
+polynomial fit using PySMO’s ``generate_expression``. To do this, the
+user must pass in a list of Pyomo variables corresponding to each
+variable in the input dataset.
+
+As a demonstration, let us create the variables :math:`x_1` and
+:math:`x_2` and generate the pyomo expression based on them:
+
+.. code:: ipython3
+
+    from pyomo.environ import Var, ConcreteModel
+    m = ConcreteModel()
+    m.x = Var([1, 2])
+    print(poly_class.generate_expression([m.x[1], m.x[2]]))
+
+
+.. parsed-literal::
+
+    57.60700349333485 - 19.07856084664722*x[1] - 17.19156303663504*x[2] + 3.8899241750056777*x[1]**2 + 1.1633280321366661*x[2]**2 - 0.35192841345421644*x[1]**3 + 0.018398180895012814*x[2]**3 + 3.100134835673003*(x[2]*x[1]) - 0.01793303721385922*(x[1]*x[1]*x[2]*x[2]) + 0.0047457110433976185*exp(x[1]) - 1.297532026006687e-05*exp(x[2])
+
+
+Step 9 (Optional): Predict output at any unsampled point
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Based on the model we trained, we can predict the surrogate value at any
+previously unsampled point.
+
+Let us evaluate the surrogate at three points:
+
+-  :math:`x_{1}=5`, :math:`x_{2}=8` (true function value: 57.9908)
+-  :math:`x_{1}=-3`, :math:`x_{2}=10` (true function value: 4.2461)
+-  :math:`x_{1}=-2`, :math:`x_{2}=3`. (true function value: 50.8899)
+
+We will pass the points in as an array.
+
+.. code:: ipython3
+
+    unsampled_points = np.array([ [5, 8], [-3, 10], [-2, 3]])
+    ys = poly_class.predict_output(unsampled_points)
+    print(ys)
+
+
+.. parsed-literal::
+
+    [[57.7897913 ]
+     [12.74008178]
+     [54.28524655]]
+
+
+The model performs fairly well in predicting the value at two of our
+sampled points but is off on the value at [-3, 2]. For better model
+performance, additional training data is needed in this region. We will
+leave this to the user to try.
+
+Further information about using PySMO’s polynomial regression tool can
+be found in the
+`documentation <https://idaes-pse.readthedocs.io/en/stable/surrogate/pysmo/pysmo_polyregression.html>`__.
+
+Generating RBF models
+~~~~~~~~~~~~~~~~~~~~~
+
+The ``RadialBasisFunction`` class trains RBF models from data. For
+details about RBF models, the user should consult the documentation.
+
+As an example, we will again consider the Brainin function. The same
+dataset loaded previously will be used.
+
+Step 1: Import the data and the RBF tool
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: ipython3
+
+    import numpy as np
+    brainin_data = np.loadtxt('brainin_30.txt')
+    from idaes.surrogate.pysmo.radial_basis_function import RadialBasisFunctions
+
+Step 2: Specify the RBF settings and initialize the RadialBasisFunctions class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The RadialBasisFunctions class takes a number of keyword arguments:
+
+::
+
+      -  XY_data                       : The dataset forRBF training. training_data is expected to contain xy_data, 
+                                         with the output values (y) in the last column.
+
+It also takes a number of optional arguments:
+
+::
+
+      -  regularization                : Boolean variable determining whether regularization is done. Default is True.
+      -  basis_function                : Basis function transformation to be applied to the training data. PySMO offers 
+                                         six basis function types including the Gaussian and Spline transformations. User 
+                                         should consult documentation for full list of options.   
+      -  fname                         : Filename for saving (.pickle extension)
+      - overwrite                      : Option determining whether any existing file with the same name supplied in 'fname'  
+                                         should be overwritten.
+
+For this demonstration, we will train an RBF model with a Gaussian basis
+function:
+
+.. code:: ipython3
+
+    rbf_class = RadialBasisFunctions(XY_data=brainin_data, basis_function='gaussian', overwrite=True)
+
+
+.. parsed-literal::
+
+    Warning: solution.pickle already exists; previous file will be overwritten.
+    
+    Default parameter estimation method is used.
+    
+    Parameter estimation method:  algebraic
+    Basis function:  gaussian
+    Regularization done:  True
+
+
+Step 3: Extract variable names
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next, we extract Pyomo variable names from the dataset.
+
+.. code:: ipython3
+
+    vars = rbf_class.get_feature_vector()
+
+Step 4: Train the RBF surrogate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next, we train the RBF surrogate by calling ``training``:
+
+.. code:: ipython3
+
+    rbf_class.training()
+
+
+.. parsed-literal::
+
+    ===========================================================================================================
+    0.001    |     1e-05    |     1.3301889998201746    |     3.82795801152956e+18    |     849.9774243396896    |     2999999.7995526725    |     6.661337702668463e-10
+    0.001    |     2e-05    |     1.3231321486484373    |     3.82795801152956e+18    |     849.9774243396896    |     1500000.399726111    |     3.3306699614457335e-10
+    0.001    |     5e-05    |     1.3204882439279508    |     3.82795801152956e+18    |     849.9774243396896    |     600000.7598788738    |     1.3322693168202311e-10
+    0.001    |     7.5e-05    |     1.3203184940709194    |     3.82795801152956e+18    |     849.9774243396896    |     400000.8399171954    |     8.881802846909434e-11
+    0.001    |     0.0001    |     1.3203209127611875    |     3.82795801152956e+18    |     849.9774243396896    |     300000.8799381844    |     6.66135768630359e-11
+    0.001    |     0.0002    |     1.3204538291267542    |     3.82795801152956e+18    |     849.9774243396896    |     150000.9399680635    |     3.3306899453592e-11
+    0.001    |     0.0005    |     1.3206180157502447    |     3.82795801152956e+18    |     849.9774243396896    |     60000.97598693567    |     1.3322893008135422e-11
+    0.001    |     0.00075    |     1.3206637488448558    |     3.82795801152956e+18    |     849.9774243396896    |     40000.983991246016    |     8.882002686948724e-12
+    0.001    |     0.001    |     1.3206877851838077    |     3.82795801152956e+18    |     849.9774243396896    |     30000.987993458613    |     6.6615575263681256e-12
+    0.001    |     0.002    |     1.3207246211572017    |     3.82795801152956e+18    |     849.9774243396896    |     15000.993996717587    |     3.330889785483923e-12
+    0.001    |     0.005    |     1.3207441010685774    |     3.82795801152956e+18    |     849.9774243396896    |     6000.9975986845475    |     1.332489140955972e-12
+    0.001    |     0.0075    |     1.3207457685491861    |     3.82795801152956e+18    |     849.9774243396896    |     4000.998399122304    |     8.884001088387947e-13
+    0.001    |     0.01    |     1.3207447379585615    |     3.82795801152956e+18    |     849.9774243396896    |     3000.9987993418913    |     6.663555927803636e-13
+    0.001    |     0.02    |     1.3207338807217233    |     3.82795801152956e+18    |     849.9774243396896    |     1500.9993996709493    |     3.332888186926451e-13
+    0.001    |     0.05    |     1.3206922424549343    |     3.82795801152956e+18    |     849.9774243396896    |     600.9997598683193    |     1.3344875423999965e-13
+    0.001    |     0.075    |     1.3206569542287026    |     3.82795801152956e+18    |     849.9774243396896    |     400.99983991221194    |     8.90398510283079e-14
+    0.001    |     0.1    |     1.3206222275255661    |     3.82795801152956e+18    |     849.9774243396896    |     300.99987993415755    |     6.683539942246187e-14
+    0.001    |     0.2    |     1.3204909253945518    |     3.82795801152956e+18    |     849.9774243396896    |     150.99993996707784    |     3.352872201369324e-14
+    0.001    |     0.5    |     1.3201734897566475    |     3.82795801152956e+18    |     849.9774243396896    |     60.99997598683111    |     1.354471556843231e-14
+    0.001    |     0.75    |     1.3199938819612362    |     3.82795801152956e+18    |     849.9774243396896    |     40.999983991220795    |     9.10382524726323e-15
+    0.001    |     1    |     1.3198876280547236    |     3.82795801152956e+18    |     849.9774243396896    |     30.99998799341556    |     6.883380086678672e-15
+    0.002    |     1e-05    |     1.362387822278972    |     1.905202120790801e+19    |     4230.398522133252    |     2999996.1977204354    |     6.661329704994302e-10
+    0.002    |     2e-05    |     1.343994630880536    |     1.905202120790801e+19    |     4230.398522133252    |     1499998.5987321776    |     3.3306659624358695e-10
+    0.002    |     5e-05    |     1.32722464857023    |     1.905202120790801e+19    |     4230.398522133252    |     600000.0394939862    |     1.3322677172444534e-10
+    0.002    |     7.5e-05    |     1.323544009920847    |     1.905202120790801e+19    |     4230.398522133252    |     400000.3596555926    |     8.881792182959649e-11
+    0.002    |     0.0001    |     1.3220037168856702    |     1.905202120790801e+19    |     4230.398522133252    |     300000.51974201977    |     6.661349688342083e-11
+    0.002    |     0.0002    |     1.3204880868270101    |     1.905202120790801e+19    |     4230.398522133252    |     150000.75986911202    |     3.330685946359147e-11
+    0.002    |     0.0005    |     1.3203538501484047    |     1.905202120790801e+19    |     4230.398522133252    |     60000.903947552    |     1.3322877012178935e-11
+    0.002    |     0.00075    |     1.320438936129584    |     1.905202120790801e+19    |     4230.398522133252    |     40000.93596503136    |     8.881992022986865e-12
+    0.002    |     0.001    |     1.3205000397653335    |     1.905202120790801e+19    |     4230.398522133252    |     30000.951973764237    |     6.661549528389318e-12
+    0.002    |     0.002    |     1.320615846455806    |     1.905202120790801e+19    |     4230.398522133252    |     15000.9759868646    |     3.3308857864932317e-12
+    0.002    |     0.005    |     1.3206969267656372    |     1.905202120790801e+19    |     4230.398522133252    |     6000.990394744535    |     1.3324875413599579e-12
+    0.002    |     0.0075    |     1.3207137929011117    |     1.905202120790801e+19    |     4230.398522133252    |     4000.9935964959063    |     8.883990424415136e-13
+    0.002    |     0.01    |     1.3207205715037698    |     1.905202120790801e+19    |     4230.398522133252    |     3000.9951973718257    |     6.663547929823434e-13
+    0.002    |     0.02    |     1.3207216922930918    |     1.905202120790801e+19    |     4230.398522133252    |     1500.9975986858778    |     3.3328841879362644e-13
+    0.002    |     0.05    |     1.3206873938685026    |     1.905202120790801e+19    |     4230.398522133252    |     600.9990394743186    |     1.3344859428039836e-13
+    0.002    |     0.075    |     1.3206537523643649    |     1.905202120790801e+19    |     4230.398522133252    |     400.99935964954403    |     8.903974438857355e-14
+    0.002    |     0.1    |     1.3206198511578067    |     1.905202120790801e+19    |     4230.398522133252    |     300.99951973715855    |     6.683531944266153e-14
+    0.002    |     0.2    |     1.320489789943987    |     1.905202120790801e+19    |     4230.398522133252    |     150.99975986857837    |     3.352868202379308e-14
+    0.002    |     0.5    |     1.3201731005146329    |     1.905202120790801e+19    |     4230.398522133252    |     60.9999039474312    |     1.3544699572472219e-14
+    0.002    |     0.75    |     1.3199936589276795    |     1.905202120790801e+19    |     4230.398522133252    |     40.99993596495411    |     9.103814583289818e-15
+    0.002    |     1    |     1.319887488406783    |     1.905202120790801e+19    |     4230.398522133252    |     30.99995197371558    |     6.88337208869862e-15
+    0.005    |     1e-05    |     1.3982813940029557    |     3.393974421783829e+18    |     753.6137096106519    |     2999970.984026443    |     6.66127371934709e-10
+    0.005    |     2e-05    |     1.3887224316174596    |     3.393974421783829e+18    |     753.6137096106519    |     1499985.9920160368    |     3.3306379699028205e-10
+    0.005    |     5e-05    |     1.3683630926252028    |     3.393974421783829e+18    |     753.6137096106519    |     599994.9967702791    |     1.3322565201485207e-10
+    0.005    |     7.5e-05    |     1.3574022549698945    |     3.393974421783829e+18    |     753.6137096106519    |     399996.99784565496    |     8.881717535783705e-11
+    0.005    |     0.0001    |     1.3496565265220097    |     3.393974421783829e+18    |     753.6137096106519    |     299997.9983857557    |     6.66129370298653e-11
+    0.005    |     0.0002    |     1.3338899892293845    |     3.393974421783829e+18    |     753.6137096106519    |     149999.49919096357    |     3.330657953681006e-11
+    0.005    |     0.0005    |     1.3231314606157345    |     3.393974421783829e+18    |     753.6137096106519    |     60000.39967641343    |     1.3322765041493196e-11
+    0.005    |     0.00075    |     1.321365870905778    |     3.393974421783829e+18    |     753.6137096106519    |     40000.59978412601    |     8.881917375830553e-12
+    0.005    |     0.001    |     1.3207434325088265    |     3.393974421783829e+18    |     753.6137096106519    |     30000.69983809141    |     6.6614935430234575e-12
+    0.005    |     0.002    |     1.3203109441737806    |     3.393974421783829e+18    |     753.6137096106519    |     15000.849919033773    |     3.330857793811542e-12
+    0.005    |     0.005    |     1.3204473592564125    |     3.393974421783829e+18    |     753.6137096106519    |     6000.939967612915    |     1.33247634428744e-12
+    0.005    |     0.0075    |     1.3205266147948713    |     3.393974421783829e+18    |     753.6137096106519    |     4000.9599784081793    |     8.88391577726506e-13
+    0.005    |     0.01    |     1.3205722511348361    |     3.393974421783829e+18    |     753.6137096106519    |     3000.969983805985    |     6.663491944460776e-13
+    0.005    |     0.02    |     1.3206416674457797    |     3.393974421783829e+18    |     753.6137096106519    |     1500.9849919029066    |     3.332856195254822e-13
+    0.005    |     0.05    |     1.3206543062552785    |     3.393974421783829e+18    |     753.6137096106519    |     600.9939967611575    |     1.3344747457314677e-13
+    0.005    |     0.075    |     1.3206317178276619    |     3.393974421783829e+18    |     753.6137096106519    |     400.9959978407688    |     8.903899791707221e-14
+    0.005    |     0.1    |     1.3206034290426674    |     3.393974421783829e+18    |     753.6137096106519    |     300.9969983805781    |     6.683475958903575e-14
+    0.005    |     0.2    |     1.3204818942961343    |     3.393974421783829e+18    |     753.6137096106519    |     150.9984991902868    |     3.352840209697989e-14
+    0.005    |     0.5    |     1.3201703838941499    |     3.393974421783829e+18    |     753.6137096106519    |     60.999399676114706    |     1.3544587601746973e-14
+    0.005    |     0.75    |     1.3199921011576619    |     3.393974421783829e+18    |     753.6137096106519    |     40.99959978407638    |     9.103739936139639e-15
+    0.005    |     1    |     1.3198865127506894    |     3.393974421783829e+18    |     753.6137096106519    |     30.999699838057268    |     6.883316103335983e-15
+    0.0075    |     1e-05    |     1.404300593873339    |     2.430229858280154e+18    |     539.6194287588316    |     2999933.464547654    |     6.661190409368643e-10
+    0.0075    |     2e-05    |     1.3994032633279052    |     2.430229858280154e+18    |     539.6194287588316    |     1499967.232282024    |     3.330596314925547e-10
+    0.0075    |     5e-05    |     1.3868056479461581    |     2.430229858280154e+18    |     539.6194287588316    |     599987.4928881692    |     1.3322398581831357e-10
+    0.0075    |     7.5e-05    |     1.3783815287734535    |     2.430229858280154e+18    |     539.6194287588316    |     399991.99525280035    |     8.881606455908305e-11
+    0.0075    |     0.0001    |     1.3714017808046122    |     2.430229858280154e+18    |     539.6194287588316    |     299994.24643608765    |     6.661210392968356e-11
+    0.0075    |     0.0002    |     1.3527834516574555    |     2.430229858280154e+18    |     539.6194287588316    |     149997.62321910477    |     3.330616298737982e-11
+    0.0075    |     0.0005    |     1.3320471009304706    |     2.430229858280154e+18    |     539.6194287588316    |     59999.64928707244    |     1.3322598421588436e-11
+    0.0075    |     0.00075    |     1.326497256926748    |     2.430229858280154e+18    |     539.6194287588316    |     40000.099524681136    |     8.881806295919756e-12
+    0.0075    |     0.001    |     1.323914758231659    |     2.430229858280154e+18    |     539.6194287588316    |     30000.32464348618    |     6.6614102330855694e-12
+    0.0075    |     0.002    |     1.3209497744221748    |     2.430229858280154e+18    |     539.6194287588316    |     15000.662321733604    |     3.330816138843141e-12
+    0.0075    |     0.005    |     1.3203066752602253    |     2.430229858280154e+18    |     539.6194287588316    |     6000.864928690621    |     1.3324596822995851e-12
+    0.0075    |     0.0075    |     1.3203572891448478    |     2.430229858280154e+18    |     539.6194287588316    |     4000.9099524600456    |     8.883804697346166e-13
+    0.0075    |     0.01    |     1.3204149453606089    |     2.430229858280154e+18    |     539.6194287588316    |     3000.9324643450996    |     6.663408634522082e-13
+    0.0075    |     0.02    |     1.3205391985944197    |     2.430229858280154e+18    |     539.6194287588316    |     1500.9662321724315    |     3.332814540285404e-13
+    0.0075    |     0.05    |     1.3206077953595612    |     2.430229858280154e+18    |     539.6194287588316    |     600.9864928689657    |     1.3344580837436963e-13
+    0.0075    |     0.075    |     1.3206001441008708    |     2.430229858280154e+18    |     539.6194287588316    |     400.9909952459681    |     8.90378871178861e-14
+    0.0075    |     0.1    |     1.3205796752193621    |     2.430229858280154e+18    |     539.6194287588316    |     300.99324643447636    |     6.683392648964589e-14
+    0.0075    |     0.2    |     1.3204703143593979    |     2.430229858280154e+18    |     539.6194287588316    |     150.99662321723713    |     3.352798554728523e-14
+    0.0075    |     0.5    |     1.3201663674229873    |     2.430229858280154e+18    |     539.6194287588316    |     60.998649286894484    |     1.3544420981869028e-14
+    0.0075    |     0.75    |     1.319989794261374    |     2.430229858280154e+18    |     539.6194287588316    |     40.99909952459633    |     9.103628856221031e-15
+    0.0075    |     1    |     1.319885066965614    |     2.430229858280154e+18    |     539.6194287588316    |     30.9993246434473    |     6.8832327933970424e-15
+    0.01    |     1e-05    |     1.4061992061507596    |     3.149735246691845e+18    |     699.3817184701368    |     2999880.938965916    |     6.661073779148188e-10
+    0.01    |     2e-05    |     1.4035355143514552    |     3.149735246691845e+18    |     699.3817184701368    |     1499940.9693497696    |     3.330537999501381e-10
+    0.01    |     5e-05    |     1.395627182514604    |     3.149735246691845e+18    |     699.3817184701368    |     599976.9877233654    |     1.3322165320314504e-10
+    0.01    |     7.5e-05    |     1.3897600752454602    |     3.149735246691845e+18    |     699.3817184701368    |     399984.991813804    |     8.8814509483238e-11
+    0.01    |     0.0001    |     1.3845164268281698    |     3.149735246691845e+18    |     699.3817184701368    |     299988.99385885795    |     6.661093762324776e-11
+    0.01    |     0.0002    |     1.3683402006566538    |     3.149735246691845e+18    |     699.3817184701368    |     149994.99692920613    |     3.330557983387686e-11
+    0.01    |     0.0005    |     1.3439837129675036    |     3.149735246691845e+18    |     699.3817184701368    |     59998.59877129841    |     1.3322365160228425e-11
+    0.01    |     0.00075    |     1.335093711991549    |     3.149735246691845e+18    |     699.3817184701368    |     39999.39918084797    |     8.881650788350008e-12
+    0.01    |     0.001    |     1.3301839804869129    |     3.149735246691845e+18    |     699.3817184701368    |     29999.799385623828    |     6.66129360241104e-12
+    0.01    |     0.002    |     1.3231293127499852    |     3.149735246691845e+18    |     699.3817184701368    |     15000.39969279921    |     3.3307578235051616e-12
+    0.01    |     0.005    |     1.320483075844344    |     3.149735246691845e+18    |     699.3817184701368    |     6000.759877119498    |     1.3324363561649784e-12
+    0.01    |     0.0075    |     1.3203100371669947    |     3.149735246691845e+18    |     699.3817184701368    |     4000.839918079037    |     8.883649189781544e-13
+    0.01    |     0.01    |     1.320308943205701    |     3.149735246691845e+18    |     699.3817184701368    |     3000.8799385588454    |     6.663292003847511e-13
+    0.01    |     0.02    |     1.320427342345217    |     3.149735246691845e+18    |     699.3817184701368    |     1500.9399692794    |     3.33275622494833e-13
+    0.01    |     0.05    |     1.3205480387004715    |     3.149735246691845e+18    |     699.3817184701368    |     600.975987711759    |     1.33443475760888e-13
+    0.01    |     0.075    |     1.3205583477737097    |     3.149735246691845e+18    |     699.3817184701368    |     400.98399180783207    |     8.903633204223206e-14
+    0.01    |     0.1    |     1.3205477786808852    |     3.149735246691845e+18    |     699.3817184701368    |     300.9879938558744    |     6.683276018290538e-14
+    0.01    |     0.2    |     1.3204544411843482    |     3.149735246691845e+18    |     699.3817184701368    |     150.9939969279356    |     3.352740239391485e-14
+    0.01    |     0.5    |     1.3201607967208797    |     3.149735246691845e+18    |     699.3817184701368    |     60.99759877117422    |     1.3544187720520954e-14
+    0.01    |     0.75    |     1.319986587102122    |     3.149735246691845e+18    |     699.3817184701368    |     40.99839918078276    |     9.103473348655636e-15
+    0.01    |     1    |     1.3198830550759417    |     3.149735246691845e+18    |     699.3817184701368    |     30.998799385587105    |     6.883116162722992e-15
+    0.02    |     1e-05    |     1.3991967821729665    |     2.882239215720758e+18    |     639.9856679541477    |     2999520.807800082    |     6.6602741273238e-10
+    0.02    |     2e-05    |     1.4033527819999245    |     2.882239215720758e+18    |     639.9856679541477    |     1499760.9038978417    |     3.330138173880041e-10
+    0.02    |     5e-05    |     1.4040547659106544    |     2.882239215720758e+18    |     639.9856679541477    |     599904.9615311804    |     1.3320566017575706e-10
+    0.02    |     7.5e-05    |     1.4028711082095835    |     2.882239215720758e+18    |     639.9856679541477    |     399936.9743507876    |     8.880384746463301e-11
+    0.02    |     0.0001    |     1.401409189745077    |     2.882239215720758e+18    |     639.9856679541477    |     299952.9807615441    |     6.660294110928257e-11
+    0.02    |     0.0002    |     1.3952513762985541    |     2.882239215720758e+18    |     639.9856679541477    |     149976.990381286    |     3.3301581577057874e-11
+    0.02    |     0.0005    |     1.3796701173935886    |     2.882239215720758e+18    |     639.9856679541477    |     59991.39615212213    |     1.3320765857499001e-11
+    0.02    |     0.00075    |     1.369923208565299    |     2.882239215720758e+18    |     639.9856679541477    |     39994.59743471157    |     8.880584586526201e-12
+    0.02    |     0.001    |     1.3622921102964727    |     2.882239215720758e+18    |     639.9856679541477    |     29996.198076028264    |     6.66049395104468e-12
+    0.02    |     0.002    |     1.3439496124691097    |     2.882239215720758e+18    |     639.9856679541477    |     14998.599038011704    |     3.3303579978242634e-12
+    0.02    |     0.005    |     1.3272089427378846    |     2.882239215720758e+18    |     639.9856679541477    |     6000.039615202933    |     1.3322764258922722e-12
+    0.02    |     0.0075    |     1.3235324618626503    |     2.882239215720758e+18    |     639.9856679541477    |     4000.3597434684293    |     8.88258298796447e-13
+    0.02    |     0.01    |     1.321992371490611    |     2.882239215720758e+18    |     639.9856679541477    |     3000.519807601063    |     6.66249235248509e-13
+    0.02    |     0.02    |     1.3204676186157356    |     2.882239215720758e+18    |     639.9856679541477    |     1500.759903800494    |     3.3323563992670867e-13
+    0.02    |     0.05    |     1.320292865976956    |     2.882239215720758e+18    |     639.9856679541477    |     600.9039615201899    |     1.3342748273363678e-13
+    0.02    |     0.075    |     1.3203431410941708    |     2.882239215720758e+18    |     639.9856679541477    |     400.9359743467912    |     8.902567002406575e-14
+    0.02    |     0.1    |     1.3203699372606268    |     2.882239215720758e+18    |     639.9856679541477    |     300.95198076008995    |     6.68247636692798e-14
+    0.02    |     0.2    |     1.3203560056794403    |     2.882239215720758e+18    |     639.9856679541477    |     150.97599038004478    |     3.352340413710237e-14
+    0.02    |     0.5    |     1.3201242272878075    |     2.882239215720758e+18    |     639.9856679541477    |     60.99039615201783    |     1.3542588417795949e-14
+    0.02    |     0.75    |     1.3199652973344642    |     2.882239215720758e+18    |     639.9856679541477    |     40.99359743467855    |     9.102407146838975e-15
+    0.02    |     1    |     1.319869640905194    |     2.882239215720758e+18    |     639.9856679541477    |     30.99519807600895    |     6.882316511360498e-15
+    0.05    |     1e-05    |     1.1802626763396402    |     9.507962995676619e+18    |     2111.191887016832    |     2997002.130673552    |     6.654681540648859e-10
+    0.05    |     2e-05    |     1.2638668839614857    |     9.507962995676619e+18    |     2111.191887016832    |     1498501.5652579328    |     3.327341880372387e-10
+    0.05    |     5e-05    |     1.3399914336679764    |     9.507962995676619e+18    |     2111.191887016832    |     599401.2260875761    |     1.330938084381952e-10
+    0.05    |     7.5e-05    |     1.3607917455538852    |     9.507962995676619e+18    |     2111.191887016832    |     399601.1507251884    |     8.872927964036234e-11
+    0.05    |     0.0001    |     1.3717399149137466    |     9.507962995676619e+18    |     2111.191887016832    |     299701.11304097954    |     6.654701524077645e-11
+    0.05    |     0.0002    |     1.3883571964182624    |     9.507962995676619e+18    |     2111.191887016832    |     149851.05651989626    |     3.32736186425589e-11
+    0.05    |     0.0005    |     1.3960809195485901    |     9.507962995676619e+18    |     2111.191887016832    |     59941.022607971674    |     1.330958068378944e-11
+    0.05    |     0.00075    |     1.395825918790148    |     9.507962995676619e+18    |     2111.191887016832    |     39961.0150718515    |     8.873127804032488e-12
+    0.05    |     0.001    |     1.3944270862079116    |     9.507962995676619e+18    |     2111.191887016832    |     29971.01130389779    |     6.654901364177632e-12
+    0.05    |     0.002    |     1.386803865618272    |     9.507962995676619e+18    |     2111.191887016832    |     14986.005651941352    |     3.3275617043896037e-12
+    0.05    |     0.005    |     1.3676102367336431    |     9.507962995676619e+18    |     2111.191887016832    |     5995.002260777159    |     1.3311579085189338e-12
+    0.05    |     0.0075    |     1.3569104532324152    |     9.507962995676619e+18    |     2111.191887016832    |     3997.001507183095    |     8.87512620547225e-13
+    0.05    |     0.01    |     1.3492964425394973    |     9.507962995676619e+18    |     2111.191887016832    |     2998.0011303872716    |     6.65689976561639e-13
+    0.05    |     0.02    |     1.3337278030827036    |     9.507962995676619e+18    |     2111.191887016832    |     1499.5005651935262    |     3.329560105832577e-13
+    0.05    |     0.05    |     1.3230623528240155    |     9.507962995676619e+18    |     2111.191887016832    |     600.4002260774155    |     1.333156309962592e-13
+    0.05    |     0.075    |     1.3212917568278904    |     9.507962995676619e+18    |     2111.191887016832    |     400.60015071827434    |     8.895110219914722e-14
+    0.05    |     0.1    |     1.3206495137172816    |     9.507962995676619e+18    |     2111.191887016832    |     300.7001130387049    |     6.676883780059148e-14
+    0.05    |     0.2    |     1.3201079927565513    |     9.507962995676619e+18    |     2111.191887016832    |     150.85005651935134    |     3.349544120275801e-14
+    0.05    |     0.5    |     1.319943063340198    |     9.507962995676619e+18    |     2111.191887016832    |     60.94002260774041    |     1.3531403244058195e-14
+    0.05    |     0.75    |     1.319849098238075    |     9.507962995676619e+18    |     2111.191887016832    |     40.96001507182699    |     9.094950364347151e-15
+    0.05    |     1    |     1.319793746770627    |     9.507962995676619e+18    |     2111.191887016832    |     30.970011303870212    |     6.876723924491615e-15
+    0.075    |     1e-05    |     1.0289125857125991    |     2.3844934007584865e+18    |     529.4638951177625    |     2993261.340837656    |     6.646375318636668e-10
+    0.075    |     2e-05    |     1.0683357423026132    |     2.3844934007584865e+18    |     529.4638951177625    |     1496631.1703588453    |     3.32318876940817e-10
+    0.075    |     5e-05    |     1.1788194485839256    |     2.3844934007584865e+18    |     529.4638951177625    |     598653.0681394349    |     1.3292768400217867e-10
+    0.075    |     7.5e-05    |     1.229861581347512    |     2.3844934007584865e+18    |     529.4638951177625    |     399102.3787590686    |     8.86185300161976e-11
+    0.075    |     0.0001    |     1.2625315302897475    |     2.3844934007584865e+18    |     529.4638951177625    |     299327.0340661776    |     6.64639530226058e-11
+    0.075    |     0.0002    |     1.32412696300682    |     2.3844934007584865e+18    |     529.4638951177625    |     149664.01703278648    |     3.323208753353823e-11
+    0.075    |     0.0005    |     1.3699287056812517    |     2.3844934007584865e+18    |     529.4638951177625    |     59866.20681304705    |     1.329296824016325e-11
+    0.075    |     0.00075    |     1.3804567145240536    |     2.3844934007584865e+18    |     529.4638951177625    |     39911.13787533393    |     8.862052841636976e-12
+    0.075    |     0.001    |     1.3852806670848423    |     2.3844934007584865e+18    |     529.4638951177625    |     29933.603406515726    |     6.646595142382356e-12
+    0.075    |     0.002    |     1.3897667849500184    |     2.3844934007584865e+18    |     529.4638951177625    |     14967.301703250821    |     3.323408593492077e-12
+    0.075    |     0.005    |     1.3829509021399553    |     2.3844934007584865e+18    |     529.4638951177625    |     5987.520681298505    |     1.3294966641593809e-12
+    0.075    |     0.0075    |     1.3758254841268822    |     2.3844934007584865e+18    |     529.4638951177625    |     3992.013787532062    |     8.864051243078346e-13
+    0.075    |     0.01    |     1.3694975238619171    |     2.3844934007584865e+18    |     529.4638951177625    |     2994.2603406490493    |     6.648593543821078e-13
+    0.075    |     0.02    |     1.3518655278680698    |     2.3844934007584865e+18    |     529.4638951177625    |     1497.630170324488    |     3.325406994935083e-13
+    0.075    |     0.05    |     1.3317271553627905    |     2.3844934007584865e+18    |     529.4638951177625    |     599.6520681297744    |     1.3314950656035372e-13
+    0.075    |     0.075    |     1.3262949589526674    |     2.3844934007584865e+18    |     529.4638951177625    |     400.10137875318554    |     8.88403525752114e-14
+    0.075    |     0.1    |     1.3237555826770937    |     2.3844934007584865e+18    |     529.4638951177625    |     300.3260340648899    |     6.668577558263997e-14
+    0.075    |     0.2    |     1.3207755491672835    |     2.3844934007584865e+18    |     529.4638951177625    |     150.6630170324436    |     3.3453910093782203e-14
+    0.075    |     0.5    |     1.3198839335916885    |     2.3844934007584865e+18    |     529.4638951177625    |     60.86520681297757    |     1.3514790800467928e-14
+    0.075    |     0.75    |     1.3197723726186077    |     2.3844934007584865e+18    |     529.4638951177625    |     40.910137875318284    |     9.083875401953608e-15
+    0.075    |     1    |     1.3197346497546032    |     2.3844934007584865e+18    |     529.4638951177625    |     30.932603406488766    |     6.868417702696476e-15
+    0.1    |     1e-05    |     1.079898106819403    |     5.8004031504447906e+19    |     12879.482259464205    |     2988038.7413830305    |     6.634778818310828e-10
+    0.1    |     2e-05    |     1.0344111472942077    |     5.8004031504447906e+19    |     12879.482259464205    |     1494019.8706277967    |     3.317390519236955e-10
+    0.1    |     5e-05    |     1.0485665416889696    |     5.8004031504447906e+19    |     12879.482259464205    |     597608.5482297593    |     1.3269575399149843e-10
+    0.1    |     7.5e-05    |     1.0859812540933096    |     5.8004031504447906e+19    |     12879.482259464205    |     398406.0321496486    |     8.846391000841804e-11
+    0.1    |     0.0001    |     1.1199271289312234    |     5.8004031504447906e+19    |     12879.482259464205    |     298804.7741134956    |     6.634798801774435e-11
+    0.1    |     0.0002    |     1.2092033599798464    |     5.8004031504447906e+19    |     12879.482259464205    |     149402.88705539887    |     3.3174105030875116e-11
+    0.1    |     0.0005    |     1.305803183492463    |     5.8004031504447906e+19    |     12879.482259464205    |     59761.754822115916    |     1.3269775239103313e-11
+    0.1    |     0.00075    |     1.3347573633948362    |     5.8004031504447906e+19    |     12879.482259464205    |     39841.503214744276    |     8.846590840937258e-12
+    0.1    |     0.001    |     1.3503821090955987    |     5.8004031504447906e+19    |     12879.482259464205    |     29881.37741105174    |     6.634998641852739e-12
+    0.1    |     0.002    |     1.3741948871332381    |     5.8004031504447906e+19    |     12879.482259464205    |     14941.188705526976    |     3.3176103432290774e-12
+    0.1    |     0.005    |     1.3835828525726022    |     5.8004031504447906e+19    |     12879.482259464205    |     5977.07548220835    |     1.327177364054044e-12
+    0.1    |     0.0075    |     1.381710463377337    |     5.8004031504447906e+19    |     12879.482259464205    |     3985.0503214723135    |     8.848589242376889e-13
+    0.1    |     0.01    |     1.3784840301739305    |     5.8004031504447906e+19    |     12879.482259464205    |     2989.0377411040486    |     6.636997043294565e-13
+    0.1    |     0.02    |     1.365360961026242    |     5.8004031504447906e+19    |     12879.482259464205    |     1495.0188705519922    |     3.3196087446718364e-13
+    0.1    |     0.05    |     1.3428726584962272    |     5.8004031504447906e+19    |     12879.482259464205    |     598.6075482207932    |     1.3291757654982766e-13
+    0.1    |     0.075    |     1.3344025162997282    |     5.8004031504447906e+19    |     12879.482259464205    |     399.4050321471928    |     8.868573256819285e-14
+    0.1    |     0.1    |     1.329694773989871    |     5.8004031504447906e+19    |     12879.482259464205    |     299.80377411039285    |     6.656981057737551e-14
+    0.1    |     0.2    |     1.3228751118106659    |     5.8004031504447906e+19    |     12879.482259464205    |     150.4018870551958    |     3.339592759115013e-14
+    0.1    |     0.5    |     1.3201305530113185    |     5.8004031504447906e+19    |     12879.482259464205    |     60.76075482207832    |     1.3491597799415071e-14
+    0.1    |     0.75    |     1.319826836642747    |     5.8004031504447906e+19    |     12879.482259464205    |     40.84050321471888    |     9.068413401251725e-15
+    0.1    |     1    |     1.319745846785765    |     5.8004031504447906e+19    |     12879.482259464205    |     30.880377411039163    |     6.856821202170052e-15
+    0.2    |     1e-05    |     1.034878071422684    |     1.0882135131864314e+18    |     241.6319396095615    |     2952676.8513822686    |     6.556259649364612e-10
+    0.2    |     2e-05    |     1.0990542705302626    |     1.0882135131864314e+18    |     241.6319396095615    |     1476338.925658697    |     3.2781309348333055e-10
+    0.2    |     5e-05    |     1.1186681575668558    |     1.0882135131864314e+18    |     241.6319396095615    |     590536.1702543575    |     1.3112537061806984e-10
+    0.2    |     7.5e-05    |     1.1064632913466463    |     1.0882135131864314e+18    |     241.6319396095615    |     393691.11350387725    |     8.741698776046408e-11
+    0.2    |     0.0001    |     1.0918067697062097    |     1.0882135131864314e+18    |     241.6319396095615    |     295268.58512794017    |     6.556279633150645e-11
+    0.2    |     0.0002    |     1.0475901909836438    |     1.0882135131864314e+18    |     241.6319396095615    |     147634.79256327872    |     3.2781509187902174e-11
+    0.2    |     0.0005    |     1.0237060377513603    |     1.0882135131864314e+18    |     241.6319396095615    |     59054.51702518815    |     1.3112736901896438e-11
+    0.2    |     0.00075    |     1.0428612641130184    |     1.0882135131864314e+18    |     241.6319396095615    |     39370.01135011953    |     8.74189861613129e-12
+    0.2    |     0.001    |     1.0675482361223931    |     1.0882135131864314e+18    |     241.6319396095615    |     29527.75851260191    |     6.5564794732524215e-12
+    0.2    |     0.002    |     1.150251960798761    |     1.0882135131864314e+18    |     241.6319396095615    |     14764.379256294145    |     3.278350758927161e-12
+    0.2    |     0.005    |     1.261346117268917    |     1.0882135131864314e+18    |     241.6319396095615    |     5906.351702517845    |     1.311473530333861e-12
+    0.2    |     0.0075    |     1.2986164432111682    |     1.0882135131864314e+18    |     241.6319396095615    |     3937.901135011626    |     8.743897017574889e-13
+    0.2    |     0.01    |     1.3193653278045696    |     1.0882135131864314e+18    |     241.6319396095615    |     2953.6758512586543    |     6.558477874693334e-13
+    0.2    |     0.02    |     1.3511101649720019    |     1.0882135131864314e+18    |     241.6319396095615    |     1477.3379256293333    |     3.280349160371306e-13
+    0.2    |     0.05    |     1.3613657406180075    |     1.0882135131864314e+18    |     241.6319396095615    |     591.5351702517379    |     1.3134719317780827e-13
+    0.2    |     0.075    |     1.3577244256580763    |     1.0882135131864314e+18    |     241.6319396095615    |     394.6901135011539    |     8.763881032017949e-14
+    0.2    |     0.1    |     1.3532120690730087    |     1.0882135131864314e+18    |     241.6319396095615    |     296.2675851258662    |     6.578461889136605e-14
+    0.2    |     0.2    |     1.3396807959929742    |     1.0882135131864314e+18    |     241.6319396095615    |     148.63379256293294    |     3.30033317481455e-14
+    0.2    |     0.5    |     1.3258785979549306    |     1.0882135131864314e+18    |     241.6319396095615    |     60.053517025173015    |     1.3334559462213184e-14
+    0.2    |     0.75    |     1.322792798552994    |     1.0882135131864314e+18    |     241.6319396095615    |     40.36901135011533    |     8.963721176450463e-15
+    0.2    |     1    |     1.3215357179523248    |     1.0882135131864314e+18    |     241.6319396095615    |     30.5267585125865    |     6.778302033569106e-15
+    0.5    |     1e-05    |     0.24096794492336937    |     980378006355679.0    |     0.21768764709843658    |     2725466.739090434    |     6.051751853176488e-10
+    0.5    |     2e-05    |     0.24490838803236697    |     980378006355679.0    |     0.21768764709843658    |     1362733.8714551092    |     3.025877041052081e-10
+    0.5    |     5e-05    |     0.2660371941887727    |     980378006355679.0    |     0.21768764709843658    |     545094.1490350903    |     1.2103521496944277e-10
+    0.5    |     7.5e-05    |     0.3041435170922618    |     980378006355679.0    |     0.21768764709843658    |     363396.43275826017    |     8.069021734297358e-11
+    0.5    |     0.0001    |     0.3466455959869741    |     980378006355679.0    |     0.21768764709843658    |     272547.57459440024    |     6.05177185240891e-11
+    0.5    |     0.0002    |     0.48965105730956426    |     980378006355679.0    |     0.21768764709843658    |     136274.2873159829    |     3.0258970288517626e-11
+    0.5    |     0.0005    |     0.7000258094502926    |     980378006355679.0    |     0.21768764709843658    |     54510.31493093894    |     1.2103721343179372e-11
+    0.5    |     0.00075    |     0.780315240453671    |     980378006355679.0    |     0.21768764709843658    |     36340.543287963876    |     8.069221577136937e-12
+    0.5    |     0.001    |     0.8291864833507582    |     980378006355679.0    |     0.21768764709843658    |     27255.657466222685    |     6.051971694059396e-12
+    0.5    |     0.002    |     0.9148557625309818    |     980378006355679.0    |     0.21768764709843658    |     13628.328733300437    |     3.026096869374148e-12
+    0.5    |     0.005    |     0.9605054768523459    |     980378006355679.0    |     0.21768764709843658    |     5451.93149336643    |     1.2105719745228849e-12
+    0.5    |     0.0075    |     0.9664986040888535    |     980378006355679.0    |     0.21768764709843658    |     3634.954328917667    |     8.071219978850557e-13
+    0.5    |     0.01    |     0.9715770597539669    |     980378006355679.0    |     0.21768764709843658    |     2726.465746690794    |     6.053970095655878e-13
+    0.5    |     0.02    |     1.004622169221296    |     980378006355679.0    |     0.21768764709843658    |     1363.7328733473043    |     3.0280952708567995e-13
+    0.5    |     0.05    |     1.1047795554227995    |     980378006355679.0    |     0.21768764709843658    |     546.0931493393774    |     1.2125703759732818e-13
+    0.5    |     0.075    |     1.1581424516578152    |     980378006355679.0    |     0.21768764709843658    |     364.3954328929862    |     8.091203993320888e-14
+    0.5    |     0.1    |     1.1943040342674949    |     980378006355679.0    |     0.21768764709843658    |     273.5465746697651    |     6.073954110114357e-14
+    0.5    |     0.2    |     1.2650403625958064    |     980378006355679.0    |     0.21768764709843658    |     137.27328733490154    |     3.0480792853038516e-14
+    0.5    |     0.5    |     1.3129959855689675    |     980378006355679.0    |     0.21768764709843658    |     55.509314933965186    |     1.232554390417144e-14
+    0.5    |     0.75    |     1.3205631535380167    |     980378006355679.0    |     0.21768764709843658    |     37.3395432893108    |     8.29104413775612e-15
+    0.5    |     1    |     1.3228809465642855    |     980378006355679.0    |     0.21768764709843658    |     28.25465746698335    |     6.273794254548404e-15
+    0.75    |     1e-05    |     0.22244997019240012    |     3532637284371.809    |     0.0007844030501517738    |     2442727.9074395886    |     5.423945531467719e-10
+    0.75    |     2e-05    |     0.20530606055422124    |     3532637284371.809    |     0.0007844030501517738    |     1221364.876008071    |     2.71197481362522e-10
+    0.75    |     5e-05    |     0.20855337608219907    |     3532637284371.809    |     0.0007844030501517738    |     488546.6517431899    |     1.0847914827376346e-10
+    0.75    |     7.5e-05    |     0.21981047089541023    |     3532637284371.809    |     0.0007844030501517738    |     325698.11617620534    |     7.231950953117246e-11
+    0.75    |     0.0001    |     0.2292918343521837    |     3532637284371.809    |     0.0007844030501517738    |     244273.8427619738    |     5.423968890960169e-11
+    0.75    |     0.0002    |     0.2520655671085378    |     3532637284371.809    |     0.0007844030501517738    |     122137.42560380531    |     2.7119956414757354e-11
+    0.75    |     0.0005    |     0.291146581689913    |     3532637284371.809    |     0.0007844030501517738    |     48855.57125495097    |     1.0848116017692304e-11
+    0.75    |     0.00075    |     0.3252398789514318    |     3532637284371.809    |     0.0007844030501517738    |     32570.714320096915    |     7.232151393331979e-12
+    0.75    |     0.001    |     0.35990828966427363    |     3532637284371.809    |     0.0007844030501517738    |     24428.285796379485    |     5.4241690686528365e-12
+    0.75    |     0.002    |     0.47580513929032187    |     3532637284371.809    |     0.0007844030501517738    |     12214.642940416195    |     2.712195566005037e-12
+    0.75    |     0.005    |     0.6515260879776105    |     3532637284371.809    |     0.0007844030501517738    |     4886.457186300819    |     1.0850114554152454e-12
+    0.75    |     0.0075    |     0.7197356993725802    |     3532637284371.809    |     0.0007844030501517738    |     3257.9714590352382    |     7.234149854785073e-13
+    0.75    |     0.01    |     0.7617582568840112    |     3532637284371.809    |     0.0007844030501517738    |     2443.7285948394756    |     5.426167503851333e-13
+    0.75    |     0.02    |     0.8408992984214768    |     3532637284371.809    |     0.0007844030501517738    |     1222.364297841989    |     2.7141939758878773e-13
+    0.75    |     0.05    |     0.9210906761308866    |     3532637284371.809    |     0.0007844030501517738    |     489.54571923814467    |     1.0870098582097413e-13
+    0.75    |     0.075    |     0.9624492708631206    |     3532637284371.809    |     0.0007844030501517738    |     326.69714617377684    |     7.254133875229148e-14
+    0.75    |     0.1    |     0.9968207350967744    |     3532637284371.809    |     0.0007844030501517738    |     245.2728596359628    |     5.4461515216700016e-14
+    0.75    |     0.2    |     1.0921914353907196    |     3532637284371.809    |     0.0007844030501517738    |     123.1364298222042    |     2.7341779911750176e-14
+    0.75    |     0.5    |     1.211388707239522    |     3532637284371.809    |     0.0007844030501517738    |     49.85457192989514    |     1.1069938727880121e-14
+    0.75    |     0.75    |     1.2502765485666587    |     3532637284371.809    |     0.0007844030501517738    |     33.56971462008021    |     7.453974020261758e-15
+    0.75    |     1    |     1.2715113409155714    |     3532637284371.809    |     0.0007844030501517738    |     25.427285965116454    |     5.645991666440076e-15
+    1.0    |     1e-05    |     0.32017904466980734    |     63914575467.52059    |     1.4191886658636708e-05    |     2130369.1131628216    |     4.73036968076728e-10
+    1.0    |     2e-05    |     0.300740231425001    |     63914575467.52059    |     1.4191886658636708e-05    |     1065202.8089919568    |     2.365225368876526e-10
+    1.0    |     5e-05    |     0.26987296046960413    |     63914575467.52059    |     1.4191886658636708e-05    |     426085.9842785207    |     9.461009404321723e-11
+    1.0    |     7.5e-05    |     0.2559713871873938    |     63914575467.52059    |     1.4191886658636708e-05    |     284058.2874065957    |     6.307361020287854e-11
+    1.0    |     0.0001    |     0.2465204142744731    |     63914575467.52059    |     1.4191886658636708e-05    |     213044.20226337612    |     4.730531572313981e-11
+    1.0    |     0.0002    |     0.22985421062250522    |     63914575467.52059    |     1.4191886658636708e-05    |     106522.77866351568    |     2.3652808303856894e-11
+    1.0    |     0.0005    |     0.23919407237614934    |     63914575467.52059    |     1.4191886658636708e-05    |     42609.75407313637    |     9.461266009122309e-12
+    1.0    |     0.00075    |     0.25539979901783666    |     63914575467.52059    |     1.4191886658636708e-05    |     28406.842361022245    |     6.307586089220828e-12
+    1.0    |     0.001    |     0.2695794334088665    |     63914575467.52059    |     1.4191886658636708e-05    |     21305.38413787151    |     4.7307456036697085e-12
+    1.0    |     0.002    |     0.3106387680745061    |     63914575467.52059    |     1.4191886658636708e-05    |     10653.19384425952    |     2.3654842183383807e-12
+    1.0    |     0.005    |     0.39366095954965064    |     63914575467.52059    |     1.4191886658636708e-05    |     4261.877963782281    |     9.463270087067334e-13
+    1.0    |     0.0075    |     0.44699159009613804    |     63914575467.52059    |     1.4191886658636708e-05    |     2841.5853723107875    |     6.309587013554968e-13
+    1.0    |     0.01    |     0.49016736300399466    |     63914575467.52059    |     1.4191886658636708e-05    |     2131.439052904106    |     4.732745424238751e-13
+    1.0    |     0.02    |     0.6017532446914219    |     63914575467.52059    |     1.4191886658636708e-05    |     1066.2195442053278    |     2.3674829745641896e-13
+    1.0    |     0.05    |     0.7405769938099299    |     63914575467.52059    |     1.4191886658636708e-05    |     427.0878219429175    |     9.483254669160724e-14
+    1.0    |     0.075    |     0.7971634633262158    |     63914575467.52059    |     1.4191886658636708e-05    |     285.0585485931723    |     6.329571280287378e-14
+    1.0    |     0.1    |     0.8372760302121784    |     63914575467.52059    |     1.4191886658636708e-05    |     214.04391168158912    |     4.752729580594675e-14
+    1.0    |     0.2    |     0.9403435142235642    |     63914575467.52059    |     1.4191886658636708e-05    |     107.5219560183274    |     2.38746702448561e-14
+    1.0    |     0.5    |     1.0888716539372494    |     63914575467.52059    |     1.4191886658636708e-05    |     43.60878244993883    |     9.683094870358306e-15
+    1.0    |     0.75    |     1.149981397877131    |     63914575467.52059    |     1.4191886658636708e-05    |     29.40585497293815    |     6.529411449948819e-15
+    1.0    |     1    |     1.1884279444711836    |     63914575467.52059    |     1.4191886658636708e-05    |     22.3043912320707    |     4.952569739218471e-15
+    2.0    |     1e-05    |     0.377175270800003    |     4995157.201237197    |     1.1091477072871385e-09    |     931785.000487201    |     2.0689783230825066e-10
+    2.0    |     2e-05    |     0.3655473904437131    |     4995157.201237197    |     1.1091477072871385e-09    |     513815.8738676732    |     1.1409004271715722e-10
+    2.0    |     5e-05    |     0.3556659370170552    |     4995157.201237197    |     1.1091477072871385e-09    |     219045.86744166462    |     4.86379530965452e-11
+    2.0    |     7.5e-05    |     0.35350368702106066    |     4995157.201237197    |     1.1091477072871385e-09    |     148197.11674365663    |     3.290637023837398e-11
+    2.0    |     0.0001    |     0.3528173534979667    |     4995157.201237197    |     1.1091477072871385e-09    |     111978.62460516304    |     2.4864249460501818e-11
+    2.0    |     0.0002    |     0.3534347525530457    |     4995157.201237197    |     1.1091477072871385e-09    |     56624.483463981735    |     1.2573161059843793e-11
+    2.0    |     0.0005    |     0.3550242415453256    |     4995157.201237197    |     1.1091477072871385e-09    |     22805.49604335496    |     5.063837359066117e-12
+    2.0    |     0.00075    |     0.3537163573870914    |     4995157.201237197    |     1.1091477072871385e-09    |     15227.168148581115    |     3.381110535678714e-12
+    2.0    |     0.001    |     0.3515909417690296    |     4995157.201237197    |     1.1091477072871385e-09    |     11429.33503583862    |     2.537822182588605e-12
+    2.0    |     0.002    |     0.3437425980245029    |     4995157.201237197    |     1.1091477072871385e-09    |     5721.7116786093075    |     1.2704752091717414e-12
+    2.0    |     0.005    |     0.3384378232843952    |     4995157.201237197    |     1.1091477072871385e-09    |     2290.858149957779    |     5.086726928466632e-13
+    2.0    |     0.0075    |     0.34349118443995574    |     4995157.201237197    |     1.1091477072871385e-09    |     1527.8054038403625    |     3.392409472980612e-13
+    2.0    |     0.01    |     0.3514509386543827    |     4995157.201237197    |     1.1091477072871385e-09    |     1146.1915618887456    |     2.545056525279911e-13
+    2.0    |     0.02    |     0.3879545312712374    |     4995157.201237197    |     1.1091477072871385e-09    |     573.6614252411292    |     1.2737842452839692e-13
+    2.0    |     0.05    |     0.47107485080566774    |     4995157.201237197    |     1.1091477072871385e-09    |     230.08032761773364    |     5.1088095446901437e-14
+    2.0    |     0.075    |     0.5172647100633149    |     4995157.201237197    |     1.1091477072871385e-09    |     153.72255305569738    |     3.413326356131949e-14
+    2.0    |     0.1    |     0.5526131904880448    |     4995157.201237197    |     1.1091477072871385e-09    |     115.54279030330181    |     2.565565322483239e-14
+    2.0    |     0.2    |     0.6463104722195471    |     4995157.201237197    |     1.1091477072871385e-09    |     58.27205179784525    |     1.2938994719623509e-14
+    2.0    |     0.5    |     0.7972439807925047    |     4995157.201237197    |     1.1091477072871385e-09    |     23.908978317115814    |     5.308859644585121e-15
+    2.0    |     0.75    |     0.8774340306364914    |     4995157.201237197    |     1.1091477072871385e-09    |     16.272675559455415    |     3.6132598156724904e-15
+    2.0    |     1    |     0.9386486865700189    |     4995157.201237197    |     1.1091477072871385e-09    |     12.454515425128456    |     2.7654579571053563e-15
+    5.0    |     1e-05    |     0.7290963744458012    |     555.6368040064709    |     1.233761546274239e-13    |     554.9108780960413    |     1.232149666954377e-13
+    5.0    |     2e-05    |     0.7291162264236526    |     555.6368040064709    |     1.233761546274239e-13    |     554.1868499306499    |     1.2305420014749878e-13
+    5.0    |     5e-05    |     0.7291757523892821    |     555.6368040064709    |     1.233761546274239e-13    |     552.0260777777679    |     1.2257441234847908e-13
+    5.0    |     7.5e-05    |     0.7292253230382068    |     555.6368040064709    |     1.233761546274239e-13    |     550.2382870339158    |     1.221774430590718e-13
+    5.0    |     0.0001    |     0.7292748625029515    |     555.6368040064709    |     1.233761546274239e-13    |     548.4620596604128    |     1.2178304135366532e-13
+    5.0    |     0.0002    |     0.7294727088701937    |     555.6368040064709    |     1.233761546274239e-13    |     541.4705687792587    |     1.2023061852312248e-13
+    5.0    |     0.0005    |     0.7300632679255018    |     555.6368040064709    |     1.233761546274239e-13    |     521.5279990898964    |     1.1580247851525814e-13
+    5.0    |     0.00075    |     0.7305520056062914    |     555.6368040064709    |     1.233761546274239e-13    |     505.99987151524476    |     1.1235454156271913e-13
+    5.0    |     0.001    |     0.7310376814323818    |     555.6368040064709    |     1.233761546274239e-13    |     491.3713614768363    |     1.0910635983059886e-13
+    5.0    |     0.002    |     0.7329502858896298    |     555.6368040064709    |     1.233761546274239e-13    |     440.4522822110045    |     9.780005299187089e-14
+    5.0    |     0.005    |     0.7384152522426061    |     555.6368040064709    |     1.233761546274239e-13    |     336.0726653659439    |     7.462312220728327e-14
+    5.0    |     0.0075    |     0.7426859104004214    |     555.6368040064709    |     1.233761546274239e-13    |     280.70853882879646    |     6.232981660332292e-14
+    5.0    |     0.01    |     0.74672952940703    |     555.6368040064709    |     1.233761546274239e-13    |     241.04573230445487    |     5.352290439840754e-14
+    5.0    |     0.02    |     0.7610911745523709    |     555.6368040064709    |     1.233761546274239e-13    |     154.16834802636313    |     3.423224992945853e-14
+    5.0    |     0.05    |     0.7938460924485604    |     555.6368040064709    |     1.233761546274239e-13    |     74.43525519938758    |     1.65279468332419e-14
+    5.0    |     0.075    |     0.8150678569112062    |     555.6368040064709    |     1.233761546274239e-13    |     52.21726682813801    |     1.1594562383118847e-14
+    5.0    |     0.1    |     0.8333792535955517    |     555.6368040064709    |     1.233761546274239e-13    |     40.320705913772095    |     8.952995214921898e-15
+    5.0    |     0.2    |     0.8919888448352007    |     555.6368040064709    |     1.233761546274239e-13    |     21.382869766048394    |     4.747950869365612e-15
+    5.0    |     0.5    |     1.0120030229593935    |     555.6368040064709    |     1.233761546274239e-13    |     9.336977975122133    |     2.073225585679713e-15
+    5.0    |     0.75    |     1.0827038377848375    |     555.6368040064709    |     1.233761546274239e-13    |     6.585973686347977    |     1.4623799252317886e-15
+    5.0    |     1    |     1.1385693673981576    |     555.6368040064709    |     1.233761546274239e-13    |     5.200055382874517    |     1.1546442430786545e-15
+    7.5    |     1e-05    |     1.157972716294107    |     65.4206227436605    |     1.4526296331065614e-14    |     65.40750197167772    |     1.4523382934434385e-14
+    7.5    |     2e-05    |     1.1579776842823726    |     65.4206227436605    |     1.4526296331065614e-14    |     65.39438654331292    |     1.45204707243247e-14
+    7.5    |     5e-05    |     1.157992587485609    |     65.4206227436605    |     1.4526296331065614e-14    |     65.35507228730182    |     1.4511741205880796e-14
+    7.5    |     7.5e-05    |     1.1580050059490286    |     65.4206227436605    |     1.4526296331065614e-14    |     65.3223470587634    |     1.45044747454389e-14
+    7.5    |     0.0001    |     1.158017423619176    |     65.4206227436605    |     1.4526296331065614e-14    |     65.28965509555222    |     1.449721567138345e-14
+    7.5    |     0.0002    |     1.158067086367233    |     65.4206227436605    |     1.4526296331065614e-14    |     65.15921888360978    |     1.4468253014234774e-14
+    7.5    |     0.0005    |     1.1582159984650566    |     65.4206227436605    |     1.4526296331065614e-14    |     64.77106671380928    |     1.4382065919040627e-14
+    7.5    |     0.00075    |     1.158340004641428    |     65.4206227436605    |     1.4526296331065614e-14    |     64.45117618545746    |     1.4311035953053487e-14
+    7.5    |     0.001    |     1.1584639315271188    |     65.4206227436605    |     1.4526296331065614e-14    |     64.13447892974594    |     1.4240715036028182e-14
+    7.5    |     0.002    |     1.1589588465897585    |     65.4206227436605    |     1.4526296331065614e-14    |     62.89868505684156    |     1.3966313673750354e-14
+    7.5    |     0.005    |     1.1604360020625986    |     65.4206227436605    |     1.4526296331065614e-14    |     59.465476505803295    |     1.3203988237409824e-14
+    7.5    |     0.0075    |     1.161658314493383    |     65.4206227436605    |     1.4526296331065614e-14    |     56.88254043457728    |     1.263046121792783e-14
+    7.5    |     0.01    |     1.162872831495904    |     65.4206227436605    |     1.4526296331065614e-14    |     54.51817052965837    |     1.2105465636493478e-14
+    7.5    |     0.02    |     1.1676546346371228    |     65.4206227436605    |     1.4526296331065614e-14    |     46.77181528449086    |     1.0385429246471314e-14
+    7.5    |     0.05    |     1.1813220595206988    |     65.4206227436605    |     1.4526296331065614e-14    |     32.91391372384854    |     7.308356969348515e-15
+    7.5    |     0.075    |     1.192025682675384    |     65.4206227436605    |     1.4526296331065614e-14    |     26.484230061148875    |     5.88068040067144e-15
+    7.5    |     0.1    |     1.20219020027986    |     65.4206227436605    |     1.4526296331065614e-14    |     22.210881996573825    |     4.9318065179657255e-15
+    7.5    |     0.2    |     1.2385142386896437    |     65.4206227436605    |     1.4526296331065614e-14    |     13.695471638717024    |     3.0410055892808926e-15
+    7.5    |     0.5    |     1.3202321940460673    |     65.4206227436605    |     1.4526296331065614e-14    |     6.7591697420605    |     1.5008371749970495e-15
+    7.5    |     0.75    |     1.3692070811077148    |     65.4206227436605    |     1.4526296331065614e-14    |     4.957375592564131    |     1.1007585049158954e-15
+    7.5    |     1    |     1.4074503211972997    |     65.4206227436605    |     1.4526296331065614e-14    |     4.014324376831696    |     8.913590702945164e-16
+    10.0    |     1e-05    |     1.4570968886841433    |     19.175864900543598    |     4.257897345936978e-15    |     19.17448930484127    |     4.257591902332718e-15
+    10.0    |     2e-05    |     1.4570993187331154    |     19.175864900543598    |     4.257897345936978e-15    |     19.173113917340398    |     4.257286504958468e-15
+    10.0    |     5e-05    |     1.4571066086154156    |     19.175864900543598    |     4.257897345936978e-15    |     19.16898900357349    |     4.256370590110745e-15
+    10.0    |     7.5e-05    |     1.4571126832141397    |     19.175864900543598    |     4.257897345936978e-15    |     19.165553005574097    |     4.255607645292447e-15
+    10.0    |     0.0001    |     1.457118757537252    |     19.175864900543598    |     4.257897345936978e-15    |     19.162118306915037    |     4.254844988985659e-15
+    10.0    |     0.0002    |     1.4571430520739161    |     19.175864900543598    |     4.257897345936978e-15    |     19.148392490952517    |     4.251797245602988e-15
+    10.0    |     0.0005    |     1.4572159092372128    |     19.175864900543598    |     4.257897345936978e-15    |     19.107339239051985    |     4.242681592503846e-15
+    10.0    |     0.00075    |     1.457276593252045    |     19.175864900543598    |     4.257897345936978e-15    |     19.07326980753782    |     4.235116659043263e-15
+    10.0    |     0.001    |     1.4573372497498753    |     19.175864900543598    |     4.257897345936978e-15    |     19.039328340305314    |     4.2275801393610455e-15
+    10.0    |     0.002    |     1.4575796008997441    |     19.175864900543598    |     4.257897345936978e-15    |     18.904827802739526    |     4.197715020635046e-15
+    10.0    |     0.005    |     1.4583040248763592    |     19.175864900543598    |     4.257897345936978e-15    |     18.513096874683374    |     4.1107332814779016e-15
+    10.0    |     0.0075    |     1.458904714524559    |     19.175864900543598    |     4.257897345936978e-15    |     18.199513783630785    |     4.041103847913959e-15
+    10.0    |     0.01    |     1.4595026976623577    |     19.175864900543598    |     4.257897345936978e-15    |     17.896962960525315    |     3.973924069927762e-15
+    10.0    |     0.02    |     1.4618679084524944    |     19.175864900543598    |     4.257897345936978e-15    |     16.786203891155257    |     3.727286011202592e-15
+    10.0    |     0.05    |     1.4687164362187248    |     19.175864900543598    |     4.257897345936978e-15    |     14.185809264834251    |     3.14988241375197e-15
+    10.0    |     0.075    |     1.4741565641494003    |     19.175864900543598    |     4.257897345936978e-15    |     12.594249511471267    |     2.796485157101906e-15
+    10.0    |     0.1    |     1.479371019681003    |     19.175864900543598    |     4.257897345936978e-15    |     11.345519722685244    |     2.519211444492796e-15
+    10.0    |     0.2    |     1.4982457886579081    |     19.175864900543598    |     4.257897345936978e-15    |     8.230533331790681    |     1.8275455219797635e-15
+    10.0    |     0.5    |     1.5410098659533926    |     19.175864900543598    |     4.257897345936978e-15    |     4.798974397071009    |     1.0655863740429726e-15
+    10.0    |     0.75    |     1.566357435218295    |     19.175864900543598    |     4.257897345936978e-15    |     3.722315134424429    |     8.265199934297371e-16
+    10.0    |     1    |     1.5858716852811887    |     19.175864900543598    |     4.257897345936978e-15    |     3.121161313222283    |     6.930370307017337e-16
+    20.0    |     1e-05    |     1.7286486756519492    |     2.142916234875077    |     4.758229887602721e-16    |     2.1428984173511343    |     4.758190324752075e-16
+    20.0    |     2e-05    |     1.7286487644074295    |     2.142916234875077    |     4.758229887602721e-16    |     2.142880600382717    |     4.758150763134943e-16
+    20.0    |     5e-05    |     1.7286490306649474    |     2.142916234875077    |     4.758229887602721e-16    |     2.1428271528103546    |     4.758032085684049e-16
+    20.0    |     7.5e-05    |     1.728649252535983    |     2.142916234875077    |     4.758229887602721e-16    |     2.1427826169852673    |     4.757933196287184e-16
+    20.0    |     0.0001    |     1.7286494743977223    |     2.142916234875077    |     4.758229887602721e-16    |     2.1427380846311563    |     4.757834314597434e-16
+    20.0    |     0.0002    |     1.7286503617517066    |     2.142916234875077    |     4.758229887602721e-16    |     2.1425599899163483    |     4.757438864891546e-16
+    20.0    |     0.0005    |     1.7286530229215005    |     2.142916234875077    |     4.758229887602721e-16    |     2.142026038687107    |     4.756253254994085e-16
+    20.0    |     0.00075    |     1.7286552395412749    |     2.142916234875077    |     4.758229887602721e-16    |     2.1415814604086183    |     4.755266092912032e-16
+    20.0    |     0.001    |     1.7286574552328238    |     2.142916234875077    |     4.758229887602721e-16    |     2.141137228134385    |     4.754279699113761e-16
+    20.0    |     0.002    |     1.7286663087282652    |     2.142916234875077    |     4.758229887602721e-16    |     2.139363751013921    |     4.750341788848192e-16
+    20.0    |     0.005    |     1.728692780526596    |     2.142916234875077    |     4.758229887602721e-16    |     2.1340762407576834    |     4.738601157589358e-16
+    20.0    |     0.0075    |     1.7287147392794122    |     2.142916234875077    |     4.758229887602721e-16    |     2.1297073264769595    |     4.728900219135211e-16
+    20.0    |     0.01    |     1.7287366067447658    |     2.142916234875077    |     4.758229887602721e-16    |     2.1253719446187818    |     4.719273737616229e-16
+    20.0    |     0.02    |     1.728823174869511    |     2.142916234875077    |     4.758229887602721e-16    |     2.1083581370698803    |     4.681495495861566e-16
+    20.0    |     0.05    |     1.729074514919933    |     2.142916234875077    |     4.758229887602721e-16    |     2.060269448440304    |     4.574717157180394e-16
+    20.0    |     0.075    |     1.7292748667352156    |     2.142916234875077    |     4.758229887602721e-16    |     2.023271926743741    |     4.492566156297209e-16
+    20.0    |     0.1    |     1.7294674543189972    |     2.142916234875077    |     4.758229887602721e-16    |     1.9887693614232325    |     4.4159550714422845e-16
+    20.0    |     0.2    |     1.7301684663530887    |     2.142916234875077    |     4.758229887602721e-16    |     1.8712610423214948    |     4.155034188538786e-16
+    20.0    |     0.5    |     1.7317725169771794    |     2.142916234875077    |     4.758229887602721e-16    |     1.64227232787048    |     3.6465771022131223e-16
+    20.0    |     0.75    |     1.7327288355012884    |     2.142916234875077    |     4.758229887602721e-16    |     1.5268757896947267    |     3.390345314923608e-16
+    20.0    |     1    |     1.7334658393718354    |     2.142916234875077    |     4.758229887602721e-16    |     1.4466301244654554    |     3.212164144595809e-16
+    50.0    |     1e-05    |     1.7391411403978456    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013610614050856    |     2.2234682126700225e-16
+    50.0    |     2e-05    |     1.7391411404618256    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013610477854813    |     2.223468182428426e-16
+    50.0    |     5e-05    |     1.7391411406537574    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013610069283048    |     2.2234680917072697e-16
+    50.0    |     7.5e-05    |     1.739141140813692    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013609728825315    |     2.223468016110467e-16
+    50.0    |     0.0001    |     1.7391411409736182    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013609388384612    |     2.2234679405174456e-16
+    50.0    |     0.0002    |     1.739141141613244    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013608026792107    |     2.2234676381831757e-16
+    50.0    |     0.0005    |     1.7391411435313555    |     1.001361075024962    |     2.223468242912223e-16    |     1.00136039436488    |     2.223466731543233e-16
+    50.0    |     0.00075    |     1.7391411451289038    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013600542900682    |     2.223465976425461e-16
+    50.0    |     0.001    |     1.739141146725655    |     1.001361075024962    |     2.223468242912223e-16    |     1.00135971438524    |     2.223465221685128e-16
+    50.0    |     0.002    |     1.739141153104692    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013583564632107    |     2.223462206492523e-16
+    50.0    |     0.005    |     1.7391411721656658    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013542989220954    |     2.2234531969413837e-16
+    50.0    |     0.0075    |     1.7391411879631307    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013509361089248    |     2.2234457299961647e-16
+    50.0    |     0.01    |     1.7391412036824185    |     1.001361075024962    |     2.223468242912223e-16    |     1.0013475899545612    |     2.223438300040928e-16
+    50.0    |     0.02    |     1.7391412657893077    |     1.001361075024962    |     2.223468242912223e-16    |     1.001334369473718    |     2.2234089446764705e-16
+    50.0    |     0.05    |     1.7391414450146112    |     1.001361075024962    |     2.223468242912223e-16    |     1.001296219922522    |     2.2233242356562365e-16
+    50.0    |     0.075    |     1.7391415867303395    |     1.001361075024962    |     2.223468242912223e-16    |     1.001266056190751    |     2.223257258717195e-16
+    50.0    |     0.1    |     1.739141722006669    |     1.001361075024962    |     2.223468242912223e-16    |     1.0012372643858902    |     2.223193328067841e-16
+    50.0    |     0.2    |     1.7391422067646825    |     1.001361075024962    |     2.223468242912223e-16    |     1.0011341005544732    |     2.2229642583459456e-16
+    50.0    |     0.5    |     1.7391432733304768    |     1.001361075024962    |     2.223468242912223e-16    |     1.0009071775605212    |     2.222460388080541e-16
+    50.0    |     0.75    |     1.739143882857248    |     1.001361075024962    |     2.223468242912223e-16    |     1.0007775303834385    |     2.222172513518391e-16
+    50.0    |     1    |     1.739144340031251    |     1.001361075024962    |     2.223468242912223e-16    |     1.000680306025596    |     2.221956632077129e-16
+    75.0    |     1e-05    |     1.7391475402804035    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001490198573    |     2.2204463801408666e-16
+    75.0    |     2e-05    |     1.7391475402804109    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001490183668    |     2.220446380137557e-16
+    75.0    |     5e-05    |     1.7391475402804306    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001490138963    |     2.2204463801276305e-16
+    75.0    |     7.5e-05    |     1.739147540280447    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001490101718    |     2.2204463801193603e-16
+    75.0    |     0.0001    |     1.739147540280464    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001490064465    |     2.2204463801110886e-16
+    75.0    |     0.0002    |     1.7391475402805299    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001489915489    |     2.220446380078009e-16
+    75.0    |     0.0005    |     1.7391475402807293    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001489468737    |     2.2204463799788104e-16
+    75.0    |     0.00075    |     1.7391475402808945    |     1.0000001490213473    |     2.220446380144175e-16    |     1.000000148909665    |     2.2204463798961905e-16
+    75.0    |     0.001    |     1.7391475402810597    |     1.0000001490213473    |     2.220446380144175e-16    |     1.000000148872475    |     2.220446379813612e-16
+    75.0    |     0.002    |     1.7391475402817214    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001487238992    |     2.2204463794837075e-16
+    75.0    |     0.005    |     1.7391475402836962    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001482799472    |     2.220446378497936e-16
+    75.0    |     0.0075    |     1.7391475402853338    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001479120069    |     2.2204463776809444e-16
+    75.0    |     0.01    |     1.7391475402869625    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001475458884    |     2.220446376867998e-16
+    75.0    |     0.02    |     1.7391475402933996    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001460993597    |     2.220446373656059e-16
+    75.0    |     0.05    |     1.7391475403119736    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001419250921    |     2.220446364387323e-16
+    75.0    |     0.075    |     1.7391475403266603    |     1.0000001490213473    |     2.220446380144175e-16    |     1.000000138624508    |     2.2204463570585544e-16
+    75.0    |     0.1    |     1.7391475403406795    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001354739514    |     2.220446350062913e-16
+    75.0    |     0.2    |     1.739147540390915    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000001241844543    |     2.220446324995194e-16
+    75.0    |     0.5    |     1.7391475405014307    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000000993475626    |     2.220446269846216e-16
+    75.0    |     0.75    |     1.7391475405645824    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000000851550528    |     2.2204462383325136e-16
+    75.0    |     1    |     1.739147540611947    |     1.0000001490213473    |     2.220446380144175e-16    |     1.0000000745106707    |     2.2204462146972376e-16
+    100.0    |     1e-05    |     1.7391475409434953    |     1.000000000000426    |     2.220446049251259e-16    |     1.000000000000426    |     2.220446049251259e-16
+    100.0    |     2e-05    |     1.7391475409434953    |     1.000000000000426    |     2.220446049251259e-16    |     1.000000000000426    |     2.220446049251259e-16
+    100.0    |     5e-05    |     1.7391475409434953    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004259    |     2.2204460492512587e-16
+    100.0    |     7.5e-05    |     1.739147540943495    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004259    |     2.2204460492512587e-16
+    100.0    |     0.0001    |     1.7391475409434953    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004259    |     2.2204460492512587e-16
+    100.0    |     0.0002    |     1.739147540943495    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004259    |     2.2204460492512587e-16
+    100.0    |     0.0005    |     1.7391475409434949    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004257    |     2.220446049251258e-16
+    100.0    |     0.00075    |     1.7391475409434956    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004259    |     2.2204460492512587e-16
+    100.0    |     0.001    |     1.7391475409434953    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004254    |     2.2204460492512577e-16
+    100.0    |     0.002    |     1.7391475409434953    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004252    |     2.2204460492512572e-16
+    100.0    |     0.005    |     1.7391475409434953    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004237    |     2.220446049251254e-16
+    100.0    |     0.0075    |     1.7391475409434953    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004228    |     2.220446049251252e-16
+    100.0    |     0.01    |     1.739147540943495    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004219    |     2.22044604925125e-16
+    100.0    |     0.02    |     1.7391475409434956    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004174    |     2.22044604925124e-16
+    100.0    |     0.05    |     1.739147540943495    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000004057    |     2.220446049251214e-16
+    100.0    |     0.075    |     1.7391475409434949    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000003963    |     2.220446049251193e-16
+    100.0    |     0.1    |     1.7391475409434953    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000003872    |     2.220446049251173e-16
+    100.0    |     0.2    |     1.7391475409434958    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000003548    |     2.220446049251101e-16
+    100.0    |     0.5    |     1.7391475409434962    |     1.000000000000426    |     2.220446049251259e-16    |     1.000000000000284    |     2.2204460492509437e-16
+    100.0    |     0.75    |     1.7391475409434956    |     1.000000000000426    |     2.220446049251259e-16    |     1.0000000000002436    |     2.220446049250854e-16
+    100.0    |     1    |     1.7391475409434962    |     1.000000000000426    |     2.220446049251259e-16    |     1.000000000000213    |     2.220446049250786e-16
+    200.0    |     1e-05    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000002    |     2.2204460492503136e-16
+    200.0    |     2e-05    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000002    |     2.2204460492503136e-16
+    200.0    |     5e-05    |     1.7391475409434973    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000004    |     2.220446049250314e-16
+    200.0    |     7.5e-05    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000007    |     2.2204460492503146e-16
+    200.0    |     0.0001    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000002    |     2.2204460492503136e-16
+    200.0    |     0.0002    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000002    |     2.2204460492503136e-16
+    200.0    |     0.0005    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000004    |     2.220446049250314e-16
+    200.0    |     0.00075    |     1.7391475409434967    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000002    |     2.2204460492503136e-16
+    200.0    |     0.001    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000002    |     2.2204460492503136e-16
+    200.0    |     0.002    |     1.7391475409434973    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000004    |     2.220446049250314e-16
+    200.0    |     0.005    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000002    |     2.2204460492503136e-16
+    200.0    |     0.0075    |     1.7391475409434973    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000004    |     2.220446049250314e-16
+    200.0    |     0.01    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000004    |     2.220446049250314e-16
+    200.0    |     0.02    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000002    |     2.2204460492503136e-16
+    200.0    |     0.05    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000004    |     2.220446049250314e-16
+    200.0    |     0.075    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000002    |     2.2204460492503136e-16
+    200.0    |     0.1    |     1.7391475409434973    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000007    |     2.2204460492503146e-16
+    200.0    |     0.2    |     1.7391475409434973    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000004    |     2.220446049250314e-16
+    200.0    |     0.5    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0    |     2.220446049250313e-16
+    200.0    |     0.75    |     1.7391475409434969    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000004    |     2.220446049250314e-16
+    200.0    |     1    |     1.739147540943497    |     1.0000000000000004    |     2.220446049250314e-16    |     1.0000000000000004    |     2.220446049250314e-16
+    500.0    |     1e-05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     2e-05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     5e-05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     7.5e-05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.0001    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.0002    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.0005    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.00075    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.001    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.002    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.005    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.0075    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.01    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.02    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.075    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.1    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.2    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.5    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     0.75    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    500.0    |     1    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     1e-05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     2e-05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     5e-05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     7.5e-05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.0001    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.0002    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.0005    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.00075    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.001    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.002    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.005    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.0075    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.01    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.02    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.05    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.075    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.1    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.2    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.5    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     0.75    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    1000.0    |     1    |     1.739147540943497    |     1.0    |     2.220446049250313e-16    |     1.0    |     2.220446049250313e-16
+    
+    Results saved in  solution.pickle
+
+
+
+
+.. parsed-literal::
+
+    
+    ========================================================================================================================
+    Results of radial basis function run:
+    
+    Basis function type               : gaussian
+    Shape parameter                    : 0.75
+    Regularization parameter           : 2e-05
+    Number of terms in RBF model       : 31
+    
+    RBF Expression:
+    --------------------------
+    
+    4.038157591240296 + 237.8499310618983*(-1551.5244569731565*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.5518182560031254)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.2731190901874679)**2)**0.5)**2) -334.7189127204942*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.4300326512391472)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.8610629174234938)**2)**0.5)**2) + 235.58220307084423*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.11035664436222248)**2)**0.5)**2) + 27.886153331852256*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.6822668136056202)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.8414199967160326)**2)**0.5)**2) -1415.9829578097579*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.13520535030959882)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.5811256814195772)**2)**0.5)**2) -990.5466783010754*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.908216841775921)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.20132180755786522)**2)**0.5)**2) -343.1090937753397*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.18501228557936236)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.09666279198240106)**2)**0.5)**2) -723.9922784960042*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.22021941796179972)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -1.0)**2)**0.5)**2) -8.52522690364915*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.8266365897830592)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.16264387978612238)**2)**0.5)**2) + 255.07386587267732*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.831288905218487)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.26866011456766936)**2)**0.5)**2) + 528.0399010821895*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.43739443999592303)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.9599385359524552)**2)**0.5)**2) + 432.74002298761496*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.8327482651149929)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.3330572615505772)**2)**0.5)**2) -761.4482838985659*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.17485274298531528)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.3711736045917253)**2)**0.5)**2) + 854.420692779795*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.0009932894634358945)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.2461895993357224)**2)**0.5)**2) + 158.48258717431474*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.8102253955808789)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546)**2)**0.5)**2) -2542.5018400547606*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.6086081776493459)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.6109286075828757)**2)**0.5)**2) -1366.5543839166426*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.1028770983224648)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.38063145554753214)**2)**0.5)**2) + 342.140658212478*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.0325313822086792)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.9084335925839453)**2)**0.5)**2) + 107.60917336174248*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -1.0)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.046386199083146756)**2)**0.5)**2) + 49.671206786643154*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.9074219145138307)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.5830026053427076)**2)**0.5)**2) + 897.3018667927153*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.7557460774371298)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.6383110566137417)**2)**0.5)**2) -8.627269385500881*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.5911925356865033)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.005381283583344741)**2)**0.5)**2) -136.91234830724306*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.21031274399063923)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.5495609776179707)**2)**0.5)**2) + 735.7407100555176*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.7830308832306688)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.24439265066740792)**2)**0.5)**2) + 541.7309337987273*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.28803140536417743)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.8689715765112118)**2)**0.5)**2) -45.92139976088774*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.993941455353761)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.9026639746834018)**2)**0.5)**2) + 1712.6788445511513*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.36343808704287006)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.6057949629205177)**2)**0.5)**2) + 3266.9168170443177*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.3586109792561233)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.3372905989731323)**2)**0.5)**2) -827.2715689195884*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.17758838147122427)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.23089727866378493)**2)**0.5)**2) + 919.0325530673636*exp(- (0.75*(((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.04112204875223326)**2 + ((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.5088149538788017)**2)**0.5)**2))
+    --------------------------
+    
+    Model training errors:
+    -----------------------
+    Mean Squared Error (MSE)         : 0.00044438098273910073
+    Root Mean Squared Error (RMSE)   : 0.02108034588755841
+    Goodness of fit (R2)             : 0.9918215668807615
+    
+    ========================================================================================================================
+
+
+
+Step 5: View model metrics
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We can view the Root Mean Square Error (RMSE) and :math:`R^2` values of
+the RBF fit based on the training data:
+
+.. code:: ipython3
+
+    print('R2: ', rbf_class.R2, '\nRMSE: ', rbf_class.rmse)
+
+
+.. parsed-literal::
+
+    R2:  0.9918215668807615 
+    RMSE:  0.02108034588755841
+
+
+Step 6 (Optional): Generate Pyomo expression output at any unsampled point
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Based on the model we trained, we can predict the surrogate value at any
+previously unsampled point. We do this by calling the function
+``predict_output``.
+
+Let us again evaluate the RBF surrogate at the same set of points we
+considered for the polynomial model:
+
+-  :math:`x_{1}=5`, :math:`x_{2}=8` (true function value: 57.9908)
+-  :math:`x_{1}=-3`, :math:`x_{2}=10` (true function value: 4.2461)
+-  :math:`x_{1}=-2`, :math:`x_{2}=3` (true function value: 50.8899)
+
+.. code:: ipython3
+
+    unsampled_points = np.array([ [5, 8], [-3, 10], [-2, 3]])
+    ys = rbf_class.predict_output(unsampled_points)
+    print(ys)
+
+
+.. parsed-literal::
+
+    [[61.06401281]
+     [12.7142377 ]
+     [50.97501439]]
+
+
+The results from the RBF surrogate are similar to those obtained from
+the polynomial.
+
+For RBF models, the Pyomo expression is generated by calling
+``generate_expression`` on the results object, while parity plots may be
+viewed with the ``parity_residual_plots`` method.
+
+Further information about using PySMO’s RBF tool and features can be
+found in the
+`documentation <https://idaes-pse.readthedocs.io/en/stable/surrogate/pysmo/pysmo_radialbasisfunctions.html>`__.
+
+Training Kriging models
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``KrigingModel`` class trains Kriging from data. For details about
+Kriging models, users should consult the documentation.
+
+As an example, we will again consider the Brainin function. The same
+dataset loaded previously will be used.
+
+Step 1: Load the data and import the Kriging tool
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: ipython3
+
+    import numpy as np
+    brainin_data = np.loadtxt('brainin_30.txt')
+    from idaes.surrogate.pysmo.kriging import KrigingModel
+
+Step 2: Specify the Kriging settings and initialize the KrigingModel class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The KrigingModel class takes a number of keyword arguments:
+
+::
+
+      -  XY_data                       : The dataset for Kriging training. training_data is expected to contain xy_data, 
+                                         with the output values (y) in the last column.
+
+It also takes a number of optional arguments:
+
+::
+
+      -  regularization                : Boolean variable determining whether regularization is done. Default is True.
+      -  numerical_gradients           : Boolean variable which determines whether numerical gradients are used when
+                                         solving the max. likelihood optimization problem. Default is True.
+      -  fname                         : Filename for saving (.pickle extension)
+      - overwrite                      : Option determining whether any existing file with the same name supplied in 'fname'  
+                                         should be overwritten.
+
+For this demonstration, we will train a Kriging model with
+regularization:
+
+.. code:: ipython3
+
+    krg_class = KrigingModel(XY_data=brainin_data, overwrite=True)
+
+
+.. parsed-literal::
+
+    Warning: solution.pickle already exists; previous file will be overwritten.
+    
+
+
+Step 3: Extract variable names (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next, we extract Pyomo variable names from the dataset.
+
+.. code:: ipython3
+
+    vars = krg_class.get_feature_vector()
+
+Step 4: Train the Kriging surrogate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next, we train the RBF surrogate by calling ``training``:
+
+.. code:: ipython3
+
+    krg_class.training()
+
+
+.. parsed-literal::
+
+    Optimizing kriging parameters using L-BFGS-B algorithm...
+    
+    Final results
+    ================
+    Theta: [6.01285036 0.22728669] 
+    Mean: [[387.33020809]] 
+    Regularization parameter: 1.000000000001e-06
+    
+    Results saved in  solution.pickle
+
+
+
+
+.. parsed-literal::
+
+    
+    ========================================================================================================================
+    Results of Kriging run:
+    
+    Kriging mean                     : [[387.33020809]]
+    Kriging variance                 : [[70693.91811267]]
+    Kriging weights                  : [6.01285036 0.22728669]
+    Regularization parameter         : 1.000000000001e-06
+    Number of terms in Kriging model : 31
+    
+    Kriging Expression:
+    --------------------
+    
+    387.33020809309534 + (3566.00828287052*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.5518182560031254)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.2731190901874679)**2)) -142281.05755360052*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.4300326512391472)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.8610629174234938)**2)) + 90105.41159003973*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.11035664436222248)**2)) -17450.86945432052*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.6822668136056202)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.8414199967160326)**2)) + 71167.34326620027*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.13520535030959882)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.5811256814195772)**2)) + 84586.20806671958*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.908216841775921)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.20132180755786522)**2)) + 12263.707300841808*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.18501228557936236)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.09666279198240106)**2)) + 10764.371572643518*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.22021941796179972)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -1.0)**2)) -88723.06573833805*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.8266365897830592)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.16264387978612238)**2)) -59944.916589853354*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.831288905218487)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.26866011456766936)**2)) + 108482.10428458825*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.43739443999592303)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.9599385359524552)**2)) -49790.09442472644*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.8327482651149929)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.3330572615505772)**2)) + 142547.5782162845*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.17485274298531528)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.3711736045917253)**2)) -121379.88735868782*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.0009932894634358945)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.2461895993357224)**2)) + 18664.85411686264*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.8102253955808789)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546)**2)) -20682.698139440734*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.6086081776493459)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.6109286075828757)**2)) -147244.38432316482*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.1028770983224648)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.38063145554753214)**2)) -20781.24773292616*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.0325313822086792)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.9084335925839453)**2)) -12607.604584001587*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -1.0)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.046386199083146756)**2)) -15652.622483453248*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.9074219145138307)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.5830026053427076)**2)) + 51756.5815049056*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.7557460774371298)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.6383110566137417)**2)) -7852.5041644005105*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.5911925356865033)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.005381283583344741)**2)) -105203.4234775831*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.21031274399063923)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.5495609776179707)**2)) + 104074.76756908745*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.7830308832306688)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.24439265066740792)**2)) -32907.092089721*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.28803140536417743)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.8689715765112118)**2)) + 2451.5997917804634*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.993941455353761)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.9026639746834018)**2)) + 99572.97239897616*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.36343808704287006)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.6057949629205177)**2)) -18616.890433128923*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.3586109792561233)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.3372905989731323)**2)) -47481.89007052779*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.17758838147122427)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.23089727866378493)**2)) + 108596.74065606296*exp(- (6.012850359224248*((IndexedParam[0] + 4.929217157135412)/14.643030012320084 -0.04112204875223326)**2 + 0.2272866881058233*((IndexedParam[1] -0.22882456869508516)/14.45053220191546 -0.5088149538788017)**2)))
+    --------------------------
+    
+    Model training errors:
+    -----------------------
+    Mean Squared Error (MSE)         : 0.005842070520481231
+    Root Mean Squared Error (RMSE)   : 0.07643343849704284
+    Goodness of fit (R2)             : 0.9999980994671668
+    
+    ========================================================================================================================
+
+
+
+The returned information correspond to the Kriging model parameters.
+
+As we can see, the optimization problem was solved using SciPy’s L-BFGS
+algorithm which makes use of gradients. A different algorithm
+(Basinhopping) is used when no numerical gradients are computed (when
+numerical_gradients is set to False). The user should try this.
+
+Step 5: View model metrics
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We can view the RMSE and :math:`R^2` values of the Kriging fit based on
+the training data:
+
+.. code:: ipython3
+
+    print('R2: ', krg_class.training_R2, '\nRMSE: ', krg_class.training_rmse)
+
+
+.. parsed-literal::
+
+    R2:  0.9999980994671668 
+    RMSE:  0.07643343849704284
+
+
+Step 6 (Optional): Generate Pyomo expression output at any unsampled point
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Again, based on the model we trained, we evaluate the surrogate at a set
+of off-design points:
+
+-  :math:`x_{1}=5`, :math:`x_{2}=8` (true function value: 57.9908)
+-  :math:`x_{1}=-3`, :math:`x_{2}=10` (true function value: 4.2461)
+-  :math:`x_{1}=-2`, :math:`x_{2}=3` (true function value: 50.8899)
+
+We do this by calling the function ``predict_output``:
+
+.. code:: ipython3
+
+    unsampled_points = np.array([ [5, 8], [-3, 10], [-2, 3]])
+    ys = krg_class.predict_output(unsampled_points)
+    print(ys)
+
+
+.. parsed-literal::
+
+    [[57.63123416]
+     [ 4.44343338]
+     [50.80267539]]
+
+
+The Kriging model performs very well, predicting all three points fairly
+accurately.
+
+For Kriging models, the Pyomo expression is generated by calling
+``generate_expression`` on the results object:
+
+.. code:: ipython3
+
+    print(krg_class.generate_expression([m.x[1], m.x[2]]))
+
+
+.. parsed-literal::
+
+    3566.00828287052*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.5518182560031254)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.2731190901874679)**2)) - 142281.05755360052*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.4300326512391472)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.8610629174234938)**2)) + 90105.41159003973*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.11035664436222248)**2)) - 17450.86945432052*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.6822668136056202)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.8414199967160326)**2)) + 71167.34326620027*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.13520535030959882)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.5811256814195772)**2)) + 84586.20806671958*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.908216841775921)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.20132180755786522)**2)) + 12263.707300841808*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.18501228557936236)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.09666279198240106)**2)) + 10764.371572643518*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.22021941796179972)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 1.0)**2)) - 88723.06573833805*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.8266365897830592)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.16264387978612238)**2)) - 59944.916589853354*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.831288905218487)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.26866011456766936)**2)) + 108482.10428458825*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.43739443999592303)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.9599385359524552)**2)) - 49790.09442472644*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.8327482651149929)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.3330572615505772)**2)) + 142547.5782162845*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.17485274298531528)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.3711736045917253)**2)) - 121379.88735868782*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.0009932894634358945)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.2461895993357224)**2)) + 18664.85411686264*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.8102253955808789)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546)**2)) - 20682.698139440734*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.6086081776493459)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.6109286075828757)**2)) - 147244.38432316482*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.1028770983224648)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.38063145554753214)**2)) - 20781.24773292616*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.0325313822086792)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.9084335925839453)**2)) - 12607.604584001587*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 1.0)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.046386199083146756)**2)) - 15652.622483453248*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.9074219145138307)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.5830026053427076)**2)) + 51756.5815049056*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.7557460774371298)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.6383110566137417)**2)) - 7852.5041644005105*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.5911925356865033)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.005381283583344741)**2)) - 105203.4234775831*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.21031274399063923)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.5495609776179707)**2)) + 104074.76756908745*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.7830308832306688)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.24439265066740792)**2)) - 32907.092089721*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.28803140536417743)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.8689715765112118)**2)) + 2451.5997917804634*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.993941455353761)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.9026639746834018)**2)) + 99572.97239897616*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.36343808704287006)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.6057949629205177)**2)) - 18616.890433128923*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.3586109792561233)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.3372905989731323)**2)) - 47481.89007052779*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.17758838147122427)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.23089727866378493)**2)) + 108596.74065606296*exp(- (6.012850359224248*((x[1] + 4.929217157135412)/14.643030012320084 - 0.04112204875223326)**2 + 0.2272866881058233*((x[2] - 0.22882456869508516)/14.45053220191546 - 0.5088149538788017)**2)) + 387.33020809309534
+
+
+As we can see, expressing a Kriging model algebraically is pretty
+complicated!
+
+Parity plots for the Kriging model may be viewed with the
+``parity_residual_plots`` method.
+
+Further information about using PySMO’s Krigng tool and features can be
+found in the
+`documentation <https://idaes-pse.readthedocs.io/en/stable/surrogate/pysmo/pysmo_kriging.html>`__.
+
+Summary
+-------
+
+PySMO allows IDAES users to sample design spaces and generate different
+types of surrogate models. Further information about PySMO’s
+capabilities may be found in the documentation.

@@ -1,0 +1,622 @@
+SOFC + SOEC Model
+=================
+
+This notebook contains a solid oxide fuel cell (SOFC) coupled with a
+solid oxide electrolysis cell (SOEC) system. Both components can be run
+at partial load, between 200 - 680 MW for the SOFC and between 1 - 5
+kg/s hydrogen production for the SOEC. The systems are coupled
+physically and electrically. The SOFC anode exhaust can be supplied to
+make steam for the SOEC or to power a bottoming steam cycle. Electricity
+from the SOFC is used to power the SOEC and balance of plant. If there
+is excess it can be supplied to the grid. The SOFC is modeled with
+surrogate equations generated from the SOFC example flowsheet. The
+surrogates contain one input, the SOFC direct current power. The
+surrogates are used to calculate the SOFC anode exhaust flowrate,
+temperature, and composition, the SOFC balance of plant load, and
+natural gas use.
+
+Module Imports
+--------------
+
+.. code:: ipython3
+
+    import os
+    import numpy as np
+    import pandas as pd
+    import pytest
+    from IPython.core.display import SVG
+    
+    import pyomo.environ as pyo
+    from pyomo.environ import units as pyunits
+    from pyomo.util.infeasible import log_infeasible_constraints
+    
+    import idaes
+    from idaes.core.solvers import use_idaes_solver_configuration_defaults
+    import idaes.core.util as iutil
+    
+    from sofc_with_soec import (
+        get_model,
+        initialize,
+        add_tags,
+        write_pfd,
+        make_stream_table
+    )
+    from sofc_soec_costing import (
+        get_capital_cost,
+        get_fixed_costs,
+        get_variable_costs
+    )
+
+Make Output Directories
+-----------------------
+
+This notebook can produce a large number of output files. To make it
+easier to manage, some subdirectories are used to organize output. This
+ensures that the directories exist.
+
+.. code:: ipython3
+
+    # Make a directory if it doesn't exist
+    def make_directory(path):
+        if not os.path.exists(path):
+            os.mkdir(path)
+        
+    make_directory("data")
+    make_directory("data_pfds")
+    make_directory("data_tabulated")
+
+Global Solver Settings
+----------------------
+
+Use the IDAES configuration system for solver settings. These will apply
+to all Ipopt instances created, including the ones created in
+initialization methods.
+
+.. code:: ipython3
+
+    use_idaes_solver_configuration_defaults()
+    idaes.cfg.ipopt.options.nlp_scaling_method = "user-scaling"
+    idaes.cfg.ipopt.options.linear_solver = "ma57"
+    idaes.cfg.ipopt.options.OF_ma57_automatic_scaling = "yes"
+    idaes.cfg.ipopt.options.ma57_pivtol = 1e-5
+    idaes.cfg.ipopt.options.ma57_pivtolmax = 0.1
+    idaes.cfg.ipopt.options.bound_push = 1e-20
+    solver = pyo.SolverFactory("ipopt")
+
+Create the SOFC + SOEC model
+----------------------------
+
+Create the SOFC + SOEC model and initialize it or read the saved
+initialization if available.
+
+.. code:: ipython3
+
+    def get_base_sofc_soec_model(solve=True):
+        m = get_model()
+        save_name = "sofc_soec_init.json.gz"
+        if os.path.exists(save_name):
+            iutil.from_json(m, fname=save_name, wts=iutil.StoreSpec(suffix=False))
+            print("Loading initialized model from json")
+        else:
+            initialize(m)
+            iutil.to_json(m, fname=save_name)
+        
+        if solve:
+            res = solver.solve(m, tee=True)
+    
+        return m
+
+Design Optimization
+-------------------
+
+.. code:: ipython3
+
+    def add_optimization_constraints(m):
+        # make sure the delta T on the hydrogen side is 40K or less (it is
+        # squared so one constraint covers both positive and negative delta T)
+        @m.fs.Constraint(m.fs.time)
+        def delta_T_h_constraint(b, t):
+            return (
+                m.fs.feed_heater.control_volume.properties_out[t].temperature -
+                m.fs.feed_recycle_split.mixed_state[t].temperature
+            )**2/100 <= 16
+    
+        # make sure the delta T on the oxygen side is 40K or less
+        @m.fs.Constraint(m.fs.time)
+        def delta_T_o_constraint(b, t):
+            return (
+                m.fs.soec_module.oxygen_inlet.temperature[t] -
+                m.fs.soec_module.oxygen_outlet.temperature[t]
+            )**2/100 <= 16
+    
+        # make sure the oxygen inlet and hydrogen outlet are 40K or less apart
+        @m.fs.Constraint(m.fs.time)
+        def delta_T_1_constraint(b, t):
+            return (
+                m.fs.soec_module.oxygen_inlet.temperature[t] -
+                m.fs.feed_recycle_split.mixed_state[t].temperature
+            )**2/100 <= 16
+    
+        # make sure the hydrogen inlet and oxygen outlet are 40K or less apart
+        @m.fs.Constraint(m.fs.time)
+        def delta_T_2_constraint(b, t):
+            return (
+                m.fs.feed_heater.control_volume.properties_out[t].temperature -
+                m.fs.soec_module.oxygen_outlet.temperature[t]
+            )**2/100 <= 16
+    
+        @m.fs.Constraint(m.fs.time)
+        def average_current_density_constraint(b, t):
+            return m.fs.soec_module.solid_oxide_cell.average_current_density[0]/1000 >= -8
+    
+        @m.fs.Constraint(m.fs.time)
+        def positive_steam_cycle(b, t):
+            return m.fs.steam_cycle_heat_duty[t] >= 0
+
+.. code:: ipython3
+
+    m = get_base_sofc_soec_model()
+    
+    # add costs
+    get_capital_cost(m)
+    get_fixed_costs(m)
+    get_variable_costs(m)
+    
+    # set up design optimization problem
+    m.fs.obj = pyo.Objective(
+        expr=(
+            m.fs.costing.annualized_tasc +
+            m.fs.costing.total_fixed_OM_cost +
+            m.fs.costing.total_variable_OM_cost[0] +
+            (-m.fs.net_power[0]/1000 * 60 / 1e6 * 24 * 365)
+        )
+    )
+    
+    # add design and operating constraints
+    add_optimization_constraints(m)
+    
+    m.fs.soec_module.oxygen_outlet.temperature[0].setub(1030)
+    m.fs.soec_module.fuel_outlet.temperature[0].setub(1030)
+    m.fs.soec_module.oxygen_outlet.mole_frac_comp[0, "O2"].setub(0.35)
+    m.fs.soec_single_pass_water_conversion.setub(0.90)
+    m.fs.feed_recycle_split.mixed_state[0].mole_frac_comp["H2O"].setlb(0.20)
+    m.fs.h2_condenser.control_volume.properties_in[0].temperature.setlb(350)
+    m.fs.fg_flash.control_volume.properties_in[0].temperature.setlb(350)
+    
+    # unfix decision vars
+    decision_vars = []
+    
+    def make_decision_var(v, lb, ub):
+        v.unfix()
+        v.setlb(lb)
+        v.setub(ub)
+        decision_vars.append(v)
+    
+    make_decision_var(m.fs.feed_recycle_split.split_fraction[0, "out"], 0.25, 0.95)
+    make_decision_var(m.fs.sweep_compressor.inlet.flow_mol[0], 100, 8000)
+    make_decision_var(m.fs.soec_module.potential_cell[0], 1.26, 1.38) # already free
+    m.fs.soec_single_pass_water_conversion.unfix()
+    make_decision_var(m.fs.feed_heater.control_volume.properties_out[0].temperature, 900, 1020)
+    make_decision_var(m.fs.soec_module.number_cells, 1e6, 2e6)
+    make_decision_var(m.fs.sweep_hx.area, 100, 10000)
+    make_decision_var(m.fs.sweep_heater.area, 100, 10000)  # already free
+    m.fs.sweep_heater.tube_outlet.temperature.unfix()
+    make_decision_var(m.fs.boiler.area, 100, 10000)  # already free
+    m.fs.oxycombustor.heat_duty.unfix()
+    make_decision_var(m.fs.feed_hx.area, 100, 10000)  # already free
+    m.fs.feed_hx.shell_outlet.temperature.unfix()
+    make_decision_var(m.fs.oxycombustor_mix.gas_inlet.flow_mol[0], 0, 50000)
+    
+    save_name = "sofc_soec_design_opt.json.gz"
+    if os.path.exists(save_name):
+        iutil.from_json(m, fname=save_name, wts=iutil.StoreSpec(suffix=False))
+        print("Loading optimized design from json")
+    else:
+        res = solver.solve(m, tee=True)
+        iutil.to_json(m, fname=save_name)
+
+
+.. parsed-literal::
+
+    Loading initialized model from json
+    Ipopt 3.13.2: nlp_scaling_method=user-scaling
+    tol=1e-06
+    linear_solver=ma57
+    ma57_pivtol=1e-05
+    ma57_pivtolmax=0.1
+    bound_push=1e-20
+    option_file_name=/tmp/tmpnzq9zeju_ipopt.opt
+    
+    Using option file "/tmp/tmpnzq9zeju_ipopt.opt".
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma57.
+    
+    Number of nonzeros in equality constraint Jacobian...:    11433
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:     8138
+    
+    Total number of variables............................:     2583
+                         variables with only lower bounds:      483
+                    variables with lower and upper bounds:     1385
+                         variables with only upper bounds:       38
+    Total number of equality constraints.................:     2583
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 4.99e-02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    Reallocating memory for MA57: lfact (215994)
+    Reallocating memory for MA57: lfact (228600)
+       1  0.0000000e+00 1.60e-03 1.06e+05  -1.0 3.43e+00    -  9.89e-01 1.00e+00h  1
+       2  0.0000000e+00 1.23e-08 1.65e+03  -1.0 1.27e-02    -  9.90e-01 1.00e+00h  1
+    
+    Number of Iterations....: 2
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   1.2309229191487248e-08    1.2309229191487248e-08
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   1.2309229191487248e-08    1.2309229191487248e-08
+    
+    
+    Number of objective function evaluations             = 3
+    Number of objective gradient evaluations             = 3
+    Number of equality constraint evaluations            = 3
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 3
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 2
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.325
+    Total CPU secs in NLP function evaluations           =      0.323
+    
+    EXIT: Optimal Solution Found.
+    Ipopt 3.13.2: nlp_scaling_method=user-scaling
+    tol=1e-06
+    linear_solver=ma57
+    ma57_pivtol=1e-05
+    ma57_pivtolmax=0.1
+    bound_push=1e-20
+    option_file_name=/tmp/tmpgxlsib3b_ipopt.opt
+    
+    Using option file "/tmp/tmpgxlsib3b_ipopt.opt".
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma57.
+    
+    Number of nonzeros in equality constraint Jacobian...:    12367
+    Number of nonzeros in inequality constraint Jacobian.:       20
+    Number of nonzeros in Lagrangian Hessian.............:     8817
+    
+    Reallocating memory for MA57: lfact (242598)
+    Total number of variables............................:     2732
+                         variables with only lower bounds:      486
+                    variables with lower and upper bounds:     1524
+                         variables with only upper bounds:       38
+    Total number of equality constraints.................:     2722
+    Total number of inequality constraints...............:        6
+            inequality constraints with only lower bounds:        2
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        4
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  3.0896827e+02 1.64e+01 3.37e+02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  3.0113696e+02 6.95e+01 1.02e+07  -1.0 2.34e+02    -  6.94e-06 1.00e+00f  1
+       2  3.0557467e+02 1.09e+01 9.06e+06  -1.0 4.49e+02   0.0 1.14e-01 1.38e-01h  1
+       3  3.0567142e+02 9.04e+00 9.05e+06  -1.0 5.08e+01  -0.5 1.10e-02 4.43e-01h  1
+       4  3.0566460e+02 8.32e+00 1.41e+06  -1.0 1.34e+01  -0.1 8.51e-01 8.00e-02h  1
+       5  3.0554032e+02 2.26e+00 3.47e+05  -1.0 1.53e+01  -0.5 7.35e-01 1.00e+00f  1
+       6  3.0542610e+02 1.76e-02 1.26e+04  -1.0 3.07e+00  -1.0 9.64e-01 1.00e+00h  1
+       7  3.0541868e+02 7.16e-03 1.26e+02  -1.0 6.39e-01  -1.5 9.90e-01 1.00e+00f  1
+       8  3.0516343e+02 9.72e-02 7.95e+04  -1.7 2.14e+00  -2.0 9.90e-01 1.00e+00f  1
+       9  3.0475149e+02 1.60e-01 6.85e+03  -1.7 4.48e+00  -2.4 9.96e-01 7.02e-01f  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10  3.0404161e+02 5.06e-02 5.45e+03  -1.7 1.20e+01  -2.9 1.00e+00 7.06e-01f  1
+      11  3.0252064e+02 1.40e-01 6.31e+02  -1.7 2.25e+01  -3.4 1.00e+00 1.00e+00f  1
+      12  3.0283729e+02 9.37e-02 1.65e+03  -1.7 1.52e+01  -3.9 1.00e+00 1.00e+00f  1
+      13  3.0195960e+02 3.06e-01 1.28e+04  -1.7 3.25e+01  -4.3 1.00e+00 1.00e+00f  1
+      14  3.0088023e+02 1.38e+00 4.28e+04  -1.7 6.83e+01  -4.8 9.52e-01 1.00e+00h  1
+      15  2.9994015e+02 4.31e+00 2.10e+07  -1.7 1.01e+02  -5.3 1.00e+00 7.46e-01h  1
+      16  2.9884065e+02 6.17e+03 9.19e+06  -1.7 8.68e+05    -  5.67e-01 5.63e-01h  1
+      17  2.9870960e+02 5.94e+03 8.65e+06  -1.7 1.24e+06    -  5.20e-01 5.87e-02h  1
+      18  2.9735939e+02 1.43e+04 7.95e+05  -1.7 7.93e+05    -  3.09e-01 1.00e+00h  1
+      19  2.9720777e+02 7.02e+03 4.08e+05  -1.7 5.32e+04    -  6.61e-01 5.10e-01h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      20  2.9722427e+02 1.94e+01 8.35e+04  -1.7 3.76e+04    -  4.97e-01 1.00e+00h  1
+      21  2.9721400e+02 2.55e-01 1.05e+04  -1.7 3.48e+03    -  6.03e-01 1.00e+00h  1
+      22  2.9721410e+02 1.59e-03 1.19e+04  -1.7 2.77e+02    -  5.82e-01 1.00e+00h  1
+      23  2.9721456e+02 4.76e-06 1.92e+03  -1.7 2.45e+01    -  5.87e-01 1.00e+00f  1
+      24  2.9721394e+02 6.23e-07 2.03e+03  -1.7 8.88e+00    -  5.85e-01 1.00e+00f  1
+      25  2.9721428e+02 2.41e-06 3.31e+02  -1.7 1.74e+01    -  5.85e-01 1.00e+00f  1
+      26  2.9721328e+02 6.69e-07 3.50e+02  -1.7 9.19e+00    -  5.84e-01 1.00e+00f  1
+      27  2.9721268e+02 1.86e-05 5.71e+01  -1.7 4.85e+01    -  5.81e-01 1.00e+00f  1
+      28  2.9671747e+02 3.10e+00 4.41e+05  -2.5 1.97e+04    -  8.78e-01 6.21e-01f  1
+      29  2.9651911e+02 2.29e+00 1.21e+05  -2.5 4.81e+03    -  4.25e-01 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      30  2.9652725e+02 3.67e-03 7.55e+04  -2.5 6.81e+02    -  3.75e-01 1.00e+00h  1
+      31  2.9639726e+02 1.76e-01 6.13e+04  -2.5 4.72e+03    -  1.88e-01 1.00e+00f  1
+      32  2.9179869e+02 2.48e+02 5.92e+04  -2.5 1.77e+05    -  3.35e-02 1.00e+00f  1
+      33  2.9388468e+02 2.53e+00 3.51e-01  -2.5 2.07e+01  -5.8 1.00e+00 1.00e+00h  1
+      34  2.9301080e+02 1.49e+02 2.55e+00  -2.5 3.57e+05    -  1.00e+00 3.92e-01h  1
+      35  2.9332498e+02 5.26e-01 4.33e-02  -2.5 7.33e+03    -  1.00e+00 1.00e+00h  1
+      36  2.9327314e+02 2.04e+00 1.20e-03  -2.5 1.66e+04    -  1.00e+00 1.00e+00h  1
+      37  2.9327313e+02 1.53e-03 2.63e-07  -2.5 4.64e+02    -  1.00e+00 1.00e+00h  1
+      38  2.9319146e+02 3.13e-01 5.26e+03  -3.8 4.48e+02    -  1.00e+00 9.81e-01f  1
+      39  2.9319679e+02 1.04e-03 3.40e-02  -3.8 2.03e+02    -  1.00e+00 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      40  2.9319634e+02 3.54e-07 3.38e-04  -3.8 6.90e+00    -  1.00e+00 1.00e+00h  1
+      41  2.9319360e+02 7.08e-04 3.32e+03  -5.7 4.65e+01    -  1.00e+00 7.77e-01f  1
+      42  2.9319332e+02 5.96e-05 3.61e-02  -5.7 1.10e+01    -  1.00e+00 1.00e+00h  1
+    Reallocating memory for MA57: lfact (256630)
+      43  2.9319331e+02 1.51e-09 1.92e-07  -5.7 1.23e-01    -  1.00e+00 1.00e+00h  1
+      44  2.9319329e+02 1.63e-07 6.52e-01  -7.0 5.63e-01    -  1.00e+00 9.96e-01h  1
+      45  2.9319329e+02 1.86e-09 1.39e-09  -7.0 3.86e-03    -  1.00e+00 1.00e+00f  1
+    
+    Number of Iterations....: 45
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   2.9319329311621965e+02    2.9319329311621965e+02
+    Dual infeasibility......:   1.3907308416729383e-09    9.1724223676311124e-08
+    Constraint violation....:   1.8626451492309570e-09    1.8626451492309570e-09
+    Complementarity.........:   9.0982545789316247e-08    9.0982545789316247e-08
+    Overall NLP error.......:   9.0982545789316247e-08    9.1724223676311124e-08
+    
+    
+    Number of objective function evaluations             = 46
+    Number of objective gradient evaluations             = 46
+    Number of equality constraint evaluations            = 46
+    Number of inequality constraint evaluations          = 46
+    Number of equality constraint Jacobian evaluations   = 46
+    Number of inequality constraint Jacobian evaluations = 46
+    Number of Lagrangian Hessian evaluations             = 45
+    Total CPU secs in IPOPT (w/o function evaluations)   =      3.016
+    Total CPU secs in NLP function evaluations           =      8.587
+    
+    EXIT: Optimal Solution Found.
+
+
+Show PFDs with design optimization results
+------------------------------------------
+
+This displays PFDs in the notebook, and saves them to files.
+
+.. code:: ipython3
+
+    display(SVG(write_pfd(m)))
+    write_pfd(m, fname="data_pfds/sofc_soec_results.svg")
+
+
+
+.. image:: output_13_0.svg
+
+
+.. code:: ipython3
+
+    # assert that flowsheet values have not changed from prior runs
+    assert m.fs.feed_recycle_split.split_fraction[0, 'out'].value == pytest.approx(0.8302, rel=0.01)
+    assert m.fs.sweep_compressor.inlet.flow_mol[0].value == pytest.approx(5635.58, rel=0.01)
+    assert m.fs.soec_module.potential_cell[0].value == pytest.approx(1.3026, rel=0.01)
+    assert m.fs.feed_heater.control_volume.properties_out[0].temperature.value == pytest.approx(990.00, rel=0.01)
+    assert m.fs.soec_module.number_cells.value == pytest.approx(1101995, rel=0.01)
+    assert m.fs.sweep_hx.area.value == pytest.approx(100.00, rel=0.01)
+    assert m.fs.sweep_heater.area.value == pytest.approx(1137.15, rel=0.01)
+    assert m.fs.boiler.area.value == pytest.approx(4865.23, rel=0.01)
+    assert m.fs.feed_hx.area.value == pytest.approx(9999.99, rel=0.01)
+    
+    print("------------------------------------------")
+    print("Decision Variable Results")
+    print("------------------------------------------")
+    print(f"Feed recycle = {m.fs.feed_recycle_split.split_fraction[0, 'out'].value}")
+    print(f"Sweep flowrate = {m.fs.sweep_compressor.inlet.flow_mol[0].value} mol/s")
+    print(f"SOEC potential = {m.fs.soec_module.potential_cell[0].value} V")
+    print(f"Feed trim heater temperature = {m.fs.feed_heater.control_volume.properties_out[0].temperature.value} K")
+    print(f"Number of cells = {m.fs.soec_module.number_cells.value}")
+    print(f"Sweep hx 1 area = {m.fs.sweep_hx.area.value} ft^2")
+    print(f"Sweep hx 2 area = {m.fs.sweep_heater.area.value} ft^2")
+    print(f"Boiler area = {m.fs.boiler.area.value} ft^2")
+    print(f"Feed hx area = {m.fs.feed_hx.area.value} ft^2")
+    print(f"Natural gas flowrate = {m.fs.oxycombustor_mix.gas_inlet.flow_mol[0].value} mol/s")
+    
+    print("\n")
+    print("------------------------------------------")
+    print("Capital Costs")
+    print("------------------------------------------")
+    print(f"SOFC modules = MM${m.fs.sofc_modules.costing.total_plant_cost.value}")
+    print(f"SOFC balance of plant = MM${m.fs.sofc_bop.costing.total_plant_cost.value}")
+    print(f"SOEC modules = MM${m.fs.soec_module.costing.total_plant_cost.value}")
+    print(f"SOEC balance of plant = MM${pyo.value(m.fs.costing.soec_bop_cost)}")
+    print(f"Hydrogen Compressor = MM${m.fs.cmp01.costing.total_plant_cost.value}")
+    print(f"Oxycombustor = MM${m.fs.oxycombustor.costing.total_plant_cost.value}")
+    print(f"Air separation unit = MM${m.fs.asu_split.costing.total_plant_cost.value}")
+    print(f"Carbon purification unit = MM${m.fs.cpu_cost.costing.total_plant_cost.value}")
+    print(f"Feedwater and misc. BOP systems = MM${pyo.value(m.fs.costing.feedwater_bop_cost)}")
+    print(f"HRSG, ductwork, and stack = MM${pyo.value(m.fs.costing.hrsg_ductwork_and_stack_cost)}")
+    print(f"Steam turbine generator = MM${pyo.value(m.fs.costing.steam_turbine_cost)}")
+    print(f"Cooling water system = MM${pyo.value(m.fs.costing.cooling_water_system_cost)}")
+    print(f"Electric equipment = MM${pyo.value(m.fs.costing.accessory_electric_plant_cost)}")
+    print(f"Instrumentation and control = MM${pyo.value(m.fs.costing.instrumentation_and_control_cost)}")
+    print(f"Improvements to site = MM${pyo.value(m.fs.costing.improvements_to_site_cost)}")
+    print(f"Buildings and structures = MM${pyo.value(m.fs.costing.buildings_and_structures_cost)}")
+    print("\n")
+    print(f"Total Plant Cost = MM${m.fs.costing.total_TPC.value}")
+    print(f"Total Overnight Cost = MM${m.fs.costing.total_overnight_cost.value}")
+    print(f"Total As Spent Cost = MM${m.fs.costing.total_as_spent_cost.value}")
+    print(f"Annualized TASC = MM${m.fs.costing.annualized_tasc.value}/year")
+    
+    print("\n")
+    print("------------------------------------------")
+    print("Fixed and Variable O&M Costs")
+    print("------------------------------------------")
+    print(f"Annual operating labor = MM${m.fs.costing.annual_operating_labor_cost.value}/year")
+    print(f"Maintenance labor = MM${m.fs.costing.maintenance_labor_cost.value}/year")
+    print(f"Admin & support labor = MM${m.fs.costing.admin_and_support_labor_cost.value}/year")
+    print(f"Property taxes & insurance = MM${m.fs.costing.property_taxes_and_insurance.value}/year")
+    print(f"Maintenance material cost = MM${m.fs.costing.maintenance_material_cost.value}/year")
+    print(f"SOFC replacement cost = MM${m.fs.costing.sofc_replacement_cost.value}/year")
+    print(f"SOFC replacement cost = MM${m.fs.costing.soec_replacement_cost.value}/year")
+    print(f"Total Fixed O&M Cost = MM${m.fs.costing.total_fixed_OM_cost.value}/year")
+    print(f"Total Variable O&M Cost = MM${m.fs.costing.total_variable_OM_cost[0].value}/year")
+
+
+.. parsed-literal::
+
+    ------------------------------------------
+    Decision Variable Results
+    ------------------------------------------
+    Feed recycle = 0.8302182349390419
+    Sweep flowrate = 5635.5840476953545 mol/s
+    SOEC potential = 1.3026545751526992 V
+    Feed trim heater temperature = 990.0000112464168 K
+    Number of cells = 1101995.0230871164
+    Sweep hx 1 area = 100.00003477701021 ft^2
+    Sweep hx 2 area = 1137.1569684437095 ft^2
+    Boiler area = 4865.233245889867 ft^2
+    Feed hx area = 9999.999486214741 ft^2
+    Natural gas flowrate = 1.1972315968968457e-06 mol/s
+    
+    
+    ------------------------------------------
+    Capital Costs
+    ------------------------------------------
+    SOFC modules = MM$233.582
+    SOFC balance of plant = MM$31.5456
+    SOEC modules = MM$73.78628076084406
+    SOEC balance of plant = MM$34.51835756579969
+    Hydrogen Compressor = MM$21.101265162179303
+    Oxycombustor = MM$18.354599318124865
+    Air separation unit = MM$79.22249574756025
+    Carbon purification unit = MM$84.15785143974657
+    Feedwater and misc. BOP systems = MM$66.9453628472775
+    HRSG, ductwork, and stack = MM$6.83139001652793
+    Steam turbine generator = MM$22.779132728016606
+    Cooling water system = MM$21.706297993044576
+    Electric equipment = MM$108.83021948476281
+    Instrumentation and control = MM$23.58494987122456
+    Improvements to site = MM$29.64851361953984
+    Buildings and structures = MM$8.344202907339561
+    
+    
+    Total Plant Cost = MM$864.9385194619883
+    Total Overnight Cost = MM$1046.575608549006
+    Total As Spent Cost = MM$1143.9071401440633
+    Annualized TASC = MM$80.87423480818528/year
+    
+    
+    ------------------------------------------
+    Fixed and Variable O&M Costs
+    ------------------------------------------
+    Annual operating labor = MM$3.5075040000000004/year
+    Maintenance labor = MM$6.573532747911112/year
+    Admin & support labor = MM$2.520259186977778/year
+    Property taxes & insurance = MM$17.298770389239767/year
+    Maintenance material cost = MM$9.860299121866666/year
+    SOFC replacement cost = MM$16.582344/year
+    SOFC replacement cost = MM$4.712681716232053/year
+    Total Fixed O&M Cost = MM$61.05539116222738/year
+    Total Variable O&M Cost = MM$146.24400819775175/year
+
+
+Run Partial Load
+----------------
+
+This runs the SOFC at partial load from 680 MW to 200 MW at 20 MW
+intervals and the SOEC from 5 kg/s to 1 kg/s at 0.5 kg/s intervals.
+Results are tabulated for tags in the tags_output tag group in a Pandas
+data frame.
+
+To run the series, change run_series to True. Running the turndown
+series takes ~2 hours, unless previous saved results are available.
+
+.. code:: ipython3
+
+    run_series = False
+    if run_series:
+        idaes.cfg.ipopt.options.tol = 1e-6
+        idaes.cfg.ipopt.options.mu_init = 1e-3
+        solver = pyo.SolverFactory("ipopt")
+    
+        # rebuild the model since capital costs are already fixed
+        m = get_base_sofc_soec_model(solve=False)
+        get_variable_costs(m)
+        add_optimization_constraints(m)
+        
+        # load in optimized design
+        save_name = "sofc_soec_design_opt.json.gz"
+        iutil.from_json(m, fname=save_name, wts=iutil.StoreSpec(suffix=False))
+    
+        # fix the design vars
+        m.fs.soec_module.number_cells.fix()
+        m.fs.sweep_hx.area.fix()
+        m.fs.sweep_heater.area.fix()
+        m.fs.boiler.area.fix()
+        m.fs.feed_hx.area.fix()
+        m.fs.costing.other_variable_costs.fix(0)
+    
+        m.fs.obj = pyo.Objective(
+            expr=(
+                m.fs.costing.total_variable_OM_cost[0] +
+                (-m.fs.net_power[0]/1000 * 60 / 1e6 * 24 * 365)
+            )
+        )
+    
+        add_tags(m)
+        df = pd.DataFrame(columns=m._tags_output.table_heading())
+    
+        for p in range(680, 199, -20):
+            for h in [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1]:
+                print(f"power: {int(p)}, hydrogen: {float(h)}")
+    
+                m.fs.sofc_power.fix(p)
+                m.fs.hydrogen_product_rate.fix(h)
+    
+                fname = f"data/sofc+soec_{int(p)}_{h}.json.gz"
+                if os.path.exists(fname):
+                    iutil.from_json(m, fname=fname, wts=iutil.StoreSpec(suffix=False))
+                else:
+                    res = solver.solve(m, tee=True, symbolic_solver_labels=True)
+                    if not pyo.check_optimal_termination(res):
+                        break
+                    iutil.to_json(m, fname=fname)
+    
+                df.loc[m._tags_output["net_power"].value] = m._tags_output.table_row(numeric=True)
+        df.to_csv("data_tabulated/sofc+soec.csv")
+

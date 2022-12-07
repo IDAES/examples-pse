@@ -1,0 +1,591 @@
+PETSc Time-stepping Solver – PID Control and Steam Example
+==========================================================
+
+This example provides an overview of the PETSc time-stepping solver
+utilities in IDAES, which can be used to solve systems of differential
+algebraic equations (DAEs). PETSc is a solver suite developed primarily
+by Argonne National Lab (https://petsc.org/release/). IDAES provides a
+wrapper for PETSc (https://github.com/IDAES/idaes-ext/tree/main/petsc)
+that uses the AMPL solver interface
+(https://ampl.com/resources/learn-more/hooking-your-solver-to-ampl/) and
+utility functions that allow Pyomo and Pyomo.DAE
+(https://pyomo.readthedocs.io/en/stable/modeling_extensions/dae.html)
+problems to be solved using PETSc.
+
+This demonstration uses the IDAES PID controller model and a flowsheet
+arranged like so:
+
+::
+
+                
+   ->--|><|------[]------|><|-->-
+      valve_1   tank   valve_2   
+
+where the tank pressure is controlled by the opening of valve_1.
+
+Prerequisites
+-------------
+
+The PETSc solver is an extra download for IDAES. The solver is available
+for Linux, but can be run in the Windows environment via the WSL
+(Windows Subsystem for Linux). The WSL method of running the solver
+works smoothly in the normal Windows workflow. PETSc installation
+details for Linux and Windows are available along with the documentation
+(https://idaes-pse.readthedocs.io/en/latest/technical_specs/core/solvers.html).
+
+You may want to review the `“PETSc Time-stepping Solver – Chemical Akzo
+Nobel Example” <petsc_chem_example.ipynb>`__ notebook first.
+
+Imports
+-------
+
+.. code:: ipython3
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    
+    import pyomo.environ as pyo
+    import idaes.core.solvers.petsc as petsc # petsc utilities module
+    import pid
+    from idaes.core.util.math import smooth_max, smooth_min
+
+Model Set Up
+------------
+
+.. code:: ipython3
+
+    # to see the model code uncomment the line below
+    #??pid
+
+.. code:: ipython3
+
+    m = pid.create_model(
+        time_set=[0, 12],
+        nfe=1,
+        calc_integ=True,
+    )
+
+
+.. parsed-literal::
+
+    2022-03-08 01:23:04 [INFO] idaes.init.fs.valve_1: Initialization Complete: optimal - Optimal Solution Found
+    2022-03-08 01:23:04 [INFO] idaes.init.fs.tank.control_volume: Initialization Complete
+    2022-03-08 01:23:04 [INFO] idaes.init.fs.tank: Initialization Complete: optimal - Optimal Solution Found
+    2022-03-08 01:23:04 [INFO] idaes.init.fs.valve_2: Initialization Complete: optimal - Optimal Solution Found
+
+
+Solve
+-----
+
+.. code:: ipython3
+
+    res = petsc.petsc_dae_by_time_element(
+        m,
+        time=m.fs.time,
+        ts_options={
+            "--ts_type":"beuler",
+            "--ts_dt":0.1,
+            "--ts_monitor":"", # set initial step to 0.1
+            "--ts_save_trajectory":1,
+            "--ts_trajectory_type":"visualization",
+        },
+        vars_stub="pid_tj",
+        trajectory_save_prefix="pid_tj",
+    )
+
+
+.. parsed-literal::
+
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Ignoring PCI device with non-16bit domain.
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Pass --enable-32bits-pci-domain to configure to support such devices
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: (warning: it would break the library ABI, don't enable unless really needed).
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Called fg_read, err: 0 (0 is good)
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: ---------------------------------------------------
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: DAE: 0
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Reading nl file: /tmp/tmp0_s5joq_.pyomo.nl
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of constraints: 28
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of nonlinear constraints: 14
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of linear constraints: 14
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of inequalities: 0
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of variables: 28
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of integers: 0
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of binary: 0
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of objectives: 0 (Ignoring)
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of non-zeros in Jacobian: 83
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: Number of degrees of freedom: 0
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: ---------------------------------------------------
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: 0 SNES Function norm 5.904233477544e+05
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: 1 SNES Function norm 4.315325976358e+05
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: 2 SNES Function norm 7.639793381334e+04
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: 3 SNES Function norm 5.928557930246e+03
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: 4 SNES Function norm 5.008361736230e+01
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: 5 SNES Function norm 3.698195225878e-03
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: 6 SNES Function norm 4.115904156200e-11
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: SNESConvergedReason = SNES_CONVERGED_FNORM_ABS, in 6 iterations
+    2022-03-08 01:23:04 [INFO] idaes.solve.petsc-dae: SNES_CONVERGED_FNORM_ABS
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Ignoring PCI device with non-16bit domain.
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Pass --enable-32bits-pci-domain to configure to support such devices
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: (warning: it would break the library ABI, don't enable unless really needed).
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Called fg_read, err: 0 (0 is good)
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: ---------------------------------------------------
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: DAE: 1
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Reading nl file: /tmp/tmpqg0r9k84.pyomo.nl
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of constraints: 29
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of nonlinear constraints: 15
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of linear constraints: 14
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of inequalities: 0
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of variables: 34
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of integers: 0
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of binary: 0
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of objectives: 0 (Ignoring)
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of non-zeros in Jacobian: 91
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Explicit time variable: 0
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of derivatives: 5
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of differential vars: 5
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of algebraic vars: 24
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of state vars: 29
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: Number of degrees of freedom: 0
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: ---------------------------------------------------
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 0 TS dt 0.1 time 0.
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 1 TS dt 0.1 time 0.1
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 2 TS dt 0.0283969 time 0.117913
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 3 TS dt 0.016625 time 0.132528
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 4 TS dt 0.0158745 time 0.149153
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 5 TS dt 0.0172739 time 0.165027
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 6 TS dt 0.0174024 time 0.182301
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 7 TS dt 0.0184955 time 0.199703
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 8 TS dt 0.019007 time 0.218199
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 9 TS dt 0.0199726 time 0.237206
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 10 TS dt 0.0206586 time 0.257179
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 11 TS dt 0.0215502 time 0.277837
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 12 TS dt 0.0222775 time 0.299387
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 13 TS dt 0.0230664 time 0.321665
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 14 TS dt 0.023719 time 0.344731
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 15 TS dt 0.0243423 time 0.36845
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 16 TS dt 0.0248331 time 0.392793
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 17 TS dt 0.0252521 time 0.417626
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 18 TS dt 0.0255567 time 0.442878
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 19 TS dt 0.0257915 time 0.468435
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 20 TS dt 0.0259479 time 0.494226
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 21 TS dt 0.0260597 time 0.520174
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 22 TS dt 0.0261313 time 0.546234
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 23 TS dt 0.0261854 time 0.572365
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 24 TS dt 0.026228 time 0.598551
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 25 TS dt 0.0262727 time 0.624779
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 26 TS dt 0.0263238 time 0.651051
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 27 TS dt 0.0263888 time 0.677375
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 28 TS dt 0.0264705 time 0.703764
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 29 TS dt 0.0265728 time 0.730234
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 30 TS dt 0.0266975 time 0.756807
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 31 TS dt 0.0268471 time 0.783505
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 32 TS dt 0.0270228 time 0.810352
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 33 TS dt 0.0272263 time 0.837374
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 34 TS dt 0.0274591 time 0.864601
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 35 TS dt 0.0277226 time 0.89206
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 36 TS dt 0.0280186 time 0.919782
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 37 TS dt 0.0283487 time 0.947801
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 38 TS dt 0.0287152 time 0.97615
+    2022-03-08 01:23:05 [INFO] idaes.solve.petsc-dae: 39 TS dt 0.0291202 time 1.00486
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 40 TS dt 0.0295665 time 1.03399
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 41 TS dt 0.0300571 time 1.06355
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 42 TS dt 0.0305957 time 1.09361
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 43 TS dt 0.0311862 time 1.1242
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 44 TS dt 0.0318336 time 1.15539
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 45 TS dt 0.0325434 time 1.18722
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 46 TS dt 0.033322 time 1.21977
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 47 TS dt 0.0341772 time 1.25309
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 48 TS dt 0.0351179 time 1.28727
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 49 TS dt 0.0361548 time 1.32238
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 50 TS dt 0.0373005 time 1.35854
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 51 TS dt 0.0385702 time 1.39584
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 52 TS dt 0.0399821 time 1.43441
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 53 TS dt 0.0415586 time 1.47439
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 54 TS dt 0.0433269 time 1.51595
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 55 TS dt 0.0453206 time 1.55928
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 56 TS dt 0.0475818 time 1.6046
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 57 TS dt 0.0501633 time 1.65218
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 58 TS dt 0.0531324 time 1.70234
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 59 TS dt 0.0565752 time 1.75548
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 60 TS dt 0.0606026 time 1.81205
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 61 TS dt 0.0653575 time 1.87265
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 62 TS dt 0.071022 time 1.93801
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 63 TS dt 0.0778195 time 2.00903
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 64 TS dt 0.0859987 time 2.08685
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 65 TS dt 0.0957685 time 2.17285
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 66 TS dt 0.107136 time 2.26862
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 67 TS dt 0.119655 time 2.37576
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 68 TS dt 0.132391 time 2.49541
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 69 TS dt 0.144569 time 2.6278
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 70 TS dt 0.156404 time 2.77237
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 71 TS dt 0.169045 time 2.92877
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 72 TS dt 0.184083 time 3.09782
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 73 TS dt 0.203409 time 3.2819
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 74 TS dt 0.229503 time 3.48531
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 75 TS dt 0.266175 time 3.71481
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 76 TS dt 0.320082 time 3.98099
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 77 TS dt 0.404173 time 4.30107
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 78 TS dt 0.546707 time 4.70524
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 79 TS dt 0.81886 time 5.25195
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 80 TS dt 1.43818 time 6.07081
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 81 TS dt 2.2455 time 7.509
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 82 TS dt 2.2455 time 9.7545
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: 83 TS dt 22.455 time 12.
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: TSConvergedReason = TS_CONVERGED_TIME
+    2022-03-08 01:23:06 [INFO] idaes.solve.petsc-dae: TS_CONVERGED_TIME
+
+
+Read and Plot Trajectory
+------------------------
+
+At the initial conditions the valve is fully open. At t=0, the
+controller is activated and the controller adjusts the opening of valve
+1 to keep the tank pressure at the setpoint of 300 kPa.
+
+.. code:: ipython3
+
+    tj = petsc.PetscTrajectory(json="pid_tj_1.json.gz")
+
+.. code:: ipython3
+
+    a = plt.plot(tj.vecs["_time"], tj.vecs[str(m.fs.valve_1.valve_opening[12])])
+    a = plt.ylabel("valve 1 fraction open")
+    a = plt.xlabel("time (s)")
+
+
+
+.. image:: output_11_0.png
+
+
+.. code:: ipython3
+
+    a = plt.plot(tj.vecs["_time"], tj.vecs[str(m.fs.tank.control_volume.properties_out[12].pressure)])
+    a = plt.ylabel("tank pressure (Pa)")
+    a = plt.xlabel("time (s)")
+
+
+
+.. image:: output_12_0.png
+
+
+Model a ramp in inlet pressure
+------------------------------
+
+Next we show how to add an explicit time variable and ramp the inlet
+pressure from 500 kPa to 600 kPa between 10 and 12 seconds.
+
+.. code:: ipython3
+
+    # Create a new copy of the model that runs to 24 seconds, and add a constraint.
+    
+    m = pid.create_model(
+        time_set=[0, 24],
+        nfe=1,
+        calc_integ=True,
+    )
+    # time_var will be an explicit time variable we can use in constraints.
+    m.fs.time_var = pyo.Var(m.fs.time)
+    
+    # We'll add a constraint to calculate the inlet pressure based on time,
+    # so we need to unfix pressure.
+    m.fs.valve_1.control_volume.properties_in[0].pressure.unfix()
+    m.fs.valve_1.control_volume.properties_in[24].pressure.unfix()
+    
+    # The solver will directly set the time variable for the DAE solve, but
+    # solving the initial conditions is just a system of nonlinear equations,
+    # so we need to fix the initial time.
+    m.fs.time_var[0].fix(m.fs.time.first())
+    
+    # We could break up the time domain and solve this in pieces, but creative use
+    # of min and max will let us create the ramping function we want.
+    # From 10s to 12s ramp inlet pressure from 500,000 Pa to 600,000 Pa
+    @m.fs.Constraint(m.fs.time)
+    def inlet_pressure_eqn(b, t):
+        return b.valve_1.control_volume.properties_in[t].pressure == \
+            smooth_min(600000, smooth_max(500000, 50000*(b.time_var[t] - 10) + 500000))
+
+
+.. parsed-literal::
+
+    2022-03-08 01:23:06 [INFO] idaes.init.fs.valve_1: Initialization Complete: optimal - Optimal Solution Found
+    2022-03-08 01:23:06 [INFO] idaes.init.fs.tank.control_volume: Initialization Complete
+    2022-03-08 01:23:06 [INFO] idaes.init.fs.tank: Initialization Complete: optimal - Optimal Solution Found
+    2022-03-08 01:23:06 [INFO] idaes.init.fs.valve_2: Initialization Complete: optimal - Optimal Solution Found
+
+
+.. code:: ipython3
+
+    # Solve the new problem.  Notice the new argument specifying the explicit time variable. 
+    res = petsc.petsc_dae_by_time_element(
+        m,
+        time=m.fs.time,
+        timevar=m.fs.time_var,
+        ts_options={
+            "--ts_type":"beuler",
+            "--ts_dt":0.1,
+            "--ts_monitor":"", # set initial step to 0.1
+            "--ts_save_trajectory":1,
+            "--ts_trajectory_type":"visualization",
+        },
+        vars_stub="pid_tj2",
+        trajectory_save_prefix="pid_tj2",
+    )
+
+
+.. parsed-literal::
+
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Ignoring PCI device with non-16bit domain.
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Pass --enable-32bits-pci-domain to configure to support such devices
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: (warning: it would break the library ABI, don't enable unless really needed).
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Called fg_read, err: 0 (0 is good)
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: ---------------------------------------------------
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: DAE: 0
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Reading nl file: /tmp/tmp7ytt65h3.pyomo.nl
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of constraints: 29
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of nonlinear constraints: 15
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of linear constraints: 14
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of inequalities: 0
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of variables: 29
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of integers: 0
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of binary: 0
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of objectives: 0 (Ignoring)
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of non-zeros in Jacobian: 89
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: Number of degrees of freedom: 0
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: ---------------------------------------------------
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: 0 SNES Function norm 5.904233477544e+05
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: 1 SNES Function norm 4.315325976358e+05
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: 2 SNES Function norm 7.639793381334e+04
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: 3 SNES Function norm 5.928557930246e+03
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: 4 SNES Function norm 5.008361736230e+01
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: 5 SNES Function norm 3.698195225878e-03
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: 6 SNES Function norm 7.128953984505e-11
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: SNESConvergedReason = SNES_CONVERGED_FNORM_ABS, in 6 iterations
+    2022-03-08 01:23:07 [INFO] idaes.solve.petsc-dae: SNES_CONVERGED_FNORM_ABS
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Ignoring PCI device with non-16bit domain.
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Pass --enable-32bits-pci-domain to configure to support such devices
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: (warning: it would break the library ABI, don't enable unless really needed).
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Called fg_read, err: 0 (0 is good)
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: ---------------------------------------------------
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: DAE: 1
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Reading nl file: /tmp/tmp_3fupc9w.pyomo.nl
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of constraints: 30
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of nonlinear constraints: 17
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of linear constraints: 13
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of inequalities: 0
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of variables: 36
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of integers: 0
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of binary: 0
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of objectives: 0 (Ignoring)
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of non-zeros in Jacobian: 98
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Explicit time variable: 1
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of derivatives: 5
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of differential vars: 5
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of algebraic vars: 25
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of state vars: 30
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: Number of degrees of freedom: 0
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: ---------------------------------------------------
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 0 TS dt 0.1 time 0.
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 1 TS dt 0.1 time 0.1
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 2 TS dt 0.0285383 time 0.118065
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 3 TS dt 0.0167721 time 0.132825
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 4 TS dt 0.0160308 time 0.149597
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 5 TS dt 0.0174411 time 0.165628
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 6 TS dt 0.0175822 time 0.183069
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 7 TS dt 0.0186891 time 0.200651
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 8 TS dt 0.0192145 time 0.21934
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 9 TS dt 0.0201946 time 0.238555
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 10 TS dt 0.0208941 time 0.258749
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 11 TS dt 0.0217985 time 0.279643
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 12 TS dt 0.0225359 time 0.301442
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 13 TS dt 0.0233324 time 0.323978
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 14 TS dt 0.0239886 time 0.34731
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 15 TS dt 0.0246121 time 0.371299
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 16 TS dt 0.0250998 time 0.395911
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 17 TS dt 0.0255135 time 0.421011
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 18 TS dt 0.0258117 time 0.446524
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 19 TS dt 0.0260399 time 0.472336
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 20 TS dt 0.0261905 time 0.498376
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 21 TS dt 0.0262979 time 0.524566
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 22 TS dt 0.0263666 time 0.550864
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 23 TS dt 0.0264195 time 0.577231
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 24 TS dt 0.0264627 time 0.60365
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 25 TS dt 0.0265093 time 0.630113
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 26 TS dt 0.0265638 time 0.656622
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 27 TS dt 0.0266334 time 0.683186
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 28 TS dt 0.0267209 time 0.70982
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 29 TS dt 0.0268301 time 0.73654
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 30 TS dt 0.0269628 time 0.763371
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 31 TS dt 0.0271213 time 0.790333
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 32 TS dt 0.0273071 time 0.817455
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 33 TS dt 0.0275218 time 0.844762
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 34 TS dt 0.0277669 time 0.872284
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 35 TS dt 0.028044 time 0.90005
+    2022-03-08 01:23:08 [INFO] idaes.solve.petsc-dae: 36 TS dt 0.0283548 time 0.928094
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 37 TS dt 0.0287012 time 0.956449
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 38 TS dt 0.0290856 time 0.98515
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 39 TS dt 0.0295103 time 1.01424
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 40 TS dt 0.0299783 time 1.04375
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 41 TS dt 0.0304929 time 1.07372
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 42 TS dt 0.0310579 time 1.10422
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 43 TS dt 0.0316779 time 1.13528
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 44 TS dt 0.0323581 time 1.16695
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 45 TS dt 0.0331044 time 1.19931
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 46 TS dt 0.0339241 time 1.23242
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 47 TS dt 0.0348255 time 1.26634
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 48 TS dt 0.0358185 time 1.30117
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 49 TS dt 0.0369149 time 1.33698
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 50 TS dt 0.0381287 time 1.3739
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 51 TS dt 0.0394767 time 1.41203
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 52 TS dt 0.0409795 time 1.4515
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 53 TS dt 0.042662 time 1.49248
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 54 TS dt 0.0445549 time 1.53515
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 55 TS dt 0.0466966 time 1.5797
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 56 TS dt 0.0491349 time 1.6264
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 57 TS dt 0.0519306 time 1.67553
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 58 TS dt 0.0551614 time 1.72746
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 59 TS dt 0.0589272 time 1.78262
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 60 TS dt 0.0633572 time 1.84155
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 61 TS dt 0.0686173 time 1.90491
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 62 TS dt 0.0749167 time 1.97353
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 63 TS dt 0.0825027 time 2.04844
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 64 TS dt 0.0916248 time 2.13095
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 65 TS dt 0.102421 time 2.22257
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 66 TS dt 0.114687 time 2.32499
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 67 TS dt 0.12767 time 2.43968
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 68 TS dt 0.140371 time 2.56735
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 69 TS dt 0.152482 time 2.70772
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 70 TS dt 0.164817 time 2.8602
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 71 TS dt 0.178856 time 3.02502
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 72 TS dt 0.196403 time 3.20387
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 73 TS dt 0.219691 time 3.40028
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 74 TS dt 0.251946 time 3.61997
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 75 TS dt 0.298542 time 3.87191
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 76 TS dt 0.369524 time 4.17046
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 77 TS dt 0.485852 time 4.53998
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 78 TS dt 0.697376 time 5.02583
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 79 TS dt 1.14493 time 5.72321
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 80 TS dt 2.33406 time 6.86813
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 81 TS dt 6.84079 time 9.20219
+    2022-03-08 01:23:09 [INFO] idaes.solve.petsc-dae: 82 TS dt 6.84079 time 9.88627
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 83 TS dt 0.684079 time 9.95468
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 84 TS dt 0.114475 time 9.96612
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 85 TS dt 0.157141 time 9.98184
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 86 TS dt 0.168373 time 9.99868
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 87 TS dt 0.00625846 time 10.002
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 88 TS dt 0.00507659 time 10.0073
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 89 TS dt 0.0263784 time 10.0124
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 90 TS dt 0.0214531 time 10.0337
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 91 TS dt 0.0284313 time 10.0551
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 92 TS dt 0.0283301 time 10.0836
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 93 TS dt 0.0320737 time 10.1119
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 94 TS dt 0.0331647 time 10.144
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 95 TS dt 0.0360913 time 10.1771
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 96 TS dt 0.0379948 time 10.2132
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 97 TS dt 0.0406362 time 10.2512
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 98 TS dt 0.0427144 time 10.2919
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 99 TS dt 0.0448435 time 10.3346
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 100 TS dt 0.046461 time 10.3794
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 101 TS dt 0.0478551 time 10.4259
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 102 TS dt 0.0489142 time 10.4737
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 103 TS dt 0.0498602 time 10.5226
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 104 TS dt 0.0507381 time 10.5725
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 105 TS dt 0.0516846 time 10.6232
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 106 TS dt 0.0527509 time 10.6749
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 107 TS dt 0.0540122 time 10.7277
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 108 TS dt 0.0555123 time 10.7817
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 109 TS dt 0.0573081 time 10.8372
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 110 TS dt 0.0594539 time 10.8945
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 111 TS dt 0.062021 time 10.954
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 112 TS dt 0.0650952 time 11.016
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 113 TS dt 0.0687883 time 11.0811
+    2022-03-08 01:23:10 [INFO] idaes.solve.petsc-dae: 114 TS dt 0.0732394 time 11.1499
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 115 TS dt 0.0786126 time 11.2231
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 116 TS dt 0.0850682 time 11.3017
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 117 TS dt 0.0926599 time 11.3868
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 118 TS dt 0.101096 time 11.4795
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 119 TS dt 0.1094 time 11.5805
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 120 TS dt 0.116069 time 11.6899
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 121 TS dt 0.120278 time 11.806
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 122 TS dt 0.122551 time 11.9263
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 123 TS dt 0.165418 time 11.9602
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 124 TS dt 0.138091 time 11.9829
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 125 TS dt 0.0275124 time 12.0017
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 126 TS dt 0.00633465 time 12.0053
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 127 TS dt 0.0269645 time 12.0116
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 128 TS dt 0.0251546 time 12.0386
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 129 TS dt 0.0340688 time 12.0638
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 130 TS dt 0.0330245 time 12.0978
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 131 TS dt 0.0375976 time 12.1309
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 132 TS dt 0.0381123 time 12.1685
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 133 TS dt 0.0410916 time 12.2066
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 134 TS dt 0.0422593 time 12.2477
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 135 TS dt 0.044362 time 12.2899
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 136 TS dt 0.0455877 time 12.3343
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 137 TS dt 0.0471524 time 12.3799
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 138 TS dt 0.0483535 time 12.427
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 139 TS dt 0.0497653 time 12.4754
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 140 TS dt 0.0511453 time 12.5251
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 141 TS dt 0.0527788 time 12.5763
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 142 TS dt 0.0546067 time 12.6291
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 143 TS dt 0.056795 time 12.6837
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 144 TS dt 0.0593768 time 12.7405
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 145 TS dt 0.0624979 time 12.7998
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 146 TS dt 0.0662764 time 12.8623
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 147 TS dt 0.0709207 time 12.9286
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 148 TS dt 0.0766919 time 12.9995
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 149 TS dt 0.0839883 time 13.0762
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 150 TS dt 0.0933816 time 13.1602
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 151 TS dt 0.10572 time 13.2536
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 152 TS dt 0.122168 time 13.3593
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 153 TS dt 0.143966 time 13.4815
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 154 TS dt 0.171146 time 13.6255
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 155 TS dt 0.20087 time 13.7966
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 156 TS dt 0.231498 time 13.9975
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 157 TS dt 0.268692 time 14.229
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 158 TS dt 0.323398 time 14.4977
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 159 TS dt 0.415639 time 14.8211
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 160 TS dt 0.591875 time 15.2367
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 161 TS dt 0.991269 time 15.8286
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 162 TS dt 2.16148 time 16.8198
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 163 TS dt 5.01868 time 18.9813
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: 164 TS dt 21.6031 time 24.
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: TSConvergedReason = TS_CONVERGED_TIME
+    2022-03-08 01:23:11 [INFO] idaes.solve.petsc-dae: TS_CONVERGED_TIME
+
+
+.. code:: ipython3
+
+    tj = petsc.PetscTrajectory(json="pid_tj2_1.json.gz")
+
+.. code:: ipython3
+
+    a = plt.plot(tj.vecs["_time"], tj.vecs[str(m.fs.valve_1.control_volume.properties_in[24].pressure)])
+    a = plt.ylabel("inlet pressure (Pa)")
+    a = plt.xlabel("time (s)")
+
+
+
+.. image:: output_17_0.png
+
+
+.. code:: ipython3
+
+    a = plt.plot(tj.vecs["_time"], tj.vecs[str(m.fs.valve_1.valve_opening[24])])
+    a = plt.ylabel("valve 1 fraction open")
+    a = plt.xlabel("time (s)")
+
+
+
+.. image:: output_18_0.png
+
+
+.. code:: ipython3
+
+    a = plt.plot(tj.vecs["_time"], tj.vecs[str(m.fs.tank.control_volume.properties_out[24].pressure)])
+    a = plt.ylabel("tank pressure (Pa)")
+    a = plt.xlabel("time (s)")
+
+
+
+.. image:: output_19_0.png
+
+

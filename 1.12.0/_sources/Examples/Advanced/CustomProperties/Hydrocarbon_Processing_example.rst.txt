@@ -1,0 +1,977 @@
+Hydrocarbon Processing with cubic equation of state case study
+==============================================================
+
+1. Introduction
+---------------
+
+This Jupyter Notebook solves and optimizes a simple hydrocarbon
+processing unit. A property package has been created for hydrocarbon
+processing which includes methane, ethane, propane, n-butane, i-butane,
+ethylene, propene, butene, pentene, hexene, heptene and octene.
+Additionally, a sensitivity study is performed over the influence of
+temperature in the Gibbs reactor.
+
+1.1 Tutorial objectives
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The goals of this tutorial are:
+
+-  Utilize the heat exchanger, gibbs reactor and flash unit models.
+-  Utilize the Generic Property Package, which provides a flexible
+   platform for users to build property packages by calling upon
+   libraries of modular sub-models to build up complex property
+   calculations with the least effort possible.
+-  Demonstrate the use of arcs as streams connecting unit models
+-  Save a json file to avoid initialization if it has been done before.
+-  Demonstrate the sequential initialization approach, including the use
+   of the propagate_state method in idaes/core/util/initialization.
+-  Fix state variables for different conditions and initialize and solve
+   the flowsheet for these conditions.
+-  Solve problem in order to:
+
+   -  Solve square problem
+   -  Minimize operating costs
+
+-  Create sensitivity analysis and create a plot from the results
+
+2. Problem Statement
+--------------------
+
+The flowsheet that we will be using for this module is shown below. We
+will be processing ethylene, propene and butene to produce pentene,
+hexene, heptene and octene. As shown in the flowsheet, there is a Gibbs
+reactor, R101, one flash tanks, F101 to separate out the
+non-condensibles. We will assume ideal gas for this flowsheet.
+
+|image0|
+
+The property package required for this module is available in the
+property example directory:
+
+-  HC_PR.py (for VLE calcullations)
+-  HC_PR_vap.py (for equipment that work only in vapor phase)
+
+The state variables chosen for the property package are **flows of
+component by phase, temperature and pressure**. The components
+considered are: **methane, ethane, propane, n-butane, i-butane,
+ethylene, propene, butene, pentene, hexene, heptene and octene**.
+Therefore, every stream has 8 flow variables, 1 temperature and 1
+pressure variable.
+
+In this example, we will simulate the following cases:
+
+-  Case 1: Solve square problem.
+-  Case 2: Minimize operating costs.
+-  Sensitivity Analysis 1: Temperature in the Gibbs reactor.
+
+.. |image0| image:: HC_processing.png
+
+2.1 Setting up the problem in IDAES
+-----------------------------------
+
+In the next cell, we will be importing the necessary components from
+Pyomo and IDAES.
+
+.. code:: ipython3
+
+    # Import objects from pyomo package
+    from pyomo.environ import (Constraint,
+                               Var,
+                               ConcreteModel,
+                               Expression,
+                               Param,
+                               Objective,
+                               SolverFactory,
+                               TransformationFactory,
+                               value)
+    
+    from pyomo.network import Arc, SequentialDecomposition
+    
+    from idaes.core.util.initialization import propagate_state
+    
+    # Import plotting functions
+    import matplotlib.pyplot as plt
+    
+    # Import numpy library 
+    import numpy as np
+    
+    # Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model
+    from idaes.core import FlowsheetBlock
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+    
+    # Import the degrees_of_freedom function from the idaes.core.util.model_statistics package
+    # DOF = Number of Model Variables - Number of Model Constraints
+    from idaes.core.util.model_statistics import degrees_of_freedom
+    
+    # Import the scaling tools - this will help increase model efficiency and reduce model run time
+    from idaes.core.util import scaling as iscale
+    
+    # Import the Generic Parameter Block
+    from idaes.generic_models.properties.core.generic.generic_property import (
+            GenericParameterBlock)
+    
+    # Import unit models from the model library
+    from idaes.generic_models.unit_models import (Flash, GibbsReactor, Heater)
+
+For this specific problem we will need two different property packages
+as we will utilize an vapor-only property package for the Gibbs reactor
+and a VLE package for the flash column
+
+.. code:: ipython3
+
+    # Import the HC_PR property package to create a VLE property block for the flowsheet
+    from idaes.generic_models.properties.core.examples.HC_PR import configuration
+    
+    # Import the HC_PR_vap property package to create a vapor property block for the flowsheet
+    from idaes.generic_models.properties.core.examples.HC_PR_vap import configuration_vap
+
+2.1 Building the flowsheet
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the next cell, we will first create a model and attach a flowsheet to
+it. We then introduce the unit models and connect them through an arc
+and analyze the degrees of freedom of the flowsheet and how many
+variables we need to fix.
+
+.. code:: ipython3
+
+    # Create the ConcreteModel and the FlowsheetBlock, and attach the flowsheet block to it.
+    m = ConcreteModel()
+    
+    m.fs = FlowsheetBlock(default={"dynamic": False}) 
+    
+    # Add properties parameter blocks to the flowsheet with specifications
+    m.fs.VLE_props = GenericParameterBlock(default=configuration)
+    m.fs.Vap_props = GenericParameterBlock(default=configuration_vap)
+    
+    # Create an instance of the units, attaching them to the flowsheet
+    # Specify the property package to be used with with each unit.
+    m.fs.H101 = Heater(default={"property_package": m.fs.Vap_props,
+                                "has_pressure_change": False,
+                                "has_phase_equilibrium": True})
+    m.fs.R101 = GibbsReactor(
+                default={"property_package": m.fs.Vap_props,
+                         "inert_species":["hydrogen","methane","ethane","propane","nbutane"],
+                         "has_heat_transfer": True})
+    
+    m.fs.H102 = Heater(default={"property_package": m.fs.VLE_props,
+                                "has_pressure_change": False,
+                                "has_phase_equilibrium": True})
+    
+    m.fs.F101 = Flash(default={"property_package": m.fs.VLE_props,
+                                   "has_heat_transfer": True,
+                                   "has_pressure_change": True})
+    
+    # Create streams to define connectivity between unit models
+    m.fs.s01 = Arc(source=m.fs.H101.outlet, destination=m.fs.R101.inlet)
+    m.fs.s02 = Arc(source=m.fs.R101.outlet, destination=m.fs.H102.inlet)
+    m.fs.s03 = Arc(source=m.fs.H102.outlet, destination=m.fs.F101.inlet)
+    
+    # Expand arcs
+    TransformationFactory("network.expand_arcs").apply_to(m)
+    
+    # Call the degrees_of_freedom function, get intitial DOF
+    DOF_initial = degrees_of_freedom(m)
+    print("The initial DOF is {0}".format(DOF_initial))
+
+
+.. parsed-literal::
+
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.ethane dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.propane dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.nbutane dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.ibutane dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.ethylene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.propene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.butene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.pentene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.hexene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.heptene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.VLE_props.octene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.ethane dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.propane dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.nbutane dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.ibutane dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.ethylene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.propene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.butene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.pentene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.hexene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.heptene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    2021-12-23 12:03:39 [WARNING] idaes.generic_models.properties.core.pure.Perrys: DEPRECATED - fs.Vap_props.octene dens_mol_liq_comp_coeff index 'eqn_type' should be specified, defaulting to equation form 1.
+    The initial DOF is 21
+
+
+2.2 Create solver object
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    solver = SolverFactory('ipopt')
+
+3 Case 1:Square problem.
+------------------------
+
+For this tutorial, we will solve a series of case studies by changing
+the goal of the solution. For the first case we will solve a square
+problem where all equipment and stream conditions are fixed.
+
+3.1 Fix initial conditions
+--------------------------
+
+The conditions were extracted from *Valorization of Shale Gas Condensate
+to Liquid Hydrocarbons through Catalytic Dehydrogenation and
+Oligomerization*, Taufik Ridha, Yiru Li, Emre Gençer, Jeffrey J.
+Siirola, Jeffrey T. Miller, Fabio H. Ribeiro and Rakesh Agrawal, 2018.
+
+.. code:: ipython3
+
+    # Fix Heater H101 inlet conditions
+    m.fs.H101.inlet.mole_frac_comp[0, "hydrogen"].fix(0.05)
+    m.fs.H101.inlet.mole_frac_comp[0, "methane"].fix(0.25)
+    m.fs.H101.inlet.mole_frac_comp[0, "ethane"].fix(0.2)
+    m.fs.H101.inlet.mole_frac_comp[0, "propane"].fix(0.025)
+    m.fs.H101.inlet.mole_frac_comp[0, "nbutane"].fix(0.05)
+    m.fs.H101.inlet.mole_frac_comp[0, "ibutane"].fix(0.05)
+    m.fs.H101.inlet.mole_frac_comp[0, "ethylene"].fix(0.13)
+    m.fs.H101.inlet.mole_frac_comp[0, "propene"].fix(0.13)
+    m.fs.H101.inlet.mole_frac_comp[0, "butene"].fix(0.115)
+    m.fs.H101.inlet.mole_frac_comp[0, "pentene"].fix(0.0)
+    m.fs.H101.inlet.mole_frac_comp[0, "hexene"].fix(0.0)
+    m.fs.H101.inlet.mole_frac_comp[0, "heptene"].fix(0.0)
+    m.fs.H101.inlet.mole_frac_comp[0, "octene"].fix(0.0)
+    m.fs.H101.inlet.flow_mol[0].fix(100)
+    m.fs.H101.inlet.temperature.fix(1073)
+    m.fs.H101.inlet.pressure.fix(550000)
+    
+    # Fix unit models operating conditions
+    # Fix H101 Heater outlet temperature
+    m.fs.H101.outlet.temperature.fix(573)
+    
+    # Fix R101 Reactor outlet temperature
+    m.fs.R101.outlet.temperature[0].fix(573)
+    
+    # Fix H102 Heater outlet temperature
+    m.fs.H102.outlet.temperature.fix(300)
+    
+    # Fix F101 Flash outlet conditions
+    m.fs.F101.vap_outlet.temperature.fix(300.0)
+    m.fs.F101.deltaP.fix(0)
+    
+    DOF_final = degrees_of_freedom(m)
+    print("The final DOF is {0}".format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final DOF is 0
+
+
+.. code:: ipython3
+
+    # Set scaling for model components
+    def set_scaling_factors(m):
+        for unit in ['H101', 'R101', 'H102', 'F101']:
+            if unit == 'F101':
+                stream_list = ['inlet', 'vap_outlet', 'liq_outlet']
+            else:
+                stream_list = ['inlet', 'outlet']
+            for stream in stream_list:
+                block = getattr( getattr(m.fs, unit), stream )
+                iscale.set_scaling_factor( getattr(block, 'flow_mol')[0], 1e2)
+                iscale.set_scaling_factor( getattr(block, 'temperature')[0], 1e2)
+                iscale.set_scaling_factor( getattr(block, 'pressure')[0], 1e6)
+        iscale.calculate_scaling_factors(m)
+
+
+.. code:: ipython3
+
+    assert DOF_final == 0
+
+3.2 Flowsheet Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+IDAES includes pre-written initialization routines for all unit models.
+The output from initialization can be set to 7 different levels
+depending on the details required by the user. In general, when a
+particular output level is set, any information at that level and above
+gets picked up by logger. The default level taken by the logger is INFO.
+More information on these levels can be found in the IDAES
+documentation: https://idaes-pse.readthedocs.io/en/latest/logging.html
+
+.. code:: ipython3
+
+    set_scaling_factors(m)
+    seq = SequentialDecomposition()
+    seq.options.select_tear_method = "heuristic"
+    seq.options.tear_method = "Wegstein"
+    seq.options.iterLim = 5
+    
+    # Using the SD tool
+    G = seq.create_graph(m)
+    heuristic_tear_set = seq.tear_set_arcs(G, method="heuristic")
+    order = seq.calculation_order(G)
+    
+    for o in heuristic_tear_set:
+        print(o.name)
+    print("Order of initialization")
+    for o in order:
+        print(o[0].name)    
+        
+    def function(unit):
+            unit.initialize(outlvl=idaeslog.INFO_HIGH)  
+
+
+.. parsed-literal::
+
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H101.control_volume.properties_in[0.0].enth_mol_phase[Vap], for _enthalpy_flow_term
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H101.control_volume.properties_out[0.0].enth_mol_phase[Vap], for _enthalpy_flow_term
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H101.control_volume.heat
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_in[0.0].enth_mol_phase[Vap], for _enthalpy_flow_term
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0].enth_mol_phase[Vap], for _enthalpy_flow_term
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,hydrogen]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,methane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,ethane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,propane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,nbutane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,ibutane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,ethylene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,propene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,butene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,pentene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,hexene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,heptene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,octene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,hydrogen]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,methane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,ethane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,propane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,nbutane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,ibutane]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,ethylene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,propene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,butene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,pentene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,hexene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,heptene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.properties_out[0.0]._material_density_term[Vap,octene]
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.R101.control_volume.heat
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H102.control_volume.properties_in[0.0].enth_mol_phase[Liq], for _enthalpy_flow_term
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H102.control_volume.properties_in[0.0].enth_mol_phase[Vap], for _enthalpy_flow_term
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H102.control_volume.properties_in[0.0].mole_frac_comp
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H102.control_volume.properties_out[0.0].enth_mol_phase[Liq], for _enthalpy_flow_term
+    2021-12-23 12:03:59 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H102.control_volume.properties_out[0.0].enth_mol_phase[Vap], for _enthalpy_flow_term
+    2021-12-23 12:04:00 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H102.control_volume.properties_out[0.0].mole_frac_comp
+    2021-12-23 12:04:00 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.H102.control_volume.heat
+    2021-12-23 12:04:00 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.F101.control_volume.properties_in[0.0].enth_mol_phase[Liq], for _enthalpy_flow_term
+    2021-12-23 12:04:00 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.F101.control_volume.properties_in[0.0].enth_mol_phase[Vap], for _enthalpy_flow_term
+    2021-12-23 12:04:00 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.F101.control_volume.properties_in[0.0].mole_frac_comp
+    2021-12-23 12:04:00 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.F101.control_volume.properties_out[0.0].enth_mol_phase[Liq], for _enthalpy_flow_term
+    2021-12-23 12:04:00 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.F101.control_volume.properties_out[0.0].enth_mol_phase[Vap], for _enthalpy_flow_term
+    2021-12-23 12:04:00 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.F101.control_volume.properties_out[0.0].mole_frac_comp
+    2021-12-23 12:04:00 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.F101.control_volume.heat
+    Order of initialization
+    fs.H101
+    fs.R101
+    fs.H102
+    fs.F101
+
+
+3.3 Saving a json file
+~~~~~~~~~~~~~~~~~~~~~~
+
+In the next cell we will save a json file to avoid initialization if it
+has been done before.
+
+.. code:: ipython3
+
+    # Import python path
+    import os
+    
+    # Import idaes model serializer to store initialized model
+    from idaes.core.util import model_serializer as ms 
+
+.. code:: ipython3
+
+    if not os.path.exists("HI_init.json.gz"):
+        seq.run(m, function)
+        
+        # Solve the simulation using ipopt
+        # Note: If the degrees of freedom = 0, we have a square problem
+        solve_status = solver.solve(m, tee=True)
+    
+        ms.to_json(m, fname="HI_init.json.gz")
+    else:
+        ms.from_json(m, fname="HI_init.json.gz")
+
+3.3 Run Simulation
+~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    result = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:     4334
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:     2692
+    
+    Total number of variables............................:      551
+                         variables with only lower bounds:       64
+                    variables with lower and upper bounds:      433
+                         variables with only upper bounds:       44
+    Total number of equality constraints.................:      551
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 5.59e+04 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 5.60e+02 6.70e-01  -1.0 1.50e+02    -  9.90e-01 9.90e-01h  1
+       2  0.0000000e+00 5.56e+00 6.28e-01  -1.0 1.48e+02    -  9.90e-01 9.90e-01h  1
+       3  0.0000000e+00 2.71e-04 9.84e+02  -1.0 1.46e+00    -  9.90e-01 1.00e+00h  1
+       4  0.0000000e+00 9.31e-10 2.99e-03  -1.0 7.05e-05    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 4
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   3.6379788070917130e-12    9.3132257461547852e-10
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   3.6379788070917130e-12    9.3132257461547852e-10
+    
+    
+    Number of objective function evaluations             = 5
+    Number of objective gradient evaluations             = 5
+    Number of equality constraint evaluations            = 5
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 5
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 4
+    Total CPU secs in IPOPT (w/o function evaluations)   =      4.816
+    Total CPU secs in NLP function evaluations           =     14.607
+    
+    EXIT: Optimal Solution Found.
+    
+
+.. code:: ipython3
+
+    from pyomo.opt import TerminationCondition, SolverStatus
+    
+    # Check if termination condition is optimal
+    assert result.solver.termination_condition == TerminationCondition.optimal
+    assert result.solver.status == SolverStatus.ok
+
+3.4 Results
+~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Display output report
+    m.fs.H101.report()
+    m.fs.R101.report()
+    m.fs.H102.report()
+    m.fs.F101.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.H101                                                             Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key       : Value       : Fixed : Bounds
+        Heat Duty : -6.0523e+06 : False : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                        Inlet     Outlet  
+        Total Molar Flowrate             100.00     100.00
+        Total Mole Fraction hydrogen   0.050000   0.050000
+        Total Mole Fraction methane     0.25000    0.25000
+        Total Mole Fraction ethane      0.20000    0.20000
+        Total Mole Fraction propane    0.025000   0.025000
+        Total Mole Fraction nbutane    0.050000   0.050000
+        Total Mole Fraction ibutane    0.050000   0.050000
+        Total Mole Fraction ethylene    0.13000    0.13000
+        Total Mole Fraction propene     0.13000    0.13000
+        Total Mole Fraction butene      0.11500    0.11500
+        Total Mole Fraction pentene      0.0000 1.0000e-20
+        Total Mole Fraction hexene       0.0000 1.0000e-20
+        Total Mole Fraction heptene      0.0000 1.0000e-20
+        Total Mole Fraction octene       0.0000 1.0000e-20
+        Temperature                      1073.0     573.00
+        Pressure                     5.5000e+05 5.5000e+05
+    ====================================================================================
+    
+    ====================================================================================
+    Unit : fs.R101                                                             Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key       : Value       : Fixed : Bounds
+        Heat Duty : -1.1646e+06 : False : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                        Inlet     Outlet  
+        Total Molar Flowrate             100.00     87.514
+        Total Mole Fraction hydrogen   0.050000   0.057134
+        Total Mole Fraction methane     0.25000    0.28567
+        Total Mole Fraction ethane      0.20000    0.22853
+        Total Mole Fraction propane    0.025000   0.028567
+        Total Mole Fraction nbutane    0.050000   0.057134
+        Total Mole Fraction ibutane    0.050000   0.057134
+        Total Mole Fraction ethylene    0.13000  0.0054777
+        Total Mole Fraction propene     0.13000   0.099966
+        Total Mole Fraction butene      0.11500   0.047605
+        Total Mole Fraction pentene  1.0000e-20   0.064162
+        Total Mole Fraction hexene   1.0000e-20   0.039585
+        Total Mole Fraction heptene  1.0000e-20   0.023508
+        Total Mole Fraction octene   1.0000e-20  0.0055265
+        Temperature                      573.00     573.00
+        Pressure                     5.5000e+05 5.5000e+05
+    ====================================================================================
+    
+    ====================================================================================
+    Unit : fs.H102                                                             Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key       : Value       : Fixed : Bounds
+        Heat Duty : -2.3797e+06 : False : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                        Inlet     Outlet  
+        Total Molar Flowrate             87.514     87.514
+        Total Mole Fraction hydrogen   0.057134   0.057134
+        Total Mole Fraction methane     0.28567    0.28567
+        Total Mole Fraction ethane      0.22853    0.22853
+        Total Mole Fraction propane    0.028567   0.028567
+        Total Mole Fraction nbutane    0.057134   0.057134
+        Total Mole Fraction ibutane    0.057134   0.057134
+        Total Mole Fraction ethylene  0.0054777  0.0054777
+        Total Mole Fraction propene    0.099966   0.099966
+        Total Mole Fraction butene     0.047605   0.047605
+        Total Mole Fraction pentene    0.064162   0.064162
+        Total Mole Fraction hexene     0.039585   0.039585
+        Total Mole Fraction heptene    0.023508   0.023508
+        Total Mole Fraction octene    0.0055265  0.0055265
+        Temperature                      573.00     300.00
+        Pressure                     5.5000e+05 5.5000e+05
+    ====================================================================================
+    
+    ====================================================================================
+    Unit : fs.F101                                                             Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key             : Value       : Fixed : Bounds
+              Heat Duty : -4.4383e-10 : False : (None, None)
+        Pressure Change :      0.0000 :  True : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                   Inlet    Vapor Outlet  Liquid Outlet
+        flow_mol                    87.514       76.463        11.052  
+        mole_frac_comp hydrogen   0.057134     0.065391    1.0000e-08  
+        mole_frac_comp methane     0.28567      0.32696    1.0000e-08  
+        mole_frac_comp ethane      0.22853      0.25523      0.043864  
+        mole_frac_comp propane    0.028567     0.030153      0.017595  
+        mole_frac_comp nbutane    0.057134     0.050737       0.10139  
+        mole_frac_comp ibutane    0.057134     0.054254      0.077056  
+        mole_frac_comp ethylene  0.0054777    0.0061655    0.00071920  
+        mole_frac_comp propene    0.099966      0.10665      0.053740  
+        mole_frac_comp butene     0.047605     0.043906      0.073200  
+        mole_frac_comp pentene    0.064162     0.044309       0.20152  
+        mole_frac_comp hexene     0.039585     0.013294       0.22148  
+        mole_frac_comp heptene    0.023508    0.0026874       0.16756  
+        mole_frac_comp octene    0.0055265   0.00027267      0.041876  
+        temperature                 300.00       300.00        300.00  
+        pressure                5.5000e+05   5.5000e+05    5.5000e+05  
+    ====================================================================================
+
+
+We have successfully transformed our light gas into a mixture of light
+and heavy alkanes and alkenes, as we can see from solving the square
+problem. Our target was to produce liquid hydrocarbons that are easily
+transportable compared to the gas that requires piping. The liquid
+stream also contains now heavier alkenes like octene and heptene.
+
+We now have a liquid product stream of 10.99 mols/second with a high
+composition (~60%) C5-C8 composition.
+
+4. Case 2: Minimize operating costs.
+------------------------------------
+
+4.0 Create purity and flow parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For this example we will show the optimization capabilities of our
+flowsheet. We will introduce two new parameters one for octene mol
+fraction and one for the liquid flow from the Flash column. And we will
+include an objective function to minimize the operating costs.
+
+.. code:: ipython3
+
+    m.fs.Pur = Param(mutable=True,default=0.040)
+    m.fs.Liq = Param(mutable=True,default=10)
+
+4.1 Create constraints
+~~~~~~~~~~~~~~~~~~~~~~
+
+We will create constraints to set the inlet and outlet reactor
+temperature. And expressions to calculate costs.
+
+.. code:: ipython3
+
+    # Set constraint over the inlet and outlet of the temperature of the reactor
+    m.fs.reactorT = Constraint(expr=m.fs.H101.outlet.temperature[0] == 
+                        m.fs.R101.outlet.temperature[0])
+    
+    # Set constraint over the purity of the octene after the flash
+    m.fs.purity = Expression(
+            expr=m.fs.F101.liq_outlet.mole_frac_comp[0, "octene"])
+    m.fs.product_purity = Constraint(expr=m.fs.purity >= m.fs.Pur)
+    
+    # Set constraint over the minimum amount of liquid in the flas outlet
+    m.fs.liquid = Constraint(expr=m.fs.F101.liq_outlet.flow_mol[0]>= m.fs.Liq)
+    
+    # Set expressions to calculate 
+    m.fs.cooling_cost = Expression(expr=0.212e-7 * ((-m.fs.H101.heat_duty[0]) +
+                                      (-(m.fs.R101.heat_duty[0])) +
+                                        (-m.fs.H102.heat_duty[0])))
+    
+    m.fs.heating_cost = Expression(expr=2.2e-7 * ((m.fs.F101.heat_duty[0]**2)**1/2))
+    
+    m.fs.operating_cost = Expression(expr=(3600 * (m.fs.heating_cost +
+                                                m.fs.cooling_cost)))
+    
+    m.fs.objective = Objective(expr=m.fs.operating_cost)
+
+4.2 Unfix operation conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the next cell we will unfix some conditions we want want the problem
+to solve. To minimize cost we will unfix the Reactors temperature and
+heat duty while unfixing the flash colum outlet temperature and pressure
+drop.
+
+.. code:: ipython3
+
+    # Unfix operation condition
+    m.fs.H101.outlet.temperature.unfix()
+    m.fs.R101.heat_duty.unfix()
+    m.fs.R101.outlet.temperature.unfix()
+    m.fs.F101.vap_outlet.temperature.unfix()
+    m.fs.F101.deltaP.unfix()
+    
+    # Set bounds on unit model operating conditions
+    m.fs.H101.outlet.temperature[0].setlb(350)
+    m.fs.H101.outlet.temperature[0].setub(800)
+    
+    m.fs.R101.outlet.temperature[0].setlb(350)
+    m.fs.R101.outlet.temperature[0].setub(800)
+    
+    m.fs.F101.vap_outlet.temperature[0].setlb(298.0)
+    m.fs.F101.vap_outlet.temperature[0].setub(450.0)
+    m.fs.F101.vap_outlet.pressure[0].setlb(105000)
+    m.fs.F101.vap_outlet.pressure[0].setub(550000)
+
+4.3 Run Simulation
+~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    results = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:     4351
+    Number of nonzeros in inequality constraint Jacobian.:        2
+    Number of nonzeros in Lagrangian Hessian.............:     2762
+    
+    Total number of variables............................:      555
+                         variables with only lower bounds:       64
+                    variables with lower and upper bounds:      436
+                         variables with only upper bounds:       44
+    Total number of equality constraints.................:      552
+    Total number of inequality constraints...............:        2
+            inequality constraints with only lower bounds:        2
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  7.3241268e+02 4.45e+09 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  7.2628895e+02 1.39e+09 2.33e+01  -1.0 1.26e+05    -  9.39e-01 6.87e-01h  1
+       2  7.2629918e+02 1.28e+09 1.03e+03  -1.0 8.18e+03    -  9.90e-01 7.76e-02h  1
+       3  7.2844399e+02 3.21e+07 7.83e+03  -1.0 3.54e+04    -  7.59e-02 9.75e-01h  1
+       4  7.2858253e+02 3.35e+05 2.70e+02  -1.0 1.84e+03    -  9.02e-01 9.90e-01h  1
+       5  7.2737109e+02 2.56e+05 3.57e+04  -1.0 8.67e+04    -  1.16e-01 2.35e-01h  1
+       6  7.2816739e+02 1.62e+01 8.95e+04  -1.0 1.22e+04    -  9.66e-01 1.00e+00h  1
+       7  7.2746270e+02 1.27e+01 2.45e+06  -1.0 1.19e+04    -  9.96e-01 1.00e+00f  1
+       8  7.2748833e+02 1.72e-02 1.15e+04  -1.0 6.95e+02    -  1.00e+00 1.00e+00h  1
+       9  7.2748844e+02 3.02e-07 3.02e-02  -1.0 2.01e+00    -  1.00e+00 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10  7.2729863e+02 9.20e-01 6.01e+05  -5.7 2.49e+03    -  9.93e-01 1.00e+00f  1
+      11  7.2729361e+02 1.10e-03 3.25e+02  -5.7 7.47e+01    -  1.00e+00 9.99e-01h  1
+      12  7.2729361e+02 6.10e-05 1.92e-06  -5.7 3.48e-02    -  1.00e+00 1.00e+00h  1
+      13  7.2729361e+02 6.98e-10 2.15e-04  -8.6 4.84e-02    -  1.00e+00 1.00e+00h  1
+      14  7.2729361e+02 4.66e-10 1.59e-12  -8.6 2.07e-08    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 14
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   7.2729360530797294e+02    7.2729360530797294e+02
+    Dual infeasibility......:   1.5934683251893621e-12    1.5934683251893621e-12
+    Constraint violation....:   3.6379788070917130e-12    4.6566128730773926e-10
+    Complementarity.........:   2.5059065002117096e-09    2.5059065002117096e-09
+    Overall NLP error.......:   2.5059065002117096e-09    2.5059065002117096e-09
+    
+    
+    Number of objective function evaluations             = 15
+    Number of objective gradient evaluations             = 15
+    Number of equality constraint evaluations            = 15
+    Number of inequality constraint evaluations          = 15
+    Number of equality constraint Jacobian evaluations   = 15
+    Number of inequality constraint Jacobian evaluations = 15
+    Number of Lagrangian Hessian evaluations             = 14
+    Total CPU secs in IPOPT (w/o function evaluations)   =      5.191
+    Total CPU secs in NLP function evaluations           =     64.429
+    
+    EXIT: Optimal Solution Found.
+    
+
+4.4 Results
+~~~~~~~~~~~
+
+.. code:: ipython3
+
+    print('operating cost = $', value(m.fs.operating_cost))
+    
+    print()
+    print('Product flow rate and purity in F102')
+    
+    m.fs.F101.report()
+    
+    print()
+    print('octene purity = ', value(m.fs.purity))
+
+
+.. parsed-literal::
+
+    operating cost = $ 727.2936053079729
+    
+    Product flow rate and purity in F102
+    
+    ====================================================================================
+    Unit : fs.F101                                                             Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key             : Value     : Fixed : Bounds
+              Heat Duty : -0.010424 : False : (None, None)
+        Pressure Change :   -28095. : False : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                   Inlet    Vapor Outlet  Liquid Outlet
+        flow_mol                    88.045       78.045        10.000  
+        mole_frac_comp hydrogen   0.056789     0.064066    1.0000e-08  
+        mole_frac_comp methane     0.28395      0.32033    1.0000e-08  
+        mole_frac_comp ethane      0.22716      0.25093      0.041635  
+        mole_frac_comp propane    0.028395     0.029860      0.016959  
+        mole_frac_comp nbutane    0.056789     0.051199       0.10042  
+        mole_frac_comp ibutane    0.056789     0.054378      0.075612  
+        mole_frac_comp ethylene  0.0063737    0.0070883    0.00079626  
+        mole_frac_comp propene     0.10781      0.11444      0.056084  
+        mole_frac_comp butene     0.049284     0.045971      0.075139  
+        mole_frac_comp pentene    0.063323     0.045346       0.20362  
+        mole_frac_comp hexene     0.037351     0.013482       0.22364  
+        mole_frac_comp heptene    0.021215    0.0026515       0.16609  
+        mole_frac_comp octene    0.0047715   0.00025758      0.040000  
+        temperature                 300.00       299.03        299.03  
+        pressure                5.5000e+05   5.2191e+05    5.2191e+05  
+    ====================================================================================
+    
+    octene purity =  0.03999999000283402
+
+
+As we can see from the Flash report we optimized the reactor conditions
+however we are limited by the octene purity and the amount of the liquid
+flow at the end of the flash column.
+
+5. Sensitivity Analysis
+-----------------------
+
+5.0 Building sensitivity analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To create a sensitivity analysis, we will create two arrays, one for the
+liquid mole fraction of octene and another for the liquid mole flow of
+the liquid phase. We will also require to store several variable values.
+
+This sensitivity analysis will require solving the optimization program
+at different points. However, this requires computational time. To solve
+the study, switch the ``running_time`` option to True. You can increase
+the number of points calculated by changing ``N_points``.
+
+.. code:: ipython3
+
+    Running_time = False
+    N_points = 3
+
+.. code:: ipython3
+
+    if Running_time == True:
+        purity = np.linspace(0.010, 0.030, N_points)
+        liq = np.linspace(5, 9, N_points)
+    
+        vap_flow = np.zeros((len(purity),len(liq))) 
+        vap_T = np.zeros((len(purity),len(liq))) 
+        vap_P = np.zeros((len(purity),len(liq))) 
+        reactor_temp = np.zeros((len(purity),len(liq))) 
+        cost = np.zeros((len(purity),len(liq))) 
+    
+        for j in range(len(purity)):
+            m.fs.Pur = purity[j]
+    
+            for k in range(len(liq)):       
+                m.fs.Liq = liq[k]
+                # solve the model
+                print("solving for octene purity of ", purity[j], "and liquid flow mol of ", liq[k])
+    
+                status = solver.solve(m)
+                print("solved for octene purity of ", purity[j], "and liquid flow mol of ", liq[k])
+                vap_flow[j,k]= (value(m.fs.F101.vap_outlet.flow_mol[0]))
+                vap_T[j,k]= (value(m.fs.F101.vap_outlet.temperature[0]))
+                vap_P[j,k]= (value(m.fs.F101.vap_outlet.pressure[0]))
+                cost[j,k]= (value(m.fs.operating_cost))
+                reactor_temp[j,k]= (value(m.fs.R101.outlet.temperature[0]))
+    else:
+        pass
+
+5.1 Plot reactor temperature results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    if Running_time == True:
+        fig, ax = plt.subplots()
+    
+        CS = ax.contour(purity, liq, reactor_temp)
+    
+        ax.clabel(CS, inline=1, fontsize=10)
+    
+        plt.grid()
+        plt.title("Reactor temperature",fontsize=24)
+        plt.xlabel("Purity")
+        plt.ylabel("Liquid Flow")
+        plt.savefig("Sa1.png")
+        plt.show()
+    
+    else:
+        pass
+
+5.2 Plot cost results
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    if Running_time == True:
+        fig, ax = plt.subplots()
+    
+        CS = ax.contour(purity, liq, cost)
+    
+        ax.clabel(CS, inline=1, fontsize=10)
+    
+        plt.grid()
+        plt.title("Cost",fontsize=24)
+        plt.xlabel("Purity")
+        plt.ylabel("Liquid Flow")
+    
+        plt.show()
+    
+    else:
+        pass
+
+From the plots we can see that to increase the liquid flow and purity
+you require to increase the reactor temperature which will increase the
+cost of the process.
+
+We have added the resulting plots for solving this analysis. However to
+run them and print them change the running time to True
+
+Plots examples:
+
+|image1|
+
+|image1|
+
+.. |image1| image:: Sa1.png
+.. |image1| image:: Sa2.png
+

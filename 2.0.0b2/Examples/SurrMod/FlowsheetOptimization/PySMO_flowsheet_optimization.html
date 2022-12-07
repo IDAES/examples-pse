@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Autothermal Reformer Flowsheet Optimization with PySMO Surrogate Object &mdash; IDAES v2.0.0b2 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Autothermal Reformer Flowsheet Optimization with PySMO Surrogate Object</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/SurrMod/FlowsheetOptimization/PySMO_flowsheet_optimization.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="autothermal-reformer-flowsheet-optimization-with-pysmo-surrogate-object">
+<h1>Autothermal Reformer Flowsheet Optimization with PySMO Surrogate Object<a class="headerlink" href="#autothermal-reformer-flowsheet-optimization-with-pysmo-surrogate-object" title="Permalink to this heading">¶</a></h1>
+<section id="introduction">
+<h2>1. Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<p>This example demonstrates autothermal reformer optimization leveraging
+the PySMO Polynomial surrogate trainer. Other than the specific training
+method syntax, this workflow is identical for PySMO RBF and PySMO
+Kriging surrogate models. In this notebook, sampled simulation data will
+be used to train and validate a surrogate model. IDAES surrogate
+plotting tools will be utilized to visualize the surrogates on training
+and validation data. Once validated, integration of the surrogate into
+an IDAES flowsheet will be demonstrated.</p>
+</section>
+</section>
+<section id="problem-statement">
+<h1>2. Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this heading">¶</a></h1>
+<p>Within the context of a larger NGFC system, the autothermal reformer
+generates syngas from air, steam and natural gas for use in a
+solid-oxide fuel cell (SOFC).</p>
+<section id="main-inputs">
+<h2>2.1. Main Inputs:<a class="headerlink" href="#main-inputs" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Bypass fraction (dimensionless) - split fraction of natural gas to
+bypass AR unit and feed directly to the power island</p></li>
+<li><p>NG-Steam Ratio (dimensionless) - proportion of natural relative to
+steam fed into AR unit operation</p></li>
+</ul>
+</section>
+<section id="main-outputs">
+<h2>2.2. Main Outputs:<a class="headerlink" href="#main-outputs" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Steam flowrate (kg/s) - inlet steam fed to AR unit</p></li>
+<li><p>Reformer duty (kW) - required energy input to AR unit</p></li>
+<li><p>Composition (dimensionless) - outlet mole fractions of components
+(Ar, C2H6, C3H8, C4H10, CH4, CO, CO2, H2, H2O, N2, O2)</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="n">Image</span><span class="p">(</span><span class="s2">&quot;AR_PFD.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_3_02.png" src="../../../_images/output_3_02.png" />
+</section>
+<section id="training-and-validating-surrogates">
+<h2>3. Training and Validating Surrogates<a class="headerlink" href="#training-and-validating-surrogates" title="Permalink to this heading">¶</a></h2>
+<p>First, let’s import the required Python, Pyomo and IDAES modules:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import statements</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="c1"># Import Pyomo libraries</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">SolverFactory</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">Var</span><span class="p">,</span> \
+    <span class="n">Constraint</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">maximize</span>
+<span class="kn">from</span> <span class="nn">pyomo.common.timing</span> <span class="kn">import</span> <span class="n">TicTocTimer</span>
+
+<span class="c1"># Import IDAES libraries</span>
+<span class="kn">from</span> <span class="nn">idaes.core.surrogate.sampling.data_utils</span> <span class="kn">import</span> <span class="n">split_training_validation</span>
+<span class="kn">from</span> <span class="nn">idaes.core.surrogate.pysmo_surrogate</span> <span class="kn">import</span> <span class="n">PysmoPolyTrainer</span><span class="p">,</span> <span class="n">PysmoSurrogate</span>
+<span class="kn">from</span> <span class="nn">idaes.core.surrogate.plotting.sm_plotter</span> <span class="kn">import</span> <span class="n">surrogate_scatter2D</span><span class="p">,</span> <span class="n">surrogate_parity</span><span class="p">,</span> <span class="n">surrogate_residual</span>
+<span class="kn">from</span> <span class="nn">idaes.core.surrogate.surrogate_block</span> <span class="kn">import</span> <span class="n">SurrogateBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.convergence.convergence_base</span> <span class="kn">import</span> <span class="n">_run_ipopt_with_stats</span>
+</pre></div>
+</div>
+</section>
+<section id="importing-training-and-validation-datasets">
+<h2>3.1 Importing Training and Validation Datasets<a class="headerlink" href="#importing-training-and-validation-datasets" title="Permalink to this heading">¶</a></h2>
+<p>In this section, we read the dataset from the CSV file located in this
+directory. 2800 data points were simulated from a rigorous IDAES NGFC
+flowsheet using a grid sampling method. For simplicity and to reduce
+training runtime, this example randomly selects 100 data points to use
+for training/validation. The data is separated using an 80/20 split into
+training and validation data using the IDAES
+<code class="docutils literal notranslate"><span class="pre">split_training_validation()</span></code> method.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import Auto-reformer training data</span>
+<span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">suppress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">csv_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;reformer-data.csv&#39;</span><span class="p">)</span> <span class="c1"># 2800 data points</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">csv_data</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="c1"># randomly sample points for training/validation</span>
+<span class="n">input_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">output_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span>
+
+<span class="c1"># Define labels, and split training and validation data</span>
+<span class="c1"># note that PySMO requires that labels are passed as string lists</span>
+<span class="n">input_labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="n">output_labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">output_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+<span class="n">n_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">input_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">size</span>
+<span class="n">data_training</span><span class="p">,</span> <span class="n">data_validation</span> <span class="o">=</span> <span class="n">split_training_validation</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">n_data</span><span class="p">)</span>  <span class="c1"># seed=100</span>
+</pre></div>
+</div>
+</section>
+<section id="training-surrogates-with-pysmo">
+<h2>3.2 Training Surrogates with PySMO<a class="headerlink" href="#training-surrogates-with-pysmo" title="Permalink to this heading">¶</a></h2>
+<p>IDAES builds a model class for each type of PySMO surrogate model. In
+this case, we will call and build the Polynomial Regression class.
+Regression settings can be directly passed as class arguments, as shown
+below. In this example, allowed basis terms span a 6th order polynomial
+as well as a variable product, and data is internally cross-validated
+using 10 iterations of 80/20 splits to ensure a robust surrogate fit.
+Note that PySMO uses cross-validation of training data to adjust model
+coefficients and ensure a more accurate fit, while we separate the
+validation dataset pre-training in order to visualize the surrogate
+fits.</p>
+<p>Finally, after training the model we save the results and model
+expressions to a folder which contains a serialized JSON file.
+Serializing the model in this fashion enables importing a previously
+trained set of surrogate models into external flowsheets. This feature
+will be used later.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># capture long output (not required to use surrogate API)</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">StringIO</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">stream</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+<span class="n">oldstdout</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">stream</span>
+
+<span class="c1"># Create PySMO trainer object</span>
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">PysmoPolyTrainer</span><span class="p">(</span><span class="n">input_labels</span><span class="o">=</span><span class="n">input_labels</span><span class="p">,</span>
+                           <span class="n">output_labels</span><span class="o">=</span><span class="n">output_labels</span><span class="p">,</span>
+                           <span class="n">training_dataframe</span><span class="o">=</span><span class="n">data_training</span><span class="p">)</span>
+
+<span class="c1"># Set PySMO options</span>
+<span class="n">trainer</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">maximum_polynomial_order</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">trainer</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">multinomials</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">trainer</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">training_split</span> <span class="o">=</span> <span class="mf">0.8</span>
+<span class="n">trainer</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">number_of_crossvalidations</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="c1"># Train surrogate (calls PySMO through IDAES Python wrapper)</span>
+<span class="n">poly_train</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train_surrogate</span><span class="p">()</span>
+
+<span class="c1"># create callable surrogate object</span>
+<span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">]</span>
+<span class="n">input_bounds</span> <span class="o">=</span> <span class="p">{</span><span class="n">input_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="p">(</span><span class="n">xmin</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">xmax</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">input_labels</span><span class="p">))}</span>
+<span class="n">poly_surr</span> <span class="o">=</span> <span class="n">PysmoSurrogate</span><span class="p">(</span><span class="n">poly_train</span><span class="p">,</span> <span class="n">input_labels</span><span class="p">,</span> <span class="n">output_labels</span><span class="p">,</span> <span class="n">input_bounds</span><span class="p">)</span>
+
+<span class="c1"># save model to JSON</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">poly_surr</span><span class="o">.</span><span class="n">save_to_file</span><span class="p">(</span><span class="s1">&#39;pysmo_poly_surrogate.json&#39;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># revert back to normal output capture</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">oldstdout</span>
+
+<span class="c1"># display first 50 lines and last 50 lines of output</span>
+<span class="n">celloutput</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">celloutput</span><span class="p">[:</span><span class="mi">50</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">celloutput</span><span class="p">[</span><span class="o">-</span><span class="mi">50</span><span class="p">:]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">52</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">Steam_Flow</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">54</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">Reformer_Duty</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">55</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">AR</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">57</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">C2H6</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">59</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">C3H8</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">00</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">C4H10</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">02</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">CH4</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">CO</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">CO2</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">07</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">H2</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">08</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">H2O</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">10</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">N2</span> <span class="n">trained</span> <span class="n">successfully</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">12</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">pysmo_surrogate</span><span class="p">:</span> <span class="n">Model</span> <span class="k">for</span> <span class="n">output</span> <span class="n">O2</span> <span class="n">trained</span> <span class="n">successfully</span>
+
+<span class="o">===========================</span><span class="n">Polynomial</span> <span class="n">Regression</span><span class="o">===============================================</span>
+
+<span class="n">No</span> <span class="n">iterations</span> <span class="n">will</span> <span class="n">be</span> <span class="n">run</span><span class="o">.</span>
+<span class="n">Default</span> <span class="n">parameter</span> <span class="n">estimation</span> <span class="n">method</span> <span class="ow">is</span> <span class="n">used</span><span class="o">.</span>
+<span class="n">Parameter</span> <span class="n">estimation</span> <span class="n">method</span><span class="p">:</span>  <span class="n">pyomo</span>
+
+<span class="n">max_fraction_training_samples</span> <span class="nb">set</span> <span class="n">at</span>  <span class="mf">0.5</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">adaptive</span> <span class="n">samples</span> <span class="p">(</span><span class="n">no_adaptive_samples</span><span class="p">)</span> <span class="nb">set</span> <span class="n">at</span>  <span class="mi">4</span>
+<span class="n">Maximum</span> <span class="n">number</span> <span class="n">of</span> <span class="n">iterations</span> <span class="p">(</span><span class="n">Max_iter</span><span class="p">)</span> <span class="nb">set</span> <span class="n">at</span><span class="p">:</span>  <span class="mi">0</span>
+
+<span class="n">Initial</span> <span class="n">surrogate</span> <span class="n">model</span> <span class="ow">is</span> <span class="n">of</span> <span class="n">order</span> <span class="mi">1</span>  <span class="k">with</span> <span class="n">a</span> <span class="n">cross</span><span class="o">-</span><span class="n">val</span> <span class="n">error</span> <span class="n">of</span> <span class="mf">0.000000</span>
+<span class="n">Initial</span> <span class="n">Regression</span> <span class="n">Model</span> <span class="n">Performance</span><span class="p">:</span>
+<span class="n">Order</span><span class="p">:</span>  <span class="mi">1</span>  <span class="o">/</span> <span class="n">MAE</span><span class="p">:</span> <span class="mf">0.000000</span>  <span class="o">/</span> <span class="n">MSE</span><span class="p">:</span> <span class="mf">0.000000</span>  <span class="o">/</span> <span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="p">:</span> <span class="mf">1.000000</span>  <span class="o">/</span> <span class="n">Adjusted</span> <span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="p">:</span> <span class="mf">1.000000</span>
+
+<span class="n">Polynomial</span> <span class="n">regression</span> <span class="n">generates</span> <span class="n">a</span> <span class="n">good</span> <span class="n">surrogate</span> <span class="n">model</span> <span class="k">for</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">data</span><span class="o">.</span>
+
+<span class="o">-------------------------------------------------</span>
+<span class="o">-------------------------------------------------</span>
+<span class="n">Best</span> <span class="n">solution</span> <span class="n">found</span><span class="p">:</span>
+<span class="n">Order</span><span class="p">:</span>  <span class="mi">1</span>  <span class="o">/</span> <span class="n">MAE</span><span class="p">:</span> <span class="mf">0.000000</span>  <span class="o">/</span> <span class="n">MSE</span><span class="p">:</span> <span class="mf">0.000000</span>  <span class="o">/</span> <span class="n">R_sq</span><span class="p">:</span> <span class="mf">1.000000</span>  <span class="o">/</span> <span class="n">Adjusted</span> <span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="p">:</span> <span class="mf">1.000000</span>
+
+<span class="o">------------------------------------------------------------</span>
+<span class="n">The</span> <span class="n">final</span> <span class="n">coefficients</span> <span class="n">of</span> <span class="n">the</span> <span class="n">regression</span> <span class="n">terms</span> <span class="n">are</span><span class="p">:</span>
+
+<span class="n">k</span>               <span class="o">|</span> <span class="mf">0.0</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">1</span> <span class="p">)</span><span class="o">^</span> <span class="mi">1</span>      <span class="o">|</span> <span class="o">-</span><span class="mf">0.0</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">2</span> <span class="p">)</span><span class="o">^</span> <span class="mi">1</span>      <span class="o">|</span> <span class="mf">1.211862</span>
+<span class="n">x_</span> <span class="mi">1</span> <span class="o">.</span><span class="n">x_</span> <span class="mi">2</span>      <span class="o">|</span> <span class="o">-</span><span class="mf">1.211862</span>
+
+<span class="n">Results</span> <span class="n">saved</span> <span class="ow">in</span>  <span class="n">solution</span><span class="o">.</span><span class="n">pickle</span>
+
+<span class="o">===========================</span><span class="n">Polynomial</span> <span class="n">Regression</span><span class="o">===============================================</span>
+
+<span class="ne">Warning</span><span class="p">:</span> <span class="n">solution</span><span class="o">.</span><span class="n">pickle</span> <span class="n">already</span> <span class="n">exists</span><span class="p">;</span> <span class="n">previous</span> <span class="n">file</span> <span class="n">will</span> <span class="n">be</span> <span class="n">overwritten</span><span class="o">.</span>
+
+<span class="n">No</span> <span class="n">iterations</span> <span class="n">will</span> <span class="n">be</span> <span class="n">run</span><span class="o">.</span>
+<span class="n">Default</span> <span class="n">parameter</span> <span class="n">estimation</span> <span class="n">method</span> <span class="ow">is</span> <span class="n">used</span><span class="o">.</span>
+<span class="n">Parameter</span> <span class="n">estimation</span> <span class="n">method</span><span class="p">:</span>  <span class="n">pyomo</span>
+
+<span class="n">max_fraction_training_samples</span> <span class="nb">set</span> <span class="n">at</span>  <span class="mf">0.5</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">adaptive</span> <span class="n">samples</span> <span class="p">(</span><span class="n">no_adaptive_samples</span><span class="p">)</span> <span class="nb">set</span> <span class="n">at</span>  <span class="mi">4</span>
+<span class="n">Maximum</span> <span class="n">number</span> <span class="n">of</span> <span class="n">iterations</span> <span class="p">(</span><span class="n">Max_iter</span><span class="p">)</span> <span class="nb">set</span> <span class="n">at</span><span class="p">:</span>  <span class="mi">0</span>
+
+<span class="n">Initial</span> <span class="n">surrogate</span> <span class="n">model</span> <span class="ow">is</span> <span class="n">of</span> <span class="n">order</span> <span class="mi">6</span>  <span class="k">with</span> <span class="n">a</span> <span class="n">cross</span><span class="o">-</span><span class="n">val</span> <span class="n">error</span> <span class="n">of</span> <span class="mf">17.465620</span>
+<span class="n">Initial</span> <span class="n">Regression</span> <span class="n">Model</span> <span class="n">Performance</span><span class="p">:</span>
+<span class="n">Order</span><span class="p">:</span>  <span class="mi">6</span>  <span class="o">/</span> <span class="n">MAE</span><span class="p">:</span> <span class="mf">4.611273</span>  <span class="o">/</span> <span class="n">MSE</span><span class="p">:</span> <span class="mf">33.170482</span>  <span class="o">/</span> <span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="p">:</span> <span class="mf">0.999999</span>  <span class="o">/</span> <span class="n">Adjusted</span> <span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="p">:</span> <span class="mf">0.999999</span>
+
+<span class="n">Polynomial</span> <span class="n">regression</span> <span class="n">generates</span> <span class="n">a</span> <span class="n">good</span> <span class="n">surrogate</span> <span class="n">model</span> <span class="k">for</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">data</span><span class="o">.</span>
+
+<span class="o">.</span>
+<span class="o">.</span>
+<span class="o">.</span>
+<span class="n">The</span> <span class="n">final</span> <span class="n">coefficients</span> <span class="n">of</span> <span class="n">the</span> <span class="n">regression</span> <span class="n">terms</span> <span class="n">are</span><span class="p">:</span>
+
+<span class="n">k</span>               <span class="o">|</span> <span class="o">-</span><span class="mf">0.160548</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">1</span> <span class="p">)</span><span class="o">^</span> <span class="mi">1</span>      <span class="o">|</span> <span class="o">-</span><span class="mf">0.140861</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">2</span> <span class="p">)</span><span class="o">^</span> <span class="mi">1</span>      <span class="o">|</span> <span class="mf">2.845095</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">1</span> <span class="p">)</span><span class="o">^</span> <span class="mi">2</span>      <span class="o">|</span> <span class="mf">0.203883</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">2</span> <span class="p">)</span><span class="o">^</span> <span class="mi">2</span>      <span class="o">|</span> <span class="o">-</span><span class="mf">5.759182</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">1</span> <span class="p">)</span><span class="o">^</span> <span class="mi">3</span>      <span class="o">|</span> <span class="o">-</span><span class="mf">0.794051</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">2</span> <span class="p">)</span><span class="o">^</span> <span class="mi">3</span>      <span class="o">|</span> <span class="mf">5.631334</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">1</span> <span class="p">)</span><span class="o">^</span> <span class="mi">4</span>      <span class="o">|</span> <span class="mf">1.08608</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">2</span> <span class="p">)</span><span class="o">^</span> <span class="mi">4</span>      <span class="o">|</span> <span class="o">-</span><span class="mf">2.72515</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">1</span> <span class="p">)</span><span class="o">^</span> <span class="mi">5</span>      <span class="o">|</span> <span class="o">-</span><span class="mf">0.693947</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">2</span> <span class="p">)</span><span class="o">^</span> <span class="mi">5</span>      <span class="o">|</span> <span class="mf">0.52328</span>
+<span class="n">x_</span> <span class="mi">1</span> <span class="o">.</span><span class="n">x_</span> <span class="mi">2</span>      <span class="o">|</span> <span class="mf">0.048017</span>
+
+<span class="n">Results</span> <span class="n">saved</span> <span class="ow">in</span>  <span class="n">solution</span><span class="o">.</span><span class="n">pickle</span>
+
+<span class="o">===========================</span><span class="n">Polynomial</span> <span class="n">Regression</span><span class="o">===============================================</span>
+
+<span class="ne">Warning</span><span class="p">:</span> <span class="n">solution</span><span class="o">.</span><span class="n">pickle</span> <span class="n">already</span> <span class="n">exists</span><span class="p">;</span> <span class="n">previous</span> <span class="n">file</span> <span class="n">will</span> <span class="n">be</span> <span class="n">overwritten</span><span class="o">.</span>
+
+<span class="n">No</span> <span class="n">iterations</span> <span class="n">will</span> <span class="n">be</span> <span class="n">run</span><span class="o">.</span>
+<span class="n">Default</span> <span class="n">parameter</span> <span class="n">estimation</span> <span class="n">method</span> <span class="ow">is</span> <span class="n">used</span><span class="o">.</span>
+<span class="n">Parameter</span> <span class="n">estimation</span> <span class="n">method</span><span class="p">:</span>  <span class="n">pyomo</span>
+
+<span class="n">max_fraction_training_samples</span> <span class="nb">set</span> <span class="n">at</span>  <span class="mf">0.5</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">adaptive</span> <span class="n">samples</span> <span class="p">(</span><span class="n">no_adaptive_samples</span><span class="p">)</span> <span class="nb">set</span> <span class="n">at</span>  <span class="mi">4</span>
+<span class="n">Maximum</span> <span class="n">number</span> <span class="n">of</span> <span class="n">iterations</span> <span class="p">(</span><span class="n">Max_iter</span><span class="p">)</span> <span class="nb">set</span> <span class="n">at</span><span class="p">:</span>  <span class="mi">0</span>
+
+<span class="n">Initial</span> <span class="n">surrogate</span> <span class="n">model</span> <span class="ow">is</span> <span class="n">of</span> <span class="n">order</span> <span class="mi">1</span>  <span class="k">with</span> <span class="n">a</span> <span class="n">cross</span><span class="o">-</span><span class="n">val</span> <span class="n">error</span> <span class="n">of</span> <span class="mf">0.000000</span>
+<span class="n">Initial</span> <span class="n">Regression</span> <span class="n">Model</span> <span class="n">Performance</span><span class="p">:</span>
+<span class="n">Order</span><span class="p">:</span>  <span class="mi">1</span>  <span class="o">/</span> <span class="n">MAE</span><span class="p">:</span> <span class="mf">0.000000</span>  <span class="o">/</span> <span class="n">MSE</span><span class="p">:</span> <span class="mf">0.000000</span>  <span class="o">/</span> <span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="p">:</span> <span class="o">-</span><span class="mf">78385063692.159042</span>  <span class="o">/</span> <span class="n">Adjusted</span> <span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="p">:</span> <span class="mf">0.000000</span>
+
+<span class="n">Polynomial</span> <span class="n">regression</span> <span class="n">performs</span> <span class="n">poorly</span> <span class="k">for</span> <span class="n">this</span> <span class="n">dataset</span><span class="o">.</span>
+
+<span class="o">-------------------------------------------------</span>
+<span class="o">-------------------------------------------------</span>
+<span class="n">Best</span> <span class="n">solution</span> <span class="n">found</span><span class="p">:</span>
+<span class="n">Order</span><span class="p">:</span>  <span class="mi">1</span>  <span class="o">/</span> <span class="n">MAE</span><span class="p">:</span> <span class="mf">0.000000</span>  <span class="o">/</span> <span class="n">MSE</span><span class="p">:</span> <span class="mf">0.000000</span>  <span class="o">/</span> <span class="n">R_sq</span><span class="p">:</span> <span class="o">-</span><span class="mf">78385063692.159042</span>  <span class="o">/</span> <span class="n">Adjusted</span> <span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="p">:</span> <span class="mf">0.000000</span>
+
+<span class="o">------------------------------------------------------------</span>
+<span class="n">The</span> <span class="n">final</span> <span class="n">coefficients</span> <span class="n">of</span> <span class="n">the</span> <span class="n">regression</span> <span class="n">terms</span> <span class="n">are</span><span class="p">:</span>
+
+<span class="n">k</span>               <span class="o">|</span> <span class="o">-</span><span class="mf">0.0</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">1</span> <span class="p">)</span><span class="o">^</span> <span class="mi">1</span>      <span class="o">|</span> <span class="mf">0.0</span>
+<span class="p">(</span><span class="n">x_</span> <span class="mi">2</span> <span class="p">)</span><span class="o">^</span> <span class="mi">1</span>      <span class="o">|</span> <span class="mf">0.0</span>
+<span class="n">x_</span> <span class="mi">1</span> <span class="o">.</span><span class="n">x_</span> <span class="mi">2</span>      <span class="o">|</span> <span class="o">-</span><span class="mf">0.0</span>
+
+<span class="n">Results</span> <span class="n">saved</span> <span class="ow">in</span>  <span class="n">solution</span><span class="o">.</span><span class="n">pickle</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">runner</span><span class="o">/.</span><span class="n">conda</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">idaes</span><span class="o">-</span><span class="n">env</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.8</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">idaes</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">surrogate</span><span class="o">/</span><span class="n">pysmo</span><span class="o">/</span><span class="n">polynomial_regression</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">1401</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">Polynomial</span> <span class="n">regression</span> <span class="n">generates</span> <span class="n">poor</span> <span class="n">fit</span> <span class="k">for</span> <span class="n">the</span> <span class="n">dataset</span>
+  <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+</pre></div>
+</div>
+</section>
+<section id="visualizing-surrogates">
+<h2>3.3 Visualizing surrogates<a class="headerlink" href="#visualizing-surrogates" title="Permalink to this heading">¶</a></h2>
+<p>Now that the surrogate models have been trained, the models can be
+visualized through scatter, parity and residual plots to confirm their
+validity in the chosen domain. The training data will be visualized
+first to confirm the surrogates are fit the data, and then the
+validation data will be visualized to confirm the surrogates accurately
+predict new output values.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># visualize with IDAES surrogate plotting tools</span>
+<span class="n">surrogate_scatter2D</span><span class="p">(</span><span class="n">poly_surr</span><span class="p">,</span> <span class="n">data_training</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;pysmo_poly_train_scatter2D.pdf&#39;</span><span class="p">)</span>
+<span class="n">surrogate_parity</span><span class="p">(</span><span class="n">poly_surr</span><span class="p">,</span> <span class="n">data_training</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;pysmo_poly_train_parity.pdf&#39;</span><span class="p">)</span>
+<span class="n">surrogate_residual</span><span class="p">(</span><span class="n">poly_surr</span><span class="p">,</span> <span class="n">data_training</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;pysmo_poly_train_residual.pdf&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_15_02.png" src="../../../_images/output_15_02.png" />
+<img alt="../../../_images/output_15_1.png" src="../../../_images/output_15_1.png" />
+<img alt="../../../_images/output_15_2.png" src="../../../_images/output_15_2.png" />
+<img alt="../../../_images/output_15_3.png" src="../../../_images/output_15_3.png" />
+<img alt="../../../_images/output_15_4.png" src="../../../_images/output_15_4.png" />
+<img alt="../../../_images/output_15_5.png" src="../../../_images/output_15_5.png" />
+<img alt="../../../_images/output_15_6.png" src="../../../_images/output_15_6.png" />
+<img alt="../../../_images/output_15_7.png" src="../../../_images/output_15_7.png" />
+<img alt="../../../_images/output_15_8.png" src="../../../_images/output_15_8.png" />
+<img alt="../../../_images/output_15_9.png" src="../../../_images/output_15_9.png" />
+<img alt="../../../_images/output_15_10.png" src="../../../_images/output_15_10.png" />
+<img alt="../../../_images/output_15_11.png" src="../../../_images/output_15_11.png" />
+<img alt="../../../_images/output_15_12.png" src="../../../_images/output_15_12.png" />
+<img alt="../../../_images/output_15_13.png" src="../../../_images/output_15_13.png" />
+<img alt="../../../_images/output_15_14.png" src="../../../_images/output_15_14.png" />
+<img alt="../../../_images/output_15_15.png" src="../../../_images/output_15_15.png" />
+<img alt="../../../_images/output_15_16.png" src="../../../_images/output_15_16.png" />
+<img alt="../../../_images/output_15_17.png" src="../../../_images/output_15_17.png" />
+<img alt="../../../_images/output_15_18.png" src="../../../_images/output_15_18.png" />
+<img alt="../../../_images/output_15_19.png" src="../../../_images/output_15_19.png" />
+<img alt="../../../_images/output_15_20.png" src="../../../_images/output_15_20.png" />
+<img alt="../../../_images/output_15_21.png" src="../../../_images/output_15_21.png" />
+<img alt="../../../_images/output_15_22.png" src="../../../_images/output_15_22.png" />
+<img alt="../../../_images/output_15_23.png" src="../../../_images/output_15_23.png" />
+<img alt="../../../_images/output_15_24.png" src="../../../_images/output_15_24.png" />
+<img alt="../../../_images/output_15_25.png" src="../../../_images/output_15_25.png" />
+<img alt="../../../_images/output_15_26.png" src="../../../_images/output_15_26.png" />
+<img alt="../../../_images/output_15_27.png" src="../../../_images/output_15_27.png" />
+<img alt="../../../_images/output_15_28.png" src="../../../_images/output_15_28.png" />
+<img alt="../../../_images/output_15_29.png" src="../../../_images/output_15_29.png" />
+<img alt="../../../_images/output_15_30.png" src="../../../_images/output_15_30.png" />
+<img alt="../../../_images/output_15_31.png" src="../../../_images/output_15_31.png" />
+<img alt="../../../_images/output_15_32.png" src="../../../_images/output_15_32.png" />
+<img alt="../../../_images/output_15_33.png" src="../../../_images/output_15_33.png" />
+<img alt="../../../_images/output_15_34.png" src="../../../_images/output_15_34.png" />
+<img alt="../../../_images/output_15_35.png" src="../../../_images/output_15_35.png" />
+<img alt="../../../_images/output_15_36.png" src="../../../_images/output_15_36.png" />
+<img alt="../../../_images/output_15_37.png" src="../../../_images/output_15_37.png" />
+<img alt="../../../_images/output_15_38.png" src="../../../_images/output_15_38.png" />
+<img alt="../../../_images/output_15_39.png" src="../../../_images/output_15_39.png" />
+<img alt="../../../_images/output_15_40.png" src="../../../_images/output_15_40.png" />
+<img alt="../../../_images/output_15_41.png" src="../../../_images/output_15_41.png" />
+<img alt="../../../_images/output_15_42.png" src="../../../_images/output_15_42.png" />
+<img alt="../../../_images/output_15_43.png" src="../../../_images/output_15_43.png" />
+<img alt="../../../_images/output_15_44.png" src="../../../_images/output_15_44.png" />
+<img alt="../../../_images/output_15_45.png" src="../../../_images/output_15_45.png" />
+<img alt="../../../_images/output_15_46.png" src="../../../_images/output_15_46.png" />
+<img alt="../../../_images/output_15_47.png" src="../../../_images/output_15_47.png" />
+<img alt="../../../_images/output_15_48.png" src="../../../_images/output_15_48.png" />
+<img alt="../../../_images/output_15_49.png" src="../../../_images/output_15_49.png" />
+<img alt="../../../_images/output_15_50.png" src="../../../_images/output_15_50.png" />
+<img alt="../../../_images/output_15_51.png" src="../../../_images/output_15_51.png" />
+<img alt="../../../_images/output_15_52.png" src="../../../_images/output_15_52.png" />
+<img alt="../../../_images/output_15_53.png" src="../../../_images/output_15_53.png" />
+<img alt="../../../_images/output_15_54.png" src="../../../_images/output_15_54.png" />
+<img alt="../../../_images/output_15_55.png" src="../../../_images/output_15_55.png" />
+<img alt="../../../_images/output_15_56.png" src="../../../_images/output_15_56.png" />
+<img alt="../../../_images/output_15_57.png" src="../../../_images/output_15_57.png" />
+<img alt="../../../_images/output_15_58.png" src="../../../_images/output_15_58.png" />
+<img alt="../../../_images/output_15_59.png" src="../../../_images/output_15_59.png" />
+<img alt="../../../_images/output_15_60.png" src="../../../_images/output_15_60.png" />
+<img alt="../../../_images/output_15_61.png" src="../../../_images/output_15_61.png" />
+<img alt="../../../_images/output_15_62.png" src="../../../_images/output_15_62.png" />
+<img alt="../../../_images/output_15_63.png" src="../../../_images/output_15_63.png" />
+<img alt="../../../_images/output_15_64.png" src="../../../_images/output_15_64.png" />
+</section>
+<section id="model-validation">
+<h2>3.4 Model Validation<a class="headerlink" href="#model-validation" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># visualize with IDAES surrogate plotting tools</span>
+<span class="n">surrogate_scatter2D</span><span class="p">(</span><span class="n">poly_surr</span><span class="p">,</span> <span class="n">data_validation</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;pysmo_poly_val_scatter2D.pdf&#39;</span><span class="p">)</span>
+<span class="n">surrogate_parity</span><span class="p">(</span><span class="n">poly_surr</span><span class="p">,</span> <span class="n">data_validation</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;pysmo_poly_val_parity.pdf&#39;</span><span class="p">)</span>
+<span class="n">surrogate_residual</span><span class="p">(</span><span class="n">poly_surr</span><span class="p">,</span> <span class="n">data_validation</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;pysmo_poly_val_residual.pdf&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_17_02.png" src="../../../_images/output_17_02.png" />
+<img alt="../../../_images/output_17_1.png" src="../../../_images/output_17_1.png" />
+<img alt="../../../_images/output_17_2.png" src="../../../_images/output_17_2.png" />
+<img alt="../../../_images/output_17_3.png" src="../../../_images/output_17_3.png" />
+<img alt="../../../_images/output_17_4.png" src="../../../_images/output_17_4.png" />
+<img alt="../../../_images/output_17_5.png" src="../../../_images/output_17_5.png" />
+<img alt="../../../_images/output_17_6.png" src="../../../_images/output_17_6.png" />
+<img alt="../../../_images/output_17_7.png" src="../../../_images/output_17_7.png" />
+<img alt="../../../_images/output_17_8.png" src="../../../_images/output_17_8.png" />
+<img alt="../../../_images/output_17_9.png" src="../../../_images/output_17_9.png" />
+<img alt="../../../_images/output_17_10.png" src="../../../_images/output_17_10.png" />
+<img alt="../../../_images/output_17_11.png" src="../../../_images/output_17_11.png" />
+<img alt="../../../_images/output_17_12.png" src="../../../_images/output_17_12.png" />
+<img alt="../../../_images/output_17_13.png" src="../../../_images/output_17_13.png" />
+<img alt="../../../_images/output_17_14.png" src="../../../_images/output_17_14.png" />
+<img alt="../../../_images/output_17_15.png" src="../../../_images/output_17_15.png" />
+<img alt="../../../_images/output_17_16.png" src="../../../_images/output_17_16.png" />
+<img alt="../../../_images/output_17_17.png" src="../../../_images/output_17_17.png" />
+<img alt="../../../_images/output_17_18.png" src="../../../_images/output_17_18.png" />
+<img alt="../../../_images/output_17_19.png" src="../../../_images/output_17_19.png" />
+<img alt="../../../_images/output_17_20.png" src="../../../_images/output_17_20.png" />
+<img alt="../../../_images/output_17_21.png" src="../../../_images/output_17_21.png" />
+<img alt="../../../_images/output_17_22.png" src="../../../_images/output_17_22.png" />
+<img alt="../../../_images/output_17_23.png" src="../../../_images/output_17_23.png" />
+<img alt="../../../_images/output_17_24.png" src="../../../_images/output_17_24.png" />
+<img alt="../../../_images/output_17_25.png" src="../../../_images/output_17_25.png" />
+<img alt="../../../_images/output_17_26.png" src="../../../_images/output_17_26.png" />
+<img alt="../../../_images/output_17_27.png" src="../../../_images/output_17_27.png" />
+<img alt="../../../_images/output_17_28.png" src="../../../_images/output_17_28.png" />
+<img alt="../../../_images/output_17_29.png" src="../../../_images/output_17_29.png" />
+<img alt="../../../_images/output_17_30.png" src="../../../_images/output_17_30.png" />
+<img alt="../../../_images/output_17_31.png" src="../../../_images/output_17_31.png" />
+<img alt="../../../_images/output_17_32.png" src="../../../_images/output_17_32.png" />
+<img alt="../../../_images/output_17_33.png" src="../../../_images/output_17_33.png" />
+<img alt="../../../_images/output_17_34.png" src="../../../_images/output_17_34.png" />
+<img alt="../../../_images/output_17_35.png" src="../../../_images/output_17_35.png" />
+<img alt="../../../_images/output_17_36.png" src="../../../_images/output_17_36.png" />
+<img alt="../../../_images/output_17_37.png" src="../../../_images/output_17_37.png" />
+<img alt="../../../_images/output_17_38.png" src="../../../_images/output_17_38.png" />
+<img alt="../../../_images/output_17_39.png" src="../../../_images/output_17_39.png" />
+<img alt="../../../_images/output_17_40.png" src="../../../_images/output_17_40.png" />
+<img alt="../../../_images/output_17_41.png" src="../../../_images/output_17_41.png" />
+<img alt="../../../_images/output_17_42.png" src="../../../_images/output_17_42.png" />
+<img alt="../../../_images/output_17_43.png" src="../../../_images/output_17_43.png" />
+<img alt="../../../_images/output_17_44.png" src="../../../_images/output_17_44.png" />
+<img alt="../../../_images/output_17_45.png" src="../../../_images/output_17_45.png" />
+<img alt="../../../_images/output_17_46.png" src="../../../_images/output_17_46.png" />
+<img alt="../../../_images/output_17_47.png" src="../../../_images/output_17_47.png" />
+<img alt="../../../_images/output_17_48.png" src="../../../_images/output_17_48.png" />
+<img alt="../../../_images/output_17_49.png" src="../../../_images/output_17_49.png" />
+<img alt="../../../_images/output_17_50.png" src="../../../_images/output_17_50.png" />
+<img alt="../../../_images/output_17_51.png" src="../../../_images/output_17_51.png" />
+<img alt="../../../_images/output_17_52.png" src="../../../_images/output_17_52.png" />
+<img alt="../../../_images/output_17_53.png" src="../../../_images/output_17_53.png" />
+<img alt="../../../_images/output_17_54.png" src="../../../_images/output_17_54.png" />
+<img alt="../../../_images/output_17_55.png" src="../../../_images/output_17_55.png" />
+<img alt="../../../_images/output_17_56.png" src="../../../_images/output_17_56.png" />
+<img alt="../../../_images/output_17_57.png" src="../../../_images/output_17_57.png" />
+<img alt="../../../_images/output_17_58.png" src="../../../_images/output_17_58.png" />
+<img alt="../../../_images/output_17_59.png" src="../../../_images/output_17_59.png" />
+<img alt="../../../_images/output_17_60.png" src="../../../_images/output_17_60.png" />
+<img alt="../../../_images/output_17_61.png" src="../../../_images/output_17_61.png" />
+<img alt="../../../_images/output_17_62.png" src="../../../_images/output_17_62.png" />
+<img alt="../../../_images/output_17_63.png" src="../../../_images/output_17_63.png" />
+<img alt="../../../_images/output_17_64.png" src="../../../_images/output_17_64.png" />
+</section>
+</section>
+<section id="idaes-flowsheet-integration">
+<h1>4. IDAES Flowsheet Integration<a class="headerlink" href="#idaes-flowsheet-integration" title="Permalink to this heading">¶</a></h1>
+<section id="build-and-run-idaes-flowsheet">
+<h2>4.1 Build and Run IDAES Flowsheet<a class="headerlink" href="#build-and-run-idaes-flowsheet" title="Permalink to this heading">¶</a></h2>
+<p>Next, we will build an IDAES flowsheet and import the surrogate model
+object. Each output variable has a unique PySMO model expression, and
+the surrogate expressions may be added to the model via an indexed
+Constraint() component.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create the IDAES model and flowsheet</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># create flowsheet input variables</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">bypass_frac</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mf">0.80</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;natural gas bypass fraction&#39;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ng_steam_ratio</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mf">0.80</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;natural gas to steam ratio&#39;</span><span class="p">)</span>
+
+<span class="c1"># create flowsheet output variables</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">steam_flowrate</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;steam flowrate&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reformer_duty</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;reformer heat duty&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">AR</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;AR fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C2H6</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;C2H6 fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C3H8</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;C3H8 fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C4H10</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;C4H10 fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CH4</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;CH4 fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CO</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;CO fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CO2</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;CO2 fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H2</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;H2 fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H2O</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;H2O fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">N2</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;N2 fraction&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">O2</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;O2 fraction&quot;</span><span class="p">)</span>
+
+<span class="c1"># create input and output variable object lists for flowsheet</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">bypass_frac</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ng_steam_ratio</span><span class="p">]</span>
+<span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">steam_flowrate</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reformer_duty</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">AR</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C2H6</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C4H10</span><span class="p">,</span>
+           <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C3H8</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CH4</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CO</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CO2</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H2</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H2O</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">N2</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">O2</span><span class="p">]</span>
+
+<span class="c1"># create the Pyomo/IDAES block that corresponds to the surrogate</span>
+<span class="c1"># PySMO</span>
+
+<span class="c1"># capture long output (not required to use surrogate API)</span>
+<span class="n">stream</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+<span class="n">oldstdout</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">stream</span>
+
+<span class="n">surrogate</span> <span class="o">=</span> <span class="n">PysmoSurrogate</span><span class="o">.</span><span class="n">load_from_file</span><span class="p">(</span><span class="s1">&#39;pysmo_poly_surrogate.json&#39;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">surrogate</span> <span class="o">=</span> <span class="n">SurrogateBlock</span><span class="p">(</span><span class="n">concrete</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">build_model</span><span class="p">(</span><span class="n">surrogate</span><span class="p">,</span> <span class="n">input_vars</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="n">output_vars</span><span class="o">=</span><span class="n">outputs</span><span class="p">)</span>
+
+<span class="c1"># revert back to normal output capture - don&#39;t need to print PySMO load output</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">oldstdout</span>
+
+<span class="c1"># fix input values and solve flowsheet</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">bypass_frac</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ng_steam_ratio</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="p">[</span><span class="n">status_obj</span><span class="p">,</span> <span class="n">solved</span><span class="p">,</span> <span class="n">iters</span><span class="p">,</span> <span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">_run_ipopt_with_stats</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">solver</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">2022-12-07 19:14:35 [INFO] idaes.core.surrogate.pysmo_surrogate: Decode surrogate. type=poly
+Ipopt 3.13.2: output_file=/tmp/tmp93228_n1ipopt_out
+max_iter=500
+max_cpu_time=120
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       13
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Total number of variables............................:       13
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        0
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       13
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 1.11e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 0.00e+00 0.00e+00  -1.0 1.11e+04    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 1
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   0.0000000000000000e+00    0.0000000000000000e+00
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   0.0000000000000000e+00    0.0000000000000000e+00
+
+
+Number of objective function evaluations             = 2
+Number of objective gradient evaluations             = 2
+Number of equality constraint evaluations            = 2
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 2
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 1
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.</pre>
+<p>Let’s print some model results:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model status: &quot;</span><span class="p">,</span> <span class="n">status_obj</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solution optimal: &quot;</span><span class="p">,</span> <span class="n">solved</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IPOPT iterations: &quot;</span><span class="p">,</span> <span class="n">iters</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IPOPT runtime: &quot;</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Steam flowrate = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">steam_flowrate</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reformer duty = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reformer_duty</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction Ar = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">AR</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction C2H6 = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C2H6</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction C3H8 = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C3H8</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction C4H10 = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C4H10</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction CH4 = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CH4</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction CO = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CO</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction CO2 = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CO2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction H2 = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction H2O = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H2O</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction N2 = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">N2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Mole Fraction O2 = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">O2</span><span class="p">))</span>
+</pre></div>
+</div>
+<pre class="literal-block">Model status:
+Problem:
+- Lower bound: -inf
+  Upper bound: inf
+  Number of objectives: 1
+  Number of constraints: 13
+  Number of variables: 13
+  Sense: unknown
+Solver:
+- Status: ok
+  Message: Ipopt 3.13.2x3a Optimal Solution Found
+  Termination condition: optimal
+  Id: 0
+  Error rc: 0
+  Time: 0.015253543853759766
+Solution:
+- number of solutions: 0
+  number of solutions displayed: 0
+
+Solution optimal:  True
+IPOPT iterations:  1
+IPOPT runtime:  0.0
+
+Steam flowrate =  0.6059308500180416
+Reformer duty =  21069.338758897513
+Mole Fraction Ar =  0.0036777951495869797
+Mole Fraction C2H6 =  0.004188734466716755
+Mole Fraction C3H8 =  0.0005235920471653374
+Mole Fraction C4H10 =  0.0009162978191664117
+Mole Fraction CH4 =  0.1279030022903695
+Mole Fraction CO =  0.09689519863316157
+Mole Fraction CO2 =  0.046036504565874214
+Mole Fraction H2 =  0.29378502675279283
+Mole Fraction H2O =  0.11960788610331093
+Mole Fraction N2 =  0.3063161002302848
+Mole Fraction O2 =  -1.1796119636642288e-16</pre>
+</section>
+<section id="optimizing-the-autothermal-reformer">
+<h2>4.2 Optimizing the Autothermal Reformer<a class="headerlink" href="#optimizing-the-autothermal-reformer" title="Permalink to this heading">¶</a></h2>
+<p>Extending this example, we will unfix the input variables and optimize
+hydrogen production. We will restrict nitrogen below 34 mol% of the
+product stream and leave all other variables unfixed.</p>
+<p>Above, variable values are called in reference to actual objects names;
+however, as shown below this may be done much more compactly by calling
+the list objects we created earlier.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># unfix input values and add the objective/constraint to the model</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">bypass_frac</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ng_steam_ratio</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H2</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">maximize</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">con</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">N2</span> <span class="o">&lt;=</span> <span class="mf">0.34</span><span class="p">)</span>
+
+<span class="c1"># solve the model</span>
+<span class="n">tmr</span> <span class="o">=</span> <span class="n">TicTocTimer</span><span class="p">()</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">solve_time</span> <span class="o">=</span> <span class="n">tmr</span><span class="o">.</span><span class="n">toc</span><span class="p">(</span><span class="s1">&#39;solve&#39;</span><span class="p">)</span>
+
+<span class="c1"># print and check results</span>
+<span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H2</span><span class="p">)</span><span class="o">-</span><span class="mf">0.33</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">0.01</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">N2</span> <span class="o">&lt;=</span> <span class="mf">0.4</span><span class="o">+</span><span class="mf">1e-8</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Model status: &#39;</span><span class="p">,</span> <span class="n">status</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Solve time: &#39;</span><span class="p">,</span> <span class="n">solve_time</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       39
+Number of nonzeros in inequality constraint Jacobian.:        1
+Number of nonzeros in Lagrangian Hessian.............:        3
+
+Total number of variables............................:       15
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        2
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       13
+Total number of inequality constraints...............:        1
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        1
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0 -2.9378503e-01 2.79e-09 2.29e-02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1 -2.9577498e-01 1.26e+00 1.85e-03  -1.7 4.88e+02    -  1.00e+00 1.00e+00f  1
+   2 -3.1976218e-01 1.19e+02 9.87e-03  -2.5 6.04e+03    -  8.78e-01 1.00e+00h  1
+   3 -3.2537528e-01 1.22e+02 3.16e-03  -2.5 4.75e+03    -  1.00e+00 1.00e+00h  1
+   4 -3.2603034e-01 2.26e+01 3.49e-04  -2.5 1.88e+03    -  1.00e+00 1.00e+00h  1
+   5 -3.2607236e-01 1.21e-02 2.29e-06  -2.5 9.59e+01    -  1.00e+00 1.00e+00h  1
+   6 -3.3093990e-01 6.93e+01 4.92e-03  -3.8 3.84e+03    -  9.24e-01 1.00e+00h  1
+   7 -3.3152651e-01 4.50e+00 3.33e-03  -3.8 1.01e+03    -  1.00e+00 9.72e-01h  1
+   8 -3.3138329e-01 4.97e-01 1.56e-05  -3.8 2.98e+02    -  1.00e+00 1.00e+00f  1
+   9 -3.3167672e-01 1.11e-01 6.12e-04  -5.7 1.72e+02    -  1.00e+00 9.74e-01h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10 -3.3168579e-01 3.01e-04 1.25e-08  -5.7 1.19e+01    -  1.00e+00 1.00e+00h  1
+  11 -3.3168947e-01 3.25e-05 2.75e-09  -8.6 1.61e+00    -  1.00e+00 1.00e+00h  1
+  12 -3.3168947e-01 5.12e-09 2.50e-14  -8.6 2.60e-03    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 12
+
+                                   (scaled)                 (unscaled)
+Objective...............:  -3.3168947262124338e-01   -3.3168947262124338e-01
+Dual infeasibility......:   2.5035529205297280e-14    2.5035529205297280e-14
+Constraint violation....:   1.3605978081911161e-11    5.1222741603851318e-09
+Complementarity.........:   2.5059039702460055e-09    2.5059039702460055e-09
+Overall NLP error.......:   2.5059039702460055e-09    5.1222741603851318e-09
+
+
+Number of objective function evaluations             = 13
+Number of objective gradient evaluations             = 13
+Number of equality constraint evaluations            = 13
+Number of inequality constraint evaluations          = 13
+Number of equality constraint Jacobian evaluations   = 13
+Number of inequality constraint Jacobian evaluations = 13
+Number of Lagrangian Hessian evaluations             = 12
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+[+   0.02] solve
+Model status:
+Problem:
+- Lower bound: -inf
+  Upper bound: inf
+  Number of objectives: 1
+  Number of constraints: 14
+  Number of variables: 15
+  Sense: unknown
+Solver:
+- Status: ok
+  Message: Ipopt 3.13.2x3a Optimal Solution Found
+  Termination condition: optimal
+  Id: 0
+  Error rc: 0
+  Time: 0.014014005661010742
+Solution:
+- number of solutions: 0
+  number of solutions displayed: 0
+
+Solve time:  0.019793611019849777
+fs.bypass_frac :  0.10000005458314608
+fs.ng_steam_ratio :  1.1203602500040855
+fs.steam_flowrate :  1.221949435470257
+fs.reformer_duty :  39002.16376294012
+fs.AR :  0.004107205947822798
+fs.C2H6 :  0.0005274509770651401
+fs.C4H10 :  0.00011536919667914267
+fs.C3H8 :  6.593300230450314e-05
+fs.CH4 :  0.016446946120259903
+fs.CO :  0.10485472531790857
+fs.CO2 :  0.05352549628083596
+fs.H2 :  0.3316894726212434
+fs.H2O :  0.14886541752851465
+fs.N2 :  0.34000000431014926
+fs.O2 :  3.0086381992513586e-15</pre>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Air separation case study &mdash; IDAES v1.12.0 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Air separation case study</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/Advanced/CustomProperties/air_separation_case_study.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="air-separation-case-study">
+<h1>Air separation case study<a class="headerlink" href="#air-separation-case-study" title="Permalink to this headline">¶</a></h1>
+<section id="introduction">
+<h2>1. Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This Jupyter Notebook develops and validates property packages for air
+separation units (N2, O2, Ar mixture). Two different databases have been
+used for comparison and validation purposes, 1) The Properties of Gasses
+and Liquids, 4th Ed. (1987); 2) Dowling et al., 2015, a mix of the
+Properties of Gasses and Liquids 3rd Ed. and NIST webbook. To
+demonstrate the successful implementation of the property package for
+separation purposes, we will study a flash unit, representing a tray
+inside an air separation unit. Using the flash case study, we will
+perform three simulations in the 2-phase region, vapor region, and
+liquid region. These simulations will validate the parameter database
+with thermodynamically consistent phase equilibria calculations for a
+range of conditions. Additionally, a sensitivity study is performed over
+the influence of temperature in the vapor-liquid split.</p>
+<section id="tutorial-objectives">
+<h3>1.1 Tutorial objectives<a class="headerlink" href="#tutorial-objectives" title="Permalink to this headline">¶</a></h3>
+<p>The goals of this tutorial are:</p>
+<ul class="simple">
+<li><p>Utilize the mixer and flash unit models.</p></li>
+<li><p>Utilize the Generic Property Package, which provides a flexible
+platform for users to build property packages by calling upon
+libraries of modular sub-models to build up complex property
+calculations with the least effort possible.</p></li>
+<li><p>Demonstrate the manual initialization approach, including the use of
+the propagate_state method in idaes/core/util/initialization</p></li>
+<li><p>Fix state variables for different conditions and initialize and solve
+the flowsheet for these conditions.</p></li>
+<li><p>Demonstrate the sensitivity of the two-phase flash solution to
+parameter values and the importance of getting good values for these.</p></li>
+<li><p>Create sensitivity analysis and create a plot from the results</p></li>
+<li><p>Create two different flowsheet models in the same notebook with two
+different parameter blocks.</p></li>
+</ul>
+</section>
+</section>
+<section id="problem-statement">
+<h2>2. Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this headline">¶</a></h2>
+<p>Figure 1 shows the process flowsheet that we will be using for this
+module. We will mix three streams of a mixture of nitrogen, oxygen, and
+nitrogen. The compositions of the streams were extracted from <em>A
+framework for efficient large scale equation-oriented flowsheet
+optimization</em>, Alexander W. Dowling and Lorenz T. Biegler, 2014</p>
+<p><img alt="image0" src="../../../_images/Air_flash.png" /></p>
+<p>The flash unit model, F101, represents the top tray of a low-pressure
+column. The stream LowP_1 is the feed of vapor stream from the
+low-pressure column, while the streams HighP_1 and HighP_2 are the
+recycle streams coming from the high-pressure column. We will utilize
+the Peng-Robinson equation of state for this flowsheet. The property
+package required for this module is available in the property example
+directory:</p>
+<ul class="simple">
+<li><p>idaes:raw-latex:<cite>generic</cite>_models:raw-latex:<cite>properties</cite><a href="#id1"><span class="problematic" id="id2">:raw-latex:`\core`</span></a><a href="#id3"><span class="problematic" id="id4">:raw-latex:`\examples`</span></a><a href="#id5"><span class="problematic" id="id6">:raw-latex:`\ASU`</span></a>_PR.py</p></li>
+</ul>
+<p>The state variables chosen for the property package are <strong>component mole
+fractions (mole_frac_comp), molar flow (flow_mol), temperature
+(temperature), and pressure (pressure)</strong>. The components considered are
+<strong>nitrogen, oxygen, and argon</strong>.</p>
+<p>In this example, we will simulate the following cases:</p>
+<ul class="simple">
+<li><p>Case 1: Adiabatic flash unit calculation in the 2-phase region.</p></li>
+<li><p>Case 2: Flash unit calculation in the vapor region.</p></li>
+<li><p>Case 3: Flash unit calculation in the liquid region.</p></li>
+<li><p>Sensitivity Analysis 1: Vapor-liquid split with respect to
+temperature</p></li>
+<li><p>Sensitivity Analysis 2: Thermodynamic models and parameters.</p></li>
+</ul>
+</section>
+<section id="setting-up-the-problem-in-idaes">
+<h2>2.1 Setting up the problem in IDAES<a class="headerlink" href="#setting-up-the-problem-in-idaes" title="Permalink to this headline">¶</a></h2>
+<p>In the next cell, we will be importing the necessary components from
+Pyomo and IDAES.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import objects from pyomo package</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ConcreteModel</span><span class="p">,</span>
+                           <span class="n">SolverFactory</span><span class="p">,</span>
+                           <span class="n">TransformationFactory</span><span class="p">,</span>
+                           <span class="n">value</span><span class="p">,</span>
+                           <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">pyomo.network</span> <span class="kn">import</span> <span class="n">Arc</span>
+
+<span class="kn">from</span> <span class="nn">idaes.core.util.initialization</span> <span class="kn">import</span> <span class="n">propagate_state</span>
+
+<span class="c1"># Import plotting functions</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="c1"># Import numpy library</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+
+<span class="c1"># Import idaes logger to set output levels</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+
+<span class="c1"># Import the degrees_of_freedom function from the idaes.core.util.model_statistics package</span>
+<span class="c1"># DOF = Number of Model Variables - Number of Model Constraints</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+
+<span class="c1"># Import scaling module</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util.scaling</span> <span class="k">as</span> <span class="nn">iscale</span>
+<span class="n">idaeslog</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;idaes.core.util.scaling&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+
+<span class="c1"># Import the Generic Parameter Block</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.generic.generic_property</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">GenericParameterBlock</span><span class="p">)</span>
+
+<span class="c1"># Add properties parameter blocks to the flowsheet with specifications</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.examples.ASU_PR</span> <span class="kn">import</span> <span class="n">configuration</span> <span class="k">as</span> <span class="n">configuration_1</span>
+
+<span class="c1"># Import unit models from the model library</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.unit_models</span> <span class="kn">import</span> <span class="n">Mixer</span><span class="p">,</span> <span class="n">Flash</span>
+</pre></div>
+</div>
+<section id="building-the-flowsheet">
+<h3>2.1 Building the flowsheet<a class="headerlink" href="#building-the-flowsheet" title="Permalink to this headline">¶</a></h3>
+<p>In the next cell, we will first create a model and attach a flowsheet to
+it. We then introduce the unit models and connect them through an arc
+and analyze the degrees of freedom of the flowsheet and how many
+variables we need to fix.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the ConcreteModel and the FlowsheetBlock, and attach the flowsheet block to it.</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+
+<span class="c1"># Add properties parameter blocks to the flowsheet with specifications</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">props</span> <span class="o">=</span> <span class="n">GenericParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">configuration_1</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span> <span class="o">=</span> <span class="n">Mixer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">props</span><span class="p">,</span>
+                           <span class="s2">&quot;inlet_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;LowP_1&quot;</span><span class="p">,</span><span class="s2">&quot;HighP_1&quot;</span><span class="p">,</span><span class="s2">&quot;HighP_2&quot;</span><span class="p">]})</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span> <span class="o">=</span> <span class="n">Flash</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">props</span><span class="p">,</span>
+                           <span class="s2">&quot;has_heat_transfer&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                           <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+
+<span class="c1"># Create streams to define connectivity between unit models</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+
+<span class="c1"># Expand arcs</span>
+<span class="n">TransformationFactory</span><span class="p">(</span><span class="s2">&quot;network.expand_arcs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+<span class="c1"># Apply scaling factors</span>
+<span class="n">iscale</span><span class="o">.</span><span class="n">calculate_scaling_factors</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+<span class="c1"># Call the degrees_of_freedom function, get intitial DOF</span>
+<span class="n">DOF_initial</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;The initial DOF is </span><span class="si">{</span><span class="n">DOF_initial</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">initial</span> <span class="n">DOF</span> <span class="ow">is</span> <span class="mi">20</span>
+</pre></div>
+</div>
+</section>
+<section id="create-solver-object">
+<h3>2.2 Create solver object<a class="headerlink" href="#create-solver-object" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Solve the simulation using ipopt</span>
+<span class="c1"># Note: If the degrees of freedom = 0, we have a square problem</span>
+<span class="n">ipopt</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;bound_push&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-06</span>
+<span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;mu_init&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-06</span>
+<span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;tol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-06</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="case-1-flash-unit-calculation-in-the-2-phase-region">
+<h2>3 Case 1: Flash unit calculation in the 2-phase region.<a class="headerlink" href="#case-1-flash-unit-calculation-in-the-2-phase-region" title="Permalink to this headline">¶</a></h2>
+<p>For this tutorial, we will solve a series of case studies by changing
+the temperature and heat duty to evaluate the temperature’s importance
+and the difference in the vapor fraction of the flash column.</p>
+</section>
+<section id="fix-initial-conditions">
+<h2>3.1 Fix initial conditions<a class="headerlink" href="#fix-initial-conditions" title="Permalink to this headline">¶</a></h2>
+<p>The streams’ compositions were extracted from <em>A framework for efficient
+large scale equation-oriented flowsheet optimization</em>, Alexander W.
+Dowling and Lorenz T. Biegler, 2014. The streams’ temperature was fixed
+to match a 2-phase region with a heat duty of the Flash = 0.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.9814</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0106</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0080</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1.4667</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">77.430</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101000</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.9942</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0014</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0043</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0486</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">84.0070</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">204630</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.9832</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0032</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0135</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.7134</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">84.0070</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">204630</span><span class="p">)</span>
+
+<span class="c1"># Fix unit models operating conditions</span>
+<span class="c1"># Fix F101 Flash outlet temperature</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;The final DOF is </span><span class="si">{</span><span class="n">DOF_final</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">DOF</span> <span class="ow">is</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">DOF_final</span> <span class="o">==</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<section id="flowsheet-initialization">
+<h3>3.2 Flowsheet Initialization<a class="headerlink" href="#flowsheet-initialization" title="Permalink to this headline">¶</a></h3>
+<p>IDAES includes pre-written initialization routines for all unit models.
+We will initialize the units in order using the propagate_state method
+in idaes/core/util/initialization. This method propagates values between
+Ports along Arcs. We will propagate the values between the mixer M101
+and the flash unit F101 along the stream S01.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="run-simulation">
+<h3>3.3 Run Simulation<a class="headerlink" href="#run-simulation" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">ipopt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: bound_push=1e-06
+mu_init=1e-06
+tol=1e-06
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     1023
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      533
+
+Total number of variables............................:      231
+                     variables with only lower bounds:       48
+                variables with lower and upper bounds:      132
+                     variables with only upper bounds:       36
+Total number of equality constraints.................:      231
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 5.24e-07 1.00e+00  -6.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   5.2401271055657619e-08    5.2401271055657617e-07
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   5.2401271055657619e-08    5.2401271055657617e-07
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 1
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 1
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.031
+Total CPU secs in NLP function evaluations           =      0.013
+
+EXIT: Optimal Solution Found.</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.opt</span> <span class="kn">import</span> <span class="n">TerminationCondition</span><span class="p">,</span> <span class="n">SolverStatus</span>
+
+<span class="c1"># Check if termination condition is optimal</span>
+<span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span>
+<span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SolverStatus</span><span class="o">.</span><span class="n">ok</span>
+</pre></div>
+</div>
+</section>
+<section id="results">
+<h3>3.4 Results<a class="headerlink" href="#results" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display output report</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">F101</span>                                                             <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>             <span class="p">:</span> <span class="n">Value</span>  <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+          <span class="n">Heat</span> <span class="n">Duty</span> <span class="p">:</span> <span class="mf">0.0000</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Pressure</span> <span class="n">Change</span> <span class="p">:</span> <span class="mf">0.0000</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                               <span class="n">Inlet</span>    <span class="n">Vapor</span> <span class="n">Outlet</span>  <span class="n">Liquid</span> <span class="n">Outlet</span>
+    <span class="n">flow_mol</span>                    <span class="mf">2.2286</span>       <span class="mf">1.6029</span>       <span class="mf">0.62575</span>
+    <span class="n">mole_frac_comp</span> <span class="n">nitrogen</span>    <span class="mf">0.98229</span>      <span class="mf">0.98901</span>       <span class="mf">0.96508</span>
+    <span class="n">mole_frac_comp</span> <span class="n">argon</span>     <span class="mf">0.0080309</span>    <span class="mf">0.0055854</span>      <span class="mf">0.014295</span>
+    <span class="n">mole_frac_comp</span> <span class="n">oxygen</span>    <span class="mf">0.0096802</span>    <span class="mf">0.0054079</span>      <span class="mf">0.020624</span>
+    <span class="n">temperature</span>                 <span class="mf">77.431</span>       <span class="mf">77.431</span>        <span class="mf">77.431</span>
+    <span class="n">pressure</span>                <span class="mf">1.0100e+05</span>   <span class="mf">1.0100e+05</span>    <span class="mf">1.0100e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+<p>As we can see from the Flash report with a Heat Duty = 0, we have a
+liquid outlet of 0.626 and a vapor outlet of 1.603. This results in a
+vapor fraction of 0.72, which was expected.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytest</span>
+
+<span class="c1"># Check results</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-1</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.63350</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.96525</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.014242</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.020512</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">77.430</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">101000</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.5951</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.98906</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0055642</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0053782</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">77.430</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">101000</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="case-2-flash-unit-calculation-in-the-vapor-region">
+<h2>4. Case 2: Flash unit calculation in the vapor region.<a class="headerlink" href="#case-2-flash-unit-calculation-in-the-vapor-region" title="Permalink to this headline">¶</a></h2>
+<section id="id7">
+<h3>4.1 Fix initial conditions<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>We unfix the heat duty and fix the flash outlet to a temperature where
+we estimate we will only obtain vapor as the outlet.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">80</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h3>4.2 Flowsheet Initialization<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id9">
+<h3>4.3 Run Simulation<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">ipopt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id10">
+<h3>4.4 Results<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display output report</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">F101</span>                                                             <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>             <span class="p">:</span> <span class="n">Value</span>  <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+          <span class="n">Heat</span> <span class="n">Duty</span> <span class="p">:</span> <span class="mf">3668.5</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Pressure</span> <span class="n">Change</span> <span class="p">:</span> <span class="mf">0.0000</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                               <span class="n">Inlet</span>    <span class="n">Vapor</span> <span class="n">Outlet</span>  <span class="n">Liquid</span> <span class="n">Outlet</span>
+    <span class="n">flow_mol</span>                    <span class="mf">2.2286</span>       <span class="mf">2.2286</span>    <span class="mf">6.8287e-08</span>
+    <span class="n">mole_frac_comp</span> <span class="n">nitrogen</span>    <span class="mf">0.98229</span>      <span class="mf">0.98229</span>       <span class="mf">0.94329</span>
+    <span class="n">mole_frac_comp</span> <span class="n">argon</span>     <span class="mf">0.0080309</span>    <span class="mf">0.0080309</span>      <span class="mf">0.020284</span>
+    <span class="n">mole_frac_comp</span> <span class="n">oxygen</span>    <span class="mf">0.0096802</span>    <span class="mf">0.0096802</span>      <span class="mf">0.036422</span>
+    <span class="n">temperature</span>                 <span class="mf">77.431</span>       <span class="mf">80.000</span>        <span class="mf">80.000</span>
+    <span class="n">pressure</span>                <span class="mf">1.0100e+05</span>   <span class="mf">1.0100e+05</span>    <span class="mf">1.0100e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+<p>As expected the outlet of the flash is vapor phase only.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Check if termination condition is optimal</span>
+<span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span>
+<span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SolverStatus</span><span class="o">.</span><span class="n">ok</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check results</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">3668.5</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e1</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">2.2286</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.98229</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0080309</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0096802</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">80.000</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">101000</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="case-3-flash-unit-calculation-in-the-liquid-region">
+<h2>5 Case 3: Flash unit calculation in the liquid region.<a class="headerlink" href="#case-3-flash-unit-calculation-in-the-liquid-region" title="Permalink to this headline">¶</a></h2>
+<section id="id11">
+<h3>5.1 Fix initial conditions<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>We now fix the flash outlet to a temperature where we estimate we will
+only obtain liquid as the outlet</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">74.001</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id12">
+<h3>5.2 Flowsheet Initialization<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id13">
+<h3>5.3 Run Simulation<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">ipopt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id14">
+<h3>5.4 Results<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display output report</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">F101</span>                                                             <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>             <span class="p">:</span> <span class="n">Value</span>   <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+          <span class="n">Heat</span> <span class="n">Duty</span> <span class="p">:</span> <span class="o">-</span><span class="mf">9307.5</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Pressure</span> <span class="n">Change</span> <span class="p">:</span>  <span class="mf">0.0000</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                               <span class="n">Inlet</span>    <span class="n">Vapor</span> <span class="n">Outlet</span>  <span class="n">Liquid</span> <span class="n">Outlet</span>
+    <span class="n">flow_mol</span>                    <span class="mf">2.2286</span>   <span class="mf">0.00021439</span>        <span class="mf">2.2284</span>
+    <span class="n">mole_frac_comp</span> <span class="n">nitrogen</span>    <span class="mf">0.98229</span>      <span class="mf">0.99438</span>       <span class="mf">0.98229</span>
+    <span class="n">mole_frac_comp</span> <span class="n">argon</span>     <span class="mf">0.0080309</span>    <span class="mf">0.0031074</span>     <span class="mf">0.0080314</span>
+    <span class="n">mole_frac_comp</span> <span class="n">oxygen</span>    <span class="mf">0.0096802</span>    <span class="mf">0.0025123</span>     <span class="mf">0.0096809</span>
+    <span class="n">temperature</span>                 <span class="mf">77.431</span>       <span class="mf">74.001</span>        <span class="mf">74.001</span>
+    <span class="n">pressure</span>                <span class="mf">1.0100e+05</span>   <span class="mf">1.0100e+05</span>    <span class="mf">1.0100e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+<p>As expected the outlet of the flash is liquid phase only.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check if termination condition is optimal</span>
+<span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span>
+<span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SolverStatus</span><span class="o">.</span><span class="n">ok</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#### Check results</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="o">-</span><span class="mf">9307.</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e1</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">2.2285</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.98229</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span> <span class="mf">0.00803</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0096805</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">74.000</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">101000</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.000</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="sensitivity-analysis-1-vapor-liquid-split-with-respect-to-temperature">
+<h2>6 Sensitivity Analysis 1: Vapor-liquid split with respect to temperature<a class="headerlink" href="#sensitivity-analysis-1-vapor-liquid-split-with-respect-to-temperature" title="Permalink to this headline">¶</a></h2>
+<p>The property example contains two dictionaries: * configuration 1:
+contains parameters obtained from The Properties of Gases and Liquids
+(1987) 4th edition and NIST. * configuration 2: contains parameters
+used in A framework for efficient large scale equation-oriented
+flowsheet optimization (2015) Dowling. The parameters are extracted from
+Properties of Gases and Liquids (1977) 3rd edition for Antoine’s vapor
+equation and acentric factors and converted values from the Properties
+of Gases and Liquids (1977) 3rd edition</p>
+</section>
+<section id="id15">
+<h2>6.1 Fix initial conditions<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
+<p>We will first fix a temperature close to the temperature of the
+sensitivity analysis’s start and initialize the model.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">77.01</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="id16">
+<h3>6.2 Flowsheet Initialization<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id17">
+<h3>6.3 Run Simulation<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<p>We will run a few cases with different parameter values and look at the
+effect on the vapour fraction as a function of T.. For the sensitivity
+analysis, we will create a vector of temperatures, solve the model, and
+store the vapor fraction. The user can make decisions on what values to
+store depending on the variable or variables to study.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">77.01</span><span class="p">,</span> <span class="mi">78</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span>
+<span class="n">x1</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="c1"># solve the model</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">ipopt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Case: &#39;</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39; Optimal. Temp = </span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="s1">&#39; K&#39;</span><span class="p">)</span>
+        <span class="n">x1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Case: &#39;</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39; Failed to solve. Temp = </span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="s1">&#39; K&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Case</span><span class="p">:</span>  <span class="mi">1</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.01</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">2</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.06</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">3</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.12</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">4</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.18</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">5</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.23</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">6</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.28</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">7</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.34</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">8</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.40</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">9</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.45</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">10</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.50</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">11</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.56</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">12</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.62</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">13</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.67</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">14</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.72</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">15</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.78</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">16</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.84</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">17</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.89</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">18</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.94</span>  <span class="n">K</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">19</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">78.00</span>  <span class="n">K</span>
+</pre></div>
+</div>
+</section>
+<section id="id18">
+<h3>6.4 Results<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;configuration_1 parameter dictionary&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature (K)&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Vapor fraction&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;xtick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;ytick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Sensitivity Analysis 1: Temperature vs. Vapor fraction&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_54_0.png" src="../../../_images/output_54_0.png" />
+<p>With the results obtained, we can now set the flash’s temperature to get
+an outlet with a specific desired vapor-liquid split. We will use this
+data later after we have some other results to compare it to.</p>
+</section>
+</section>
+<section id="sensitivity-analysis-2-thermodynamic-models-and-parameters">
+<h2>7. Sensitivity Analysis 2: Thermodynamic models and parameters.<a class="headerlink" href="#sensitivity-analysis-2-thermodynamic-models-and-parameters" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="building-a-second-flowsheet">
+<h2>7.1 Building a second flowsheet<a class="headerlink" href="#building-a-second-flowsheet" title="Permalink to this headline">¶</a></h2>
+<p>Create a second model utilizing parameters and equations from <em>A
+framework for efficient large scale equation-oriented flowsheet
+optimization</em> (2015) Dowling. We need to import the parameter block
+dictionary <strong>configuration_Dowling_2015</strong> and create a flowsheet as we
+did in the example above. We will utilize the same flowsheet
+configuration.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.examples.ASU_PR</span> <span class="kn">import</span> <span class="n">configuration_Dowling_2015</span> <span class="k">as</span> <span class="n">configuration_2</span>
+
+<span class="n">m1</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">props</span> <span class="o">=</span> <span class="n">GenericParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">configuration_2</span><span class="p">)</span>
+
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span> <span class="o">=</span> <span class="n">Mixer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">props</span><span class="p">,</span>
+                           <span class="s2">&quot;inlet_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;LowP_1&quot;</span><span class="p">,</span><span class="s2">&quot;HighP_1&quot;</span><span class="p">,</span><span class="s2">&quot;HighP_2&quot;</span><span class="p">]})</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span> <span class="o">=</span> <span class="n">Flash</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">props</span><span class="p">,</span>
+                           <span class="s2">&quot;has_heat_transfer&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                           <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+
+<span class="n">TransformationFactory</span><span class="p">(</span><span class="s2">&quot;network.expand_arcs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="n">m1</span><span class="p">)</span>
+
+<span class="n">iscale</span><span class="o">.</span><span class="n">calculate_scaling_factors</span><span class="p">(</span><span class="n">m1</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id19">
+<h2>7.2 Fix initial conditions<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h2>
+<p>The compositions of the streams were extracted from <em>A framework for
+efficient large scale equation-oriented flowsheet optimization</em>,
+Alexander W. Dowling and Lorenz T. Biegler, 2014. The temperature of the
+streams was fixed to match a 2-phase region with a heat duty of the
+Flash = 0.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.9814</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0106</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0080</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1.4667</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">77.6601</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">LowP_1</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101000</span><span class="p">)</span>
+
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.9942</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0014</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0043</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0486</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">84.0070</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_1</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">204630</span><span class="p">)</span>
+
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.9832</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0032</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.0135</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.7134</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">84.0070</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">HighP_2</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">204630</span><span class="p">)</span>
+
+<span class="c1"># Fix unit models operating conditions</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;The final DOF is </span><span class="si">{</span><span class="n">DOF_final</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">DOF</span> <span class="ow">is</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<section id="id20">
+<h3>7.3 Flowsheet Initialization<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<p>The flowsheet is now complete, and we have a square problem (degrees of
+freedom = 0). We now initialize and solve adiabatic the model at the
+temperature stated in the paper.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="run-simulation-of-adiabatic-flash-unit-calculation-in-the-2-phase-region">
+<h3>7.4 Run Simulation of adiabatic flash unit calculation in the 2-phase region.<a class="headerlink" href="#run-simulation-of-adiabatic-flash-unit-calculation-in-the-2-phase-region" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">ipopt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check results</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e1</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.61582</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.96535</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.014167</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.020480</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">77.535</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">101000</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.6128</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.98875</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;argon&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0056891</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;oxygen&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0055588</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">77.535</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">101000</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="results-of-adiabatic-flash-unit-calculation-in-the-2-phase-region">
+<h3>7.5 Results of adiabatic flash unit calculation in the 2-phase region.<a class="headerlink" href="#results-of-adiabatic-flash-unit-calculation-in-the-2-phase-region" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display output report</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">F101</span>                                                             <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>             <span class="p">:</span> <span class="n">Value</span>  <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+          <span class="n">Heat</span> <span class="n">Duty</span> <span class="p">:</span> <span class="mf">0.0000</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Pressure</span> <span class="n">Change</span> <span class="p">:</span> <span class="mf">0.0000</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                               <span class="n">Inlet</span>    <span class="n">Vapor</span> <span class="n">Outlet</span>  <span class="n">Liquid</span> <span class="n">Outlet</span>
+    <span class="n">flow_mol</span>                    <span class="mf">2.2286</span>       <span class="mf">1.6132</span>       <span class="mf">0.61538</span>
+    <span class="n">mole_frac_comp</span> <span class="n">nitrogen</span>    <span class="mf">0.98229</span>      <span class="mf">0.98875</span>       <span class="mf">0.96535</span>
+    <span class="n">mole_frac_comp</span> <span class="n">argon</span>     <span class="mf">0.0080309</span>    <span class="mf">0.0056897</span>      <span class="mf">0.014169</span>
+    <span class="n">mole_frac_comp</span> <span class="n">oxygen</span>    <span class="mf">0.0096802</span>    <span class="mf">0.0055595</span>      <span class="mf">0.020483</span>
+    <span class="n">temperature</span>                 <span class="mf">77.535</span>       <span class="mf">77.535</span>        <span class="mf">77.535</span>
+    <span class="n">pressure</span>                <span class="mf">1.0100e+05</span>   <span class="mf">1.0100e+05</span>    <span class="mf">1.0100e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+<p>As we can see from the Flash report with a Heat Duty = 0, we have a
+liquid outlet of 0.615 and a vapor outlet of 1.613. This results in a
+vapor fraction of 0.724. However, the temperature of our two models is
+different. We will create two python variables to store the vapor flow
+and temperature results, which we will use on the plot.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">T_paper</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">x_paper</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="flowsheet-initialization-for-sensitivity-analysis">
+<h3>7.6 Flowsheet Initialization for sensitivity analysis<a class="headerlink" href="#flowsheet-initialization-for-sensitivity-analysis" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">77.01</span><span class="p">)</span>
+
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span><span class="p">)</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_LOW</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id21">
+<h3>7.7 Run Simulation<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">77.01</span><span class="p">,</span> <span class="mi">78</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span>
+<span class="n">x2</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+    <span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="c1"># solve the model</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">ipopt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Case: &#39;</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39; Optimal. Temp = </span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s1">&#39; K&#39;</span><span class="p">))</span>
+        <span class="n">x2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">m1</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Case: &#39;</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span><span class="s1">&#39; Failed to solve. Temp = </span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s1">&#39; K&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Case</span><span class="p">:</span>  <span class="mi">1</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.01</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">2</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.06</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">3</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.12</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">4</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.18</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">5</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.23</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">6</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.28</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">7</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.34</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">8</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.40</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">9</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.45</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">10</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.50</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">11</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.56</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">12</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.62</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">13</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.67</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">14</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.72</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">15</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.78</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">16</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.84</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">17</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.89</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">18</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">77.94</span>
+<span class="n">Case</span><span class="p">:</span>  <span class="mi">19</span>  <span class="n">Optimal</span><span class="o">.</span> <span class="n">Temp</span> <span class="o">=</span> <span class="mf">78.00</span>
+</pre></div>
+</div>
+</section>
+<section id="id22">
+<h3>7.8 Results<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
+<p>Now we will plot the results</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;configuration_1 parameter dictionary&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;configuration_2 parameter dictionary&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">T_paper</span><span class="p">,</span> <span class="n">x_paper</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;A framework for efficient large scale equation-oriented flowsheet optimization&quot;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature (K)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Vapor fraction&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;xtick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;ytick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Temperature vs. Vapor fraction&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_75_0.png" src="../../../_images/output_75_0.png" />
+<p>From the plot, we can note the influence the thermodynamic equations and
+coefficients have. We can observe that a 0.2 K difference may account
+for a 0 to a 0.6 vapor fraction difference.</p>
+<p>More often than not, as users, we do not identify the thermodynamics and
+parameters used in equations used to solve problems. In this case, we
+may not have looked at the parameter values to realize what changed. We
+want to mention and note how significant the effect of the property
+package is. When creating parameter blocks, the parameter values are
+fitted to specific data ranges, and users should be check to see if the
+data used covers the range of interest. Users can (and often should) fit
+their parameters wherever possible, focusing on the range of interest
+conditions of an individual problem.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

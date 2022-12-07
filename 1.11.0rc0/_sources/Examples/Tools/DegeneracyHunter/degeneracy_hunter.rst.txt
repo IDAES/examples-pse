@@ -1,0 +1,1239 @@
+Degeneracy Hunter Examples
+==========================
+
+Created by Prof. Alex Dowling (adowling@nd.edu) at the University of
+Notre Dame.
+
+This notebook shows how to use the following Degeneracy Hunter features
+using two motivating examples: \* Inspect constraint violations and
+bounds of a Pyomo model \* Compute the Irreducible Degenerate Set (IDS)
+for a Pyomo model \* Demonstrates the Ipopt performance benefits from
+removing a single redundant constraint
+
+Setup
+-----
+
+We start by importing Pyomo and Degeneracy Hunter.
+
+.. code:: ipython3
+
+    import pyomo.environ as pyo
+    
+    from idaes.core.util.model_diagnostics import DegeneracyHunter
+
+Example 1: Well-Behaved Nonlinear Program
+-----------------------------------------
+
+Consider the following “well-behaved” nonlinear optimization problem.
+
+.. math::
+
+   \begin{align*} \min_{\mathbf{x}} \quad & \sum_{i=\{0,...,4\}} x_i^2\\
+   \mathrm{s.t.} \quad & x_0 + x_1 - x_3 \geq 10 \\
+   & x_0 \times x_3 + x_1 \geq 0 \\
+   & x_4 \times x_3 + x_0 \times x_3 + x_4 = 0
+   \end{align*} 
+
+This problem is feasible, well-initialized, and standard constraint
+qualifications hold. As expected, we have no trouble solving this
+problem.
+
+Define the model in Pyomo
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We start by defining the optimization problem in Pyomo.
+
+.. code:: ipython3
+
+    m = pyo.ConcreteModel()
+    
+    m.I = pyo.Set(initialize=[i for i in range(5)])
+    
+    m.x = pyo.Var(m.I,bounds=(-10,10),initialize=1.0)
+    
+    m.con1 = pyo.Constraint(expr=m.x[0] + m.x[1] - m.x[3] >= 10)
+    m.con2 = pyo.Constraint(expr=m.x[0]*m.x[3] + m.x[1] >= 0)
+    m.con3 = pyo.Constraint(expr=m.x[4]*m.x[3] + m.x[0]*m.x[3] - m.x[4] == 0)
+    
+    m.obj = pyo.Objective(expr=sum(m.x[i]**2 for i in m.I))
+    
+    m.pprint()
+
+
+.. parsed-literal::
+
+    1 Set Declarations
+        I : Size=1, Index=None, Ordered=Insertion
+            Key  : Dimen : Domain : Size : Members
+            None :     1 :    Any :    5 : {0, 1, 2, 3, 4}
+    
+    1 Var Declarations
+        x : Size=5, Index=I
+            Key : Lower : Value : Upper : Fixed : Stale : Domain
+              0 :   -10 :   1.0 :    10 : False : False :  Reals
+              1 :   -10 :   1.0 :    10 : False : False :  Reals
+              2 :   -10 :   1.0 :    10 : False : False :  Reals
+              3 :   -10 :   1.0 :    10 : False : False :  Reals
+              4 :   -10 :   1.0 :    10 : False : False :  Reals
+    
+    1 Objective Declarations
+        obj : Size=1, Index=None, Active=True
+            Key  : Active : Sense    : Expression
+            None :   True : minimize : x[0]**2 + x[1]**2 + x[2]**2 + x[3]**2 + x[4]**2
+    
+    3 Constraint Declarations
+        con1 : Size=1, Index=None, Active=True
+            Key  : Lower : Body               : Upper : Active
+            None :  10.0 : x[0] + x[1] - x[3] :  +Inf :   True
+        con2 : Size=1, Index=None, Active=True
+            Key  : Lower : Body             : Upper : Active
+            None :   0.0 : x[0]*x[3] + x[1] :  +Inf :   True
+        con3 : Size=1, Index=None, Active=True
+            Key  : Lower : Body                         : Upper : Active
+            None :   0.0 : x[4]*x[3] + x[0]*x[3] - x[4] :   0.0 :   True
+    
+    6 Declarations: I x con1 con2 con3 obj
+
+
+Evaluate the initial point
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Initialization is extremely important for nonlinear optimization
+problems. By setting the Ipopt option ``max_iter`` to zero, we can
+inspect the initial point.
+
+.. code:: ipython3
+
+    # Specify Ipopt as the solver
+    opt = pyo.SolverFactory('ipopt')
+    
+    # Specifying an iteration limit of 0 allows us to inspect the initial point
+    opt.options['max_iter'] = 0
+    
+    # "Solving" the model with an iteration limit of 0 load the initial point and applies
+    # any preprocessors (e.g., enforces bounds)
+    opt.solve(m, tee=True)
+    
+    # Create Degeneracy Hunter object
+    # The Degeneracy Hunter algorithm needs a MILP solver
+    # Here we specify CBC, an open source solver
+    dh = DegeneracyHunter(m, solver=pyo.SolverFactory('cbc'))
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: max_iter=0
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:        3
+    Number of nonzeros in inequality constraint Jacobian.:        6
+    Number of nonzeros in Lagrangian Hessian.............:        7
+    
+    Total number of variables............................:        5
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        5
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        1
+    Total number of inequality constraints...............:        2
+            inequality constraints with only lower bounds:        2
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  5.0000000e+00 9.00e+00 2.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    
+    Number of Iterations....: 0
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   5.0000000000000000e+00    5.0000000000000000e+00
+    Dual infeasibility......:   2.0000000000000000e+00    2.0000000000000000e+00
+    Constraint violation....:   8.9999999000000006e+00    8.9999999000000006e+00
+    Complementarity.........:   1.1000000099999999e+01    1.1000000099999999e+01
+    Overall NLP error.......:   1.1000000099999999e+01    1.1000000099999999e+01
+    
+    
+    Number of objective function evaluations             = 1
+    Number of objective gradient evaluations             = 1
+    Number of equality constraint evaluations            = 1
+    Number of inequality constraint evaluations          = 1
+    Number of equality constraint Jacobian evaluations   = 1
+    Number of inequality constraint Jacobian evaluations = 1
+    Number of Lagrangian Hessian evaluations             = 0
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Maximum Number of Iterations Exceeded.
+    WARNING: Loading a SolverResults object with a warning status into
+        model.name="unknown";
+          - termination condition: maxIterations
+          - message from solver: Ipopt 3.13.2\x3a Maximum Number of Iterations
+            Exceeded.
+
+
+We expect the exit status ``Maximum Number of Iterations Exceeded``
+because we told Ipopt to take zero iterations (only evaluate the initial
+point).
+
+Identify the constraint residuals larger than 0.1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When developing nonlinear optimization models, one often wants to know:
+“what constraints are violated at the initial point (or more generally
+the point the solver terminated) within a given tolerance?” Degeneracy
+Hunter makes this very easy by provided a simple interface to several
+IDAES utility functions.
+
+The following line of code will print out all constraints with residuals
+larger than ``0.1``:
+
+.. code:: ipython3
+
+    dh.check_residuals(tol=0.1)
+
+
+.. parsed-literal::
+
+     
+    All constraints with residuals larger than 0.1 :
+    
+    count = 0 	|residual| = 9.0
+    con1 : Size=1, Index=None, Active=True
+        Key  : Lower : Body               : Upper : Active
+        None :  10.0 : x[0] + x[1] - x[3] :  +Inf :   True
+    variable	lower	value	upper
+    x[0] 		 -10 	 1.0 	 10
+    x[1] 		 -10 	 1.0 	 10
+    x[3] 		 -10 	 1.0 	 10
+    
+    count = 1 	|residual| = 1.0
+    con3 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                         : Upper : Active
+        None :   0.0 : x[4]*x[3] + x[0]*x[3] - x[4] :   0.0 :   True
+    variable	lower	value	upper
+    x[4] 		 -10 	 1.0 	 10
+    x[3] 		 -10 	 1.0 	 10
+    x[0] 		 -10 	 1.0 	 10
+
+
+
+
+.. parsed-literal::
+
+    dict_keys([<pyomo.core.base.constraint.ScalarConstraint object at 0x7f298429bb20>, <pyomo.core.base.constraint.ScalarConstraint object at 0x7f298429bc40>])
+
+
+
+Important: Ipopt does several preprocessing steps when we executed it
+with zero iterations. When checking the initial point, it is strongly
+recommended to call Ipopt with zero iterations first. Otherwise, you
+will not be analyzing the initial point Ipopt starts with.
+
+Identify all variables within 1 of their bounds
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Another common question when developing optimization models is, “Which
+variables are within their bounds by a given tolerance?” Below is the
+syntax:
+
+.. code:: ipython3
+
+    dh.check_variable_bounds(tol=1.0)
+
+
+.. parsed-literal::
+
+     
+    No variables within 1.0 (absolute) of their bounds.
+
+
+
+
+.. parsed-literal::
+
+    <pyomo.common.collections.component_set.ComponentSet at 0x7f2983ffcac0>
+
+
+
+Solve the optimization problem
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Now we can solve the optimization problem. We first set the number of
+iterations to 50 and then resolve with Ipopt.
+
+.. code:: ipython3
+
+    opt.options['max_iter'] = 50
+    opt.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: max_iter=50
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:        3
+    Number of nonzeros in inequality constraint Jacobian.:        6
+    Number of nonzeros in Lagrangian Hessian.............:        7
+    
+    Total number of variables............................:        5
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        5
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        1
+    Total number of inequality constraints...............:        2
+            inequality constraints with only lower bounds:        2
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  5.0000000e+00 9.00e+00 2.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  5.5940309e+00 8.19e+00 2.58e+00  -1.0 4.12e+00    -  3.29e-01 9.99e-02h  1
+       2  4.3446689e+01 2.13e+00 2.10e+00  -1.0 3.67e+00    -  7.64e-01 1.00e+00h  1
+       3  5.0854561e+01 6.80e-01 1.02e+00  -1.0 1.02e+00   0.0 9.34e-01 1.00e+00h  1
+       4  4.9204340e+01 4.73e-01 1.26e+00  -1.0 1.78e+00    -  1.00e+00 1.00e+00f  1
+       5  4.8955163e+01 9.44e-01 1.57e+00  -1.0 4.62e+00  -0.5 1.00e+00 3.51e-01f  2
+       6  4.5850988e+01 8.92e-01 1.56e+00  -1.0 2.14e+00  -0.1 1.00e+00 7.67e-01f  1
+       7  4.5704084e+01 1.19e+00 1.75e+00  -1.0 4.73e+00    -  1.00e+00 2.50e-01f  3
+       8  4.5331671e+01 1.31e+00 3.01e+00  -1.0 1.56e+01    -  7.20e-01 5.98e-02f  4
+       9  4.1480725e+01 7.76e-03 1.98e-01  -1.0 4.94e-01    -  1.00e+00 1.00e+00f  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10  4.1177584e+01 1.30e-03 8.56e-03  -2.5 1.48e-01    -  1.00e+00 1.00e+00f  1
+      11  4.1157407e+01 7.91e-06 1.09e-05  -3.8 9.88e-03    -  1.00e+00 1.00e+00h  1
+      12  4.1157067e+01 2.59e-10 1.57e-09  -5.7 1.30e-04    -  1.00e+00 1.00e+00h  1
+      13  4.1157063e+01 2.24e-14 1.63e-13  -8.6 1.52e-06    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 13
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   4.1157063321491172e+01    4.1157063321491172e+01
+    Dual infeasibility......:   1.6278818285040336e-13    1.6278818285040336e-13
+    Constraint violation....:   2.2426505097428162e-14    2.2426505097428162e-14
+    Complementarity.........:   2.5065697306197698e-09    2.5065697306197698e-09
+    Overall NLP error.......:   2.5065697306197698e-09    2.5065697306197698e-09
+    
+    
+    Number of objective function evaluations             = 24
+    Number of objective gradient evaluations             = 14
+    Number of equality constraint evaluations            = 24
+    Number of inequality constraint evaluations          = 24
+    Number of equality constraint Jacobian evaluations   = 14
+    Number of inequality constraint Jacobian evaluations = 14
+    Number of Lagrangian Hessian evaluations             = 13
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+
+
+
+
+.. parsed-literal::
+
+    {'Problem': [{'Lower bound': -inf, 'Upper bound': inf, 'Number of objectives': 1, 'Number of constraints': 3, 'Number of variables': 5, 'Sense': 'unknown'}], 'Solver': [{'Status': 'ok', 'Message': 'Ipopt 3.13.2\\x3a Optimal Solution Found', 'Termination condition': 'optimal', 'Id': 0, 'Error rc': 0, 'Time': 0.009085655212402344}], 'Solution': [OrderedDict([('number of solutions', 0), ('number of solutions displayed', 0)])]}
+
+
+
+As expected, Ipopt has no trouble solving this optimization problem.
+
+Check if any constraint residuals are large than 1E-14
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Let’s now inspect the new solution to see which (if any) constraints
+have residuals larger than 10\ :math:`^{-14}`.
+
+.. code:: ipython3
+
+    dh.check_residuals(tol=1E-14)
+
+
+.. parsed-literal::
+
+     
+    All constraints with residuals larger than 1e-14 :
+    
+    count = 0 	|residual| = 9.97185747309004e-08
+    con1 : Size=1, Index=None, Active=True
+        Key  : Lower : Body               : Upper : Active
+        None :  10.0 : x[0] + x[1] - x[3] :  +Inf :   True
+    variable	lower	value	upper
+    x[0] 		 -10 	 1.4516741106008322 	 10
+    x[1] 		 -10 	 5.061595738300216 	 10
+    x[3] 		 -10 	 -3.4867300513803765 	 10
+    
+    count = 1 	|residual| = 7.942586144338293e-09
+    con2 : Size=1, Index=None, Active=True
+        Key  : Lower : Body             : Upper : Active
+        None :   0.0 : x[0]*x[3] + x[1] :  +Inf :   True
+    variable	lower	value	upper
+    x[1] 		 -10 	 5.061595738300216 	 10
+    x[0] 		 -10 	 1.4516741106008322 	 10
+    x[3] 		 -10 	 -3.4867300513803765 	 10
+    
+    count = 2 	|residual| = 2.2426505097428162e-14
+    con3 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                         : Upper : Active
+        None :   0.0 : x[4]*x[3] + x[0]*x[3] - x[4] :   0.0 :   True
+    variable	lower	value	upper
+    x[4] 		 -10 	 -1.128125759356881 	 10
+    x[3] 		 -10 	 -3.4867300513803765 	 10
+    x[0] 		 -10 	 1.4516741106008322 	 10
+
+
+
+
+.. parsed-literal::
+
+    dict_keys([<pyomo.core.base.constraint.ScalarConstraint object at 0x7f298429bb20>, <pyomo.core.base.constraint.ScalarConstraint object at 0x7f298429b880>, <pyomo.core.base.constraint.ScalarConstraint object at 0x7f298429bc40>])
+
+
+
+As expected, all of the constraints are satisfied, even with this fairly
+tight tolerance.
+
+Identify all variables within 1E-5 of their bounds
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Finally, let’s check if any of the variables are near their bounds at
+the new solution.
+
+.. code:: ipython3
+
+    dh.check_variable_bounds(tol=1E-5)
+
+
+.. parsed-literal::
+
+     
+    No variables within 1e-05 (absolute) of their bounds.
+
+
+
+
+.. parsed-literal::
+
+    <pyomo.common.collections.component_set.ComponentSet at 0x7f2983ff1cd0>
+
+
+
+Great, no variables are near their bounds. If a variable was at its
+bound, it is important the inspect the model and confirm the bound is
+physically sensible/what you intended.
+
+Check the rank of the constraint Jacobian at the solution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The main feature of Degeneracy Hunter is to check if an optimization
+problem is poorly formulated. Let’s see what happens when we check the
+rank on a carefully formulated optimization problem:
+
+.. code:: ipython3
+
+    dh.check_rank_equality_constraints()
+
+
+.. parsed-literal::
+
+    
+    Checking rank of Jacobian of equality constraints...
+    Model contains 1 equality constraints and 5 variables.
+    Model needs at least 2 equality constraints to check rank.
+
+
+
+
+.. parsed-literal::
+
+    -1
+
+
+
+Example 2: Linear Program with Redundant Equality Constraints
+-------------------------------------------------------------
+
+Now let’s apply Degeneracy Hunter to a poorly formulated optimization
+problem:
+
+.. math::
+
+   \begin{align*} \min_{\mathbf{x}} \quad & \sum_{i=\{1,...,3\}} x_i \\
+   \mathrm{s.t.}~~& x_1 + x_2 \geq 1 \\
+   & x_1 + x_2 + x_3 = 1 \\
+   & x_2 - 2 x_3 \leq 1 \\
+   & x_1 + x_3 \geq 1 \\
+   & x_1 + x_2 + x_3 = 1 \\
+   \end{align*} 
+
+Notice the two equality constraints are redundant. This means the
+constraint qualifications (e.g., LICQ) do not hold which has three
+important implications: 1. The optimal solution may not be
+mathematically well-defined (e.g., the dual variables are not unique) 2.
+The calculations performed by the optimization solver may become
+numerically poorly scaled 3. Theoretical convergence properties of
+optimization algorithms may not hold
+
+The absolute best defense against this is to detect degenerate equations
+and reformulate the model to remove them; this is the primary purpose of
+Degeneracy Hunter. Let’s see it in action.
+
+Define the model in Pyomo
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    def example2(with_degenerate_constraint=True):
+        ''' Create the Pyomo model for Example 2
+        
+        Arguments:
+            with_degenerate_constraint: Boolean, if True, include the redundant linear constraint
+        
+        Returns:
+            m2: Pyomo model
+        '''
+        
+        m2 = pyo.ConcreteModel()
+    
+        m2.I = pyo.Set(initialize=[i for i in range(1,4)])
+    
+        m2.x = pyo.Var(m2.I,bounds=(0,5),initialize=1.0)
+    
+        m2.con1 = pyo.Constraint(expr=m2.x[1] + m2.x[2] >= 1)
+        m2.con2 = pyo.Constraint(expr=m2.x[1] + m2.x[2] + m2.x[3] == 1)
+        m2.con3 = pyo.Constraint(expr=m2.x[2] - 2*m2.x[3] <= 1)
+        m2.con4 = pyo.Constraint(expr=m2.x[1] + m2.x[3] >= 1)
+        
+        if with_degenerate_constraint:
+            m2.con5 = pyo.Constraint(expr=m2.x[1] + m2.x[2] + m2.x[3] == 1)
+    
+        m2.obj = pyo.Objective(expr=sum(m2.x[i] for i in m2.I))
+    
+        m2.pprint()
+        
+        return m2
+    
+    # Create the Pyomo model for Example 2 including the redundant constraint
+    m2 = example2()
+
+
+.. parsed-literal::
+
+    1 Set Declarations
+        I : Size=1, Index=None, Ordered=Insertion
+            Key  : Dimen : Domain : Size : Members
+            None :     1 :    Any :    3 : {1, 2, 3}
+    
+    1 Var Declarations
+        x : Size=3, Index=I
+            Key : Lower : Value : Upper : Fixed : Stale : Domain
+              1 :     0 :   1.0 :     5 : False : False :  Reals
+              2 :     0 :   1.0 :     5 : False : False :  Reals
+              3 :     0 :   1.0 :     5 : False : False :  Reals
+    
+    1 Objective Declarations
+        obj : Size=1, Index=None, Active=True
+            Key  : Active : Sense    : Expression
+            None :   True : minimize : x[1] + x[2] + x[3]
+    
+    5 Constraint Declarations
+        con1 : Size=1, Index=None, Active=True
+            Key  : Lower : Body        : Upper : Active
+            None :   1.0 : x[1] + x[2] :  +Inf :   True
+        con2 : Size=1, Index=None, Active=True
+            Key  : Lower : Body               : Upper : Active
+            None :   1.0 : x[1] + x[2] + x[3] :   1.0 :   True
+        con3 : Size=1, Index=None, Active=True
+            Key  : Lower : Body          : Upper : Active
+            None :  -Inf : x[2] - 2*x[3] :   1.0 :   True
+        con4 : Size=1, Index=None, Active=True
+            Key  : Lower : Body        : Upper : Active
+            None :   1.0 : x[1] + x[3] :  +Inf :   True
+        con5 : Size=1, Index=None, Active=True
+            Key  : Lower : Body               : Upper : Active
+            None :   1.0 : x[1] + x[2] + x[3] :   1.0 :   True
+    
+    8 Declarations: I x con1 con2 con3 con4 con5 obj
+
+
+Evaluate the initial point
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Specifying an iteration limit of 0 allows us to inspect the initial point
+    opt.options['max_iter'] = 0
+    
+    # "Solving" the model with an iteration limit of 0 load the initial point and applies
+    # any preprocessors (e.g., enforces bounds)
+    opt.solve(m2, tee=True)
+    
+    # Create Degeneracy Hunter object
+    # The Degeneracy Hunter algorithm needs a MILP solver
+    # Here we specify CBC, an open source solver
+    dh2 = DegeneracyHunter(m2, solver=pyo.SolverFactory('cbc'))
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: max_iter=0
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:        6
+    Number of nonzeros in inequality constraint Jacobian.:        6
+    Number of nonzeros in Lagrangian Hessian.............:        0
+    
+    Total number of variables............................:        3
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        3
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        2
+    Total number of inequality constraints...............:        3
+            inequality constraints with only lower bounds:        2
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        1
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  3.0000000e+00 2.00e+00 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    
+    Number of Iterations....: 0
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   3.0000000000000000e+00    3.0000000000000000e+00
+    Dual infeasibility......:   1.0000000000000000e+00    1.0000000000000000e+00
+    Constraint violation....:   2.0000000000000000e+00    2.0000000000000000e+00
+    Complementarity.........:   4.0000000499999997e+00    4.0000000499999997e+00
+    Overall NLP error.......:   4.0000000499999997e+00    4.0000000499999997e+00
+    
+    
+    Number of objective function evaluations             = 1
+    Number of objective gradient evaluations             = 1
+    Number of equality constraint evaluations            = 1
+    Number of inequality constraint evaluations          = 1
+    Number of equality constraint Jacobian evaluations   = 1
+    Number of inequality constraint Jacobian evaluations = 1
+    Number of Lagrangian Hessian evaluations             = 0
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Maximum Number of Iterations Exceeded.
+    WARNING: Loading a SolverResults object with a warning status into
+        model.name="unknown";
+          - termination condition: maxIterations
+          - message from solver: Ipopt 3.13.2\x3a Maximum Number of Iterations
+            Exceeded.
+
+
+Identify constraints with residuals greater than 0.1 at the initial point
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    dh2.check_residuals(tol=0.1)
+
+
+.. parsed-literal::
+
+     
+    All constraints with residuals larger than 0.1 :
+    
+    count = 0 	|residual| = 2.0
+    con2 : Size=1, Index=None, Active=True
+        Key  : Lower : Body               : Upper : Active
+        None :   1.0 : x[1] + x[2] + x[3] :   1.0 :   True
+    variable	lower	value	upper
+    x[1] 		 0 	 1.0 	 5
+    x[2] 		 0 	 1.0 	 5
+    x[3] 		 0 	 1.0 	 5
+    
+    count = 1 	|residual| = 2.0
+    con5 : Size=1, Index=None, Active=True
+        Key  : Lower : Body               : Upper : Active
+        None :   1.0 : x[1] + x[2] + x[3] :   1.0 :   True
+    variable	lower	value	upper
+    x[1] 		 0 	 1.0 	 5
+    x[2] 		 0 	 1.0 	 5
+    x[3] 		 0 	 1.0 	 5
+
+
+
+
+.. parsed-literal::
+
+    dict_keys([<pyomo.core.base.constraint.ScalarConstraint object at 0x7f2a8980a700>, <pyomo.core.base.constraint.ScalarConstraint object at 0x7f2a8980a820>])
+
+
+
+Solve the optimization problem and extract the solution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Now let’s solve the optimization problem.
+
+.. code:: ipython3
+
+    opt.options['max_iter'] = 50
+    opt.solve(m2, tee=True)
+    
+    for i in m2.I:
+        print("x[",i,"]=",m2.x[i]())
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: max_iter=50
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:        6
+    Number of nonzeros in inequality constraint Jacobian.:        6
+    Number of nonzeros in Lagrangian Hessian.............:        0
+    
+    Total number of variables............................:        3
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        3
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        2
+    Total number of inequality constraints...............:        3
+            inequality constraints with only lower bounds:        2
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        1
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  3.0000000e+00 2.00e+00 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  1.3934810e+00 3.93e-01 2.17e-01  -1.0 1.23e+00    -  7.90e-01 8.03e-01h  1
+       2  1.0184419e+00 1.84e-02 1.26e-02  -1.7 7.02e-01    -  9.41e-01 9.53e-01h  1
+       3  1.0011246e+00 1.12e-03 3.82e-02  -2.5 1.50e-02    -  1.00e+00 9.39e-01h  1
+       4  1.0006914e+00 6.91e-04 3.12e+00  -2.5 3.17e-03    -  1.00e+00 3.85e-01h  1
+       5  1.0002664e+00 2.66e-04 4.35e+00  -2.5 1.12e-03    -  1.00e+00 6.15e-01h  1
+       6  1.0001115e+00 1.12e-04 1.07e+01  -2.5 4.99e-04    -  1.00e+00 5.82e-01h  1
+       7  1.0000788e+00 7.88e-05 4.33e+01  -2.5 1.88e-04    -  1.00e+00 2.94e-01f  2
+       8  1.0000153e+00 1.53e-05 2.19e+01  -2.5 6.85e-05    -  1.00e+00 8.08e-01h  1
+       9  1.0000118e+00 1.18e-05 2.78e+02  -2.5 3.47e-05    -  1.00e+00 2.45e-01f  2
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10  1.0000014e+00 1.44e-06 2.83e-08  -2.5 7.79e-06    -  1.00e+00 1.00e+00h  1
+      11  1.0000000e+00 1.39e-09 1.84e-11  -5.7 2.56e-06    -  1.00e+00 1.00e+00h  1
+      12  1.0000000e+00 1.39e-09 1.24e+02  -8.6 1.16e-08    -  1.00e+00 9.54e-07h 21
+      13  9.9999999e-01 9.82e-09 1.14e-13  -8.6 1.33e-08    -  1.00e+00 1.00e+00s 22
+      14  9.9999999e-01 9.96e-09 6.46e-14  -8.6 2.29e-10    -  1.00e+00 1.00e+00s 22
+      15  9.9999999e-01 9.96e-09 1.82e+02  -9.0 4.00e-11    -  1.00e+00 9.54e-07h 21
+      16  9.9999999e-01 1.00e-08 1.52e-13  -9.0 5.89e-11    -  1.00e+00 1.00e+00s 22
+    
+    Number of Iterations....: 16
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   9.9999999000238915e-01    9.9999999000238915e-01
+    Dual infeasibility......:   1.5188693260016487e-13    1.5188693260016487e-13
+    Constraint violation....:   9.9976108502985994e-09    9.9976108502985994e-09
+    Complementarity.........:   9.2217032157601989e-10    9.2217032157601989e-10
+    Overall NLP error.......:   9.9976108502985994e-09    9.9976108502985994e-09
+    
+    
+    Number of objective function evaluations             = 111
+    Number of objective gradient evaluations             = 17
+    Number of equality constraint evaluations            = 111
+    Number of inequality constraint evaluations          = 111
+    Number of equality constraint Jacobian evaluations   = 17
+    Number of inequality constraint Jacobian evaluations = 17
+    Number of Lagrangian Hessian evaluations             = 16
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+    x[ 1 ]= 1.0000000099975996
+    x[ 2 ]= 0.0
+    x[ 3 ]= 0.0
+
+
+We got lucky here. Ipopt implements several algorithmic and numerical
+safeguards to handle (mildy) degenerate equations. Nevertheless, notice
+the last column of the Ipopt output labeled ``ls``. This is the number
+of linesearch evaluations. For iterations 0 to 11, ``ls`` is 1, which
+means Ipopt is taking full steps. For iterations 12 to 16, however,
+``ls`` is greater than 20. This means Ipopt is struggling (a little) to
+converge to the solution.
+
+Check the rank of the Jacobian of the equality constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    n_deficient = dh2.check_rank_equality_constraints()
+
+
+.. parsed-literal::
+
+    
+    Checking rank of Jacobian of equality constraints...
+    Model contains 2 equality constraints and 3 variables.
+    Computing the 1 smallest singular value(s)
+    Smallest singular value(s):
+    0.000E+00
+
+
+A singular value near 0 indicates the Jacobian of the equality
+constraints is rank deficient. For each near-zero singular value, there
+is likely one degenerate constraint.
+
+Identify candidate degenerate constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Degeneracy Hunter first identifies candidate degenerate equations.
+
+.. code:: ipython3
+
+    ds2 = dh2.find_candidate_equations(verbose=True,tee=True)
+
+
+.. parsed-literal::
+
+    *** Searching for a Single Degenerate Set ***
+    Building MILP model...
+    2 Set Declarations
+        C : Size=1, Index=None, Ordered=Insertion
+            Key  : Dimen : Domain : Size : Members
+            None :     1 :    Any :    2 : {0, 1}
+        V : Size=1, Index=None, Ordered=Insertion
+            Key  : Dimen : Domain : Size : Members
+            None :     1 :    Any :    3 : {0, 1, 2}
+    
+    4 Var Declarations
+        abs_nu : Size=2, Index=C
+            Key : Lower : Value : Upper        : Fixed : Stale : Domain
+              0 :     0 :  None : 100000.00001 : False :  True :  Reals
+              1 :     0 :  None : 100000.00001 : False :  True :  Reals
+        nu : Size=2, Index=C
+            Key : Lower         : Value : Upper        : Fixed : Stale : Domain
+              0 : -100000.00001 :   1.0 : 100000.00001 : False : False :  Reals
+              1 : -100000.00001 :   1.0 : 100000.00001 : False : False :  Reals
+        y_neg : Size=2, Index=C
+            Key : Lower : Value : Upper : Fixed : Stale : Domain
+              0 :     0 :  None :     1 : False :  True : Binary
+              1 :     0 :  None :     1 : False :  True : Binary
+        y_pos : Size=2, Index=C
+            Key : Lower : Value : Upper : Fixed : Stale : Domain
+              0 :     0 :  None :     1 : False :  True : Binary
+              1 :     0 :  None :     1 : False :  True : Binary
+    
+    1 Constraint Declarations
+        pos_xor_neg : Size=0, Index=C, Active=True
+            Key : Lower : Body : Upper : Active
+    
+    7 Declarations: C V nu y_pos y_neg abs_nu pos_xor_neg
+    Solving MILP model...
+    Welcome to the CBC MILP Solver 
+    Version: 2.10.4 
+    Build Date: May 25 2021 
+    
+    command line - /home/lbianchi/.idaes/bin/cbc -printingOptions all -import /tmp/tmpqh4wntd8.pyomo.lp -stat=1 -solve -solu /tmp/tmpqh4wntd8.pyomo.soln (default strategy 1)
+    Option for printingOptions changed from normal to all
+    Presolve 9 (-8) rows, 7 (-2) columns and 20 (-15) elements
+    Statistics for presolved model
+    Original problem has 4 integers (4 of which binary)
+    Presolved problem has 4 integers (4 of which binary)
+    ==== 5 zero objective 2 different
+    5 variables have objective of 0
+    2 variables have objective of 1
+    ==== absolute objective values 2 different
+    5 variables have objective of 0
+    2 variables have objective of 1
+    ==== for integers 4 zero objective 1 different
+    4 variables have objective of 0
+    ==== for integers absolute objective values 1 different
+    4 variables have objective of 0
+    ===== end objective counts
+    
+    
+    Problem has 9 rows, 7 columns (2 with objective) and 20 elements
+    Column breakdown:
+    0 of type 0.0->inf, 2 of type 0.0->up, 0 of type lo->inf, 
+    1 of type lo->up, 0 of type free, 0 of type fixed, 
+    0 of type -inf->0.0, 0 of type -inf->up, 4 of type 0.0->1.0 
+    Row breakdown:
+    0 of type E 0.0, 0 of type E 1.0, 0 of type E -1.0, 
+    0 of type E other, 0 of type G 0.0, 1 of type G 1.0, 
+    0 of type G other, 4 of type L 0.0, 0 of type L 1.0, 
+    4 of type L other, 0 of type Range 0.0->1.0, 0 of type Range other, 
+    0 of type Free 
+    Continuous objective value is 0 - 0.00 seconds
+    Cgl0003I 0 fixed, 0 tightened bounds, 2 strengthened rows, 0 substitutions
+    Cgl0004I processed model has 9 rows, 7 columns (4 integer (4 of which binary)) and 22 elements
+    Cbc0038I Initial state - 2 integers unsatisfied sum - 1
+    Cbc0038I Pass   1: suminf.    0.00000 (0) obj. 1.99999e-05 iterations 3
+    Cbc0038I Solution found of 1.99999e-05
+    Cbc0038I Relaxing continuous gives 2e-05
+    Cbc0038I Rounding solution of 1.99999e-05 is better than previous of 2e-05
+    
+    Cbc0038I Before mini branch and bound, 2 integers at bound fixed and 0 continuous
+    Cbc0038I Full problem 9 rows 7 columns, reduced to 7 rows 5 columns
+    Cbc0038I Mini branch and bound did not improve solution (0.00 seconds)
+    Cbc0038I Round again with cutoff of 8.99991e-06
+    Cbc0038I Pass   2: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 2
+    Cbc0038I Pass   3: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass   4: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 1
+    Cbc0038I Pass   5: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass   6: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass   7: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass   8: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass   9: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  10: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  11: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  12: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 1
+    Cbc0038I Pass  13: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  14: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 1
+    Cbc0038I Pass  15: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  16: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  17: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  18: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 5
+    Cbc0038I Pass  19: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 1
+    Cbc0038I Pass  20: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  21: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  22: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  23: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  24: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  25: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  26: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 2
+    Cbc0038I Pass  27: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 2
+    Cbc0038I Pass  28: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 0
+    Cbc0038I Pass  29: suminf.    1.00000 (3) obj. 8.99991e-06 iterations 3
+    Cbc0038I Pass  30: suminf.    0.55000 (2) obj. 8.99991e-06 iterations 2
+    Cbc0038I Pass  31: suminf.    1.00000 (3) obj. 8.99991e-06 iterations 2
+    Cbc0038I No solution found this major pass
+    Cbc0038I Before mini branch and bound, 0 integers at bound fixed and 0 continuous
+    Cbc0038I Full problem 9 rows 7 columns, reduced to 9 rows 7 columns
+    Cbc0038I Mini branch and bound did not improve solution (0.00 seconds)
+    Cbc0038I After 0.00 seconds - Feasibility pump exiting with objective of 1.99999e-05 - took 0.00 seconds
+    Cbc0012I Integer solution of 2e-05 found by feasibility pump after 0 iterations and 0 nodes (0.00 seconds)
+    Cbc0038I Full problem 9 rows 7 columns, reduced to 7 rows 5 columns
+    Cbc0006I The LP relaxation is infeasible or too expensive
+    Cbc0031I 2 added rows had average density of 2
+    Cbc0013I At root node, 2 cuts changed objective from 0 to 1e-05 in 3 passes
+    Cbc0014I Cut generator 0 (Probing) - 2 row cuts average 1.0 elements, 2 column cuts (2 active)  in 0.000 seconds - new frequency is 1
+    Cbc0014I Cut generator 1 (Gomory) - 2 row cuts average 2.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is 1
+    Cbc0014I Cut generator 2 (Knapsack) - 0 row cuts average 0.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is -100
+    Cbc0014I Cut generator 3 (Clique) - 0 row cuts average 0.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is -100
+    Cbc0014I Cut generator 4 (MixedIntegerRounding2) - 0 row cuts average 0.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is -100
+    Cbc0014I Cut generator 5 (FlowCover) - 0 row cuts average 0.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is -100
+    Cbc0014I Cut generator 6 (TwoMirCuts) - 2 row cuts average 2.0 elements, 0 column cuts (0 active)  in 0.000 seconds - new frequency is 1
+    Cbc0001I Search completed - best objective 2.000000000000001e-05, took 6 iterations and 0 nodes (0.00 seconds)
+    Cbc0035I Maximum depth 0, 0 variables fixed on reduced cost
+    Cuts at root node changed objective from 0 to 1e-05
+    Probing was tried 3 times and created 4 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+    Gomory was tried 2 times and created 2 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+    Knapsack was tried 2 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+    Clique was tried 2 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+    MixedIntegerRounding2 was tried 2 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+    FlowCover was tried 2 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+    TwoMirCuts was tried 2 times and created 2 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+    ZeroHalf was tried 1 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+    
+    Result - Optimal solution found
+    
+    Objective value:                0.00002000
+    Enumerated nodes:               0
+    Total iterations:               6
+    Time (CPU seconds):             0.00
+    Time (Wallclock seconds):       0.00
+    
+    Total time (CPU seconds):       0.00   (Wallclock seconds):       0.00
+    
+
+
+Find irreducible degenerate sets (IDS)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Next, Degeneracy Hunter enumerates through the candidate equations. For
+each candidate equation, Degenerate Hunter solves a MILP to compute the
+irreducible degenerate set that must contain the candidate equation.
+
+.. code:: ipython3
+
+    ids = dh2.find_irreducible_degenerate_sets(verbose=True)
+
+
+.. parsed-literal::
+
+    *** Searching for Irreducible Degenerate Sets ***
+    Building MILP model...
+    Solving MILP 1 of 2 ...
+    Solving MILP 2 of 2 ...
+    
+    Irreducible Degenerate Set 0
+    nu	Constraint Name
+    1.0 	 con2
+    -1.0 	 con5
+    
+    Irreducible Degenerate Set 1
+    nu	Constraint Name
+    -1.0 	 con2
+    1.0 	 con5
+
+
+Reformulate Example 2
+~~~~~~~~~~~~~~~~~~~~~
+
+Now let’s reformulate the model by skipping/removing the redundant
+equality constraint:
+
+.. math::
+
+   \begin{align*} \min_{\mathbf{x}} \quad & \sum_{i=\{1,...,3\}} x_i \\
+   \mathrm{s.t.}~~& x_1 + x_2 \geq 1 \\
+   & x_1 + x_2 + x_3 = 1 \\
+   & x_2 - 2 x_3 \leq 1 \\
+   & x_1 + x_3 \geq 1
+   \end{align*} 
+
+.. code:: ipython3
+
+    m2b = example2(with_degenerate_constraint=False)
+
+
+.. parsed-literal::
+
+    1 Set Declarations
+        I : Size=1, Index=None, Ordered=Insertion
+            Key  : Dimen : Domain : Size : Members
+            None :     1 :    Any :    3 : {1, 2, 3}
+    
+    1 Var Declarations
+        x : Size=3, Index=I
+            Key : Lower : Value : Upper : Fixed : Stale : Domain
+              1 :     0 :   1.0 :     5 : False : False :  Reals
+              2 :     0 :   1.0 :     5 : False : False :  Reals
+              3 :     0 :   1.0 :     5 : False : False :  Reals
+    
+    1 Objective Declarations
+        obj : Size=1, Index=None, Active=True
+            Key  : Active : Sense    : Expression
+            None :   True : minimize : x[1] + x[2] + x[3]
+    
+    4 Constraint Declarations
+        con1 : Size=1, Index=None, Active=True
+            Key  : Lower : Body        : Upper : Active
+            None :   1.0 : x[1] + x[2] :  +Inf :   True
+        con2 : Size=1, Index=None, Active=True
+            Key  : Lower : Body               : Upper : Active
+            None :   1.0 : x[1] + x[2] + x[3] :   1.0 :   True
+        con3 : Size=1, Index=None, Active=True
+            Key  : Lower : Body          : Upper : Active
+            None :  -Inf : x[2] - 2*x[3] :   1.0 :   True
+        con4 : Size=1, Index=None, Active=True
+            Key  : Lower : Body        : Upper : Active
+            None :   1.0 : x[1] + x[3] :  +Inf :   True
+    
+    7 Declarations: I x con1 con2 con3 con4 obj
+
+
+Solve the reformulated model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    opt.options['max_iter'] = 50
+    opt.solve(m2b, tee=True)
+    
+    for i in m2b.I:
+        print("x[",i,"]=",m.x[i]())
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: max_iter=50
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:        3
+    Number of nonzeros in inequality constraint Jacobian.:        6
+    Number of nonzeros in Lagrangian Hessian.............:        0
+    
+    Total number of variables............................:        3
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        3
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        1
+    Total number of inequality constraints...............:        3
+            inequality constraints with only lower bounds:        2
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        1
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  3.0000000e+00 2.00e+00 6.30e-01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  1.3934810e+00 3.93e-01 1.34e-01  -1.0 1.23e+00    -  7.90e-01 8.03e-01f  1
+       2  1.0184419e+00 1.84e-02 9.15e-03  -1.7 7.02e-01    -  9.41e-01 9.53e-01h  1
+       3  1.0011246e+00 1.12e-03 3.88e-02  -2.5 1.50e-02    -  1.00e+00 9.39e-01h  1
+       4  1.0006914e+00 6.91e-04 3.12e+00  -2.5 3.17e-03    -  1.00e+00 3.85e-01h  1
+       5  1.0002664e+00 2.66e-04 4.35e+00  -2.5 1.12e-03    -  1.00e+00 6.15e-01h  1
+       6  1.0001115e+00 1.12e-04 1.07e+01  -2.5 5.00e-04    -  1.00e+00 5.81e-01h  1
+       7  1.0000788e+00 7.88e-05 4.34e+01  -2.5 1.88e-04    -  1.00e+00 2.93e-01f  2
+       8  1.0000154e+00 1.54e-05 2.26e+01  -2.5 6.89e-05    -  1.00e+00 8.04e-01h  1
+       9  1.0000118e+00 1.18e-05 2.98e+02  -2.5 3.64e-05    -  1.00e+00 2.33e-01f  2
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10  1.0000020e+00 2.04e-06 1.33e+02  -2.5 9.72e-06    -  1.00e+00 8.28e-01h  1
+      11  1.0000016e+00 1.61e-06 2.26e+03  -2.5 4.79e-06    -  1.00e+00 2.12e-01f  2
+      12  1.0000002e+00 2.46e-07 8.72e+02  -2.5 1.20e-06    -  1.00e+00 8.47e-01h  1
+      13  1.0000002e+00 1.95e-07 1.71e+04  -2.5 7.02e-07    -  1.00e+00 2.09e-01f  2
+      14  1.0000000e+00 1.54e-08 3.23e+03  -2.5 1.50e-07    -  1.00e+00 9.21e-01h  1
+      15  1.0000000e+00 1.15e-08 9.99e+04  -2.5 6.89e-08    -  1.00e+00 2.54e-01f  2
+      16  1.0000000e+00 2.22e-16 2.83e-08  -2.5 8.21e-09    -  1.00e+00 1.00e+00h  1
+      17  1.0000000e+00 2.22e-16 4.14e-11  -8.6 8.25e-16    -  1.00e+00 1.00e+00   0
+    
+    Number of Iterations....: 17
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   9.9999999999999978e-01    9.9999999999999978e-01
+    Dual infeasibility......:   4.1425156707686206e-11    4.1425156707686206e-11
+    Constraint violation....:   2.2204460492503131e-16    2.2204460492503131e-16
+    Complementarity.........:   2.6658012082875325e-09    2.6658012082875325e-09
+    Overall NLP error.......:   2.6658012082875325e-09    2.6658012082875325e-09
+    
+    
+    Number of objective function evaluations             = 23
+    Number of objective gradient evaluations             = 18
+    Number of equality constraint evaluations            = 23
+    Number of inequality constraint evaluations          = 23
+    Number of equality constraint Jacobian evaluations   = 18
+    Number of inequality constraint Jacobian evaluations = 18
+    Number of Lagrangian Hessian evaluations             = 17
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+    x[ 1 ]= 5.061595738300216
+    x[ 2 ]= 9.184026563775058e-26
+    x[ 3 ]= -3.4867300513803765
+
+
+We get the same answer as before, but careful inspection of the Ipopt
+output reveals a subtle improvement. Notice ``ls`` is only 1 or 2 for
+all of the iterations, in contrast to more than 20 for the original
+model. This means Ipopt is taking (nearly) full steps for all
+iterations.
+
+Let’s also compare the number of function evaluations.
+
+Original model (using Ipopt 3.13.2 with ``ma27``):
+
+::
+
+    Number of objective function evaluations             = 111
+    Number of objective gradient evaluations             = 17
+    Number of equality constraint evaluations            = 111
+    Number of inequality constraint evaluations          = 111
+    Number of equality constraint Jacobian evaluations   = 17
+    Number of inequality constraint Jacobian evaluations = 17
+    Number of Lagrangian Hessian evaluations             = 16
+
+Reformulated model (using Ipopt 3.13.2 with ``ma27``):
+
+::
+
+    Number of objective function evaluations             = 23
+    Number of objective gradient evaluations             = 18
+    Number of equality constraint evaluations            = 23
+    Number of inequality constraint evaluations          = 23
+    Number of equality constraint Jacobian evaluations   = 18
+    Number of inequality constraint Jacobian evaluations = 18
+    Number of Lagrangian Hessian evaluations             = 17
+
+Removing a **single redundant constraint** reduced the number of
+objective and constraint evaluations by a **factor of 5**!
+
+Often degenerate equations have a much worse impact on large-scale
+problems; for example, degenerate equations can cause Ipopt to require
+many more iterations or terminate at an infeasible point.
+

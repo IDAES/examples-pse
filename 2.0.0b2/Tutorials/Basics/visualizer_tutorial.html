@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flowsheet Visualizer Tutorial &mdash; IDAES v2.0.0b2 Examples</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../Examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Flowsheet Visualizer Tutorial</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/Tutorials/Basics/visualizer_tutorial.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="flowsheet-visualizer-tutorial">
+<h1>Flowsheet Visualizer Tutorial<a class="headerlink" href="#flowsheet-visualizer-tutorial" title="Permalink to this heading">¶</a></h1>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Author: Dan Gunter</div>
+<div class="line">Created: 2022-07-05</div>
+</div>
+</div></blockquote>
+<p><strong>Outline</strong> * Introduction * Example flowsheet * Running the
+Flowsheet Visualizer * Running from a script * Further reading</p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<p>The IDAES Flowsheet Visualizer (FV) is a Python tool that provides a
+web-based visualization of any existing IDAES model or flowsheet. The
+visualization shows a diagram of the flowsheet as well as a stream
+table. You can interact with the diagram and export it as an image for
+inclusion in presentations or publications.</p>
+<p>This tutorial will show the basic steps of running the FV on an example
+flowsheet, interacting with the resulting GUI, saving your work, and
+exporting the diagram as an image. It will also show how the Visualizer
+can be updated to reflect changes in the model components and/or
+variable values. The tutorial will also show how to run the Visualizer
+from a Python script.</p>
+</section>
+<section id="example-flowsheet">
+<h2>Example flowsheet<a class="headerlink" href="#example-flowsheet" title="Permalink to this heading">¶</a></h2>
+<p>This initial section creates an example flowsheet.</p>
+<section id="setup">
+<h3>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h3>
+<p>Module imports and any additional housekeeping needed to initialize the
+code.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">visualizer_tutorial</span> <span class="k">as</span> <span class="nn">vistut</span>
+<span class="n">vistut</span><span class="o">.</span><span class="n">quiet</span><span class="p">()</span>  <span class="c1"># turn off default logging and most warnings</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Markdown</span>
+</pre></div>
+</div>
+</section>
+<section id="create-the-flowsheet">
+<h3>Create the flowsheet<a class="headerlink" href="#create-the-flowsheet" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># use the pre-defined function to create the flowsheet</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">vistut</span><span class="o">.</span><span class="n">create_model</span><span class="p">()</span>
+
+<span class="c1"># description of the flowsheet we created</span>
+<span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="n">vistut</span><span class="o">.</span><span class="n">function_markdown</span><span class="p">(</span><span class="n">vistut</span><span class="o">.</span><span class="n">create_model</span><span class="p">)))</span>
+
+<span class="n">vistut</span><span class="o">.</span><span class="n">quiet</span><span class="p">()</span>
+
+<span class="c1"># initialize the flowsheet as a square problem (dof=0)</span>
+<span class="n">vistut</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+<span class="c1"># verify that there are zero degrees of freedom</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DOF = </span><span class="si">{</span><span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="create-an-idaes-flowsheet-for-hydrodealkylation-hda">
+<h2>Create an IDAES flowsheet for hydrodealkylation (HDA)<a class="headerlink" href="#create-an-idaes-flowsheet-for-hydrodealkylation-hda" title="Permalink to this heading">¶</a></h2>
+<section id="about-hda">
+<h3>About HDA<a class="headerlink" href="#about-hda" title="Permalink to this heading">¶</a></h3>
+<p>Hydrodealkylation (HDA) is a chemical reaction that often involves
+reacting an aromatic hydrocarbon in the presence of hydrogen gas to form
+a simpler aromatic hydrocarbon devoid of functional groups. In this
+example, toluene will be reacted with hydrogen gas at high temperatures
+to form benzene via the following reaction:</p>
+<p><strong>C6H5CH3 + H2 → C6H6 + CH4</strong></p>
+<p>This reaction is often accompanied by an equilibrium side reaction which
+forms diphenyl, which we will not cover in this example.</p>
+</section>
+<section id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this heading">¶</a></h3>
+<p>This example is based on the 1967 AIChE Student Contest problem as
+present by Douglas, J.M., Chemical Design of Chemical Processes, 1988,
+McGraw-Hill.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DOF</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="running-the-flowsheet-visualizer">
+<h2>Running the Flowsheet Visualizer<a class="headerlink" href="#running-the-flowsheet-visualizer" title="Permalink to this heading">¶</a></h2>
+<p>In most cases, you will run the FV by calling the <code class="docutils literal notranslate"><span class="pre">visualize()</span></code> method
+attached to your flowsheet. This function takes a number of optional
+arguments, which we will look at briefly later, and one required
+argument: the <strong>title</strong> to give the visualization. Unless you give more
+information, this title also is used as the filename in which to save
+its current state.</p>
+<p>In the following, we start the FV with the title “Hydrodealkylation”.
+This will pop up a new browser tab (and save the status in a file called
+<em>Hydrodealkylation.json</em>).</p>
+<div class="alert alert-block alert-info docutils container">
+<p>After the visualizer starts, we recommend making its tab into its own
+browser window and viewing it side-by-side with this notebook window.</p>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;Hydrodealkylation.json&quot;</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;Hydrodealkylation.json&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="s2">&quot;Hydrodealkylation&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Started visualization server
+Saving flowsheet to default file &#39;Hydrodealkylation.json&#39; in current directory (/tmp/tmpfieeksls)
+_build_abstract_layout - node_name: hydrogen_feed_1
+_build_abstract_layout - node_name: toluene_feed_1
+_build_abstract_layout - node_name: M101
+_build_abstract_layout - node_name: H101
+_build_abstract_layout - node_name: R101
+_build_abstract_layout - node_name: F101
+_build_abstract_layout - node_name: liq_outlet_1
+_build_abstract_layout - node_name: S101
+_build_abstract_layout - node_name: C101
+Error: Unable to open flowsheet in web browser.
+Flowsheet visualization at: http://localhost:42165/app?id=Hydrodealkylation
+</pre></div>
+</div>
+<section id="optional-arguments">
+<h3>Optional arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h3>
+<p>The optional (keyword) arguments are documented in the base function,
+which can be found in <code class="docutils literal notranslate"><span class="pre">idaes.core.ui.fsvis.visualize</span></code>:</p>
+<ul class="simple">
+<li><p>name: Name of flowsheet to display as the title of the visualization</p></li>
+<li><p>load_from_saved: If True load from saved file if any. Otherwise
+create a new file or overwrite it (depending on ‘overwrite’ flag).</p></li>
+<li><p>save: Where to save the current flowsheet layout and values. If this
+argument is not specified, “<code class="docutils literal notranslate"><span class="pre">name</span></code>.json” will be used (if this file
+already exists, a “-<code class="docutils literal notranslate"><span class="pre">&lt;version&gt;</span></code>” number will be added between the
+name and the extension). If the value given is the boolean ‘False’,
+then nothing will be saved. The boolean ‘True’ value is treated the
+same as unspecified.</p></li>
+<li><p>save_dir: If this argument is given, and <code class="docutils literal notranslate"><span class="pre">save</span></code> is not given or a
+relative path, then it will be used as the directory to save the
+default or given file. The current working directory is the default.
+If <code class="docutils literal notranslate"><span class="pre">save</span></code> is given and an absolute path, this argument is ignored.</p></li>
+<li><p>save_time_interval: The time interval that the UI application checks
+if any changes has occurred in the graph for it to save the model.
+Default is 5 seconds</p></li>
+<li><p>overwrite: If True, and the file given by <code class="docutils literal notranslate"><span class="pre">save</span></code> exists, overwrite
+instead of creating a new numbered file.</p></li>
+<li><p>browser: If true, open a browser</p></li>
+<li><p>port: Start listening on this port. If not given, find an open port.</p></li>
+<li><p>log_level: An IDAES logging level, which is a superset of the
+built-in <code class="docutils literal notranslate"><span class="pre">logging</span></code> module levels. See the <code class="docutils literal notranslate"><span class="pre">idaes.logger</span></code> module
+for details</p></li>
+<li><p>quiet: If True, suppress printing any messages to standard output
+(console)</p></li>
+<li><p>loop_forever: If True, don’t return but instead loop until a
+Control-C is received. Useful when invoking this function at the end
+of a script.</p></li>
+</ul>
+</section>
+</section>
+<section id="interacting-with-the-visualizer">
+<h2>Interacting with the visualizer<a class="headerlink" href="#interacting-with-the-visualizer" title="Permalink to this heading">¶</a></h2>
+<p>The first things you need to learn about the FV are how to manipulate
+the overall layout and control the view. The UI should initially look
+something like the screenshot below:</p>
+<div class="alert alert-block alert-info docutils container">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">As</span> <span class="n">you</span> <span class="n">can</span> <span class="n">see</span><span class="p">,</span> <span class="n">the</span> <span class="n">FV</span> <span class="n">has</span> <span class="n">two</span> <span class="n">main</span> <span class="n">panels</span><span class="o">.</span> <span class="n">We</span> <span class="n">will</span> <span class="n">call</span> <span class="n">the</span> <span class="n">top</span> <span class="n">panel</span> <span class="n">the</span> <span class="o">&lt;</span><span class="n">b</span><span class="o">&gt;</span><span class="n">diagram</span><span class="o">&lt;/</span><span class="n">b</span><span class="o">&gt;</span> <span class="ow">and</span> <span class="n">the</span> <span class="n">bottom</span> <span class="n">panel</span> <span class="n">the</span> <span class="o">&lt;</span><span class="n">b</span><span class="o">&gt;</span><span class="n">stream</span> <span class="n">table</span><span class="o">&lt;/</span><span class="n">b</span><span class="o">&gt;.</span>
+</pre></div>
+</div>
+</div>
+<section id="view-controls">
+<h3>View controls<a class="headerlink" href="#view-controls" title="Permalink to this heading">¶</a></h3>
+<p>Before looking at the two panels in detail, it helps to know some basic
+controls for making them easier to view.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 69%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Control</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Il
+lustration</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Panel
+height</p></td>
+<td><p>Change the height of the panels by grabbing
+the small handle in the lower right corner
+with your mouse.</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Diagram
+size</p></td>
+<td><p>Zoom in/out on the diagram with the
+magnifying glass “+” and “-” buttons in the
+upper-right corner of the top panel. The
+button labeled with two crossing arrows fits
+the diagram into the current panel height and
+width.</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="rearranging-the-diagram">
+<h3>Rearranging the diagram<a class="headerlink" href="#rearranging-the-diagram" title="Permalink to this heading">¶</a></h3>
+<p>The diagram shown in the top panel is interactive. You can move the
+units shown there into different positions. Whatever arrangement you end
+up with will be saved for next time. The arcs (i.e., lines representing
+streams) connecting the units will automatically re-route themselves as
+you move them. Below is a summary of the different actions you can take
+when rearranging the diagram.</p>
+<div class="line-block">
+<div class="line">| | |</div>
+</div>
+<p>|:—-:| |:—-:| | | | | | | | |</p>
+</section>
+<section id="stream-table">
+<h3>Stream table<a class="headerlink" href="#stream-table" title="Permalink to this heading">¶</a></h3>
+<p>The stream table panel shows the values of variables on all the streams
+between units, and also from units to outlets.</p>
+</section>
+<section id="stream-table-brushing">
+<h3>Stream table “brushing”<a class="headerlink" href="#stream-table-brushing" title="Permalink to this heading">¶</a></h3>
+<p>Brushing refers to the ability to have actions in one visual area
+influence the display in another. It is commonly used in statistics to
+show how points in one scatterplot correspond to their points in
+another, for the same samples. Here, we use it to link the position of a
+stream in the diagram with its variable values in the stream table. ####
+Controls</p>
+<table style="margin-left: 0"><thead><tr><th style="text-align: left"><p>Action</p>
+</th><th style="text-align: left"><p>Result</p>
+</th><th><p>Illustration</p>
+</th></tr></thead><tbody><tr><td style="text-align: left"><p>moving the mouse over an arc in the diagram</p>
+</td><td style="text-align: left"><p>highlights the corresponding column in the stream table</p>
+</td><td rowspan="2" style="background-color: white"></td></tr><tr><td style="text-align: left"><p>moving the mouse over a column in the stream table</p>
+</td><td style="text-align: left"><p>highlights the corresponding arc in the diagram</p>
+</td></tr></tbody></table><section id="example">
+<h4>Example<a class="headerlink" href="#example" title="Permalink to this heading">¶</a></h4>
+<p>Stream table brushing is useful for answering questions like: &gt; How much
+benzene are we losing in the F101 vapor outlet stream?</p>
+<p>To answer this question, we will use some interactive elements of the
+stream table.</p>
+<ol class="arabic simple">
+<li><p>Find the inlet of F101 on the diagram. Mouse over this to see the
+values for that stream highlighted in the stream table below. This is
+stream <code class="docutils literal notranslate"><span class="pre">s05</span></code>. Look across at the row for Benzene vapor
+(<code class="docutils literal notranslate"><span class="pre">flow_mol_phase_comp('Vap',</span> <span class="pre">'benzene')</span></code>) and see that the value is
+<span class="math notranslate nohighlight">\(0.35384\)</span></p></li>
+<li><p>Find the vapor outlet of F101 by looking for the arc connecting to
+the splitter and compressor feedback loop. This is stream <code class="docutils literal notranslate"><span class="pre">s06</span></code>.
+Then look at the same row for the Benzene vapor mol fraction and see
+that the value is <span class="math notranslate nohighlight">\(0.14916\)</span></p></li>
+<li><p>Thus the amount of benzene lost is (in mole fractions) about
+<span class="math notranslate nohighlight">\(0.2\)</span></p></li>
+</ol>
+</section>
+</section>
+<section id="showing-and-hiding-streams">
+<h3>Showing and hiding streams<a class="headerlink" href="#showing-and-hiding-streams" title="Permalink to this heading">¶</a></h3>
+<p>For complex diagrams, there are a lot of streams and the stream table
+does not fit in the window. To avoid having to scroll back and forth,
+there is the ability to “hide” selected streams in the stream table.</p>
+<ul class="simple">
+<li><p>Click on the “Hide Fields” menu and select which fields to hide</p></li>
+<li><p>The mark will toggle between a check (shown) and open circle (hidden)</p></li>
+</ul>
+<p>For example, we can hide all the streams except the feeds and the flash
+inlets and outlets.</p>
+</section>
+<section id="saving-and-loading">
+<h3>Saving and loading<a class="headerlink" href="#saving-and-loading" title="Permalink to this heading">¶</a></h3>
+<p>The current layout and status can be saved to a file, and this file can
+then be loaded when the model is viewed again. The main benefit is that
+interactive layout of the diagram is saved for re-use.</p>
+<section id="file-name">
+<h4>File name<a class="headerlink" href="#file-name" title="Permalink to this heading">¶</a></h4>
+<p>This file is named, by default, for the title of the visualizer (e.g.,
+“Hydrodealkylation”) with a “.json” extension to indicate the data
+format and saved in the same directory as the Jupyter notebook.</p>
+<p>You can select a different filename and location when you start the
+visualization, e.g.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="s2">&quot;The Title&quot;</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="s2">&quot;thefilename.json&quot;</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/save/the/file&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="reloading">
+<h4>Reloading<a class="headerlink" href="#reloading" title="Permalink to this heading">¶</a></h4>
+<p>To reload the saved layout, simply choose the same title (since the
+filename, by default, matches the title) or explicitly use the <code class="docutils literal notranslate"><span class="pre">save</span></code>
+and <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> keywords for the <code class="docutils literal notranslate"><span class="pre">visualize()</span></code> function to select a
+previously saved file. This means you only need to manually lay out the
+diagram once. Of course, if you add new pieces to the flowsheet you will
+need to position them correctly (as discussed below).</p>
+</section>
+</section>
+<section id="exporting">
+<h3>Exporting<a class="headerlink" href="#exporting" title="Permalink to this heading">¶</a></h3>
+<section id="exporting-the-diagram-as-an-image">
+<h4>Exporting the diagram as an image<a class="headerlink" href="#exporting-the-diagram-as-an-image" title="Permalink to this heading">¶</a></h4>
+<p>You can export an image of the flowsheet diagram in the <a class="reference external" href="https://www.w3.org/Graphics/SVG/">Scalable Vector
+Graphics (SVG)</a> format, which can
+render without fuzziness at arbitrary sizes. Almost all presentation and
+drawing programs, including MS Word and Powerpoint, can use SVG images.</p>
+<p>From the top menu select <em>Export -&gt; Flowsheet</em>. You will get a preview
+of the flowsheet that you can then download to a file. #### Exporting
+the stream table as CSV You can export the stream table as
+comma-separated values. From the top menu select <em>Export -&gt; Stream
+Table</em>.</p>
+</section>
+</section>
+<section id="updating-when-the-flowsheet-changes">
+<h3>Updating when the flowsheet changes<a class="headerlink" href="#updating-when-the-flowsheet-changes" title="Permalink to this heading">¶</a></h3>
+<p>The FV has a connection to the Python program that has the flowsheet
+(model) in memory. Therefore, when the underlying flowsheet changes, the
+visualization can be quickly updated to show the new state. This feature
+is particularly useful for interactive flowsheet creation and debugging
+in Jupyter Notebooks.</p>
+<p>To illustrate the feature, below is some IDAES modeling code that adds
+another Flash unit to the model, connecting the liquid outlet of the
+first flash unit to its inlet. There is a little more code that updates
+some of the output values of the model and sets initial values for this
+new unit, and then re-initializes the model.</p>
+<p><strong>After this code executes, the model will have a unit called “F102”
+connected to “F101”.</strong></p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add a second flash unit</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models</span> <span class="kn">import</span> <span class="n">Flash</span>
+<span class="kn">from</span> <span class="nn">pyomo.network</span> <span class="kn">import</span> <span class="n">Arc</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">TransformationFactory</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">model</span> <span class="c1"># alias</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span> <span class="o">=</span> <span class="n">Flash</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                  <span class="n">has_heat_transfer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                  <span class="n">has_pressure_change</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># connect to 1st flash unit</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s10</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+<span class="c1"># update expressions for purity and cost</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">purity</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span>
+        <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span> <span class="o">/</span>
+             <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span>
+              <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]))</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="mf">2.2e-7</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+                                <span class="mf">1.9e-7</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="c1"># fix unit output and pressure drop</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">375</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="o">-</span><span class="mi">200000</span><span class="p">)</span>
+
+<span class="c1"># expand arcs</span>
+<span class="n">TransformationFactory</span><span class="p">(</span><span class="s2">&quot;network.expand_arcs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="c1"># re-initialize</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">vistut</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info docutils container">
+<p>Since the FV is connected to the current state of the model in
+memory, simply hitting “Refresh” in the FV window will show the new
+flash unit in the diagram, and the new stream (liquid) in the stream
+table. We can then interactively rearrange the unit to be in the
+position we want in the diagram.</p>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#v model.fs.visualize(&quot;Hydrodealkylation-new&quot;)</span>
+</pre></div>
+</div>
+</section>
+<section id="showing-new-values">
+<h3>Showing new values<a class="headerlink" href="#showing-new-values" title="Permalink to this heading">¶</a></h3>
+<p>The previous step showed how a new unit in the flowsheet will be
+automatically added to the diagram. Similarly, if the values in the
+flowsheet change these will be reflected in the stream table. Below, we
+solve the initialized flowsheet. To make comparison a little easier, we
+will open a second UI window with the new values (the old values will
+not be updated unless we decide to hit the “Refresh” button).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the solver object</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">SolverFactory</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tol&#39;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="s1">&#39;max_iter&#39;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">}</span>
+
+<span class="c1"># Solve the model</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Open a second window</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="s2">&quot;HDA_solved&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Saving flowsheet to default file &#39;HDA_solved.json&#39; in current directory (/tmp/tmpfieeksls)
+_build_abstract_layout - node_name: hydrogen_feed_1
+_build_abstract_layout - node_name: toluene_feed_1
+_build_abstract_layout - node_name: M101
+_build_abstract_layout - node_name: H101
+_build_abstract_layout - node_name: R101
+_build_abstract_layout - node_name: F101
+_build_abstract_layout - node_name: F102
+_build_abstract_layout - node_name: S101
+_build_abstract_layout - node_name: liq_outlet_1
+_build_abstract_layout - node_name: vap_outlet_1
+_build_abstract_layout - node_name: C101
+Error: Unable to open flowsheet in web browser.
+Flowsheet visualization at: http://localhost:42165/app?id=HDA_solved
+</pre></div>
+</div>
+<p>When we look at the stream table, we can see the values in the stream
+between the first and second flash unit changing.</p>
+</section>
+</section>
+<section id="running-from-a-script">
+<h2>Running from a script<a class="headerlink" href="#running-from-a-script" title="Permalink to this heading">¶</a></h2>
+<p>Finally, although all examples have been shown in a Jupyter Notebook,
+there is nothing preventing the use of the FV from within a plain Python
+script (or module).</p>
+<p>For example, the code to run this same tutorial as a Python script is
+also in the file
+<a class="reference external" href="file://visualizer_tutorial.py">visualizer_tutorial.py</a> in the same
+folder as this notebook.</p>
+<p>If you have installed the IDAES examples (using <code class="docutils literal notranslate"><span class="pre">idaes</span> <span class="pre">get-examples</span></code>),
+then you can do the following to import and run the module:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes_examples.Tutorials.Basics</span> <span class="kn">import</span> <span class="n">visualizer_tutorial</span>
+<span class="n">visualizer_tutorial</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="further-reading">
+<h1>Further reading<a class="headerlink" href="#further-reading" title="Permalink to this heading">¶</a></h1>
+<p>Reference documentation for the FV is available in the IDAES main
+documentation, online at <a class="reference external" href="https://idaes-pse.readthedocs.io/">https://idaes-pse.readthedocs.io/</a></p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

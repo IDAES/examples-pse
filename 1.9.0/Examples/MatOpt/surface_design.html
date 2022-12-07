@@ -1,0 +1,481 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Surface Design &mdash; IDAES v1.9.0 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Surface Design</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/Examples/MatOpt/surface_design.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="surface-design">
+<h1>Surface Design<a class="headerlink" href="#surface-design" title="Permalink to this headline">¶</a></h1>
+<p>This notebook serves as an example application of the MatOpt framework.
+We consider an example optimization problem of designing a monometallic
+nanostructured catalyst surface.</p>
+<div class="section" id="importing-packages">
+<h2>Importing Packages<a class="headerlink" href="#importing-packages" title="Permalink to this headline">¶</a></h2>
+<p>We start by importing several standard Python modules for convienience.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+</pre></div>
+</div>
+<p>Next, we import MatOpt.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.apps.matopt</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="representing-materials">
+<h2>Representing Materials<a class="headerlink" href="#representing-materials" title="Permalink to this headline">¶</a></h2>
+<p>To begin, we define a <strong>Lattice</strong> object. In this example,
+<strong>FCCLattice</strong> is the appropriate a child class of Lattice. This object
+will serve to define neighbor connections and helps us generically
+create other objects. We construct our lattice from a class method
+constructor for FCC lattices aligned with the {111} plane.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">IAD</span> <span class="o">=</span> <span class="mf">2.828427</span> <span class="c1"># Angstrom</span>
+<span class="n">Lat</span> <span class="o">=</span> <span class="n">FCCLattice</span><span class="o">.</span><span class="n">alignedWith111</span><span class="p">(</span><span class="n">IAD</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, we define a <strong>Shape</strong> object that we will use to specify a design
+space. Additionally, in this example our design space is periodic, so we
+will define a <strong>Tiling</strong> object to hold information about the
+periodicity. In this example, <strong>Parallelepiped</strong> and <strong>PlanarTiling</strong>
+are the appropriate child classes for these objects, respectively.</p>
+<p>Note that we shift the shape of our design space slightly, in order to
+avoid confusion about which lattice sites that lie perfectly on the
+shape facet should be included.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nUnitCellsOnEdge</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">nLayers</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">nUnitCellsOnEdge</span><span class="o">*</span><span class="n">IAD</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">nLayers</span><span class="o">*</span><span class="n">Lat</span><span class="o">.</span><span class="n">FCC111LayerSpacing</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>
+<span class="n">S</span> <span class="o">=</span> <span class="n">Parallelepiped</span><span class="o">.</span><span class="n">fromEdgesAndAngles</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">,</span><span class="n">gamma</span><span class="p">)</span>
+<span class="n">S</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">a</span><span class="p">,</span><span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">b</span><span class="p">,</span><span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">c</span><span class="p">]))</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">PlanarTiling</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Given the parameters for a design space, we can construct a <strong>Canvas</strong>
+object to hold information about points and nearest neighbors. In this
+example, the object is efficiently constructed from a scan over lattice
+sites. In general, the Canvas can be constructed and manipulated via
+user-defined algorithms.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Canv</span> <span class="o">=</span> <span class="n">Canvas</span><span class="o">.</span><span class="n">fromLatticeAndTilingScan</span><span class="p">(</span><span class="n">Lat</span><span class="p">,</span><span class="n">T</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The Canvas object hold information about the design space and the
+lattice sites, but it does not specify any material building block
+information. To represent material configurations, use a <strong>Design</strong>
+object.</p>
+<p>Initially, the Design is empty. There are several ways to place <strong>Atom</strong>
+(i.e., building block) objects in a Design. In this example, we are
+considering a Pt surface for the oxygen reduction reaction. We can
+initialize a design representing the FCC {111} surface by using a
+standard constructor for the Design object.</p>
+<p>To debug our work so far, we can create material structure files to load
+and plot with standard visualization tools such as AtomEye. Here, we
+create PDB (protein data bank format, www.rcsb.org) and CFG (AtomEye
+configuration, li.mit.edu/A/Graphics/A/) files for the design. These
+files can be plotted with visualization packages such as AtomEye or
+OVITO.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Pt&#39;</span><span class="p">))</span>
+<span class="n">D</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;undefected.pdb&#39;</span><span class="p">)</span>
+<span class="n">D</span><span class="o">.</span><span class="n">toCFG</span><span class="p">(</span><span class="s1">&#39;undefected.cfg&#39;</span><span class="p">,</span><span class="n">GS</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span><span class="n">BBox</span><span class="o">=</span><span class="n">S</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-a-model">
+<h2>Building a Model<a class="headerlink" href="#building-a-model" title="Permalink to this headline">¶</a></h2>
+<p>In this example, we will build a model that maximizes the number of
+sites that are reactive for the oxygen reduction reaction (ORR). More
+generally, our model will indicate sites that are within a certain
+tolerance of a target generalized coordination number (GCN). These
+target sites can also be constrained to lie within minimum and maximum
+coordination number to be considered surface sites.</p>
+<p>Additionally, we model the surface energy of nanostructured designs.
+This surface energy can be constrained to be below a threshold and can
+be included in the objective function. We can parametrically optimize
+the multi-objective optimization problem by defining a weighting,
+<em>CatWeight</em>, that controls how much weight is given to the catalytic
+activity term in the objective function. A weighting of 1 corresponds to
+the optimally active material and a weighting of 0 corresponds to the
+lowest surface energy design.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;Pt&#39;</span><span class="p">)]</span>
+<span class="n">TargetGCN</span> <span class="o">=</span> <span class="mf">8.0</span>
+<span class="n">CNsurfMin</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">CNsurfMax</span> <span class="o">=</span> <span class="mi">9</span>
+<span class="n">TileSizeSquared</span> <span class="o">=</span> <span class="n">nUnitCellsOnEdge</span><span class="o">**</span><span class="mi">2</span>
+<span class="n">UndefectedSurfE</span> <span class="o">=</span> <span class="mf">0.129758</span>
+<span class="n">maxSurfE</span> <span class="o">=</span> <span class="mi">999</span>
+<span class="n">CatWeight</span> <span class="o">=</span> <span class="mf">1.0</span>
+</pre></div>
+</div>
+<p>To begin, we start by creating a <strong>*MatOptModel*</strong> object to hold
+information about the model.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">MatOptModel</span><span class="p">(</span><span class="n">Canv</span><span class="p">,</span><span class="n">Atoms</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>By default, several basic variables are pre-defined. See the first
+example, <strong>*Monometallic_Nanocluster_Design.ipynb*</strong> for a description
+of basic variables, expressions, and constraint rules.</p>
+<p>First, we introduce two rules to fix special sites in the design. We fix
+the bottom two layers of atoms to exist, creating underlying bulk layers
+above which we will introduce nanostruced defets. We also fix an
+arbitrary atom in the top layer, breaking symetry of the design space
+and resulting in easier to solve opitmization problems without actually
+restricting the designs that can be possibly represented.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">CanvTwoBotLayers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1.5</span><span class="o">*</span><span class="n">Lat</span><span class="o">.</span><span class="n">FCC111LayerSpacing</span><span class="p">]</span>
+<span class="n">CanvMinusTwoBotLayers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))</span>
+                         <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CanvTwoBotLayers</span><span class="p">]</span>
+<span class="n">OneSiteInTopLayer</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))</span>
+                          <span class="k">if</span> <span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">nLayers</span><span class="o">-</span><span class="mf">1.5</span><span class="p">)</span><span class="o">*</span><span class="n">Lat</span><span class="o">.</span><span class="n">FCC111LayerSpacing</span><span class="p">])]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FixedTo</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">sites</span><span class="o">=</span><span class="n">OneSiteInTopLayer</span><span class="p">))</span>
+<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FixedTo</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">sites</span><span class="o">=</span><span class="n">CanvTwoBotLayers</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Next, we introduce constraints thtat require atoms to be placed on top
+of each other, avoiding hollow pockets below the surface.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">NeighborsBelow</span> <span class="o">=</span> <span class="p">[[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">Canv</span><span class="o">.</span><span class="n">NeighborhoodIndexes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                   <span class="k">if</span><span class="p">(</span><span class="n">j</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                      <span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">&lt;</span><span class="n">Canv</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">DBL_TOL</span><span class="p">)]</span>
+                  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Canv</span><span class="p">))]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ImpliesNeighbors</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="p">,</span><span class="n">GreaterThan</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
+                                   <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">,</span>
+                                   <span class="n">neighborhoods</span><span class="o">=</span><span class="n">NeighborsBelow</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Next, we introduce several rules for the geometric and reactive
+descriptors of sites in the design. We define the generalized
+coordination number according to a linear equality constraint. Then, we
+define ideal sites as having a conjunction of requirements on the
+generalized coordination number, and regular coordination number.
+Finally, we define activity as the count of sites with target
+coordination number.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;GCNi&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">12</span><span class="p">),</span><span class="n">integer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumNeighborSites</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span>
+                                                    <span class="n">coefs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">12</span><span class="p">)),</span>
+                     <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;IdealSitei&#39;</span><span class="p">,</span><span class="n">binary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                     <span class="n">rules</span><span class="o">=</span><span class="p">[</span><span class="n">Implies</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span><span class="n">GreaterThan</span><span class="p">(</span><span class="mi">3</span><span class="p">))),</span>
+                            <span class="n">Implies</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span><span class="n">LessThan</span><span class="p">(</span><span class="mi">9</span><span class="p">))),</span>
+                            <span class="n">Implies</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">GCNi</span><span class="p">,</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">TargetGCN</span><span class="p">)))],</span>
+                     <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Activity&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span>
+                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">IdealSitei</span><span class="p">,</span><span class="n">coefs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">TileSizeSquared</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>Next, we define a simple model for the surface energy of nanostructured
+slabs as a piecwise linear function of coordination number.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">EiVals</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.04293</span><span class="o">*</span><span class="mi">3</span><span class="o">+</span><span class="mf">0.41492</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.04293</span><span class="o">*</span><span class="mi">10</span><span class="o">+</span><span class="mf">0.41492</span><span class="p">,</span> <span class="mf">0.05179</span><span class="o">*</span><span class="mi">11</span><span class="o">-</span><span class="mf">0.62148</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">EiBPs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;Ei&#39;</span><span class="p">,</span><span class="n">rules</span><span class="o">=</span><span class="n">PiecewiseLinear</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">EiVals</span><span class="p">,</span>
+                                                <span class="n">breakpoints</span><span class="o">=</span><span class="n">EiBPs</span><span class="p">,</span>
+                                                <span class="n">input_desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">),</span>
+                     <span class="n">sites</span><span class="o">=</span><span class="n">CanvMinusTwoBotLayers</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Esurf&#39;</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="n">maxSurfE</span><span class="p">),</span>
+                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ei</span><span class="p">,</span><span class="n">coefs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">TileSizeSquared</span><span class="p">,</span><span class="n">offset</span><span class="o">=</span><span class="mf">0.101208</span><span class="p">)))</span>
+<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Stability&#39;</span><span class="p">,</span>
+                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">LinearExpr</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Esurf</span><span class="p">,</span><span class="mi">1</span><span class="o">/</span><span class="n">UndefectedSurfE</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>Finally, we introduce a descriptor for the weighted combination of
+activity and stability.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;ActAndStab&#39;</span><span class="p">,</span>
+                      <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">LinearExpr</span><span class="p">(</span><span class="n">descs</span><span class="o">=</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">Stability</span><span class="p">,</span><span class="n">m</span><span class="o">.</span><span class="n">Activity</span><span class="p">],</span>
+                                                      <span class="n">coefs</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">CatWeight</span><span class="p">),</span><span class="n">CatWeight</span><span class="p">])))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="solving-the-model">
+<h2>Solving the Model<a class="headerlink" href="#solving-the-model" title="Permalink to this headline">¶</a></h2>
+<p>Given a fully formed Pyomo model, we have several capabilities to
+optimize and visualize the solution. In this example, we simply call the
+maximize method to optimize the balance of activity and stability</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">maximize</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">ActAndStab</span><span class="p">,</span><span class="n">tilim</span><span class="o">=</span><span class="mi">360</span><span class="p">)</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
+  with Simplex, Mixed Integer &amp; Barrier Optimizers
+5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
+Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+
+Type &#39;help&#39; for a list of available commands.
+Type &#39;help&#39; followed by a command name for more
+information on commands.
+
+CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
+Logfile &#39;/tmp/tmpbpun0oi2.cplex.log&#39; open.
+CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
+CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
+CPLEX&gt; New value for time limit in seconds: 360
+CPLEX&gt; Problem &#39;/tmp/tmp1_cixklh.pyomo.lp&#39; read.
+Read time = 0.01 sec. (0.34 ticks)
+CPLEX&gt; Problem name         : /tmp/tmp1_cixklh.pyomo.lp
+Objective sense      : Maximize
+Variables            :    1620  [Nneg: 1,  Box: 65,  Free: 322,  Binary: 1151,
+                                 General Integer: 80,  Other: 1]
+Objective nonzeros   :       1
+Linear constraints   :    4085  [Less: 3680,  Greater: 64,  Equal: 341]
+  Nonzeros           :    9808
+  RHS nonzeros       :    1029
+
+Variables            : Min LB: 0.000000         Max UB: 999.0000
+Objective nonzeros   : Min   : 1.000000         Max   : 1.000000
+Linear constraints   :
+  Nonzeros           : Min   : 0.03741000       Max   : 12.00000
+  RHS nonzeros       : Min   : 0.1012080        Max   : 12.00000
+CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
+
+Error termination, CPLEX Error  1016.
+Solution time =    0.00 sec.
+Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+
+CPLEX&gt; CPLEX Error  1217: No solution exists.
+No file written.
+CPLEX&gt; ERROR: evaluating object as numeric value: obj
+        (object: &lt;class &#39;pyomo.core.base.objective.SimpleObjective&#39;&gt;)
+    No value for uninitialized NumericValue object obj
+MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+</pre></div>
+</div>
+</div>
+<div class="section" id="processing-solutions">
+<h2>Processing Solutions<a class="headerlink" href="#processing-solutions" title="Permalink to this headline">¶</a></h2>
+<p>Once the model is solved, we can plot the resulting design. However, it
+is often useful to label atoms according to some auxilliary information.
+In this case, we would like to label atoms that consitute ideal reactive
+sites. We loop over the sites and set the atom to S to highlight the
+sites that are reactive. Then, we can write the Design object to PDB or
+CFG files for plotting.</p>
+<p>Additionally, we can manipulate the resulting design to better see the
+periodic pattern. Here, we replicate the design four times to see the
+periodic pattern.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="p">(</span><span class="n">D</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">IdealSitei</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">IdealSitei</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">D</span><span class="o">.</span><span class="n">setContent</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">))</span>
+    <span class="n">D</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;result.pdb&#39;</span><span class="p">)</span>
+    <span class="n">PeriodicD</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">replicateDesign</span><span class="p">(</span><span class="n">D</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">PeriodicS</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+    <span class="n">PeriodicS</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">PeriodicD</span><span class="o">.</span><span class="n">toCFG</span><span class="p">(</span><span class="s1">&#39;periodic_result.cfg&#39;</span><span class="p">,</span><span class="n">BBox</span><span class="o">=</span><span class="n">PeriodicS</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

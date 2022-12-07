@@ -1,0 +1,1173 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>HDA Flowsheet Simulation and Optimization &mdash; IDAES v1.11.0rc0 Examples</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../Examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">IDAES Tutorials</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>HDA Flowsheet Simulation and Optimization</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/Tutorials/Basics/HDA_flowsheet_solution.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="hda-flowsheet-simulation-and-optimization">
+<h1>HDA Flowsheet Simulation and Optimization<a class="headerlink" href="#hda-flowsheet-simulation-and-optimization" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="learning-outcomes">
+<h2>Learning outcomes<a class="headerlink" href="#learning-outcomes" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Construct a steady-state flowsheet using the IDAES unit model library</p></li>
+<li><p>Connecting unit models in a flowsheet using Arcs</p></li>
+<li><p>Using the SequentialDecomposition tool to initialize a flowsheet with
+recycle</p></li>
+<li><p>Fomulate and solve an optimization problem</p>
+<ul>
+<li><p>Defining an objective function</p></li>
+<li><p>Setting variable bounds</p></li>
+<li><p>Adding additional constraints</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="problem-statement">
+<h2>Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this headline">¶</a></h2>
+<p>Hydrodealkylation is a chemical reaction that often involves reacting an
+aromatic hydrocarbon in the presence of hydrogen gas to form a simpler
+aromatic hydrocarbon devoid of functional groups. In this example,
+toluene will be reacted with hydrogen gas at high temperatures to form
+benzene via the following reaction:</p>
+<p><strong>C6H5CH3 + H2 → C6H6 + CH4</strong></p>
+<p>This reaction is often accompanied by an equilibrium side reaction which
+forms diphenyl, which we will neglect for this example.</p>
+<p>This example is based on the 1967 AIChE Student Contest problem as
+present by Douglas, J.M., Chemical Design of Chemical Processes, 1988,
+McGraw-Hill.</p>
+<p>The flowsheet that we will be using for this module is shown below with
+the stream conditions. We will be processing toluene and hydrogen to
+produce at least 370 TPY of benzene. As shown in the flowsheet, there
+are two flash tanks, F101 to separate out the non-condensibles and F102
+to further separate the benzene-toluene mixture to improve the benzene
+purity. Note that typically a distillation column is required to obtain
+high purity benzene but that is beyond the scope of this workshop. The
+non-condensibles separated out in F101 will be partially recycled back
+to M101 and the rest will be either purged or combusted for power
+generation.We will assume ideal gas for this flowsheet. The properties
+required for this module are available in the same directory:</p>
+<ul class="simple">
+<li><p>hda_ideal_VLE.py</p></li>
+<li><p>hda_reaction.py</p></li>
+</ul>
+<p>The state variables chosen for the property package are <strong>flows of
+component by phase, temperature and pressure</strong>. The components
+considered are: <strong>toluene, hydrogen, benzene and methane</strong>. Therefore,
+every stream has 8 flow variables, 1 temperature and 1 pressure
+variable.</p>
+<p><img alt="image0" src="../../_images/HDA_flowsheet.png" /></p>
+</div>
+<div class="section" id="importing-required-pyomo-and-idaes-components">
+<h2>Importing required pyomo and idaes components<a class="headerlink" href="#importing-required-pyomo-and-idaes-components" title="Permalink to this headline">¶</a></h2>
+<p>To construct a flowsheet, we will need several components from the pyomo
+and idaes package. Let us first import the following components from
+Pyomo: - Constraint (to write constraints) - Var (to declare variables)
+- ConcreteModel (to create the concrete model object) - Expression (to
+evaluate values as a function of variables defined in the model) -
+Objective (to define an objective function for optimization) -
+SolverFactory (to solve the problem) - TransformationFactory (to apply
+certain transformations) - Arc (to connect two unit models) -
+SequentialDecomposition (to initialize the flowsheet in a sequential
+mode)</p>
+<p>For further details on these components, please refer to the pyomo
+documentation: <a class="reference external" href="https://pyomo.readthedocs.io/en/latest/">https://pyomo.readthedocs.io/en/latest/</a></p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Constraint</span><span class="p">,</span>
+                           <span class="n">Var</span><span class="p">,</span>
+                           <span class="n">ConcreteModel</span><span class="p">,</span>
+                           <span class="n">Expression</span><span class="p">,</span>
+                           <span class="n">Objective</span><span class="p">,</span>
+                           <span class="n">SolverFactory</span><span class="p">,</span>
+                           <span class="n">TransformationFactory</span><span class="p">,</span>
+                           <span class="n">value</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pyomo.network</span> <span class="kn">import</span> <span class="n">Arc</span><span class="p">,</span> <span class="n">SequentialDecomposition</span>
+</pre></div>
+</div>
+<p>From idaes, we will be needing the FlowsheetBlock and the following unit
+models: - Mixer - Heater - StoichiometricReactor - <strong>Flash</strong> - Separator
+(splitter) - PressureChanger</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.generic_models.unit_models</span> <span class="kn">import</span> <span class="p">(</span><span class="n">PressureChanger</span><span class="p">,</span>
+                                        <span class="n">Mixer</span><span class="p">,</span>
+                                        <span class="n">Separator</span> <span class="k">as</span> <span class="n">Splitter</span><span class="p">,</span>
+                                        <span class="n">Heater</span><span class="p">,</span>
+                                        <span class="n">StoichiometricReactor</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Now, import the remaining unit models highlighted in
+blue above and run the cell using <code class="docutils literal notranslate"><span class="pre">Shift+Enter</span></code> after typing in the
+code.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Todo: import flash model from idaes.generic_models.unit_moels</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.unit_models</span> <span class="kn">import</span> <span class="n">Flash</span>
+</pre></div>
+</div>
+<p>We will also be needing some utility tools to put together the flowsheet
+and calculate the degrees of freedom.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.generic_models.unit_models.pressure_changer</span> <span class="kn">import</span> <span class="n">ThermodynamicAssumption</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+
+<span class="c1"># Import idaes logger to set output levels</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="importing-required-thermo-and-reaction-package">
+<h2>Importing required thermo and reaction package<a class="headerlink" href="#importing-required-thermo-and-reaction-package" title="Permalink to this headline">¶</a></h2>
+<p>The final set of imports are to import the thermo and reaction package
+for the HDA process. We have created a custom thermo package that
+assumes Ideal Gas with support for VLE.</p>
+<p>The reaction package here is very simple as we will be using only a
+StochiometricReactor and the reaction package consists of the
+stochiometric coefficients for the reaction and the parameter for the
+heat of reaction.</p>
+<p>Let us import the following modules and they are in the same directory
+as this jupyter notebook:</p>
+<ul><li><p>hda_ideal_VLE as thermo_props</p>
+</li><li><p>hda_reaction as reaction_props</p>
+</li></ul></div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">hda_ideal_VLE</span> <span class="k">as</span> <span class="nn">thermo_props</span>
+<span class="kn">import</span> <span class="nn">hda_reaction</span> <span class="k">as</span> <span class="nn">reaction_props</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="constructing-the-flowsheet">
+<h2>Constructing the Flowsheet<a class="headerlink" href="#constructing-the-flowsheet" title="Permalink to this headline">¶</a></h2>
+<p>We have now imported all the components, unit models, and property
+modules we need to construct a flowsheet. Let us create a ConcreteModel
+and add the flowsheet block as we did in module 1.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>We now need to add the property packages to the flowsheet. Unlike Module
+1, where we only had a thermo property package, for this flowsheet we
+will also need to add a reaction property package.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span> <span class="o">=</span> <span class="n">thermo_props</span><span class="o">.</span><span class="n">HDAParameterBlock</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reaction_params</span> <span class="o">=</span> <span class="n">reaction_props</span><span class="o">.</span><span class="n">HDAReactionParameterBlock</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-unit-models">
+<h2>Adding Unit Models<a class="headerlink" href="#adding-unit-models" title="Permalink to this headline">¶</a></h2>
+<p>Let us start adding the unit models we have imported to the flowsheet.
+Here, we are adding the Mixer (assigned a name M101) and a Heater
+(assigned a name H101). Note that, all unit models need to be given a
+property package argument. In addition to that, there are several
+arguments depending on the unit model, please refer to the documentation
+for more details
+(<a class="reference external" href="https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_lib/unit_models/index.html">https://idaes-pse.readthedocs.io/en/latest/model_libraries/core_lib/unit_models/index.html</a>).
+For example, the Mixer unit model here is given a <code class="docutils literal notranslate"><span class="pre">list</span></code> consisting of
+names to the three inlets.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span> <span class="o">=</span> <span class="n">Mixer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                           <span class="s2">&quot;inlet_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;toluene_feed&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen_feed&quot;</span><span class="p">,</span> <span class="s2">&quot;vapor_recycle&quot;</span><span class="p">]})</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span> <span class="o">=</span> <span class="n">Heater</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                            <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                            <span class="s2">&quot;has_phase_equilibrium&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Let us now add the StoichiometricReactor(assign the
+name R101) and pass the following arguments:</p>
+<ul><li><p>“property_package”: m.fs.thermo_params</p>
+</li><li><p>“reaction_package”: m.fs.reaction_params</p>
+</li><li><p>“has_heat_of_reaction”: True</p>
+</li><li><p>“has_heat_transfer”: True</p>
+</li><li><p>“has_pressure_change”: False</p>
+</li></ul></div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Todo: Add reactor with the specifications above</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span> <span class="o">=</span> <span class="n">StoichiometricReactor</span><span class="p">(</span>
+            <span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                     <span class="s2">&quot;reaction_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reaction_params</span><span class="p">,</span>
+                     <span class="s2">&quot;has_heat_of_reaction&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                     <span class="s2">&quot;has_heat_transfer&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                     <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Let us now add the Flash(assign the name F101) and pass the following
+arguments:</p>
+<ul><li><p>“property_package”: m.fs.thermo_params</p>
+</li><li><p>“has_heat_transfer”: True</p>
+</li><li><p>“has_pressure_change”: False</p>
+</li></ul><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span> <span class="o">=</span> <span class="n">Flash</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                               <span class="s2">&quot;has_heat_transfer&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                               <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Let us now add the Splitter(S101), PressureChanger(C101) and the second
+Flash(F102).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span> <span class="o">=</span> <span class="n">Splitter</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                               <span class="s2">&quot;ideal_separation&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                               <span class="s2">&quot;outlet_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;purge&quot;</span><span class="p">,</span> <span class="s2">&quot;recycle&quot;</span><span class="p">]})</span>
+
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span> <span class="o">=</span> <span class="n">PressureChanger</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+            <span class="s2">&quot;compressor&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;thermodynamic_assumption&quot;</span><span class="p">:</span> <span class="n">ThermodynamicAssumption</span><span class="o">.</span><span class="n">isothermal</span><span class="p">})</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span> <span class="o">=</span> <span class="n">Flash</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                           <span class="s2">&quot;has_heat_transfer&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                           <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="connecting-unit-models-using-arcs">
+<h2>Connecting Unit Models using Arcs<a class="headerlink" href="#connecting-unit-models-using-arcs" title="Permalink to this headline">¶</a></h2>
+<p>We have now added all the unit models we need to the flowsheet. However,
+we have not yet specifed how the units are to be connected. To do this,
+we will be using the <code class="docutils literal notranslate"><span class="pre">Arc</span></code> which is a pyomo component that takes in
+two arguments: <code class="docutils literal notranslate"><span class="pre">source</span></code> and <code class="docutils literal notranslate"><span class="pre">destination</span></code>. Let us connect the outlet
+of the mixer(M101) to the inlet of the heater(H101).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s03</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="image1" src="../../_images/HDA_flowsheet.png" /></p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Now, connect the H101 outlet to the R101 inlet using
+the cell above as a guide.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Todo: Connect the H101 outlet to R101 inlet</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s04</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We will now be connecting the rest of the flowsheet as shown below.
+Notice how the outlet names are different for the flash tanks F101 and
+F102 as they have a vapor and a liquid outlet.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s05</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s06</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s08</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">recycle</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s09</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span>
+               <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">vapor_recycle</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s10</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">liq_outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We have now connected the unit model block using the arcs. However, each
+of these arcs link to ports on the two unit models that are connected.
+In this case, the ports consist of the state variables that need to be
+linked between the unit models. Pyomo provides a convenient method to
+write these equality constraints for us between two ports and this is
+done as follows:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">TransformationFactory</span><span class="p">(</span><span class="s2">&quot;network.expand_arcs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-expressions-to-compute-purity-and-operating-costs">
+<h2>Adding expressions to compute purity and operating costs<a class="headerlink" href="#adding-expressions-to-compute-purity-and-operating-costs" title="Permalink to this headline">¶</a></h2>
+<p>In this section, we will add a few Expressions that allows us to
+evaluate the performance. Expressions provide a convenient way of
+calculating certain values that are a function of the variables defined
+in the model. For more details on Expressions, please refer to:
+<a class="reference external" href="https://pyomo.readthedocs.io/en/latest/pyomo_modeling_components/Expressions.html">https://pyomo.readthedocs.io/en/latest/pyomo_modeling_components/Expressions.html</a></p>
+<p>For this flowsheet, we are interested in computing the purity of the
+product Benzene stream (i.e. the mole fraction) and the operating cost
+which is a sum of the cooling and heating cost.</p>
+<p>Let us first add an Expression to compute the mole fraction of benzene
+in the <code class="docutils literal notranslate"><span class="pre">vap_outlet</span></code> of F102 which is our product stream. Please note
+that the var flow_mol_phase_comp has the index - [time, phase,
+component]. As this is a steady-state flowsheet, the time index by
+default is 0. The valid phases are [“Liq”, “Vap”]. Similarly the valid
+component list is [“benzene”, “toluene”, “hydrogen”, “methane”].</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">purity</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span>
+        <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span> <span class="o">/</span>
+        <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span>
+         <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Now, let us add an expression to compute the cooling cost assuming a
+cost of 0.212E-4 $/kW. Note that cooling utility is required for the
+reactor (R101) and the first flash (F101).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cooling_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="mf">0.212e-7</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span>
+                                   <span class="mf">0.212e-7</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Now, let us add an expression to compute the heating cost assuming the
+utility cost as follows:</p>
+<ul><li><p>2.2E-4 dollars/kW for H101</p>
+</li><li><p>1.9E-4 dollars/kW for F102</p>
+</li></ul><p>Note that the heat duty is in units of watt (J/s).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="mf">2.2e-7</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+                                   <span class="mf">1.9e-7</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Let us now add an expression to compute the total operating cost per
+year which is basically the sum of the cooling and heating cost we
+defined above.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span>
+                                           <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span> <span class="o">+</span>
+                                            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cooling_cost</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fixing-feed-conditions">
+<h2>Fixing feed conditions<a class="headerlink" href="#fixing-feed-conditions" title="Permalink to this headline">¶</a></h2>
+<p>Let us first check how many degrees of freedom exist for this flowsheet
+using the <code class="docutils literal notranslate"><span class="pre">degrees_of_freedom</span></code> tool we imported earlier.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">29</span>
+</pre></div>
+</div>
+<p>We will now be fixing the toluene feed stream to the conditions shown in
+the flowsheet above. Please note that though this is a pure toluene
+feed, the remaining components are still assigned a very small non-zero
+value to help with convergence and initializing.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.30</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">303.2</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">toluene_feed</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">350000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Similarly, let us fix the hydrogen feed to the following conditions in
+the next cell:</p>
+<ul><li><p>FH2 = 0.30 mol/s</p>
+</li><li><p>FCH4 = 0.02 mol/s</p>
+</li><li><p>Remaining components = 1e-5 mol/s</p>
+</li><li><p>T = 303.2 K</p>
+</li><li><p>P = 350000 Pa</p>
+</li></ul><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.30</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">303.2</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">hydrogen_feed</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">350000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fixing-unit-model-specifications">
+<h2>Fixing unit model specifications<a class="headerlink" href="#fixing-unit-model-specifications" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have fixed our inlet feed conditions, we will now be fixing
+the operating conditions for the unit models in the flowsheet. Let us
+set set the H101 outlet temperature to 600 K.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">600</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For the StoichiometricReactor, we have to define the conversion in terms
+of toluene. This requires us to create a new variable for specifying the
+conversion and adding a Constraint that defines the conversion with
+respect to toluene. The second degree of freedom for the reactor is to
+define the heat duty. In this case, let us assume the reactor to be
+adiabatic i.e. Q = 0.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conv_constraint</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span>
+    <span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span> <span class="o">==</span>
+    <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span> <span class="o">-</span>
+     <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]))</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The Flash conditions for F101 can be set as follows.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">325.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Set the conditions for Flash F102 to the following
+conditions:</p>
+<ul><li><p>T = 375 K</p>
+</li><li><p>deltaP = -200000</p>
+</li></ul><p>Use Shift+Enter to run the cell once you have typed in your code.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">375</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="o">-</span><span class="mi">200000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let us fix the purge split fraction to 20% and the outlet pressure of
+the compressor is set to 350000 Pa.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;purge&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">350000</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: We have now defined all the feed conditions and the
+inputs required for the unit models. The system should now have 0
+degrees of freedom i.e. should be a square problem. Please check that
+the degrees of freedom is 0.</p>
+<p>Use Shift+Enter to run the cell once you have typed in your code.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="initialization">
+<h2>Initialization<a class="headerlink" href="#initialization" title="Permalink to this headline">¶</a></h2>
+<p>This section will demonstrate how to use the built-in sequential
+decomposition tool to initialize our flowsheet.</p>
+<p><img alt="image2" src="../../_images/HDA_flowsheet.png" /></p>
+<p>Let us first create an object for the SequentialDecomposition and
+specify our options for this.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">seq</span> <span class="o">=</span> <span class="n">SequentialDecomposition</span><span class="p">()</span>
+<span class="n">seq</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">select_tear_method</span> <span class="o">=</span> <span class="s2">&quot;heuristic&quot;</span>
+<span class="n">seq</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">tear_method</span> <span class="o">=</span> <span class="s2">&quot;Wegstein&quot;</span>
+<span class="n">seq</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">iterLim</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="c1"># Using the SD tool</span>
+<span class="n">G</span> <span class="o">=</span> <span class="n">seq</span><span class="o">.</span><span class="n">create_graph</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="n">heuristic_tear_set</span> <span class="o">=</span> <span class="n">seq</span><span class="o">.</span><span class="n">tear_set_arcs</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;heuristic&quot;</span><span class="p">)</span>
+<span class="n">order</span> <span class="o">=</span> <span class="n">seq</span><span class="o">.</span><span class="n">calculation_order</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Which is the tear stream? Display tear set and order</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">heuristic_tear_set</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fs</span><span class="o">.</span><span class="n">s03</span>
+</pre></div>
+</div>
+<p>What sequence did the SD tool determine to solve this flowsheet with the
+least number of tears?</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">R101</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">F101</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">S101</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">C101</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">M101</span>
+</pre></div>
+</div>
+<p><img alt="image3" src="../../_images/HDA_tear_stream.png" /></p>
+<p>The SequentialDecomposition tool has determined that the tear stream is
+the mixer outlet. We will need to provide a reasonable guess for this.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tear_guesses</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;flow_mol_phase_comp&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">):</span> <span class="mf">1e-5</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">):</span> <span class="mf">1e-5</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">):</span> <span class="mf">0.30</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">):</span> <span class="mf">0.02</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">):</span> <span class="mf">1e-5</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">):</span> <span class="mf">0.30</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">):</span> <span class="mf">1e-5</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">):</span> <span class="mf">1e-5</span><span class="p">},</span>
+        <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="mi">303</span><span class="p">},</span>
+        <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="mi">350000</span><span class="p">}}</span>
+
+<span class="c1"># Pass the tear_guess to the SD tool</span>
+<span class="n">seq</span><span class="o">.</span><span class="n">set_guesses_for</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">inlet</span><span class="p">,</span> <span class="n">tear_guesses</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, we need to tell the tool how to initialize a particular unit. We
+will be writing a python function which takes in a “unit” and calls the
+initialize method on that unit.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">function</span><span class="p">(</span><span class="n">unit</span><span class="p">):</span>
+        <span class="n">unit</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We are now ready to initialize our flowsheet in a sequential mode. Note
+that we specifically set the iteration limit to be 5 as we are trying to
+use this tool only to get a good set of initial values such that IPOPT
+can then take over and solve this flowsheet for us.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">seq</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">function</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">purge_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">recycle_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">03</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">purge_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">recycle_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">purge_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">recycle_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">purge_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">recycle_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">purge_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">recycle_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">purge_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">recycle_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">04</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">purge_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">recycle_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">C101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">Wegstein</span> <span class="n">failed</span> <span class="n">to</span> <span class="n">converge</span> <span class="ow">in</span> <span class="mi">5</span> <span class="n">iterations</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">25</span> <span class="mi">20</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">05</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: We have now initialized the flowsheet. Let us run the
+flowsheet in a simulation mode to look at the results. To do this,
+complete the last line of code where we pass the model to the solver.
+You will need to type the following:</p>
+<p>results = solver.solve(m, tee=True)</p>
+<p>Use Shift+Enter to run the cell once you have typed in your code.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the solver object</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tol&#39;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="s1">&#39;max_iter&#39;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">}</span>
+
+<span class="c1"># Solve the model</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="analyze-the-results-of-the-square-problem">
+<h2>Analyze the results of the square problem<a class="headerlink" href="#analyze-the-results-of-the-square-problem" title="Permalink to this headline">¶</a></h2>
+<p>What is the total operating cost?</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;operating cost = $&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>operating cost = $ 419122.3387677937
+</pre></div>
+</div>
+<p>For this operating cost, what is the amount of benzene we are able to
+produce and what purity we are able to achieve?</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;benzene purity = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">purity</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">F102</span>                                                             <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>             <span class="p">:</span> <span class="n">Value</span>       <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+          <span class="n">Heat</span> <span class="n">Duty</span> <span class="p">:</span>      <span class="mf">7352.5</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Pressure</span> <span class="n">Change</span> <span class="p">:</span> <span class="o">-</span><span class="mf">2.0000e+05</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                               <span class="n">Inlet</span>    <span class="n">Vapor</span> <span class="n">Outlet</span>  <span class="n">Liquid</span> <span class="n">Outlet</span>
+    <span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;benzene&#39;</span><span class="p">)</span>     <span class="mf">0.20460</span>   <span class="mf">1.0000e-08</span>      <span class="mf">0.062620</span>
+    <span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;toluene&#39;</span><span class="p">)</span>    <span class="mf">0.062520</span>   <span class="mf">1.0000e-08</span>      <span class="mf">0.032257</span>
+    <span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;methane&#39;</span><span class="p">)</span>  <span class="mf">2.6712e-07</span>   <span class="mf">1.0000e-08</span>    <span class="mf">9.4877e-08</span>
+    <span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;hydrogen&#39;</span><span class="p">)</span> <span class="mf">2.6712e-07</span>   <span class="mf">1.0000e-08</span>    <span class="mf">9.4877e-08</span>
+    <span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Vap&#39;</span><span class="p">,</span> <span class="s1">&#39;benzene&#39;</span><span class="p">)</span>  <span class="mf">1.0000e-08</span>      <span class="mf">0.14198</span>    <span class="mf">1.0000e-08</span>
+    <span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Vap&#39;</span><span class="p">,</span> <span class="s1">&#39;toluene&#39;</span><span class="p">)</span>  <span class="mf">1.0000e-08</span>     <span class="mf">0.030264</span>    <span class="mf">1.0000e-08</span>
+    <span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Vap&#39;</span><span class="p">,</span> <span class="s1">&#39;methane&#39;</span><span class="p">)</span>  <span class="mf">1.0000e-08</span>   <span class="mf">1.8224e-07</span>    <span class="mf">1.0000e-08</span>
+    <span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Vap&#39;</span><span class="p">,</span> <span class="s1">&#39;hydrogen&#39;</span><span class="p">)</span> <span class="mf">1.0000e-08</span>   <span class="mf">1.8224e-07</span>    <span class="mf">1.0000e-08</span>
+    <span class="n">temperature</span>                                 <span class="mf">325.00</span>       <span class="mf">375.00</span>        <span class="mf">375.00</span>
+    <span class="n">pressure</span>                                <span class="mf">3.5000e+05</span>   <span class="mf">1.5000e+05</span>    <span class="mf">1.5000e+05</span>
+<span class="o">====================================================================================</span>
+
+<span class="n">benzene</span> <span class="n">purity</span> <span class="o">=</span>  <span class="mf">0.8242962943918926</span>
+</pre></div>
+</div>
+<p>Next, let’s look at how much benzene we are loosing with the light gases
+out of F101. IDAES has tools for creating stream tables based on the
+<code class="docutils literal notranslate"><span class="pre">Arcs</span></code> and/or <code class="docutils literal notranslate"><span class="pre">Ports</span></code> in a flowsheet. Let us create and print a
+simple stream table showing the stream leaving the reactor and the vapor
+stream from F101.</p>
+<div class="alert alert-block alert-info"><p>Inline Exercise: How much benzene are we loosing in the F101 vapor
+outlet stream?</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.core.util.tables</span> <span class="kn">import</span> <span class="n">create_stream_table_dataframe</span><span class="p">,</span> <span class="n">stream_table_dataframe_to_string</span>
+
+<span class="n">st</span> <span class="o">=</span> <span class="n">create_stream_table_dataframe</span><span class="p">({</span><span class="s2">&quot;Reactor&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s05</span><span class="p">,</span> <span class="s2">&quot;Light Gases&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s06</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">stream_table_dataframe_to_string</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                                          <span class="n">Reactor</span>   <span class="n">Light</span> <span class="n">Gases</span>
+<span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;benzene&#39;</span><span class="p">)</span>  <span class="mf">1.2993e-07</span>  <span class="mf">1.0000e-08</span>
+<span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;toluene&#39;</span><span class="p">)</span>  <span class="mf">8.4147e-07</span>  <span class="mf">1.0000e-08</span>
+<span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;methane&#39;</span><span class="p">)</span>  <span class="mf">1.0000e-08</span>  <span class="mf">1.0000e-08</span>
+<span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;hydrogen&#39;</span><span class="p">)</span> <span class="mf">1.0000e-08</span>  <span class="mf">1.0000e-08</span>
+<span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Vap&#39;</span><span class="p">,</span> <span class="s1">&#39;benzene&#39;</span><span class="p">)</span>     <span class="mf">0.35374</span>     <span class="mf">0.14915</span>
+<span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Vap&#39;</span><span class="p">,</span> <span class="s1">&#39;toluene&#39;</span><span class="p">)</span>    <span class="mf">0.078129</span>    <span class="mf">0.015610</span>
+<span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Vap&#39;</span><span class="p">,</span> <span class="s1">&#39;methane&#39;</span><span class="p">)</span>      <span class="mf">1.2721</span>      <span class="mf">1.2721</span>
+<span class="n">flow_mol_phase_comp</span> <span class="p">(</span><span class="s1">&#39;Vap&#39;</span><span class="p">,</span> <span class="s1">&#39;hydrogen&#39;</span><span class="p">)</span>    <span class="mf">0.32821</span>     <span class="mf">0.32821</span>
+<span class="n">temperature</span>                                 <span class="mf">771.85</span>      <span class="mf">325.00</span>
+<span class="n">pressure</span>                                <span class="mf">3.5000e+05</span>  <span class="mf">3.5000e+05</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: You can querry additional variables here if you like.</p>
+<p>Use Shift+Enter to run the cell once you have typed in your code.</p>
+</div></div>
+<div class="section" id="optimization">
+<h2>Optimization<a class="headerlink" href="#optimization" title="Permalink to this headline">¶</a></h2>
+<p>We saw from the results above that the total operating cost for the base
+case was $419,122 per year. We are producing 0.142 mol/s of benzene at a
+purity of 82%. However, we are losing around 42% of benzene in F101
+vapor outlet stream.</p>
+<p>Let us try to minimize this cost such that: - we are producing at least
+0.15 mol/s of benzene in F102 vapor outlet i.e. our product stream -
+purity of benzene i.e. the mole fraction of benzene in F102 vapor outlet
+is at least 80% - restricting the benzene loss in F101 vapor outlet to
+less than 20%</p>
+<p>For this problem, our decision variables are as follows: - H101 outlet
+temperature - R101 cooling duty provided - F101 outlet temperature -
+F102 outlet temperature - F102 deltaP in the flash tank</p>
+<p>Let us declare our objective function for this problem.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, we need to unfix the decision variables as we had solved a square
+problem (degrees of freedom = 0) until now.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Let us now unfix the remaining variable which is F102
+pressure drop (F102.deltaP)</p>
+<p>Use Shift+Enter to run the cell once you have typed in your code.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Todo: Unfix deltaP for F102</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Next, we need to set bounds on these decision variables to values shown
+below:</p>
+<ul class="simple">
+<li><p>H101 outlet temperature [500, 600] K</p></li>
+<li><p>R101 outlet temperature [600, 800] K</p></li>
+<li><p>F101 outlet temperature [298, 450] K</p></li>
+<li><p>F102 outlet temperature [298, 450] K</p></li>
+<li><p>F102 outlet pressure [105000, 110000] Pa</p></li>
+</ul>
+<p>Let us first set the variable bound for the H101 outlet temperature as
+shown below:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">600</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Now, set the variable bound for the R101 outlet
+temperature.</p>
+<p>Use Shift+Enter to run the cell once you have typed in your code.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Todo: Set the bounds for reactor outlet temperature</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">600</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">800</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let us fix the bounds for the rest of the decision variables.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">298.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">450.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">298.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">450.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">105000</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">110000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, the only things left to define are our constraints on overhead loss
+in F101, product flow rate and purity in F102. Let us first look at
+defining a constraint for the overhead loss in F101 where we are
+restricting the benzene leaving the vapor stream to less than 20 % of
+the benzene available in the reactor outlet.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">overhead_loss</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+        <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span> <span class="o">&lt;=</span>
+        <span class="mf">0.20</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="alert alert-block alert-info"><p>Inline Exercise: Now, add the constraint such that we are producing at
+least 0.15 mol/s of benzene in the product stream which is the vapor
+outlet of F102. Let us name this constraint as m.fs.product_flow.</p>
+<p>Use Shift+Enter to run the cell once you have typed in your code.</p>
+</div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Todo: Add minimum product flow constraint</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">product_flow</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+        <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span> <span class="o">&gt;=</span>
+        <span class="mf">0.15</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let us add the final constraint on product purity or the mole fraction
+of benzene in the product stream such that it is at least greater than
+80%.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">product_purity</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">purity</span> <span class="o">&gt;=</span> <span class="mf">0.80</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We have now defined the optimization problem and we are now ready to
+solve this problem.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: tol=1e-06
+max_iter=5000
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     1048
+Number of nonzeros in inequality constraint Jacobian.:        5
+Number of nonzeros in Lagrangian Hessian.............:      901
+
+Total number of variables............................:      343
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:      149
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:      338
+Total number of inequality constraints...............:        3
+        inequality constraints with only lower bounds:        2
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        1
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  4.1912234e+05 2.99e+05 6.94e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  4.1628396e+05 2.99e+05 6.94e+00  -1.0 4.82e+09    -  1.80e-05 5.83e-06f  1
+   2  4.1616769e+05 2.99e+05 1.60e+02  -1.0 1.45e+09    -  5.86e-04 1.47e-05f  1
+   3  4.0783429e+05 2.94e+05 4.85e+02  -1.0 1.35e+09    -  2.61e-04 9.35e-04f  1
+   4  2.9670827e+05 2.83e+06 6.94e+02  -1.0 4.75e+08    -  7.35e-05 1.50e-03f  1
+   5  2.9557701e+05 2.82e+06 4.95e+04  -1.0 1.90e+08    -  1.88e-01 1.04e-03f  1
+   6  2.9452502e+05 2.72e+06 4.63e+05  -1.0 4.40e+07    -  1.88e-01 3.46e-02f  1
+   7  2.9632753e+05 2.13e+06 4.47e+05  -1.0 1.47e+07    -  7.61e-02 2.19e-01h  1
+   8  2.9636923e+05 2.12e+06 4.45e+05  -1.0 5.86e+06    -  6.38e-01 3.38e-03h  1
+   9  2.9647019e+05 2.10e+06 4.42e+05  -1.0 6.53e+06    -  7.25e-01 7.18e-03h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  2.9958737e+05 1.63e+06 4.17e+05  -1.0 6.56e+06    -  3.55e-02 2.24e-01h  1
+  11  3.0436334e+05 9.49e+05 6.96e+05  -1.0 5.55e+06    -  9.46e-01 4.19e-01h  1
+  12  3.0792618e+05 5.00e+05 4.56e+06  -1.0 4.03e+06    -  9.90e-01 4.73e-01h  1
+  13  3.1071379e+05 6.32e+05 9.21e+08  -1.0 2.67e+06    -  1.00e+00 6.16e-01h  1
+  14  3.1267920e+05 4.30e+05 3.14e+12  -1.0 1.29e+06    -  1.00e+00 9.77e-01h  1
+  15  3.1274883e+05 1.52e+05 2.64e+10  -1.0 9.13e+04    -  1.00e+00 6.47e-01h  1
+  16  3.1277240e+05 5.71e+04 4.48e+10  -1.0 3.19e+04    -  1.00e+00 6.25e-01h  1
+  17  3.1278661e+05 5.28e+02 5.15e+09  -1.0 1.22e+04    -  1.00e+00 9.91e-01h  1
+  18  3.1278674e+05 9.31e-04 3.67e+06  -1.0 1.11e+02    -  1.00e+00 1.00e+00h  1
+  19  3.1278635e+05 3.29e-05 1.55e+06  -2.5 1.96e+02    -  1.00e+00 1.00e+00f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  20  3.1278635e+05 1.49e-08 6.66e-03  -2.5 1.61e-01    -  1.00e+00 1.00e+00h  1
+  21  3.1278634e+05 2.24e-08 1.30e+03  -7.0 5.72e+00    -  1.00e+00 1.00e+00f  1
+  22  3.1278634e+05 1.49e-08 4.86e-05  -7.0 1.37e-04    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 22
+
+                                   (scaled)                 (unscaled)
+Objective...............:   3.1278633834102663e+05    3.1278633834102663e+05
+Dual infeasibility......:   4.8562170554280409e-05    4.8562170554280409e-05
+Constraint violation....:   2.9103830456733704e-11    1.4901161193847656e-08
+Complementarity.........:   9.0926527280252916e-08    9.0926527280252916e-08
+Overall NLP error.......:   2.0798568661370130e-09    4.8562170554280409e-05
+
+
+Number of objective function evaluations             = 23
+Number of objective gradient evaluations             = 23
+Number of equality constraint evaluations            = 23
+Number of inequality constraint evaluations          = 23
+Number of equality constraint Jacobian evaluations   = 23
+Number of inequality constraint Jacobian evaluations = 23
+Number of Lagrangian Hessian evaluations             = 22
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.024
+Total CPU secs in NLP function evaluations           =      0.002
+
+EXIT: Optimal Solution Found.</pre>
+</div>
+<div class="section" id="optimization-results">
+<h2>Optimization Results<a class="headerlink" href="#optimization-results" title="Permalink to this headline">¶</a></h2>
+<p>Display the results and product specifications</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;operating cost = $&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Product flow rate and purity in F102&#39;</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;benzene purity = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">purity</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Overhead loss in F101&#39;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>operating cost = $ 312786.3383410267
+
+Product flow rate and purity in F102
+
+====================================================================================
+Unit : fs.F102                                                             Time: 0.0
+------------------------------------------------------------------------------------
+    Unit Performance
+
+    Variables:
+
+    Key             : Value       : Fixed : Bounds
+          Heat Duty :      8377.0 : False : (None, None)
+    Pressure Change : -2.4500e+05 : False : (None, None)
+
+------------------------------------------------------------------------------------
+    Stream Table
+                                               Inlet    Vapor Outlet  Liquid Outlet
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;benzene&#39;)     0.21743   1.0000e-08      0.067425
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;toluene&#39;)    0.070695   1.0000e-08      0.037507
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;methane&#39;)  2.8812e-07   1.0000e-08    1.0493e-07
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;hydrogen&#39;) 2.8812e-07   1.0000e-08    1.0493e-07
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;benzene&#39;)  1.0000e-08      0.15000    1.0000e-08
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;toluene&#39;)  1.0000e-08     0.033189    1.0000e-08
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;methane&#39;)  1.0000e-08   1.9319e-07    1.0000e-08
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;hydrogen&#39;) 1.0000e-08   1.9319e-07    1.0000e-08
+    temperature                                 301.88       362.93        362.93
+    pressure                                3.5000e+05   1.0500e+05    1.0500e+05
+====================================================================================
+
+benzene purity =  0.8188276578112271
+
+Overhead loss in F101
+
+====================================================================================
+Unit : fs.F101                                                             Time: 0.0
+------------------------------------------------------------------------------------
+    Unit Performance
+
+    Variables:
+
+    Key             : Value   : Fixed : Bounds
+          Heat Duty : -56354. : False : (None, None)
+    Pressure Change :  0.0000 :  True : (None, None)
+
+------------------------------------------------------------------------------------
+    Stream Table
+                                               Inlet    Vapor Outlet  Liquid Outlet
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;benzene&#39;)  4.3534e-08   1.0000e-08       0.21743
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;toluene&#39;)  7.5866e-07   1.0000e-08      0.070695
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;methane&#39;)  1.0000e-08   1.0000e-08    2.8812e-07
+    flow_mol_phase_comp (&#39;Liq&#39;, &#39;hydrogen&#39;) 1.0000e-08   1.0000e-08    2.8812e-07
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;benzene&#39;)     0.27178     0.054356    1.0000e-08
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;toluene&#39;)    0.076085    0.0053908    1.0000e-08
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;methane&#39;)      1.2414       1.2414    1.0000e-08
+    flow_mol_phase_comp (&#39;Vap&#39;, &#39;hydrogen&#39;)    0.35887      0.35887    1.0000e-08
+    temperature                                 696.12       301.88        301.88
+    pressure                                3.5000e+05   3.5000e+05    3.5000e+05
+====================================================================================
+</pre></div>
+</div>
+<p>Display optimal values for the decision variables</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Optimal Values&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;H101 outlet temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;K&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;R101 outlet temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;K&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;F101 outlet temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;K&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;F102 outlet temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;K&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;F102 outlet pressure = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;Pa&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Optimal</span> <span class="n">Values</span>
+
+<span class="n">H101</span> <span class="n">outlet</span> <span class="n">temperature</span> <span class="o">=</span>  <span class="mf">500.0</span> <span class="n">K</span>
+
+<span class="n">R101</span> <span class="n">outlet</span> <span class="n">temperature</span> <span class="o">=</span>  <span class="mf">696.1161004637527</span> <span class="n">K</span>
+
+<span class="n">F101</span> <span class="n">outlet</span> <span class="n">temperature</span> <span class="o">=</span>  <span class="mf">301.8784760569282</span> <span class="n">K</span>
+
+<span class="n">F102</span> <span class="n">outlet</span> <span class="n">temperature</span> <span class="o">=</span>  <span class="mf">362.9347683054898</span> <span class="n">K</span>
+<span class="n">F102</span> <span class="n">outlet</span> <span class="n">pressure</span> <span class="o">=</span>  <span class="mf">105000.0</span> <span class="n">Pa</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

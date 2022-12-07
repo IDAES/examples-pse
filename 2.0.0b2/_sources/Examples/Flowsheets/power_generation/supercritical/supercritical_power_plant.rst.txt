@@ -1,0 +1,1173 @@
+Supercritical Power Plant Flowsheet Example
+===========================================
+
+1. Introduction
+---------------
+
+This example is to demonstrate a supercritical pulverized coal power
+plant model. The power plant consists of two major sub-systems (or
+flowsheets), a boiler heat exchanger network and a steam cycle. This
+jupyter notebook provides the workflow to import the steam cycle
+flowsheet, import the boiler heat exchanger network, connect and run
+both the flowsheets, and display the main results.
+
+2. Model Description
+--------------------
+
+The case study demonstrated here is for a ~620MW gross power output. The
+process flow diagram is shown in section 3 of this jupyter notebook.
+Figure 1 shows the boiler heat exchanger network, while, figure 2 shows
+the steam cycle system.
+
+| The streams connecting both the flowsheets are:
+|   a) The main steam: that connects the boiler attemperator to the
+  throttle valves of the high pressure turbine   b) The cold reheat:
+  that connects the final stage of the high pressure turbine to the
+  boiler reheater
+|   c) The hot reheat: that connects the boiler reheater to the
+  intermediate pressure turbine
+|   d) The main feed water: that connects the last feed water heater to
+  the boiler economizer
+
+To get a more detailed description of the power plant flowsheet, review
+the ``SCPC_full_plant.py`` file. For details in terms of specific power
+plant units (for example dimensions, parameters, and variables), more
+information can be found at ``supercritical_steam_cycle.py`` and
+``boiler_subflowsheet.py``.
+
+3. Process Flow Diagram (PFD)
+-----------------------------
+
+.. code:: ipython3
+
+    from IPython.display import SVG, display
+    display('Boiler subsystem PFD',
+            SVG(filename='Boiler_scpc_PFD.svg'),
+            'Steam Cycle subsystem PFD',
+            SVG(filename='supercritical_steam_cycle.svg'))
+
+
+
+
+.. parsed-literal::
+
+    'Boiler subsystem PFD'
+
+
+
+.. image:: output_3_1.svg
+
+
+
+.. parsed-literal::
+
+    'Steam Cycle subsystem PFD'
+
+
+
+.. image:: output_3_3.svg
+
+
+4. Run power plant model example
+--------------------------------
+
+This example runs the main ``SCPC_full_plant.py`` script, which, imports
+two flowsheets (steam cycle and boiler heat exchanger network), builds
+arcs to connect both flowsheets, and run the full power plant model.
+
+.. code:: ipython3
+
+    # import SCPC power plant
+    # initialize steam cycle, initialize boiler heat exchanger network, connect both flowsheets, 
+    # and run SCPC plant.
+    from idaes.models_extra.power_generation.flowsheets.supercritical_power_plant.SCPC_full_plant import main
+    m, res = main()
+
+
+.. parsed-literal::
+
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.inlet_stage[1].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.inlet_stage[2].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.inlet_stage[3].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.inlet_stage[4].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.hp_stages[1].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.hp_stages[2].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.hp_stages[3].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.hp_stages[4].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.hp_stages[5].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.hp_stages[6].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.hp_stages[7].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[1].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[2].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[3].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[4].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[5].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[6].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[7].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[8].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[9].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.ip_stages[10].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[1].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[2].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[3].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[4].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[5].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[6].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[7].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[8].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[9].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[10].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.lp_stages[11].control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.turb.outlet_stage.control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.cond_pump.control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh1.condense.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh1.condense.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh1_pump.control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.condense.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.condense.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.desuperheat.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.desuperheat.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.desuperheat.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.desuperheat.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.cooling.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.cooling.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.cooling.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh2.cooling.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.condense.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.condense.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.desuperheat.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.desuperheat.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.desuperheat.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.desuperheat.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.cooling.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.cooling.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.cooling.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh3.cooling.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.condense.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.condense.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.desuperheat.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.desuperheat.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.desuperheat.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.desuperheat.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.cooling.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.cooling.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.cooling.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh4.cooling.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.bfp.control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.bfpt.control_volume.work
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.condense.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.condense.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.desuperheat.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.desuperheat.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.desuperheat.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.desuperheat.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.cooling.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.cooling.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.cooling.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh6.cooling.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.condense.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.condense.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.desuperheat.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.desuperheat.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.desuperheat.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.desuperheat.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.cooling.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.cooling.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.cooling.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh7.cooling.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.condense.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.condense.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.desuperheat.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.desuperheat.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.desuperheat.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.desuperheat.area
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.cooling.hot_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.cooling.cold_side.heat
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.cooling.overall_heat_transfer_coefficient[0.0]
+    2022-12-07 19:08:58 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.fwh8.cooling.area
+    2022-12-07 19:08:59 [INFO] idaes.init.Steam Cycle Model: Starting initialization
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.inlet_split: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.throttle_valve[1]: Steam valve intialization started
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.throttle_valve[1]: Steam valve intialization complete
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.throttle_valve[2]: Steam valve intialization started
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.throttle_valve[2]: Steam valve intialization complete
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.throttle_valve[3]: Steam valve intialization started
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.throttle_valve[3]: Steam valve intialization complete
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.throttle_valve[4]: Steam valve intialization started
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.throttle_valve[4]: Steam valve intialization complete
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.inlet_stage[1]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.inlet_stage[2]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.inlet_stage[3]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.inlet_stage[4]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:08:59 [INFO] idaes.init.fs.turb.inlet_mix: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:00 [INFO] idaes.init.fs.turb.hp_split[4]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:00 [INFO] idaes.init.fs.turb.hp_split[7]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:00 [INFO] idaes.init.fs.turb.ip_split[5]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.ip_split[10]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.lp_split[4]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.lp_split[8]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.lp_split[10]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.lp_split[11]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.outlet_stage: Initialization Complete (Outlet Stage): optimal - Optimal Solution Found
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.inlet_split: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.throttle_valve[1]: Steam valve intialization started
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.throttle_valve[1]: Steam valve intialization complete
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.throttle_valve[2]: Steam valve intialization started
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.throttle_valve[2]: Steam valve intialization complete
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.throttle_valve[3]: Steam valve intialization started
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.throttle_valve[3]: Steam valve intialization complete
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.throttle_valve[4]: Steam valve intialization started
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.throttle_valve[4]: Steam valve intialization complete
+    2022-12-07 19:09:01 [INFO] idaes.init.fs.turb.inlet_stage[1]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:02 [INFO] idaes.init.fs.turb.inlet_stage[2]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:02 [INFO] idaes.init.fs.turb.inlet_stage[3]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:02 [INFO] idaes.init.fs.turb.inlet_stage[4]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:02 [INFO] idaes.init.fs.turb.inlet_mix: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:02 [INFO] idaes.init.fs.turb.hp_split[4]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:02 [INFO] idaes.init.fs.turb.hp_split[7]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:02 [INFO] idaes.init.fs.turb.ip_split[5]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:03 [INFO] idaes.init.fs.turb.ip_split[10]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:03 [INFO] idaes.init.fs.turb.lp_split[4]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:03 [INFO] idaes.init.fs.turb.lp_split[8]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:03 [INFO] idaes.init.fs.turb.lp_split[10]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:03 [INFO] idaes.init.fs.turb.lp_split[11]: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:03 [INFO] idaes.init.fs.turb.outlet_stage: Initialization Complete (Outlet Stage): optimal - Optimal Solution Found
+    2022-12-07 19:09:05 [INFO] idaes.init.Steam Cycle Model: Full turbine solve complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: tol=1e-06
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: ******************************************************************************
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: For more information visit http://projects.coin-or.org/Ipopt
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: This version of Ipopt was compiled from source code available at
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: for large-scale scientific computation.  All technical papers, sales and
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: publicity material resulting from use of the HSL codes within IPOPT must
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: contain the following acknowledgement:
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: HSL, a collection of Fortran codes for large-scale scientific
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: computation. See http://www.hsl.rl.ac.uk.
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: ******************************************************************************
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of nonzeros in equality constraint Jacobian...:        9
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of nonzeros in inequality constraint Jacobian.:        0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of nonzeros in Lagrangian Hessian.............:        2
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Total number of variables............................:        5
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: variables with only lower bounds:        0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: variables with lower and upper bounds:        2
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: variables with only upper bounds:        0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Total number of equality constraints.................:        5
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Total number of inequality constraints...............:        0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: inequality constraints with only lower bounds:        0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: inequality constraints with lower and upper bounds:        0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: inequality constraints with only upper bounds:        0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: 0  0.0000000e+00 5.46e+00 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: 1  0.0000000e+00 6.94e-18 1.00e-07  -1.0 5.46e+07    -  9.90e-01 1.00e+00h  1
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of Iterations....: 1
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: (scaled)                 (unscaled)
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Constraint violation....:   6.9388939039072284e-18    6.9388939039072284e-18
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Overall NLP error.......:   6.9388939039072284e-18    6.9388939039072284e-18
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of objective function evaluations             = 2
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of objective gradient evaluations             = 2
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of equality constraint evaluations            = 2
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of inequality constraint evaluations          = 0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of equality constraint Jacobian evaluations   = 2
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of inequality constraint Jacobian evaluations = 0
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Number of Lagrangian Hessian evaluations             = 1
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: Total CPU secs in NLP function evaluations           =      0.000
+    2022-12-07 19:09:05 [DEBUG] idaes.solve.fs.bfpt: EXIT: Optimal Solution Found.
+    2022-12-07 19:09:05 [INFO] idaes.init.fs.condenser_mix: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:05 [INFO] idaes.init.fs.condenser.hot_side: Initialization Complete
+    2022-12-07 19:09:05 [INFO] idaes.init.fs.condenser.cold_side: Initialization Complete
+    2022-12-07 19:09:05 [INFO] idaes.init.fs.hotwell: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:05 [INFO] idaes.init.fs.fwh1.drain_mix: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:05 [WARNING] idaes.init.fs.fwh1: The steam sat. temperature (329.33327413754284) is near the feedwater inlet temperature (299.902395638351)
+    2022-12-07 19:09:05 [INFO] idaes.init.fs.fwh1.condense.hot_side: Initialization Complete
+    2022-12-07 19:09:05 [INFO] idaes.init.fs.fwh1.condense.cold_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh1.condense: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh1.condense: Initialization Complete (w/ extraction calc): optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh1: Condensing hot side inlet delta T = 12.513326095280703
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh1: Condensing hot side outlet delta T = 29.430878499190253
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh1: Steam Flow = 1345.063521625935
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh1: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: tol=1e-06
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: ******************************************************************************
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: This program contains Ipopt, a library for large-scale nonlinear optimization.
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Ipopt is released as open source code under the Eclipse Public License (EPL).
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: For more information visit http://projects.coin-or.org/Ipopt
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: This version of Ipopt was compiled from source code available at
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: for large-scale scientific computation.  All technical papers, sales and
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: publicity material resulting from use of the HSL codes within IPOPT must
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: contain the following acknowledgement:
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: HSL, a collection of Fortran codes for large-scale scientific
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: computation. See http://www.hsl.rl.ac.uk.
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: ******************************************************************************
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: This is Ipopt version 3.13.2, running with linear solver ma27.
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of nonzeros in equality constraint Jacobian...:        9
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of nonzeros in inequality constraint Jacobian.:        0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of nonzeros in Lagrangian Hessian.............:        2
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Total number of variables............................:        5
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: variables with only lower bounds:        0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: variables with lower and upper bounds:        2
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: variables with only upper bounds:        0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Total number of equality constraints.................:        5
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Total number of inequality constraints...............:        0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: inequality constraints with only lower bounds:        0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: inequality constraints with lower and upper bounds:        0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: inequality constraints with only upper bounds:        0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: 0  0.0000000e+00 5.66e-01 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: 1  0.0000000e+00 5.20e-17 2.21e-07  -1.0 5.66e+06    -  9.90e-01 1.00e+00h  1
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of Iterations....: 1
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: (scaled)                 (unscaled)
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Constraint violation....:   5.2041704279304213e-17    5.2041704279304213e-17
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Overall NLP error.......:   5.2041704279304213e-17    5.2041704279304213e-17
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of objective function evaluations             = 2
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of objective gradient evaluations             = 2
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of equality constraint evaluations            = 2
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of inequality constraint evaluations          = 0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of equality constraint Jacobian evaluations   = 2
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of inequality constraint Jacobian evaluations = 0
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Number of Lagrangian Hessian evaluations             = 1
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: Total CPU secs in NLP function evaluations           =      0.000
+    2022-12-07 19:09:06 [DEBUG] idaes.solve.fs.fwh1_pump: EXIT: Optimal Solution Found.
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh1_return: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.desuperheat.hot_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.desuperheat.cold_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.desuperheat: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.drain_mix: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [WARNING] idaes.init.fs.fwh2: The steam sat. temperature (335.2272258893378) is near the feedwater inlet temperature (318.02261253783024)
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.condense.hot_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.condense.cold_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.condense: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.condense: Initialization Complete (w/ extraction calc): optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.cooling.hot_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.cooling.cold_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2.cooling: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2: Condensing hot side inlet delta T = 12.731240077390455
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2: Condensing hot side outlet delta T = 17.002372103619376
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2: Steam Flow = 217.13965467970039
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh2: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.desuperheat.hot_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.desuperheat.cold_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.desuperheat: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.drain_mix: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [WARNING] idaes.init.fs.fwh3: The steam sat. temperature (347.7738554943195) is near the feedwater inlet temperature (323.0365508389524)
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.condense.hot_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.condense.cold_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.condense: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.condense: Initialization Complete (w/ extraction calc): optimal - Optimal Solution Found
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.cooling.hot_side: Initialization Complete
+    2022-12-07 19:09:06 [INFO] idaes.init.fs.fwh3.cooling.cold_side: Initialization Complete
+    2022-12-07 19:09:07 [INFO] idaes.init.fs.fwh3.cooling: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:07 [INFO] idaes.init.fs.fwh3: Condensing hot side inlet delta T = 20.20691202099335
+    2022-12-07 19:09:07 [INFO] idaes.init.fs.fwh3: Condensing hot side outlet delta T = 24.503595562931153
+    2022-12-07 19:09:07 [INFO] idaes.init.fs.fwh3: Steam Flow = 217.44627715537368
+    2022-12-07 19:09:07 [INFO] idaes.init.fs.fwh3: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:07 [INFO] idaes.init.fs.fwh4.desuperheat.hot_side: Initialization Complete
+    2022-12-07 19:09:07 [INFO] idaes.init.fs.fwh4.desuperheat.cold_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4.desuperheat: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4.condense.hot_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4.condense.cold_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4.condense: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4.condense: Initialization Complete (w/ extraction calc): optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4.cooling.hot_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4.cooling.cold_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4.cooling: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4: Condensing hot side inlet delta T = 39.43016001678777
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4: Condensing hot side outlet delta T = 47.80805362177349
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4: Steam Flow = 247.42787053675445
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh4: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh5_da: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.desuperheat.hot_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.desuperheat.cold_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.desuperheat: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.drain_mix: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.condense.hot_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.condense.cold_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.condense: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.condense: Initialization Complete (w/ extraction calc): optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.cooling.hot_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.cooling.cold_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6.cooling: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6: Condensing hot side inlet delta T = 45.08557769760616
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6: Condensing hot side outlet delta T = 72.43686375397166
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6: Steam Flow = 2128.556935629349
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh6: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh7.desuperheat.hot_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh7.desuperheat.cold_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh7.desuperheat: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh7.drain_mix: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh7.condense.hot_side: Initialization Complete
+    2022-12-07 19:09:08 [INFO] idaes.init.fs.fwh7.condense.cold_side: Initialization Complete
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh7.condense: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh7.condense: Initialization Complete (w/ extraction calc): optimal - Optimal Solution Found
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh7.cooling.hot_side: Initialization Complete
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh7.cooling.cold_side: Initialization Complete
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh7.cooling: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh7: Condensing hot side inlet delta T = 72.4077862949529
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh7: Condensing hot side outlet delta T = 98.78550984875201
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh7: Steam Flow = 3749.0680255316097
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh7: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.desuperheat.hot_side: Initialization Complete
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.desuperheat.cold_side: Initialization Complete
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.desuperheat: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.condense.hot_side: Initialization Complete
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.condense.cold_side: Initialization Complete
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.condense: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.condense: Initialization Complete (w/ extraction calc): optimal - Optimal Solution Found
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.cooling.hot_side: Initialization Complete
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.cooling.cold_side: Initialization Complete
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8.cooling: Initialization Completed, optimal - Optimal Solution Found
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8: Condensing hot side inlet delta T = 99.32852730881135
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8: Condensing hot side outlet delta T = 108.5191896163438
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8: Steam Flow = 1487.8775467640564
+    2022-12-07 19:09:09 [INFO] idaes.init.fs.fwh8: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:13 [INFO] idaes.init.Steam Cycle Model: Initialization Complete: optimal - Optimal Solution Found
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:     2341
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:      793
+    
+    Total number of variables............................:      858
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:      444
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:      858
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 1.40e-09 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    
+    Number of Iterations....: 0
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   1.6370904631912708e-10    1.3969838619232178e-09
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   1.6370904631912708e-10    1.3969838619232178e-09
+    
+    
+    Number of objective function evaluations             = 1
+    Number of objective gradient evaluations             = 1
+    Number of equality constraint evaluations            = 1
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 1
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 0
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.334
+    Total CPU secs in NLP function evaluations           =      0.001
+    
+    EXIT: Optimal Solution Found.
+    0
+    57072.5254836037
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.ECON.cold_side: Initialization Complete
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.ECON.hot_side.properties_in: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.ECON.hot_side.properties_out: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.ECON.hot_side.properties_out: fs.ECON.hot_side.properties_out State Released.
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.ECON.hot_side: Initialization Complete
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.ECON: fs.ECON Initialisation Step 1 Complete.
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.ECON.hot_side.properties_in: fs.ECON.hot_side.properties_in State Released.
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.ECON: fs.ECON Initialisation Complete.
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.PrSH.cold_side: Initialization Complete
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.PrSH.hot_side.properties_in: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.PrSH.hot_side.properties_out: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.PrSH.hot_side.properties_out: fs.PrSH.hot_side.properties_out State Released.
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.PrSH.hot_side: Initialization Complete
+    2022-12-07 19:09:15 [INFO] idaes.init.fs.PrSH: fs.PrSH Initialisation Step 1 Complete.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.PrSH.hot_side.properties_in: fs.PrSH.hot_side.properties_in State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.PrSH: fs.PrSH Initialisation Complete.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.FSH.cold_side: Initialization Complete
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.FSH.hot_side.properties_in: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.FSH.hot_side.properties_out: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.FSH.hot_side.properties_out: fs.FSH.hot_side.properties_out State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.FSH.hot_side: Initialization Complete
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.FSH: fs.FSH Initialisation Step 1 Complete.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.FSH.hot_side.properties_in: fs.FSH.hot_side.properties_in State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.FSH: fs.FSH Initialisation Complete.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.RH.cold_side: Initialization Complete
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.RH.hot_side.properties_in: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.RH.hot_side.properties_out: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.RH.hot_side.properties_out: fs.RH.hot_side.properties_out State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.RH.hot_side: Initialization Complete
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.RH: fs.RH Initialisation Step 1 Complete.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.RH.hot_side.properties_in: fs.RH.hot_side.properties_in State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.RH: fs.RH Initialisation Complete.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.PlSH.control_volume: Initialization Complete
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.PlSH: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.Water_wall.control_volume: Initialization Complete
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.Water_wall: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.Spl1.mixed_state: Initialisation Complete, skipped.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.Spl1.outlet_1_state: Initialisation Complete, skipped.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.Spl1.outlet_1_state: fs.Spl1.outlet_1_state State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.Spl1.outlet_2_state: Initialisation Complete, skipped.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.Spl1.outlet_2_state: fs.Spl1.outlet_2_state State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.Spl1: Initialization Step 2 Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.Spl1.mixed_state: fs.Spl1.mixed_state State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.mix1.Reheat_out_state: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.mix1.PrSH_out_state: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.mix1.mixed_state: Initialisation Complete, optimal - Optimal Solution Found.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.mix1.mixed_state: fs.mix1.mixed_state State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.mix1: Initialization Complete: optimal - Optimal Solution Found
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.mix1.Reheat_out_state: fs.mix1.Reheat_out_state State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.mix1.PrSH_out_state: fs.mix1.PrSH_out_state State Released.
+    2022-12-07 19:09:16 [INFO] idaes.init.fs.ATMP1: Initialization Complete: optimal - Optimal Solution Found
+    initialization done
+    solving square problem disconnected
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:     2982
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:     1244
+    
+    Total number of variables............................:     1125
+                         variables with only lower bounds:        8
+                    variables with lower and upper bounds:      514
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:     1125
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 3.04e-05 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    Cannot recompute multipliers for feasibility problem.  Error in eq_mult_calculator
+    
+    Number of Iterations....: 0
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   2.2351741790771484e-08    3.0413269996643066e-05
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   2.2351741790771484e-08    3.0413269996643066e-05
+    
+    
+    Number of objective function evaluations             = 1
+    Number of objective gradient evaluations             = 1
+    Number of equality constraint evaluations            = 1
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 1
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 0
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.331
+    Total CPU secs in NLP function evaluations           =      0.002
+    
+    EXIT: Optimal Solution Found.
+    unfix inlet conditions, degreeso of freedom = 63
+    connecting flowsheets, degrees of freedom = 0
+    solving full plant model
+    Ipopt 3.13.2: tol=1e-06
+    linear_solver=ma27
+    max_iter=40
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:     3579
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:     1842
+    
+    Total number of variables............................:     1195
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        0
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:     1195
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 8.59e+06 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 5.95e+06 0.00e+00  -1.0 8.21e+07    -  1.00e+00 1.00e+00h  1
+       2  0.0000000e+00 9.94e+04 0.00e+00  -1.0 4.31e+06    -  1.00e+00 1.00e+00h  1
+       3  0.0000000e+00 7.64e+01 0.00e+00  -1.0 1.34e+05    -  1.00e+00 1.00e+00h  1
+       4  0.0000000e+00 3.92e-05 0.00e+00  -3.8 1.81e+01    -  1.00e+00 1.00e+00h  1
+    Cannot recompute multipliers for feasibility problem.  Error in eq_mult_calculator
+    
+    Number of Iterations....: 4
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   3.7252902984619141e-09    3.9160251617431641e-05
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   3.7252902984619141e-09    3.9160251617431641e-05
+    
+    
+    Number of objective function evaluations             = 5
+    Number of objective gradient evaluations             = 5
+    Number of equality constraint evaluations            = 5
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 5
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 4
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.358
+    Total CPU secs in NLP function evaluations           =      1.223
+    
+    EXIT: Optimal Solution Found.
+
+
+5. Creating a PFD with results and a stream table
+-------------------------------------------------
+
+The steam cycle results can be displayed on the PFD and as a stream
+table, by running the following cells.
+
+.. code:: ipython3
+
+    import pkg_resources
+    import pyomo.environ as pyo
+    from idaes.models_extra.power_generation.flowsheets.supercritical_steam_cycle import (
+        pfd_result,
+    )
+    from idaes.core.util.tables import create_stream_table_dataframe
+    # Create stream results as Pandas dataframe 
+    df = create_stream_table_dataframe(streams=m._streams, orient="index")
+    # Create a new PFD with simulation results
+    init_pfd = pkg_resources.resource_string(
+        "idaes.models_extra.power_generation.flowsheets.supercritical_steam_cycle",
+        "supercritical_steam_cycle.svg"
+    )
+    res_pfd = pfd_result(m, df, svg=init_pfd)
+    # Display PFD with results.
+    display(SVG(res_pfd))
+
+
+
+.. image:: output_7_0.svg
+
+
+.. code:: ipython3
+
+    # Display the stream table.
+    df
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>Molar Flow</th>
+          <th>Mass Flow</th>
+          <th>T</th>
+          <th>P</th>
+          <th>Vapor Fraction</th>
+          <th>Molar Enthalpy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>Units</th>
+          <td>mole / second</td>
+          <td>kilogram / second</td>
+          <td>kelvin</td>
+          <td>pascal</td>
+          <td>dimensionless</td>
+          <td>joule / mole</td>
+        </tr>
+        <tr>
+          <th>COND_01</th>
+          <td>17282.457727</td>
+          <td>311.348108</td>
+          <td>301.57998</td>
+          <td>3878.883621</td>
+          <td>0.0</td>
+          <td>2146.889355</td>
+        </tr>
+        <tr>
+          <th>COND_02</th>
+          <td>17282.456727</td>
+          <td>311.34809</td>
+          <td>301.579979</td>
+          <td>3878.883621</td>
+          <td>0.0</td>
+          <td>2146.889335</td>
+        </tr>
+        <tr>
+          <th>COND_03</th>
+          <td>17282.456727</td>
+          <td>311.34809</td>
+          <td>301.661034</td>
+          <td>1003878.883621</td>
+          <td>0.0</td>
+          <td>2169.492282</td>
+        </tr>
+        <tr>
+          <th>CW01</th>
+          <td>2500000</td>
+          <td>45038.17</td>
+          <td>295.536861</td>
+          <td>500000</td>
+          <td>0.0</td>
+          <td>1700</td>
+        </tr>
+        <tr>
+          <th>CW02</th>
+          <td>2500000.0</td>
+          <td>45038.17</td>
+          <td>299.435143</td>
+          <td>500000.0</td>
+          <td>0.0</td>
+          <td>1993.58828</td>
+        </tr>
+        <tr>
+          <th>EXHST_BFPT</th>
+          <td>1546.839163</td>
+          <td>27.866722</td>
+          <td>301.57998</td>
+          <td>3878.883621</td>
+          <td>0.995438</td>
+          <td>45787.761816</td>
+        </tr>
+        <tr>
+          <th>EXHST_MAIN</th>
+          <td>15735.618564</td>
+          <td>283.481386</td>
+          <td>301.57998</td>
+          <td>3878.883621</td>
+          <td>0.966083</td>
+          <td>44500.819463</td>
+        </tr>
+        <tr>
+          <th>EXTR_BFPT_A</th>
+          <td>1546.839163</td>
+          <td>27.866722</td>
+          <td>543.609663</td>
+          <td>338388.754504</td>
+          <td>1.0</td>
+          <td>54195.506149</td>
+        </tr>
+        <tr>
+          <th>EXTR_HP4</th>
+          <td>1862.000213</td>
+          <td>33.544433</td>
+          <td>697.961824</td>
+          <td>8629990.590293</td>
+          <td>1.0</td>
+          <td>57580.164959</td>
+        </tr>
+        <tr>
+          <th>EXTR_HP7</th>
+          <td>1286.074067</td>
+          <td>23.168969</td>
+          <td>604.32686</td>
+          <td>4418555.18223</td>
+          <td>1.0</td>
+          <td>54662.949171</td>
+        </tr>
+        <tr>
+          <th>EXTR_IP10</th>
+          <td>859.692736</td>
+          <td>15.487595</td>
+          <td>543.609663</td>
+          <td>338388.754504</td>
+          <td>1.0</td>
+          <td>54195.506149</td>
+        </tr>
+        <tr>
+          <th>EXTR_IP5</th>
+          <td>807.134566</td>
+          <td>14.540746</td>
+          <td>702.027096</td>
+          <td>1172041.281103</td>
+          <td>1.0</td>
+          <td>59876.382643</td>
+        </tr>
+        <tr>
+          <th>EXTR_LP10</th>
+          <td>144.712591</td>
+          <td>2.607036</td>
+          <td>335.037194</td>
+          <td>21754.637187</td>
+          <td>0.969924</td>
+          <td>45783.011066</td>
+        </tr>
+        <tr>
+          <th>EXTR_LP11</th>
+          <td>403.947012</td>
+          <td>7.277214</td>
+          <td>329.150802</td>
+          <td>16533.524262</td>
+          <td>0.959114</td>
+          <td>45129.257933</td>
+        </tr>
+        <tr>
+          <th>EXTR_LP4</th>
+          <td>273.642894</td>
+          <td>4.92975</td>
+          <td>430.325749</td>
+          <td>112893.851842</td>
+          <td>1.0</td>
+          <td>50261.690036</td>
+        </tr>
+        <tr>
+          <th>EXTR_LP8</th>
+          <td>139.830066</td>
+          <td>2.519076</td>
+          <td>347.567134</td>
+          <td>37663.845545</td>
+          <td>0.992885</td>
+          <td>47147.648625</td>
+        </tr>
+        <tr>
+          <th>FW01A</th>
+          <td>17282.456727</td>
+          <td>311.34809</td>
+          <td>314.290823</td>
+          <td>1003878.883621</td>
+          <td>0.0</td>
+          <td>3119.910062</td>
+        </tr>
+        <tr>
+          <th>FW01B</th>
+          <td>18244.58929</td>
+          <td>328.681166</td>
+          <td>315.08341</td>
+          <td>1003878.883621</td>
+          <td>0.0</td>
+          <td>3179.557668</td>
+        </tr>
+        <tr>
+          <th>FW02</th>
+          <td>18244.58929</td>
+          <td>328.681166</td>
+          <td>319.712379</td>
+          <td>1003878.883621</td>
+          <td>0.0</td>
+          <td>3527.958819</td>
+        </tr>
+        <tr>
+          <th>FW03</th>
+          <td>18244.58929</td>
+          <td>328.681166</td>
+          <td>324.210603</td>
+          <td>1003878.883621</td>
+          <td>0.0</td>
+          <td>3866.606427</td>
+        </tr>
+        <tr>
+          <th>FW04</th>
+          <td>18244.58929</td>
+          <td>328.681166</td>
+          <td>333.0717</td>
+          <td>1003878.883621</td>
+          <td>0.0</td>
+          <td>4534.065398</td>
+        </tr>
+        <tr>
+          <th>FW05A</th>
+          <td>23059.490872</td>
+          <td>415.422908</td>
+          <td>377.816254</td>
+          <td>1003878.883621</td>
+          <td>0.0</td>
+          <td>7918.049162</td>
+        </tr>
+        <tr>
+          <th>FW05B</th>
+          <td>23059.490872</td>
+          <td>415.422908</td>
+          <td>381.030383</td>
+          <td>25055327.666477</td>
+          <td>0.0</td>
+          <td>8482.043757</td>
+        </tr>
+        <tr>
+          <th>FW06</th>
+          <td>23059.490872</td>
+          <td>415.422908</td>
+          <td>412.678059</td>
+          <td>25055327.666477</td>
+          <td>0.0</td>
+          <td>10871.367426</td>
+        </tr>
+        <tr>
+          <th>FW07</th>
+          <td>23059.490872</td>
+          <td>415.422908</td>
+          <td>442.071654</td>
+          <td>25055327.666477</td>
+          <td>0.0</td>
+          <td>13119.101005</td>
+        </tr>
+        <tr>
+          <th>FW08</th>
+          <td>23059.490872</td>
+          <td>415.422908</td>
+          <td>478.527787</td>
+          <td>25055327.666477</td>
+          <td>0.0</td>
+          <td>15965.758008</td>
+        </tr>
+        <tr>
+          <th>FWH1_DRN1</th>
+          <td>962.132563</td>
+          <td>17.333076</td>
+          <td>329.150802</td>
+          <td>16533.524262</td>
+          <td>0.0</td>
+          <td>4223.564367</td>
+        </tr>
+        <tr>
+          <th>FWH1_DRN2</th>
+          <td>962.132563</td>
+          <td>17.333076</td>
+          <td>329.271324</td>
+          <td>1216533.524262</td>
+          <td>0.0</td>
+          <td>4250.987135</td>
+        </tr>
+        <tr>
+          <th>FWH2_DRN</th>
+          <td>558.185551</td>
+          <td>10.055862</td>
+          <td>326.815741</td>
+          <td>21754.637187</td>
+          <td>0.0</td>
+          <td>4047.675664</td>
+        </tr>
+        <tr>
+          <th>FWH3_DRN</th>
+          <td>413.47296</td>
+          <td>7.448826</td>
+          <td>336.976177</td>
+          <td>37663.845545</td>
+          <td>0.0</td>
+          <td>4813.886337</td>
+        </tr>
+        <tr>
+          <th>FWH4_DRN</th>
+          <td>273.642894</td>
+          <td>4.92975</td>
+          <td>349.497368</td>
+          <td>112893.851842</td>
+          <td>0.0</td>
+          <td>5760.206347</td>
+        </tr>
+        <tr>
+          <th>FWH6_DRN</th>
+          <td>3955.208846</td>
+          <td>71.254147</td>
+          <td>449.625506</td>
+          <td>1172041.281103</td>
+          <td>0.0</td>
+          <td>13468.957137</td>
+        </tr>
+        <tr>
+          <th>FWH7_DRN</th>
+          <td>3148.07428</td>
+          <td>56.713402</td>
+          <td>517.546198</td>
+          <td>4418555.18223</td>
+          <td>0.0</td>
+          <td>19072.239817</td>
+        </tr>
+        <tr>
+          <th>FWH8_DRN</th>
+          <td>1862.000213</td>
+          <td>33.544433</td>
+          <td>553.839299</td>
+          <td>8629990.590293</td>
+          <td>0.0</td>
+          <td>22326.430431</td>
+        </tr>
+        <tr>
+          <th>MAKEUP_01</th>
+          <td>-0.001</td>
+          <td>-0.000018</td>
+          <td>306.248085</td>
+          <td>101325</td>
+          <td>0.0</td>
+          <td>2500</td>
+        </tr>
+        <tr>
+          <th>RHT_COLD</th>
+          <td>19911.417592</td>
+          <td>358.709524</td>
+          <td>604.32686</td>
+          <td>4418555.18223</td>
+          <td>1.0</td>
+          <td>54662.949171</td>
+        </tr>
+        <tr>
+          <th>RHT_HOT</th>
+          <td>19911.417592</td>
+          <td>358.709524</td>
+          <td>896.034085</td>
+          <td>4059475.222879</td>
+          <td>1.0</td>
+          <td>67143.805231</td>
+        </tr>
+        <tr>
+          <th>STEAM_LP</th>
+          <td>16697.751126</td>
+          <td>300.814462</td>
+          <td>543.609663</td>
+          <td>338388.754504</td>
+          <td>1.0</td>
+          <td>54195.506149</td>
+        </tr>
+        <tr>
+          <th>STEAM_MAIN</th>
+          <td>23059.491872</td>
+          <td>415.422926</td>
+          <td>866.481887</td>
+          <td>24230000.0</td>
+          <td>0.0</td>
+          <td>62710.01</td>
+        </tr>
+        <tr>
+          <th>THRTL1</th>
+          <td>5764.872968</td>
+          <td>103.855732</td>
+          <td>863.036551</td>
+          <td>23161161.489529</td>
+          <td>0.0</td>
+          <td>62710.01</td>
+        </tr>
+        <tr>
+          <th>THRTL2</th>
+          <td>5764.872968</td>
+          <td>103.855732</td>
+          <td>863.036551</td>
+          <td>23161161.489529</td>
+          <td>0.0</td>
+          <td>62710.01</td>
+        </tr>
+        <tr>
+          <th>THRTL3</th>
+          <td>5764.872968</td>
+          <td>103.855732</td>
+          <td>863.036551</td>
+          <td>23161161.489529</td>
+          <td>0.0</td>
+          <td>62710.01</td>
+        </tr>
+        <tr>
+          <th>THRTL4</th>
+          <td>5764.872968</td>
+          <td>103.855732</td>
+          <td>863.036551</td>
+          <td>23161161.489529</td>
+          <td>0.0</td>
+          <td>62710.01</td>
+        </tr>
+        <tr>
+          <th>condenser_mix_to_condenser</th>
+          <td>17282.457727</td>
+          <td>311.348108</td>
+          <td>301.57998</td>
+          <td>3878.883621</td>
+          <td>0.968711</td>
+          <td>44616.005212</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+

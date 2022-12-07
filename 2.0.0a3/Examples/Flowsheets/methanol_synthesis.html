@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Methanol Synthesis Flowsheet Example &mdash; IDAES v2.0.0a3 Examples</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Methanol Synthesis Flowsheet Example</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/Examples/Flowsheets/methanol_synthesis.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="methanol-synthesis-flowsheet-example">
+<h1>Methanol Synthesis Flowsheet Example<a class="headerlink" href="#methanol-synthesis-flowsheet-example" title="Permalink to this heading">¶</a></h1>
+<p>The purpose of this notebook is to demonstrate flowsheet synthesis
+integrating IDAES modeling tools, including the Unit Model Library,
+Property and Reaction Framework, IDAES scaling tools and the Process
+Costing Framework. The example leverages imports from external flowsheet
+scripts, and demonstrates implementation of separate VLE and vapor-only
+property packages to reduce model complexity where applicable.</p>
+<section id="simplified-hydrogen-reformation-system">
+<h2>Simplified Hydrogen Reformation System<a class="headerlink" href="#simplified-hydrogen-reformation-system" title="Permalink to this heading">¶</a></h2>
+<p>This example demonstrates a steady-state model of methanol synthesis
+from hydrogen and carbon monoxide. To simulate relevant natural gas
+components, the reactant vapors are mixed stoichiometrically and brought
+to optimal reaction conditions prior to entering the gas-phase reactor.
+Vapor liquid equilibrium is mainly applicable in the post-reactor Flash
+unit for methanol recovery, and is accounted for by separate vapor and
+VLE thermophysical property packages. See <code class="docutils literal notranslate"><span class="pre">methanol_flowsheet.py</span></code> and
+<code class="docutils literal notranslate"><span class="pre">methanol_flowsheet_with_recycle.py</span></code> for more information on how to
+assemble the flowsheet, as well <code class="docutils literal notranslate"><span class="pre">methanol_ideal_VLE</span></code>,
+<code class="docutils literal notranslate"><span class="pre">methanol_ideal_vapor</span></code> and <code class="docutils literal notranslate"><span class="pre">methanol_reactions</span></code> for more information
+on the thermophyscial and reaction properties.</p>
+<p>This example is a reasonable approximation for gas-phase methanol
+synthesis systems and does not represent any particular chemical
+process. To simplify the system and increase tractability, hydrogen and
+carbon monoxide feeds are considered in lieu of multi-step mechanisms
+for carbon dioxide conversion to methanol. General process descriptions
+for gas-phase synthesis, as well as thermophysical and reaction
+properties for carbon monoxide hydrogenation, were taken from the
+following publication:</p>
+<p>Nieminen, H.; Laari, A.; Koiranen, T. CO2 Hydrogenation to Methanol by a
+Liquid-Phase Process with Alcoholic Solvents: A Techno-Economic
+Analysis. Processes 2019, 7, 405. <a class="reference external" href="https://doi.org/10.3390/pr7070405">https://doi.org/10.3390/pr7070405</a></p>
+</section>
+<section id="introduction">
+<h2>1. Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<p>This example demonstrates a simulation of methanol synthesis from
+hydrogen and carbon monoxide. Each methanol flowsheet module includes
+several built-in methods. This notebook demonstrates building the
+flowsheet, implementing model scaling, initialization and solving a
+square problem, costing and final constrainted optimization.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">build_model()</span></code> method creates the Pyomo concrete model and builds
+the flowsheet by importing thermophysical and reaction properties and
+unit models and defining stream connections between these units. This
+method also implements appropriate default scaling on state and property
+variables.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">set_inputs()</span></code> method adds the appropriate initial specifications
+on the feed streams and unit operations. Specifications upstream of the
+reactor largely remain fixed throughout the optimization.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">scale_flowsheet()</span></code> method implements generic variable, unit model
+state variable, unit model constraint and Arc equality constraint
+scaling via IDAES scaling tools. Scaling factors are hard-coded in the
+flowsheet scripts to adjust for order of magnitude factors in
+appropriate constraints and simplify numerical solver calculations.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">initialize_flowsheet()</span></code> method uses the initial guess to
+initialize the models sequentially, solving each unit and propagating
+the results to the outlet stream to converge the next unit more quickly.
+This occurs just before the flowsheet-level solver call.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">add_costing()</span></code> method creates new variables and constraints
+related to unit model capital cost and operating cost calculations, and
+defines an objective function for the process economics. This method is
+called after the flowsheet-level solver call, and the flowsheet is
+resolved once costing is added. Capital costs are estimated using
+built-in costing methods within IDAES, and operating costs are estimated
+from a combination of known cost coefficients and surrogate models.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">report()</span></code> method displays relevant model results after the
+flowsheet has been fully solved.</p>
+</section>
+</section>
+<section id="problem-statement">
+<h1>2. Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this heading">¶</a></h1>
+<p>For given raw material flows and optimal reactor conditions, we will
+calculate the extent of reaction, relevant process results including
+reactor duty and turbine duty, methanol recovery, and relevant economic
+results including annual revenue.</p>
+<section id="main-inputs">
+<h2>2.1. Main Inputs:<a class="headerlink" href="#main-inputs" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Raw material inlets (F - mol/s, P - Pa, h - j/mol, x - mole fraction)</p></li>
+<li><p>Pre-reactor compressor outlet pressure (Pa)</p></li>
+<li><p>Pre-reactor heater outlet temperature (K)</p></li>
+</ul>
+</section>
+<section id="main-outputs">
+<h2>2.2. Main Outputs:<a class="headerlink" href="#main-outputs" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Extent of reaction (mol/s)</p></li>
+<li><p>Reactor duty (W)</p></li>
+<li><p>Turbine duty (W)</p></li>
+<li><p>Methanol recovery (%)</p></li>
+<li><p>Annual revenue (USD/year)</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="n">Image</span><span class="p">(</span><span class="s2">&quot;methanol_flowsheet.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_3_0.png" src="../../_images/output_3_0.png" />
+</section>
+</section>
+<section id="import-and-solve-flowsheet">
+<h1>3. Import and Solve Flowsheet<a class="headerlink" href="#import-and-solve-flowsheet" title="Permalink to this heading">¶</a></h1>
+<section id="import-pyomo-and-idaes-libraries">
+<h2>3.1 Import Pyomo and IDAES Libraries<a class="headerlink" href="#import-pyomo-and-idaes-libraries" title="Permalink to this heading">¶</a></h2>
+<p>First, let’s import the relevant Pyomo and IDAES Libraries:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="c1"># Import Pyomo libraries</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Constraint</span><span class="p">,</span>
+                           <span class="n">Objective</span><span class="p">,</span>
+                           <span class="n">Var</span><span class="p">,</span>
+                           <span class="n">Expression</span><span class="p">,</span>
+                           <span class="n">Param</span><span class="p">,</span>
+                           <span class="n">ConcreteModel</span><span class="p">,</span>
+                           <span class="n">TransformationFactory</span><span class="p">,</span>
+                           <span class="n">value</span><span class="p">,</span>
+                           <span class="n">maximize</span><span class="p">,</span>
+                           <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">TerminationCondition</span>
+<span class="kn">from</span> <span class="nn">pyomo.network</span> <span class="kn">import</span> <span class="n">Arc</span>
+
+<span class="c1"># Import IDAES core libraries</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">get_solver</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util</span> <span class="kn">import</span> <span class="n">scaling</span> <span class="k">as</span> <span class="n">iscale</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.initialization</span> <span class="kn">import</span> <span class="n">propagate_state</span>
+
+<span class="c1"># Import required property modules</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties.modular_properties.base.generic_property</span> <span class="kn">import</span> \
+    <span class="n">GenericParameterBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties.modular_properties.base.generic_reaction</span> <span class="kn">import</span> \
+    <span class="n">GenericReactionParameterBlock</span>
+
+<span class="kn">import</span> <span class="nn">methanol_ideal_VLE</span> <span class="k">as</span> <span class="nn">thermo_props_VLE</span>
+<span class="kn">import</span> <span class="nn">methanol_ideal_vapor</span> <span class="k">as</span> <span class="nn">thermo_props_vapor</span>
+<span class="kn">import</span> <span class="nn">methanol_reactions</span> <span class="k">as</span> <span class="nn">reaction_props</span>
+
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Feed</span><span class="p">,</span>
+    <span class="n">Mixer</span><span class="p">,</span>
+    <span class="n">Heater</span><span class="p">,</span>
+    <span class="n">Compressor</span><span class="p">,</span>
+    <span class="n">Turbine</span><span class="p">,</span>
+    <span class="n">StoichiometricReactor</span><span class="p">,</span>
+    <span class="n">Flash</span><span class="p">,</span>
+    <span class="n">Product</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models.mixer</span> <span class="kn">import</span> <span class="n">MomentumMixingType</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models.pressure_changer</span> <span class="kn">import</span> <span class="n">ThermodynamicAssumption</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">UnitModelCostingBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models.costing.SSLW</span> <span class="kn">import</span> <span class="n">SSLWCosting</span>
+
+<span class="c1"># import flowsheet functions</span>
+<span class="kn">from</span> <span class="nn">methanol_flowsheet</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_model</span><span class="p">,</span> <span class="n">set_inputs</span><span class="p">,</span> <span class="n">scale_flowsheet</span><span class="p">,</span> <span class="n">initialize_flowsheet</span><span class="p">,</span>
+    <span class="n">add_costing</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="build-and-solve-flowsheet">
+<h2>3.2 Build and Solve Flowsheet<a class="headerlink" href="#build-and-solve-flowsheet" title="Permalink to this heading">¶</a></h2>
+<p>The methanol flowsheet methods are called sequentially below, following
+the workflow contained in the <code class="docutils literal notranslate"><span class="pre">main()</span></code> method in
+<code class="docutils literal notranslate"><span class="pre">idaes/models/flowsheets/methanol_flowsheet.py</span></code>. First, let’s set the
+solver options. IDAES contains a default solver <code class="docutils literal notranslate"><span class="pre">get_solver</span></code> which
+calls IPOPT using standard settings, and we set an iteration cap of 100
+to catch nonconverging solver runs.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Set solver options</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">()</span>  <span class="c1"># IPOPT</span>
+<span class="n">optarg</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tol&#39;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span>
+          <span class="s1">&#39;max_iter&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">optarg</span>
+</pre></div>
+</div>
+<p>Next, we will build and solve the initial flowsheet using imported
+flowsheet methods - see <code class="docutils literal notranslate"><span class="pre">methanol_flowsheet.py</span></code> for complete method
+scripts.</p>
+<p>In the code below, we first define a Pyomo model object and build the
+model by defining each unit block with relevant property packages. As
+mentioned earlier, only the Flash unit (and the liquid outlet Product
+block) employ the VLE property package to ensure fast convergence of
+vapor-only processes.</p>
+<p>The process inputs are set for stoichiometric hydrogen and carbon
+monoxide feeds according to the process diagram in section 2.2. In the
+output below, the script returns the expected degrees of freedom for the
+model for each unit (compressor pressure change, heater duty, reactor
+duty and conversion, turbine pressure change and efficiency, cooler duty
+and flash duty and pressure change) and the actual model degrees of
+freedom before input specification, after the feed inputs are specified
+(flow, enthalpy, pressure, and composition for each feed) and after the
+unit model inputs are specified.</p>
+<p>After setting process inputs, we have a square problem for
+initialization. Here, we first implement IDAES scaling tools to create a
+more tractable problem during the solve step, and then sequentially
+initialize and propagate results from each unit block. As expected, the
+model only performs dew and bubble point calculations for the Flash and
+CH3OH product blocks where liquid phases are present and we obtain a
+square, solved problem:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build and solve flowsheet</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">build_model</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># build flowsheet by adding unit models and property packages</span>
+<span class="n">set_inputs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># unit and stream specifications</span>
+<span class="n">scale_flowsheet</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># flowsheet and unit model level scaling</span>
+<span class="n">initialize_flowsheet</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># rigorous initialization scheme</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;DOF before solve: &#39;</span><span class="p">,</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Solving initial problem...&#39;</span><span class="p">)</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># initial square problem solve</span>
+</pre></div>
+</div>
+<pre class="literal-block">WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-
+    packages/idaes/models/unit_models/flash.py:235)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-
+    packages/idaes/models/unit_models/flash.py:273)
+Unit degrees of freedom
+M101 0
+C101 1
+H101 1
+R101 2
+T101 2
+H102 1
+F101 2
+Total DOF:  23
+DOF after streams specified:  9
+DOF after units specified:  0
+
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H2.properties: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H2.properties: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H2.properties: Property package initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H2: Initialization Complete.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.CO.properties: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.CO.properties: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.CO.properties: Property package initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.CO: Initialization Complete.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.M101.H2_WGS_state: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.M101.H2_WGS_state: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.M101.CO_WGS_state: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.M101.CO_WGS_state: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.M101.mixed_state: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.M101.mixed_state: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.M101.mixed_state: Property package initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+2022-09-13 00:37:50 [INFO] idaes.init.fs.C101.control_volume.properties_in: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.C101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.C101.control_volume.properties_out: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.C101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+2022-09-13 00:37:50 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H101.control_volume.properties_in: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H101.control_volume.properties_out: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+2022-09-13 00:37:50 [INFO] idaes.init.fs.R101.control_volume.properties_in: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.R101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.R101.control_volume.properties_out: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.R101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.R101.control_volume.reactions: Initialization Complete.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+2022-09-13 00:37:50 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+2022-09-13 00:37:50 [INFO] idaes.init.fs.T101.control_volume.properties_in: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.T101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.T101.control_volume.properties_out: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.T101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.T101.control_volume.properties_out: Property package initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.T101.properties_isentropic: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.T101.properties_isentropic: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.T101.properties_isentropic: Property package initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.T101: Initialization Complete: optimal - Optimal Solution Found
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H102.control_volume.properties_in: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H102.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H102.control_volume.properties_out: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H102.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H102.control_volume: Initialization Complete
+2022-09-13 00:37:50 [INFO] idaes.init.fs.H102: Initialization Complete: optimal - Optimal Solution Found
+2022-09-13 00:37:50 [INFO] idaes.init.fs.F101.control_volume.properties_in: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.F101.control_volume.properties_in: Dew and bubble point initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.F101.control_volume.properties_in: Equilibrium temperature initialization completed.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.F101.control_volume.properties_in: Phase equilibrium initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.F101.control_volume.properties_in: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.F101.control_volume.properties_out: Starting initialization
+2022-09-13 00:37:50 [INFO] idaes.init.fs.F101.control_volume.properties_out: Dew and bubble point initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:50 [INFO] idaes.init.fs.F101.control_volume.properties_out: Equilibrium temperature initialization completed.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.F101.control_volume.properties_out: Phase equilibrium initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.F101.control_volume.properties_out: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+2022-09-13 00:37:51 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+2022-09-13 00:37:51 [INFO] idaes.init.fs.EXHAUST.properties: Starting initialization
+2022-09-13 00:37:51 [INFO] idaes.init.fs.EXHAUST.properties: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.EXHAUST.properties: Property package initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.EXHAUST: Initialization Complete.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.CH3OH.properties: Starting initialization
+2022-09-13 00:37:51 [INFO] idaes.init.fs.CH3OH.properties: Dew and bubble point initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.CH3OH.properties: Equilibrium temperature initialization completed.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.CH3OH.properties: Phase equilibrium initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.CH3OH.properties: Property initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.CH3OH.properties: Property package initialization: optimal - Optimal Solution Found.
+2022-09-13 00:37:51 [INFO] idaes.init.fs.CH3OH: Initialization Complete.
+DOF before solve:  0
+
+Solving initial problem...
+Ipopt 3.13.2: tol=1e-06
+max_iter=100
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      955
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      390
+
+Total number of variables............................:      310
+                     variables with only lower bounds:       35
+                variables with lower and upper bounds:      255
+                     variables with only upper bounds:        1
+Total number of equality constraints.................:      310
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 2.79e+04 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 2.79e+02 2.77e+00  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+   2  0.0000000e+00 2.77e+00 1.21e+00  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+   3  0.0000000e+00 3.52e-08 1.00e+03  -1.0 1.76e-06    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.8189894035458565e-12    3.5157427191734314e-08
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.8189894035458565e-12    3.5157427191734314e-08
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
+Total CPU secs in NLP function evaluations           =      0.001
+
+EXIT: Optimal Solution Found.</pre>
+</section>
+<section id="flowsheet-costing-and-optimization">
+<h2>3.3 Flowsheet Costing and Optimization<a class="headerlink" href="#flowsheet-costing-and-optimization" title="Permalink to this heading">¶</a></h2>
+<p>Now that we have a well-initialized and solved flowsheet, we can add
+process economics and optimize the revenue. We utilize IDAES costing
+tools to calculate reactor and flash vessel capital cost, and implement
+surrogate models to account for heat exchanger capital costs.
+Additional, we calculate reactor operating costs as a function of
+conversion and assume constant rates for electricity, heating and
+cooling costs. Capital costs are annualized over 15 years, and revenue
+is determined from total liquid methanol sales, operating costs,
+annualized capital costs and feed raw material costs. The flowsheet
+report method returns key process results, including a check on the
+reaction stoichiometry, relevant duty and state variable values,
+economic results, and stream tables for feed and product streams:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">add_costing</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># re-solve with costing equations</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Solving with costing...&#39;</span><span class="p">)</span>
+<span class="n">results2</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial solution process results:&#39;</span><span class="p">)</span>
+<span class="n">report</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># display initial solution results</span>
+</pre></div>
+</div>
+<pre class="literal-block">Solving with costing...
+Ipopt 3.13.2: tol=1e-06
+max_iter=100
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      971
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      392
+
+Total number of variables............................:      319
+                     variables with only lower bounds:       43
+                variables with lower and upper bounds:      255
+                     variables with only upper bounds:        1
+Total number of equality constraints.................:      319
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0 -2.8492051e+07 9.10e+04 1.00e+02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1 -2.9068962e+07 5.76e+04 6.45e+01  -1.0 1.20e+05    -  5.03e-02 9.90e-01h  1
+   2 -2.9074767e+07 5.71e+02 9.98e+00  -1.0 5.72e+04    -  9.81e-01 9.90e-01h  1
+   3 -2.9074825e+07 5.22e-05 1.00e+03  -1.0 5.67e+02    -  9.90e-01 1.00e+00h  1
+   4 -2.9074825e+07 1.16e-09 9.90e+04  -1.0 5.22e-05    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 4
+
+                                   (scaled)                 (unscaled)
+Objective...............:  -4.4948186430824187e+01   -2.9074824816033270e+07
+Dual infeasibility......:   4.9773460647709510e-07    3.2196063150335752e-01
+Constraint violation....:   4.5474735088646412e-12    1.1641532182693481e-09
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   4.5474735088646412e-12    3.2196063150335752e-01
+
+
+Number of objective function evaluations             = 5
+Number of objective gradient evaluations             = 5
+Number of equality constraint evaluations            = 5
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 5
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 4
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.007
+Total CPU secs in NLP function evaluations           =      0.001
+
+EXIT: Optimal Solution Found.
+Initial solution process results:
+
+
+Extent of reaction:  237.60047790000007
+Stoichiometry of each component normalized by the extent:
+CH4 :  -0.0
+H2 :  -2.0
+CH3OH :  1.0
+CO :  -1.0
+These coefficients should follow 1*CO + 2*H2 =&gt; 1*CH3OH
+
+Reaction conversion:  0.75
+Reactor duty (MW):  -45.21917830318437
+Duty from Reaction (MW)): 21.536107316856008
+Turbine work (MW):  -0.959334644586757
+Mixer outlet temperature (C)):  20.051714213753428
+Compressor outlet temperature (C)):  20.051714213753485
+Compressor outlet pressure (Pa)):  5100000.0
+Heater outlet temperature (C)):  215.0
+Reactor outlet temperature (C)):  234.0
+Turbine outlet temperature (C)):  192.87815244243217
+Turbine outlet pressure (Pa)):  3100000.0
+Cooler outlet temperature (C)):  134.0
+Flash outlet temperature (C)):  134.0
+Methanol recovery(%):  60.00443012921689
+annualized capital cost ($/year) = 219790.50447043357
+operating cost ($/year) =  380701687.4964811
+sales ($/year) =  64685201172.19819
+raw materials cost ($/year) = 35229454878.16397
+revenue (1000$/year)=  29074824.816033263
+
+
+====================================================================================
+Unit : fs.H2                                                               Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units        Outlet
+    Total Molar Flowrate       mole / second     637.20
+    Total Mole Fraction CH4    dimensionless 1.0000e-06
+    Total Mole Fraction CO     dimensionless 1.0000e-06
+    Total Mole Fraction H2     dimensionless     1.0000
+    Total Mole Fraction CH3OH  dimensionless 1.0000e-06
+    Molar Enthalpy              joule / mole    -142.40
+    Pressure                          pascal 3.0000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.CO                                                               Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units         Outlet
+    Total Molar Flowrate       mole / second      316.80
+    Total Mole Fraction CH4    dimensionless  1.0000e-06
+    Total Mole Fraction CO     dimensionless      1.0000
+    Total Mole Fraction H2     dimensionless  1.0000e-06
+    Total Mole Fraction CH3OH  dimensionless  1.0000e-06
+    Molar Enthalpy              joule / mole -1.1068e+05
+    Pressure                          pascal  3.0000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.EXHAUST                                                          Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units         Inlet
+    Total Molar Flowrate       mole / second     336.23
+    Total Mole Fraction CH4    dimensionless 2.8373e-06
+    Total Mole Fraction CO     dimensionless    0.23555
+    Total Mole Fraction H2     dimensionless    0.48181
+    Total Mole Fraction CH3OH  dimensionless    0.28263
+    Molar Enthalpy              joule / mole    -80218.
+    Pressure                          pascal 3.1000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.CH3OH                                                            Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units          Inlet
+    Total Molar Flowrate       mole / second      142.57
+    Total Mole Fraction CH4    dimensionless  1.0000e-08
+    Total Mole Fraction CO     dimensionless  1.0000e-08
+    Total Mole Fraction H2     dimensionless  1.0000e-08
+    Total Mole Fraction CH3OH  dimensionless      1.0000
+    Molar Enthalpy              joule / mole -2.3813e+05
+    Pressure                          pascal  3.1000e+06
+====================================================================================</pre>
+<p>Finally, let’s unfix some specifications and determine an optimal
+revenue. We set bounds on our decision variables to constrain our
+objective to physical and economically sensible solutions. The
+pre-reactor section mixes the feeds and brings the reactants to optimal
+temperature and pressure, and we only unfix downstream unit
+specifications:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Set up Optimization Problem (Maximize Revenue)</span>
+<span class="c1"># keep process pre-reaction fixed and unfix some post-process specs</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion_lb</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span> <span class="o">&gt;=</span> <span class="mf">0.75</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion_ub</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span> <span class="o">&lt;=</span> <span class="mf">0.85</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet_temp</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet_t_lb</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="o">&gt;=</span> <span class="mi">405</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet_t_ub</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="o">&lt;=</span> <span class="mi">505</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+
+<span class="c1"># Optimize turbine work (or delta P)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>  <span class="c1"># optimize turbine work recovery/pressure drop</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">outlet_p_lb</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">10E5</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">outlet_p_ub</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">51E5</span><span class="o">*</span><span class="mf">0.8</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+
+<span class="c1"># Optimize Cooler outlet temperature - unfix cooler outlet temperature</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">outlet_temp</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">outlet_t_lb</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="o">&gt;=</span> <span class="mf">407.15</span><span class="o">*</span><span class="mf">0.8</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">outlet_t_ub</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="o">&lt;=</span> <span class="mi">480</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>  <span class="c1"># allow pressure change in streams</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">isothermal</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">==</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Solving optimization problem...&#39;</span><span class="p">)</span>
+<span class="n">opt_res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Optimal solution process results:&#39;</span><span class="p">)</span>
+<span class="n">report</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Solving optimization problem...
+Ipopt 3.13.2: tol=1e-06
+max_iter=100
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      975
+Number of nonzeros in inequality constraint Jacobian.:        8
+Number of nonzeros in Lagrangian Hessian.............:      394
+
+Total number of variables............................:      322
+                     variables with only lower bounds:       43
+                variables with lower and upper bounds:      256
+                     variables with only upper bounds:        1
+Total number of equality constraints.................:      318
+Total number of inequality constraints...............:        8
+        inequality constraints with only lower bounds:        4
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        4
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0 -2.8492012e+07 2.79e+04 1.00e+02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1 -2.8402805e+07 2.72e+04 9.71e+01  -1.0 8.82e+06    -  4.99e-02 2.59e-02h  1
+   2 -2.8406590e+07 2.70e+04 9.56e+01  -1.0 8.57e+06    -  7.51e-02 8.58e-03h  1
+   3 -2.8493710e+07 2.29e+04 3.69e+02  -1.0 8.41e+06    -  1.67e-01 1.52e-01h  1
+   4 -2.8493256e+07 2.28e+04 1.20e+04  -1.0 4.60e+06    -  1.00e-01 2.61e-03h  1
+   5 -2.8504482e+07 2.24e+04 1.20e+04  -1.0 4.52e+06    -  2.44e-02 2.38e-02h  1
+   6 -2.8536507e+07 2.16e+04 2.28e+04  -1.0 4.39e+06    -  5.48e-02 6.86e-02h  1
+   7 -2.8537588e+07 2.16e+04 1.35e+05  -1.0 3.94e+06    -  2.56e-01 2.49e-03h  1
+   8 -2.8537637e+07 2.15e+04 6.77e+06  -1.0 1.30e+06    -  4.69e-01 1.17e-04h  1
+   9 -2.8910081e+07 8.51e+04 2.07e+06  -1.0 1.31e+06    -  4.38e-01 9.05e-01h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10 -2.8914184e+07 7.59e+04 7.45e+06  -1.0 9.51e+04    -  9.00e-01 1.08e-01h  1
+  11 -2.8947682e+07 1.17e+03 1.82e+05  -1.0 8.76e+04    -  9.09e-01 9.90e-01h  1
+  12 -2.8918208e+07 1.81e+01 3.80e+06  -1.0 6.65e+03    -  9.89e-01 9.92e-01h  1
+  13 -3.9622915e+07 3.82e+04 5.44e+08  -1.0 5.15e+06    -  1.20e-01 1.75e-01f  3
+  14 -5.4538471e+07 7.75e+04 2.91e+08  -1.0 1.98e+06    -  6.35e-01 1.00e+00F  1
+  15 -5.8427164e+07 1.46e+05 2.83e+06  -1.0 1.61e+06    -  6.74e-01 9.97e-01f  1
+  16 -6.3179254e+07 1.83e+04 2.76e+06  -1.0 2.06e+06    -  2.01e-02 1.00e+00f  1
+  17 -6.8685110e+07 4.27e+04 2.75e+06  -1.0 1.18e+09    -  1.83e-03 1.66e-03f  2
+  18 -6.8948716e+07 1.02e+02 6.64e+05  -1.0 3.00e+04  -4.0 9.90e-01 1.00e+00h  1
+  19 -6.8948602e+07 2.50e-03 4.50e+03  -1.0 2.68e+02  -4.5 9.97e-01 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  20 -6.8948605e+07 9.31e-10 1.20e-02  -1.0 3.72e-01  -5.0 1.00e+00 1.00e+00h  1
+  21 -6.8948615e+07 2.10e-08 5.43e-01  -5.7 1.09e+00  -5.4 1.00e+00 1.00e+00f  1
+  22 -6.8948643e+07 1.61e-07 4.02e-06  -5.7 3.26e+00  -5.9 1.00e+00 1.00e+00f  1
+  23 -6.8948729e+07 1.44e-06 9.00e-05  -8.6 9.78e+00  -6.4 1.00e+00 1.00e+00f  1
+  24 -6.8948988e+07 1.30e-05 4.02e-06  -8.6 2.93e+01  -6.9 1.00e+00 1.00e+00f  1
+  25 -6.8949763e+07 1.17e-04 4.02e-06  -8.6 8.80e+01  -7.3 1.00e+00 1.00e+00f  1
+  26 -6.8952089e+07 1.05e-03 4.02e-06  -8.6 2.64e+02  -7.8 1.00e+00 1.00e+00f  1
+  27 -6.8959067e+07 9.45e-03 4.02e-06  -8.6 7.92e+02  -8.3 1.00e+00 1.00e+00f  1
+  28 -6.8980000e+07 8.50e-02 6.98e-06  -8.6 2.38e+03  -8.8 1.00e+00 1.00e+00f  1
+  29 -6.9042802e+07 7.66e-01 6.28e-05  -8.6 7.13e+03  -9.2 1.00e+00 1.00e+00f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  30 -6.9231219e+07 6.91e+00 5.66e-04  -8.6 2.14e+04  -9.7 1.00e+00 1.00e+00f  1
+  31 -6.9796592e+07 6.28e+01 5.10e-03  -8.6 6.41e+04 -10.2 1.00e+00 1.00e+00f  1
+  32 -6.9969537e+07 6.24e+01 5.06e-03  -8.6 1.92e+05 -10.7 1.00e+00 1.02e-01f  1
+  33 -7.0739937e+07 1.53e+02 5.52e-01  -8.6 7.09e+05 -11.2 1.00e+00 2.88e-01f  1
+  34 -7.6386902e+07 6.17e+03 8.19e+00  -8.6 1.96e+06 -11.6 1.00e+00 7.75e-01f  1
+  35r-7.6386902e+07 6.17e+03 9.99e+02   1.0 0.00e+00    -  0.00e+00 2.68e-10R  3
+  36r-7.6386917e+07 6.17e+03 9.99e+02   1.0 1.03e+10    -  6.44e-09 1.35e-11f  2
+  37r-7.6863689e+07 1.23e+04 6.43e+04   1.0 5.82e+05    -  2.18e-06 1.92e-04f  1
+  38 -7.8373774e+07 4.30e+04 1.74e+02  -8.6 4.25e+13    -  1.55e-07 2.00e-08f  1
+In iteration 38, 1 Slack too small, adjusting variable bound
+  39 -7.8374386e+07 4.30e+04 1.74e+02  -8.6 7.42e+09    -  8.33e-04 2.53e-08f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  40 -7.8381465e+07 4.30e+04 3.06e+02  -8.6 2.81e+06    -  1.00e+00 8.33e-04h  1
+  41 -7.7718831e+07 1.15e+04 8.17e+00  -8.6 4.30e+04    -  1.00e+00 9.73e-01h  1
+  42 -7.7700537e+07 1.09e+02 2.50e-01  -8.6 1.84e+03    -  1.00e+00 1.00e+00h  1
+  43 -7.7700536e+07 6.02e-03 4.18e-01  -8.6 4.93e+00    -  9.11e-01 1.00e+00h  1
+  44 -7.7700536e+07 3.73e-09 2.43e-03  -8.6 2.82e-03    -  1.00e+00 1.00e+00h  1
+  45 -7.7700536e+07 2.79e-09 2.27e-13  -8.6 2.60e-08    -  1.00e+00 1.00e+00h  1
+  46 -7.7700536e+07 1.86e-09 6.97e-11 -10.9 2.16e+00    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 46
+
+                                   (scaled)                 (unscaled)
+Objective...............:  -1.2012103932731618e+02   -7.7700535939009801e+07
+Dual infeasibility......:   6.9715324770738830e-11    4.5095498075803740e-05
+Constraint violation....:   9.4587448984384537e-11    1.8626451492309570e-09
+Complementarity.........:   1.4074776814316710e-11    9.1042976968786751e-06
+Overall NLP error.......:   9.4587448984384537e-11    4.5095498075803740e-05
+
+
+Number of objective function evaluations             = 60
+Number of objective gradient evaluations             = 46
+Number of equality constraint evaluations            = 60
+Number of inequality constraint evaluations          = 60
+Number of equality constraint Jacobian evaluations   = 48
+Number of inequality constraint Jacobian evaluations = 48
+Number of Lagrangian Hessian evaluations             = 46
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.068
+Total CPU secs in NLP function evaluations           =      0.012
+
+EXIT: Optimal Solution Found.
+Optimal solution process results:
+
+
+Extent of reaction:  269.280544787992
+Stoichiometry of each component normalized by the extent:
+CH4 :  0.0
+H2 :  -2.0
+CH3OH :  1.0
+CO :  -1.0
+These coefficients should follow 1*CO + 2*H2 =&gt; 1*CH3OH
+
+Reaction conversion:  0.8500000099999546
+Reactor duty (MW):  -51.36357357754579
+Duty from Reaction (MW)): 24.407588579583596
+Turbine work (MW):  -1.9904899177794952
+Mixer outlet temperature (C)):  20.05171421375354
+Compressor outlet temperature (C)):  20.0517142137536
+Compressor outlet pressure (Pa)):  5100000.0
+Heater outlet temperature (C)):  215.0
+Reactor outlet temperature (C)):  231.8500046871659
+Turbine outlet temperature (C)):  139.85888172675635
+Turbine outlet pressure (Pa)):  1427653.3547820952
+Cooler outlet temperature (C)):  52.56999709299214
+Flash outlet temperature (C)):  134.0
+Methanol recovery(%):  92.80355474669571
+annualized capital cost ($/year) = 235547.18924473264
+operating cost ($/year) =  451663512.68477196
+sales ($/year) =  113381889877.04779
+raw materials cost ($/year) = 35229454878.16397
+revenue (1000$/year)=  77700535.93900982
+
+
+====================================================================================
+Unit : fs.H2                                                               Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units        Outlet
+    Total Molar Flowrate       mole / second     637.20
+    Total Mole Fraction CH4    dimensionless 1.0000e-06
+    Total Mole Fraction CO     dimensionless 1.0000e-06
+    Total Mole Fraction H2     dimensionless     1.0000
+    Total Mole Fraction CH3OH  dimensionless 1.0000e-06
+    Molar Enthalpy              joule / mole    -142.40
+    Pressure                          pascal 3.0000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.CO                                                               Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units         Outlet
+    Total Molar Flowrate       mole / second      316.80
+    Total Mole Fraction CH4    dimensionless  1.0000e-06
+    Total Mole Fraction CO     dimensionless      1.0000
+    Total Mole Fraction H2     dimensionless  1.0000e-06
+    Total Mole Fraction CH3OH  dimensionless  1.0000e-06
+    Molar Enthalpy              joule / mole -1.1068e+05
+    Pressure                          pascal  3.0000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.EXHAUST                                                          Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units         Inlet
+    Total Molar Flowrate       mole / second     165.54
+    Total Mole Fraction CH4    dimensionless 5.7630e-06
+    Total Mole Fraction CO     dimensionless    0.28706
+    Total Mole Fraction H2     dimensionless    0.59587
+    Total Mole Fraction CH3OH  dimensionless    0.11706
+    Molar Enthalpy              joule / mole    -52313.
+    Pressure                          pascal 7.4845e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.CH3OH                                                            Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units          Inlet
+    Total Molar Flowrate       mole / second      249.90
+    Total Mole Fraction CH4    dimensionless  1.0000e-08
+    Total Mole Fraction CO     dimensionless  1.0000e-08
+    Total Mole Fraction H2     dimensionless  1.0000e-08
+    Total Mole Fraction CH3OH  dimensionless      1.0000
+    Molar Enthalpy              joule / mole -2.3792e+05
+    Pressure                          pascal  7.4845e+06
+====================================================================================</pre>
+<p>As expected, the process achieves a much greater revenue as a result of
+increasing conversion and lowering the inlet temperature to the Flash
+unit to encourage methanol recovery in the liquid phase. The results
+show a slight increase in equipment and operating costs from these
+changes, as well as a small loss of methanol in the exhuast.</p>
+</section>
+</section>
+<section id="problem-statement-analyzing-benefit-of-recycling-flash-vapor">
+<h1>4. Problem Statement - Analyzing Benefit of Recycling Flash Vapor<a class="headerlink" href="#problem-statement-analyzing-benefit-of-recycling-flash-vapor" title="Permalink to this heading">¶</a></h1>
+<p>To increase the efficiency of the process as well as overall methanol
+production and revenue, we can add a recycle stream to send most of the
+Flash vapor back to the start of the process. This will reduce methanol
+loss in the exhaust and increase feed utilization, resulting in
+increased operating costs and increased production (revenue) at the same
+conversion. Note that for conversions less than 100%, a simulation with
+no purge will never converge due to accumulation of gases within the
+system. Therefore, to ensure we close the mass balance we set a lower
+bound at 10% purge from the Flash vapor to the exhaust. We expect to see
+a marginal increase in operating costs due to increased flow, and a much
+larger increase in overall production resulting in a higher total
+revenue.</p>
+<p>By adding a recycle to the flowsheet, we significantly decrease the
+tractability of the problem and require a better initial guess. The
+SequentialDecomposition algorithm automatically determines a stream to
+<em>tear</em>, or use to break the solve loop, and iterates from a set of
+user-supplied initial guesses until converging on the optimal solution.
+The code below calls an initialization method to automatically determine
+the tear stream. See the initialization method of
+<code class="docutils literal notranslate"><span class="pre">methanol_flowsheet_w_recycle.py</span></code> for further details Sequential
+Decomposition scheme.</p>
+<p>For given raw material flows and optimal reactor conditions, we will
+calculate the extent of reaction, relevant process results including
+reactor duty and turbine duty, methanol recovery, and relevant economic
+results including annual revenue.</p>
+<section id="id1">
+<h2>4.1. Main Inputs:<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Raw material inlets (F - mol/s, P - Pa, h - j/mol, x - mole fraction)</p></li>
+<li><p>Pre-reactor compressor outlet pressure (Pa)</p></li>
+<li><p>Pre-reactor heater outlet temperature (K)</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>4.2. Main Outputs:<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Extent of reaction (mol/s)</p></li>
+<li><p>Reactor duty (W)</p></li>
+<li><p>Compressor duty (W)</p></li>
+<li><p>Turbine duty (W)</p></li>
+<li><p>Methanol recovery (%)</p></li>
+<li><p>Purge percentage (%)</p></li>
+<li><p>Annual revenue (USD/year)</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="n">Image</span><span class="p">(</span><span class="s2">&quot;methanol_flowsheet_recycle.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_17_01.png" src="../../_images/output_17_01.png" />
+</section>
+</section>
+<section id="import-and-solve-recycle-flowsheet">
+<h1>5. Import and Solve Recycle Flowsheet<a class="headerlink" href="#import-and-solve-recycle-flowsheet" title="Permalink to this heading">¶</a></h1>
+<section id="id3">
+<h2>5.1 Import Pyomo and IDAES Libraries<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h2>
+<p>As we are rebuilding the model, we need to import require Pyomo and
+IDAES libraries:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="c1"># Import Pyomo libraries</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Constraint</span><span class="p">,</span>
+                           <span class="n">Objective</span><span class="p">,</span>
+                           <span class="n">Var</span><span class="p">,</span>
+                           <span class="n">Expression</span><span class="p">,</span>
+                           <span class="n">Param</span><span class="p">,</span>
+                           <span class="n">ConcreteModel</span><span class="p">,</span>
+                           <span class="n">TransformationFactory</span><span class="p">,</span>
+                           <span class="n">value</span><span class="p">,</span>
+                           <span class="n">maximize</span><span class="p">,</span>
+                           <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">TerminationCondition</span>
+<span class="kn">from</span> <span class="nn">pyomo.network</span> <span class="kn">import</span> <span class="n">Arc</span><span class="p">,</span> <span class="n">SequentialDecomposition</span>
+
+<span class="c1"># Import IDAES core libraries</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">get_solver</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util</span> <span class="kn">import</span> <span class="n">scaling</span> <span class="k">as</span> <span class="n">iscale</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.initialization</span> <span class="kn">import</span> <span class="n">propagate_state</span>
+
+<span class="c1"># Import required models</span>
+
+<span class="kn">from</span> <span class="nn">idaes.models.properties.modular_properties.base.generic_property</span> <span class="kn">import</span> \
+    <span class="n">GenericParameterBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties.modular_properties.base.generic_reaction</span> <span class="kn">import</span> \
+    <span class="n">GenericReactionParameterBlock</span>
+
+<span class="kn">import</span> <span class="nn">methanol_ideal_VLE</span> <span class="k">as</span> <span class="nn">thermo_props_VLE</span>
+<span class="kn">import</span> <span class="nn">methanol_ideal_vapor</span> <span class="k">as</span> <span class="nn">thermo_props_vapor</span>
+<span class="kn">import</span> <span class="nn">methanol_reactions</span> <span class="k">as</span> <span class="nn">reaction_props</span>
+
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Feed</span><span class="p">,</span>
+    <span class="n">Mixer</span><span class="p">,</span>
+    <span class="n">Heater</span><span class="p">,</span>
+    <span class="n">Compressor</span><span class="p">,</span>
+    <span class="n">Turbine</span><span class="p">,</span>
+    <span class="n">StoichiometricReactor</span><span class="p">,</span>
+    <span class="n">Flash</span><span class="p">,</span>
+    <span class="n">Separator</span> <span class="k">as</span> <span class="n">Splitter</span><span class="p">,</span>
+    <span class="n">Product</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models.mixer</span> <span class="kn">import</span> <span class="n">MomentumMixingType</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models.pressure_changer</span> <span class="kn">import</span> <span class="n">ThermodynamicAssumption</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">UnitModelCostingBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models.costing.SSLW</span> <span class="kn">import</span> <span class="n">SSLWCosting</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+
+<span class="c1"># import flowsheet functions</span>
+<span class="kn">from</span> <span class="nn">methanol_flowsheet_w_recycle</span>  <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_model</span><span class="p">,</span> <span class="n">set_inputs</span><span class="p">,</span> <span class="n">scale_flowsheet</span><span class="p">,</span> <span class="n">initialize_flowsheet</span><span class="p">,</span>
+    <span class="n">add_costing</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="build-and-solve-recycle-flowsheet">
+<h2>5.2 Build and Solve Recycle Flowsheet<a class="headerlink" href="#build-and-solve-recycle-flowsheet" title="Permalink to this heading">¶</a></h2>
+<p>As before, we will first build the flowsheet, set required inputs,
+initialize and solve a square problem. Recycling methanol to pre-reactor
+blocks complicates VLE calculations, and limiting VLE calculations to
+the Flash unit and liquid Product block greatly increases tractability
+during initialization. All initial feed and unit specifications are
+identical to the non-recycle case; the Sequential Decomposition
+algorithm automatically selects the compressor feed as the tear stream
+and uses “no recycle” results as a first guess. In the output below, the
+solver solves all units and then resolves select blocks with updated
+inlet results, followed by a full flowsheet solve:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build and solve flowsheet</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">()</span>  <span class="c1"># IPOPT</span>
+<span class="n">optarg</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tol&#39;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span>
+          <span class="s1">&#39;max_iter&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">optarg</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>  <span class="c1"># create a new model so we may reference &#39;m&#39; below</span>
+<span class="n">build_model</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># build flowsheet</span>
+<span class="n">set_inputs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># unit and stream specifications</span>
+<span class="n">scale_flowsheet</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># flowsheet and unit model level scaling</span>
+
+<span class="c1"># let the solver determine the tear stream</span>
+<span class="n">initialize_flowsheet</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># rigorous initialization scheme</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;DOF before solve: &#39;</span><span class="p">,</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Solving initial problem...&#39;</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-
+    packages/idaes/models/unit_models/flash.py:235)
+WARNING: DEPRECATED: The default argument for the ProcessBlock class is
+    deprecated. Arguments can now be passed directly as keyword arguments.
+    (called from /home/runner/.conda/envs/idaes-env/lib/python3.8/site-
+    packages/idaes/models/unit_models/flash.py:273)
+Unit degrees of freedom
+M101 0
+C101 1
+H101 1
+R101 2
+T101 2
+H102 1
+F101 2
+M102 0
+S101 1
+Total DOF:  24
+DOF after streams specified:  10
+DOF after units specified:  0
+
+Tear Stream:
+fs.s02 :  fs.M102.outlet  to  fs.C101.inlet
+
+Calculation order:
+fs.H2
+fs.M101
+fs.R101
+fs.T101
+fs.H102
+fs.F101
+fs.S101
+fs.EXHAUST
+
+Initial DOF =  0
+Solving  fs.H2
+DOF =  0
+Solving  fs.CO
+DOF =  0
+Solving  fs.C101
+DOF =  0
+Solving  fs.M101
+DOF =  0
+Solving  fs.H101
+DOF =  0
+Solving  fs.R101
+DOF =  0
+Solving  fs.T101
+DOF =  0
+Solving  fs.H102
+DOF =  0
+Solving  fs.F101
+DOF =  0
+Solving  fs.S101
+DOF =  0
+Solving  fs.CH3OH
+DOF =  0
+Solving  fs.EXHAUST
+DOF =  0
+Solving  fs.M102
+DOF =  0
+Solving  fs.H2
+DOF =  0
+Solving  fs.CO
+DOF =  0
+Solving  fs.M101
+DOF =  0
+Solving  fs.EXHAUST
+DOF =  0
+Solving  fs.CH3OH
+DOF =  0
+Final DOF =  0
+DOF before solve:  0
+
+Solving initial problem...
+Ipopt 3.13.2: tol=1e-06
+max_iter=100
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     1211
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      485
+
+Total number of variables............................:      397
+                     variables with only lower bounds:       41
+                variables with lower and upper bounds:      333
+                     variables with only upper bounds:        1
+Total number of equality constraints.................:      397
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 2.79e+04 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 2.79e+02 4.22e+03  -1.0 1.96e+03    -  9.90e-01 9.90e-01h  1
+   2  0.0000000e+00 2.77e+00 3.86e+03  -1.0 2.03e+01    -  9.90e-01 9.90e-01h  1
+   3  0.0000000e+00 7.44e-06 1.01e+03  -1.0 2.01e-01    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   2.4014227693119351e-10    7.4444105848670006e-06
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   2.4014227693119351e-10    7.4444105848670006e-06
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.007
+Total CPU secs in NLP function evaluations           =      0.001
+
+EXIT: Optimal Solution Found.</pre>
+</section>
+<section id="id4">
+<h2>5.3 Flowsheet Costing and Optimization<a class="headerlink" href="#id4" title="Permalink to this heading">¶</a></h2>
+<p>Now that we have a well-initialized and solved flowsheet, we can add
+process economics and optimize the revenue. We utilize IDAES costing
+tools to calculate reactor and flash vessel capital cost, and implement
+surrogate models to account for heat exchanger capital costs, reactor
+operating costs and utility costs for heating, cooling and electricity.
+As before, revenue is determined from total liquid methanol sales,
+operating costs, annualized capital costs and feed raw material costs.
+The flowsheet report method returns key process results, which are
+updated for new results with the prescence of a recycle stream:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">add_costing</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># re-solve with costing equations</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">results2</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial solution process results:&#39;</span><span class="p">)</span>
+<span class="n">report</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># display initial solution results</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: tol=1e-06
+max_iter=100
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     1227
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      487
+
+Total number of variables............................:      406
+                     variables with only lower bounds:       49
+                variables with lower and upper bounds:      333
+                     variables with only upper bounds:        1
+Total number of equality constraints.................:      406
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0 -2.8497869e+07 9.10e+04 1.00e+02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1 -2.9074832e+07 5.76e+04 4.22e+03  -1.0 1.20e+05    -  5.03e-02 9.90e-01h  1
+   2 -2.9080637e+07 5.71e+02 3.82e+03  -1.0 5.72e+04    -  9.81e-01 9.90e-01h  1
+   3 -2.9080695e+07 5.22e-05 1.00e+03  -1.0 5.67e+02    -  9.90e-01 1.00e+00h  1
+   4 -2.9080695e+07 9.31e-10 9.90e+04  -1.0 5.22e-05    -  9.90e-01 1.00e+00h  1
+Cannot recompute multipliers for feasibility problem.  Error in eq_mult_calculator
+
+Number of Iterations....: 4
+
+                                   (scaled)                 (unscaled)
+Objective...............:  -4.4953175283791957e+01   -2.9080695361147862e+07
+Dual infeasibility......:   9.9999999999985807e+06    6.4691081725719365e+12
+Constraint violation....:   4.5474735088646412e-12    9.3132257461547852e-10
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   4.5474735088646412e-12    6.4691081725719365e+12
+
+
+Number of objective function evaluations             = 5
+Number of objective gradient evaluations             = 5
+Number of equality constraint evaluations            = 5
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 5
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 4
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.009
+Total CPU secs in NLP function evaluations           =      0.001
+
+EXIT: Optimal Solution Found.
+Initial solution process results:
+
+
+Extent of reaction:  237.60641806045155
+Stoichiometry of each component normalized by the extent:
+CH4 :  0.0
+H2 :  -2.0
+CH3OH :  1.0
+CO :  -1.0
+These coefficients should follow 1*CO + 2*H2 =&gt; 1*CH3OH
+
+Reaction conversion:  0.75
+Reactor duty (MW):  -45.22029794711382
+Duty from Reaction (MW)): 21.53664573299933
+Compressor work (MW):  5.435710250273887e-19
+Turbine work (MW):  -0.9593785023914432
+Feed Mixer outlet temperature (C)):  20.0517142137536
+Recycle Mixer outlet temperature (C)):  20.056485612776214
+Feed Compressor outlet temperature (C)):  20.05648561277644
+Feed Compressor outlet pressure (Pa)):  5100000.0
+Heater outlet temperature (C)):  215.0
+Reactor outlet temperature (C)):  234.0
+Turbine outlet temperature (C)):  192.87840947667888
+Turbine outlet pressure (Pa)):  3100000.0
+Cooler outlet temperature (C)):  134.0
+Flash outlet temperature (C)):  134.0
+Purge percentage (amount of vapor vented to exhaust): 99.99  %
+Methanol recovery(%):  60.005984934911716
+annualized capital cost ($/year) = 219794.2325658718
+operating cost ($/year) =  380711692.18369997
+sales ($/year) =  64691081725.72809
+raw materials cost ($/year) = 35229454878.16397
+revenue (1000$/year)=  29080695.36114785
+
+
+====================================================================================
+Unit : fs.H2                                                               Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units        Outlet
+    Total Molar Flowrate       mole / second     637.20
+    Total Mole Fraction CH4    dimensionless 1.0000e-06
+    Total Mole Fraction CO     dimensionless 1.0000e-06
+    Total Mole Fraction H2     dimensionless     1.0000
+    Total Mole Fraction CH3OH  dimensionless 1.0000e-06
+    Molar Enthalpy              joule / mole    -142.40
+    Pressure                          pascal 3.0000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.CO                                                               Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units         Outlet
+    Total Molar Flowrate       mole / second      316.80
+    Total Mole Fraction CH4    dimensionless  1.0000e-06
+    Total Mole Fraction CO     dimensionless      1.0000
+    Total Mole Fraction H2     dimensionless  1.0000e-06
+    Total Mole Fraction CH3OH  dimensionless  1.0000e-06
+    Molar Enthalpy              joule / mole -1.1068e+05
+    Pressure                          pascal  3.0000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.EXHAUST                                                          Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units         Inlet
+    Total Molar Flowrate       mole / second     336.21
+    Total Mole Fraction CH4    dimensionless 2.8375e-06
+    Total Mole Fraction CO     dimensionless    0.23555
+    Total Mole Fraction H2     dimensionless    0.48181
+    Total Mole Fraction CH3OH  dimensionless    0.28263
+    Molar Enthalpy              joule / mole    -80218.
+    Pressure                          pascal 3.1000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.CH3OH                                                            Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units          Inlet
+    Total Molar Flowrate       mole / second      142.58
+    Total Mole Fraction CH4    dimensionless  1.0000e-08
+    Total Mole Fraction CO     dimensionless  1.0000e-08
+    Total Mole Fraction H2     dimensionless  1.0000e-08
+    Total Mole Fraction CH3OH  dimensionless      1.0000
+    Molar Enthalpy              joule / mole -2.3813e+05
+    Pressure                          pascal  3.1000e+06
+====================================================================================</pre>
+<p>Finally, let’s unfix some specifications and determine an optimal
+revenue. We set bounds on our decision variables to constrain our
+objective to physical and economically sensible solutions, including a
+purge between 10-50% of flash vapor. The pre-reactor section mixes the
+feeds and brings the reactants to optimal temperature and pressure, and
+we only unfix downstream unit specifications:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Set up Optimization Problem (Maximize Revenue)</span>
+<span class="c1"># keep process pre-reaction fixed and unfix some post-process specs</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion_lb</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span> <span class="o">&gt;=</span> <span class="mf">0.75</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion_ub</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span> <span class="o">&lt;=</span> <span class="mf">0.85</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet_temp</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet_t_lb</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="o">&gt;=</span> <span class="mi">405</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet_t_ub</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="o">&lt;=</span> <span class="mi">505</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+
+<span class="c1"># Optimize turbine work (or delta P)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>  <span class="c1"># optimize turbine work recovery/pressure drop</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">outlet_p_lb</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">10E5</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">outlet_p_ub</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">T101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">51E5</span><span class="o">*</span><span class="mf">0.8</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+
+<span class="c1"># Optimize Cooler outlet temperature - unfix cooler outlet temperature</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">outlet_temp</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">outlet_t_lb</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="o">&gt;=</span> <span class="mf">407.15</span><span class="o">*</span><span class="mf">0.8</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">outlet_t_ub</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H102</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="o">&lt;=</span> <span class="mi">480</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>  <span class="c1"># allow pressure change in streams</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">isothermal</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">==</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;purge&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>  <span class="c1"># allow some gas recycle</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">split_fraction_lb</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;purge&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">0.10</span><span class="p">)</span>  <span class="c1"># min 10% purge</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">split_fraction_ub</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">S101</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;purge&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">0.50</span><span class="p">)</span>  <span class="c1"># max 50% purge</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Solving optimization problem...&#39;</span><span class="p">)</span>
+<span class="n">opt_res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Optimal solution process results:&#39;</span><span class="p">)</span>
+<span class="n">report</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Solving optimization problem...
+Ipopt 3.13.2: tol=1e-06
+max_iter=100
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     1236
+Number of nonzeros in inequality constraint Jacobian.:       10
+Number of nonzeros in Lagrangian Hessian.............:      494
+
+Total number of variables............................:      410
+                     variables with only lower bounds:       49
+                variables with lower and upper bounds:      334
+                     variables with only upper bounds:        1
+Total number of equality constraints.................:      405
+Total number of inequality constraints...............:       10
+        inequality constraints with only lower bounds:        5
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        5
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0 -2.8497829e+07 2.79e+04 1.00e+02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1 -2.8431118e+07 2.74e+04 9.77e+01  -1.0 8.82e+06    -  4.99e-02 1.94e-02h  1
+   2 -2.8430711e+07 2.74e+04 7.81e+02  -1.0 8.52e+06    -  3.76e-02 1.99e-04h  1
+   3 -2.8524881e+07 2.48e+04 1.61e+05  -1.0 6.46e+06    -  2.49e-04 9.25e-02f  1
+   4 -2.8526701e+07 2.48e+04 1.61e+05  -1.0 5.76e+06    -  5.84e-02 9.84e-04h  1
+   5 -2.8554187e+07 2.48e+04 1.60e+05  -1.0 1.49e+07    -  3.31e-03 8.96e-04h  1
+   6 -2.9123963e+07 2.43e+04 1.52e+05  -1.0 1.49e+07    -  1.23e-01 1.84e-02f  1
+   7 -2.9208669e+07 2.43e+04 1.51e+05  -1.0 9.71e+06    -  2.32e-02 2.78e-03h  1
+   8 -3.0003106e+07 2.36e+04 1.08e+06  -1.0 9.31e+06    -  1.92e-01 2.61e-02h  1
+   9 -3.1468193e+07 2.25e+04 1.09e+06  -1.0 8.71e+06    -  6.69e-02 4.91e-02f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10 -3.1583879e+07 2.24e+04 1.14e+07  -1.0 5.51e+06    -  3.91e-01 3.89e-03h  1
+  11 -4.3112060e+07 3.08e+04 5.71e+06  -1.0 5.49e+06    -  1.57e-01 3.86e-01f  1
+  12 -4.3711568e+07 4.53e+04 5.09e+06  -1.0 3.67e+06    -  8.46e-02 2.88e-02h  1
+  13 -4.3718128e+07 4.53e+04 1.94e+06  -1.0 3.57e+06    -  5.80e-01 3.23e-04h  1
+  14 -4.3760522e+07 4.51e+04 4.15e+07  -1.0 3.56e+06    -  4.25e-01 5.93e-03h  1
+  15 -4.4646098e+07 7.99e+04 5.37e+07  -1.0 3.54e+06    -  6.75e-01 1.23e-01h  4
+  16 -6.6609972e+07 4.70e+04 6.17e+06  -1.0 3.14e+06    -  7.83e-01 9.90e-01H  1
+  17 -6.5995606e+07 4.70e+04 3.11e+06  -1.0 2.01e+07    -  3.61e-03 3.25e-03h  5
+  18 -6.5244378e+07 4.71e+04 3.13e+07  -1.0 1.74e+07    -  4.59e-05 4.34e-03h  5
+  19 -6.4062633e+07 2.26e+03 9.67e+06  -1.0 7.97e+04    -  3.33e-04 9.87e-01h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  20 -6.4049029e+07 1.77e+03 8.54e+03  -1.0 2.65e+03    -  9.89e-01 1.00e+00h  1
+  21 -6.5078519e+07 1.26e+03 4.14e+05  -1.0 1.04e+05    -  9.50e-01 9.92e-01f  1
+  22 -7.5331212e+07 1.38e+05 3.86e+06  -1.0 1.20e+06    -  2.40e-01 1.00e+00f  1
+  23 -7.4656465e+07 9.99e+04 2.12e+06  -1.0 1.07e+05  -4.0 9.90e-01 2.77e-01h  1
+  24 -7.4647261e+07 9.94e+04 2.08e+06  -1.0 7.74e+04  -4.5 5.39e-01 5.21e-03h  1
+  25 -7.4611366e+07 9.73e+04 2.02e+06  -1.0 7.24e+04  -5.0 1.00e+00 2.07e-02h  1
+  26 -7.4417200e+07 8.61e+04 1.78e+06  -1.0 7.10e+04  -5.4 5.90e-01 1.15e-01h  1
+  27 -7.4386538e+07 8.46e+04 1.75e+06  -1.0 7.83e+04  -5.9 1.23e-02 1.80e-02h  1
+  28 -7.2736888e+07 3.01e+02 1.72e+06  -1.0 1.09e+05  -6.4 1.06e-04 1.00e+00h  1
+  29 -7.2723098e+07 1.43e-01 6.52e+02  -1.0 5.95e+02  -6.9 1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  30 -7.2723237e+07 7.89e-05 2.09e+01  -1.7 1.63e+02  -7.3 1.00e+00 1.00e+00f  1
+  31 -8.6816248e+07 8.68e+03 9.78e+05  -2.5 5.17e+06    -  2.86e-02 5.98e-01f  1
+  32 -8.6800100e+07 8.39e+03 5.89e+05  -2.5 1.65e+04  -7.8 9.53e-01 3.34e-02h  1
+  33 -8.6300514e+07 1.51e+01 7.15e+04  -2.5 2.25e+04  -8.3 8.28e-02 1.00e+00h  1
+  34 -8.6315409e+07 4.51e-03 1.67e+00  -2.5 3.37e+03  -8.8 1.00e+00 1.00e+00h  1
+  35 -8.6355967e+07 4.54e-02 7.17e-02  -2.5 1.03e+04  -9.2 1.00e+00 1.00e+00f  1
+  36 -8.6484921e+07 3.89e-01 3.04e+03  -5.7 3.04e+04  -9.7 9.89e-01 1.00e+00f  1
+  37 -8.6863742e+07 3.35e+00 6.38e-01  -5.7 9.16e+04 -10.2 1.00e+00 9.94e-01f  1
+  38 -8.7407159e+07 7.89e+00 3.54e-01  -5.7 2.74e+05 -10.7 1.00e+00 4.78e-01f  1
+  39 -9.0728210e+07 2.04e+02 2.21e+00  -5.7 8.01e+05 -11.2 1.00e+00 1.00e+00f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  40 -9.9495406e+07 6.13e+02 3.85e+00  -5.7 2.39e+06 -11.6 1.00e+00 9.06e-01f  1
+  41 -9.9495429e+07 6.13e+02 3.85e+00  -5.7 5.53e+06 -12.1 1.07e-01 1.10e-06h  1
+  42 -1.0301585e+08 3.81e+04 2.43e+01  -5.7 7.11e+06 -12.6 3.99e-01 1.44e-01f  1
+  43 -1.0301585e+08 3.81e+04 3.36e+01  -5.7 1.39e+06    -  6.86e-01 1.25e-06h  2
+  44 -1.0436645e+08 3.42e+05 1.56e+01  -5.7 2.02e+06    -  1.00e+00 1.00e+00h  1
+  45 -1.0441854e+08 3.22e+05 1.44e+01  -5.7 4.91e+06    -  9.43e-01 7.95e-02h  1
+  46 -1.0439096e+08 2.72e+05 1.22e+01  -5.7 1.25e+07    -  2.29e-01 1.54e-01h  1
+  47 -1.0436186e+08 2.07e+05 9.28e+00  -5.7 6.35e+05    -  1.00e+00 2.38e-01h  1
+  48 -1.0427962e+08 1.89e+04 8.38e-01  -5.7 2.21e+05    -  1.00e+00 9.09e-01h  1
+  49 -1.0427372e+08 1.22e+01 8.52e-02  -5.7 2.02e+04    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  50 -1.0427510e+08 3.31e+02 1.55e+00  -5.7 5.86e+04 -13.1 1.00e+00 9.55e-01h  1
+  51 -1.0427510e+08 2.94e+02 5.87e+01  -5.7 2.24e+04    -  7.65e-02 1.13e-01f  1
+  52 -1.0427509e+08 1.51e-03 1.08e-01  -5.7 8.91e+03    -  1.00e+00 1.00e+00f  1
+  53 -1.0427919e+08 3.06e+03 5.51e+01  -5.7 1.66e+05 -13.5 1.00e+00 1.00e+00f  1
+  54 -1.0427839e+08 2.40e+03 4.05e+01  -5.7 1.34e+05    -  4.18e-01 2.55e-01h  1
+  55 -1.0427605e+08 1.01e+03 2.12e+01  -5.7 9.49e+04    -  4.92e-01 1.00e+00h  1
+  56 -1.0427605e+08 6.84e-03 5.30e+01  -5.7 1.43e+03    -  2.80e-01 1.00e+00h  1
+  57 -1.0427605e+08 6.93e-04 5.08e-03  -5.7 1.97e+02    -  1.00e+00 1.00e+00h  1
+  58 -1.0427606e+08 1.10e-02 4.86e+00  -5.7 3.32e+02 -10.4 4.14e-01 1.00e+00h  1
+  59 -1.0427605e+08 2.11e-03 5.96e-01  -5.7 2.09e+02    -  2.89e-01 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  60 -1.0427605e+08 7.76e-05 1.67e-01  -5.7 3.44e+02    -  5.92e-01 1.00e+00h  1
+  61 -1.0427606e+08 1.07e-03 3.54e-02  -5.7 1.20e+03    -  4.52e-01 1.00e+00h  1
+  62 -1.0427606e+08 1.84e-02 6.27e-02  -5.7 5.23e+03    -  3.18e-01 1.00e+00h  1
+  63 -1.0427613e+08 2.01e+00 9.36e-03  -5.7 5.45e+04    -  1.26e-01 1.00e+00h  1
+  64 -1.0427676e+08 1.61e+02 1.39e-02  -5.7 6.86e+06    -  8.97e-03 7.04e-02h  3
+  65 -1.0427678e+08 1.30e-01 1.17e-04  -5.7 7.26e+02 -10.9 1.00e+00 1.00e+00h  1
+  66 -1.0427727e+08 9.59e+01 5.94e-03  -5.7 5.11e+06    -  1.07e-01 6.92e-02h  3
+  67 -1.0427802e+08 3.15e+02 6.28e-02  -5.7 5.67e+06    -  4.89e-01 9.21e-02h  2
+  68 -1.0427841e+08 3.63e+02 7.79e-02  -5.7 6.06e+06    -  2.53e-01 4.21e-02h  2
+  69 -1.0427881e+08 4.10e+02 1.51e-01  -5.7 5.10e+06    -  1.00e+00 4.94e-02h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  70 -1.0427883e+08 1.43e-01 9.49e-05  -5.7 1.47e+04    -  1.00e+00 1.00e+00h  1
+  71 -1.0427883e+08 7.08e-03 1.45e-08  -5.7 2.57e+03    -  1.00e+00 1.00e+00h  1
+  72 -1.0427884e+08 5.67e-04 5.09e-06  -8.6 1.47e+03    -  1.00e+00 1.00e+00h  1
+  73 -1.0427884e+08 1.86e-09 4.07e-13  -8.6 6.91e-01    -  1.00e+00 1.00e+00h  1
+  74 -1.0427884e+08 6.98e-10 9.29e-12 -10.9 1.99e+00    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 74
+
+                                   (scaled)                 (unscaled)
+Objective...............:  -1.6119507851269790e+02   -1.0427883997850096e+08
+Dual infeasibility......:   9.2924871475505862e-12    6.0114104549747288e-06
+Constraint violation....:   1.0186340659856796e-10    6.9849193096160889e-10
+Complementarity.........:   1.4067955349081705e-11    9.1007124920133822e-06
+Overall NLP error.......:   1.0186340659856796e-10    9.1007124920133822e-06
+
+
+Number of objective function evaluations             = 109
+Number of objective gradient evaluations             = 75
+Number of equality constraint evaluations            = 109
+Number of inequality constraint evaluations          = 109
+Number of equality constraint Jacobian evaluations   = 75
+Number of inequality constraint Jacobian evaluations = 75
+Number of Lagrangian Hessian evaluations             = 74
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.142
+Total CPU secs in NLP function evaluations           =      0.024
+
+EXIT: Optimal Solution Found.
+Optimal solution process results:
+
+
+Extent of reaction:  311.30698549500477
+Stoichiometry of each component normalized by the extent:
+CH4 :  -0.0
+H2 :  -2.0
+CH3OH :  1.0
+CO :  -1.0
+These coefficients should follow 1*CO + 2*H2 =&gt; 1*CH3OH
+
+Reaction conversion:  0.8500000099996615
+Reactor duty (MW):  -59.34022107299142
+Duty from Reaction (MW)): 28.216865165267233
+Compressor work (MW):  -1.0259209299738811e-24
+Turbine work (MW):  -2.4913012083835544
+Feed Mixer outlet temperature (C)):  20.051714213753428
+Recycle Mixer outlet temperature (C)):  41.543214378017694
+Feed Compressor outlet temperature (C)):  41.543214378017694
+Feed Compressor outlet pressure (Pa)):  5100000.0
+Heater outlet temperature (C)):  215.0
+Reactor outlet temperature (C)):  231.85000478420352
+Turbine outlet temperature (C)):  141.5003786288168
+Turbine outlet pressure (Pa)):  1487177.2483577363
+Cooler outlet temperature (C)):  52.56999699056837
+Flash outlet temperature (C)):  134.0
+Purge percentage (amount of vapor vented to exhaust): 9.999999000026644  %
+Methanol recovery(%):  92.05882105498137
+annualized capital cost ($/year) = 259559.90821304682
+operating cost ($/year) =  525130020.70955175
+sales ($/year) =  140033684437.2827
+raw materials cost ($/year) = 35229454878.16397
+revenue (1000$/year)=  104278839.97850098
+
+
+====================================================================================
+Unit : fs.H2                                                               Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units        Outlet
+    Total Molar Flowrate       mole / second     637.20
+    Total Mole Fraction CH4    dimensionless 1.0000e-06
+    Total Mole Fraction CO     dimensionless 1.0000e-06
+    Total Mole Fraction H2     dimensionless     1.0000
+    Total Mole Fraction CH3OH  dimensionless 1.0000e-06
+    Molar Enthalpy              joule / mole    -142.40
+    Pressure                          pascal 3.0000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.CO                                                               Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units         Outlet
+    Total Molar Flowrate       mole / second      316.80
+    Total Mole Fraction CH4    dimensionless  1.0000e-06
+    Total Mole Fraction CO     dimensionless      1.0000
+    Total Mole Fraction H2     dimensionless  1.0000e-06
+    Total Mole Fraction CH3OH  dimensionless  1.0000e-06
+    Molar Enthalpy              joule / mole -1.1068e+05
+    Pressure                          pascal  3.0000e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.EXHAUST                                                          Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units         Inlet
+    Total Molar Flowrate       mole / second     22.743
+    Total Mole Fraction CH4    dimensionless 4.1946e-05
+    Total Mole Fraction CO     dimensionless    0.24155
+    Total Mole Fraction H2     dimensionless    0.64134
+    Total Mole Fraction CH3OH  dimensionless    0.11706
+    Molar Enthalpy              joule / mole    -47286.
+    Pressure                          pascal 7.4845e+06
+====================================================================================
+
+====================================================================================
+Unit : fs.CH3OH                                                            Time: 0.0
+------------------------------------------------------------------------------------
+    Stream Table
+                                  Units          Inlet
+    Total Molar Flowrate       mole / second      308.65
+    Total Mole Fraction CH4    dimensionless  1.0000e-08
+    Total Mole Fraction CO     dimensionless  1.0000e-08
+    Total Mole Fraction H2     dimensionless  1.0000e-08
+    Total Mole Fraction CH3OH  dimensionless      1.0000
+    Molar Enthalpy              joule / mole -2.3792e+05
+    Pressure                          pascal  7.4845e+06
+====================================================================================</pre>
+<p>As expected, recycling methanol and gases from the flash vapor achieves
+much greater methanol production, and process cost increases are small
+compared to the increase in revenue. Note that the reaction conversion
+and flash inlet temperature did not change, and we obtain the same
+percentage methanol recovery. We can see in the stream tables that far
+more of the inlet material exits as methanol than in the non-recycle
+process (note that we do not have a mole balance due to the reaction
+stoichiometry). The results show a slight increase in equipment and
+operating costs from increased throughput on each unit.</p>
+</section>
+</section>
+<section id="summary">
+<h1>6. Summary<a class="headerlink" href="#summary" title="Permalink to this heading">¶</a></h1>
+<p>The present example demonstrates building, initializing and optimizing a
+methanol synthesis problem in IDAES. The imported scripts implement
+models from the IDAES pre-defined unit model library, the IDAES Property
+and Reaction Framework, targeted thermophysical properties for specific
+unit blocks, Pyomo’s Sequential Decomposition methods, the IDAES Costing
+Framework for capital cost calculations, and integration of custom
+surrogate expressions for operating cost calculations. The methanol
+synthesis flowsheet methods may be imported into any external script,
+and users may build, initialize and optimize the entire model via the
+<code class="docutils literal notranslate"><span class="pre">main()</span></code> method in each flowsheet.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

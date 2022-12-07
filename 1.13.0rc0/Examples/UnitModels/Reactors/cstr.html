@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flowsheet CSTR Simulation and Optimization of Ethylene Glycol Production &mdash; IDAES v1.13.0rc0 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Flowsheet CSTR Simulation and Optimization of Ethylene Glycol Production</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/UnitModels/Reactors/cstr.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="flowsheet-cstr-simulation-and-optimization-of-ethylene-glycol-production">
+<h1>Flowsheet CSTR Simulation and Optimization of Ethylene Glycol Production<a class="headerlink" href="#flowsheet-cstr-simulation-and-optimization-of-ethylene-glycol-production" title="Permalink to this headline">¶</a></h1>
+<section id="learning-outcomes">
+<h2>Learning outcomes<a class="headerlink" href="#learning-outcomes" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Call and implement the IDAES CSTR unit model</p></li>
+<li><p>Construct a steady-state flowsheet using the IDAES unit model library</p></li>
+<li><p>Connecting unit models in a flowsheet using Arcs</p></li>
+<li><p>Fomulate and solve an optimization problem</p>
+<ul>
+<li><p>Defining an objective function</p></li>
+<li><p>Setting variable bounds</p></li>
+<li><p>Adding additional constraints</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="problem-statement">
+<h2>Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this headline">¶</a></h2>
+<p>This example is adapted from Fogler, H.S., Elements of Chemical Reaction
+Engineering 5th ed., 2016, Prentice Hall, p. 157-160.</p>
+<p>Ethylene glycol (EG) is a high-demand chemical, with billions of pounds
+produced every year for applications such as vehicle anti-freeze. EG may
+be readily obtained from the hydrolysis of ethylene oxide in the
+presence of a catalytic intermediate. In this example, an aqueous
+solution of ethylene oxide hydrolizes after mixing with an aqueous
+solution of sulfuric acid catalyst:</p>
+<p><strong>C2H4O + H2O + H2SO4 → C2H6O2 + H2SO4</strong></p>
+<p>This reaction often occurs by two mechanisms, as the catalyst may bind
+to either reactant before the final hydrolysis step; we will simplify
+the reaction to a single step for this example.</p>
+<p>The flowsheet that we will be using for this module is shown below with
+the stream conditions. We will be processing ethylene oxide and catalyst
+solutions of fixed concentrations to produce 200 MM lb/year of EG. As
+shown in the flowsheet, the process consists of a mixer M101 for the two
+inlet streams, a heater H101 to preheat the feed to the reaction
+temperature, and a CSTR unit R101 with zero overall duty (external
+cooling required for the exothermic reaction). We will assume ideal
+solutions and thermodynamics for this flowsheet, as well as well-mixed
+liquid behavior (no vapor phase) in the reactor. The properties required
+for this module are available in the same directory:</p>
+<ul class="simple">
+<li><p>egprod_ideal.py</p></li>
+<li><p>egprod_reaction.py</p></li>
+</ul>
+<p>The state variables chosen for the property package are <strong>molar flows of
+each component by phase in each stream, temperature of each stream and
+pressure of each stream</strong>. The components considered are: <strong>ethylene
+oxide, water, sulfuric acid and ethylene glycol</strong> and the process occurs
+in liquid phase only. Therefore, every stream has 4 flow variables, 1
+temperature and 1 pressure variable.</p>
+<img alt="../../../_images/egprod_flowsheet.png" src="../../../_images/egprod_flowsheet.png" />
+</section>
+<section id="importing-required-pyomo-and-idaes-components">
+<h2>Importing required Pyomo and IDAES components<a class="headerlink" href="#importing-required-pyomo-and-idaes-components" title="Permalink to this headline">¶</a></h2>
+<p>To construct a flowsheet, we will need several components from the pyomo
+and idaes package. Let us first import the following components from
+Pyomo: - Constraint (to write constraints) - Var (to declare variables)
+- ConcreteModel (to create the concrete model object) - Expression (to
+evaluate values as a function of variables defined in the model) -
+Objective (to define an objective function for optimization) -
+TransformationFactory (to apply certain transformations) - Arc (to
+connect two unit models)</p>
+<p>For further details on these components, please refer to the pyomo
+documentation: <a class="reference external" href="https://pyomo.readthedocs.io/en/latest/">https://pyomo.readthedocs.io/en/latest/</a></p>
+<p>From idaes, we will be needing the FlowsheetBlock and the following unit
+models: - Mixer - Heater - CSTR</p>
+<p>We will also be needing some utility tools to put together the flowsheet
+and calculate the degrees of freedom, tools for model expressions and
+calling variable values, and built-in functions to define property
+packages, add unit containers to objects and define our initialization
+scheme.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Constraint</span><span class="p">,</span>
+                           <span class="n">exp</span><span class="p">,</span>
+                           <span class="n">Var</span><span class="p">,</span>
+                           <span class="n">ConcreteModel</span><span class="p">,</span>
+                           <span class="n">Expression</span><span class="p">,</span>
+                           <span class="n">Objective</span><span class="p">,</span>
+                           <span class="n">TransformationFactory</span><span class="p">,</span>
+                           <span class="n">value</span><span class="p">,</span>
+                           <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pyomo.network</span> <span class="kn">import</span> <span class="n">Arc</span>
+
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.generic.generic_property</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">GenericParameterBlock</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.properties.core.generic.generic_reaction</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">GenericReactionParameterBlock</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">idaes.generic_models.unit_models</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Mixer</span><span class="p">,</span>
+                                              <span class="n">Heater</span><span class="p">,</span>
+                                              <span class="n">CSTR</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">idaes.core.util.constants</span> <span class="kn">import</span> <span class="n">Constants</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util</span> <span class="kn">import</span> <span class="n">get_solver</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.initialization</span> <span class="kn">import</span> <span class="n">propagate_state</span>
+
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+</pre></div>
+</div>
+</section>
+<section id="importing-required-thermo-and-reaction-package">
+<h2>Importing required thermo and reaction package<a class="headerlink" href="#importing-required-thermo-and-reaction-package" title="Permalink to this headline">¶</a></h2>
+<p>The final set of imports are to import the thermo and reaction package.
+We have created a custom thermo package that support ideal vapor and
+liquid behavior for this system, and in this case we will restrict it to
+ideal liquid behavior only.</p>
+<p>The reaction package here assumes Arrhenius kinetic behavior for the
+CSTR, for which <span class="math notranslate nohighlight">\(k_0\)</span> and <span class="math notranslate nohighlight">\(E_a\)</span> are known <em>a priori</em> (if
+unknown, they may be obtained using one of the parameter estimation
+tools within IDAES).</p>
+<p>$ r = -kVC_{EO} $, $ k = k_0 e^{(-E_a/RT)}$, with the variables as
+follows:</p>
+<div class="line-block">
+<div class="line"><span class="math notranslate nohighlight">\(r\)</span> - reaction rate extent in moles of ethylene oxide consumed
+per second; note that the traditional reaction rate would be given by
+<span class="math notranslate nohighlight">\(rate = r/V\)</span> in moles per <span class="math notranslate nohighlight">\(m^3\)</span> per second</div>
+<div class="line"><span class="math notranslate nohighlight">\(k\)</span> - reaction rate constant per second</div>
+<div class="line"><span class="math notranslate nohighlight">\(V\)</span> - volume of CSTR in <span class="math notranslate nohighlight">\(m^3\)</span>, note that this is <em>liquid
+volume</em> and not the <em>total volume</em> of the reactor itself</div>
+<div class="line"><span class="math notranslate nohighlight">\(C_{EO}\)</span> - bulk concentration of ethylene oxide in moles per
+<span class="math notranslate nohighlight">\(m^3\)</span> (the limiting reagent, since we assume excess catalyst and
+water)</div>
+<div class="line"><span class="math notranslate nohighlight">\(k_0\)</span> - pre-exponential Arrhenius factor per second</div>
+<div class="line"><span class="math notranslate nohighlight">\(E_a\)</span> - reaction activation energy in kJ per mole of ethylene
+oxide consumed</div>
+<div class="line"><span class="math notranslate nohighlight">\(R\)</span> - gas constant in J/mol-K</div>
+<div class="line"><span class="math notranslate nohighlight">\(T\)</span> - reactor temperature in K</div>
+</div>
+<p>These calculations are contained within the property, reaction and unit
+model packages, and do not need to be entered into the flowsheet. More
+information on property estimation may be found below:</p>
+<div class="line-block">
+<div class="line">ParamEst parameter estimation:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/user_guide/workflow/data_rec_parmest.html?highlight=paramest">https://idaes-pse.readthedocs.io/en/stable/user_guide/workflow/data_rec_parmest.html?highlight=paramest</a></div>
+<div class="line">HELMET thermodynamic estimation:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/user_guide/modeling_extensions/surrogate/helmet/index.html">https://idaes-pse.readthedocs.io/en/stable/user_guide/modeling_extensions/surrogate/helmet/index.html</a></div>
+<div class="line">RIPE reaction estimation:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/user_guide/modeling_extensions/surrogate/ripe/index.html">https://idaes-pse.readthedocs.io/en/stable/user_guide/modeling_extensions/surrogate/ripe/index.html</a></div>
+</div>
+<p>Let us import the following modules from the same directory as this
+Jupyter notebook: - egprod_ideal as thermo_props - egprod_reaction as
+reaction_props</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">egprod_ideal</span> <span class="k">as</span> <span class="nn">thermo_props</span>
+<span class="kn">import</span> <span class="nn">egprod_reaction</span> <span class="k">as</span> <span class="nn">reaction_props</span>
+</pre></div>
+</div>
+</section>
+<section id="constructing-the-flowsheet">
+<h2>Constructing the Flowsheet<a class="headerlink" href="#constructing-the-flowsheet" title="Permalink to this headline">¶</a></h2>
+<p>We have now imported all the components, unit models, and property
+modules we need to construct a flowsheet. Let us create a ConcreteModel
+and add the flowsheet block.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>We now need to add the property packages to the flowsheet. Unlike Module
+1, where we only had a thermo property package, for this flowsheet we
+will also need to add a reaction property package. We will use the
+Generic Property and Generic Reaction Frameworks; more information may
+be found on these methods at
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/1.8.0/user_guide/components/property_package/index.html">https://idaes-pse.readthedocs.io/en/1.8.0/user_guide/components/property_package/index.html</a>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span> <span class="o">=</span> <span class="n">GenericParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">thermo_props</span><span class="o">.</span><span class="n">config_dict</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reaction_params</span> <span class="o">=</span> <span class="n">GenericReactionParameterBlock</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                                                              <span class="o">**</span><span class="n">reaction_props</span><span class="o">.</span><span class="n">config_dict</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="adding-unit-models">
+<h2>Adding Unit Models<a class="headerlink" href="#adding-unit-models" title="Permalink to this headline">¶</a></h2>
+<p>Let us start adding the unit models we have imported to the flowsheet.
+Here, we are adding the Mixer (assigned a name M101) and a Heater
+(assigned a name H101). Note that all unit models need to be given a
+property package argument. In addition to that, there are several
+arguments depending on the unit model, please refer to the documentation
+for more details
+(<a class="reference external" href="https://idaes-pse.readthedocs.io/en/latest/technical_specs/model_libraries/generic/unit_models/index.html">https://idaes-pse.readthedocs.io/en/latest/technical_specs/model_libraries/generic/unit_models/index.html</a>).
+For example, the Mixer unit model here is given a <code class="docutils literal notranslate"><span class="pre">list</span></code> consisting of
+names to the two inlets.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span> <span class="o">=</span> <span class="n">Mixer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                           <span class="s2">&quot;inlet_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;reagent_feed&quot;</span><span class="p">,</span> <span class="s2">&quot;catalyst_feed&quot;</span><span class="p">]})</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span> <span class="o">=</span> <span class="n">Heater</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                            <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                            <span class="s2">&quot;has_phase_equilibrium&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span> <span class="o">=</span> <span class="n">CSTR</span><span class="p">(</span>
+            <span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                     <span class="s2">&quot;reaction_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">reaction_params</span><span class="p">,</span>
+                     <span class="s2">&quot;has_heat_of_reaction&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                     <span class="s2">&quot;has_heat_transfer&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                     <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="connecting-unit-models-using-arcs">
+<h2>Connecting Unit Models using Arcs<a class="headerlink" href="#connecting-unit-models-using-arcs" title="Permalink to this headline">¶</a></h2>
+<p>We have now added all the unit models we need to the flowsheet. However,
+we have not yet specifed how the units are to be connected. To do this,
+we will be using the <code class="docutils literal notranslate"><span class="pre">Arc</span></code> which is a pyomo component that takes in
+two arguments: <code class="docutils literal notranslate"><span class="pre">source</span></code> and <code class="docutils literal notranslate"><span class="pre">destination</span></code>. Let us connect the outlet
+of the mixer(M101) to the inlet of the heater(H101), and the outlet of
+the heater(H101) to the inlet of the reactor(R101).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s03</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s04</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We have now connected the unit model block using the arcs. However, each
+of these arcs link to ports on the two unit models that are connected.
+In this case, the ports consist of the state variables that need to be
+linked between the unit models. Pyomo provides a convenient method to
+write these equality constraints for us between two ports and this is
+done as follows:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">TransformationFactory</span><span class="p">(</span><span class="s2">&quot;network.expand_arcs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="adding-expressions-to-compute-operating-costs">
+<h2>Adding expressions to compute operating costs<a class="headerlink" href="#adding-expressions-to-compute-operating-costs" title="Permalink to this headline">¶</a></h2>
+<p>In this section, we will add a few Expressions that allows us to
+evaluate the performance. Expressions provide a convenient way of
+calculating certain values that are a function of the variables defined
+in the model. For more details on Expressions, please refer to:
+<a class="reference external" href="https://pyomo.readthedocs.io/en/latest/pyomo_modeling_components/Expressions.html">https://pyomo.readthedocs.io/en/latest/pyomo_modeling_components/Expressions.html</a></p>
+<p>For this flowsheet, we are interested in computing ethylene glycol
+production in millions of pounds per year, as well as the total costs
+due to cooling and heating utilities:</p>
+<p>Let us first add an Expression to convert the product flow from mol/s to
+MM lb/year of ethylene glycol. We see that our molecular weight exists
+in the thermo property package, so we may use that value for our
+calculations.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">eg_prod</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">]</span>
+                                               <span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="o">.</span><span class="n">ethylene_glycol</span><span class="o">.</span><span class="n">mw</span><span class="p">,</span> <span class="c1"># MW defined in properties as kg/mol</span>
+                                               <span class="n">to_units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Mlb</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">yr</span><span class="p">))</span> <span class="c1"># converting kg/s to MM lb/year</span>
+</pre></div>
+</div>
+<p>Now, let us add expressions to compute the reactor cooling cost
+(\<span class="math notranslate nohighlight">\(/s) assuming a cost of 0.212E-4 \\\)</span>/kW, and the heating
+utility cost (\<span class="math notranslate nohighlight">\(/s) assuming 2.2E-4 \\\)</span>/kW. Note that the heat
+duty is in units of watt (J/s). The total operating cost will be the sum
+of the two, expressed in \$/year assuming 8000 operating hours per year
+(~10% downtime, which is fairly common for small scale chemical plants):</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cooling_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="mf">0.212e-7</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>  <span class="c1"># the reaction is exothermic, so R101 duty is negative</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="mf">2.2e-7</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># the stream must be heated to T_rxn, so H101 duty is positive</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">8000</span> <span class="o">*</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cooling_cost</span><span class="p">)))</span>
+</pre></div>
+</div>
+</section>
+<section id="fixing-feed-conditions">
+<h2>Fixing feed conditions<a class="headerlink" href="#fixing-feed-conditions" title="Permalink to this headline">¶</a></h2>
+<p>Let us first check how many degrees of freedom exist for this flowsheet
+using the <code class="docutils literal notranslate"><span class="pre">degrees_of_freedom</span></code> tool we imported earlier. We expect
+each stream to have 6 degrees of freedom, the mixer to have 0 (after
+both streams are accounted for), the heater to have 1 (just the duty,
+since the inlet is also the outlet of M101), and the reactor to have 1
+(duty or conversion, since the inlet is also the outlet of H101). In
+this case, the reactor has an extra degree of freedom (reactor
+conversion or reactor volume) since we have not yet defined the CSTR
+performance equation. Therefore, we have 15 degrees of freedom to
+specify: temperature, pressure and flow of all four components on both
+streams; outlet heater temperature; reactor conversion and volume.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">15</span>
+</pre></div>
+</div>
+<p>We will now be fixing the feed stream to the conditions shown in the
+flowsheet above. As mentioned in other tutorials, the IDAES framework
+expects a time index value for every referenced internal stream or unit
+variable, even in steady-state systems with a single time point $ t = 0
+$. The non-present components in each stream are assigned a very small
+non-zero value to help with convergence and initializing. Based on
+stoichiometric ratios for the reaction, 80% conversion and 200 MM
+lb/year (46.4 mol/s) of ethylene glycol, we will initialize our
+simulation with the following calculated values:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">reagent_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_oxide&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">58.0</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">reagent_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">39.6</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># calculated from 16.1 mol EO / cudm in stream</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">reagent_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;sulfuric_acid&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">reagent_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">reagent_feed</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">298.15</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">reagent_feed</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e5</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">catalyst_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_oxide&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">catalyst_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">200</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">catalyst_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;sulfuric_acid&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.334</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># calculated from 0.9 wt% SA in stream</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">catalyst_feed</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-5</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">catalyst_feed</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">298.15</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">catalyst_feed</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e5</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="fixing-unit-model-specifications">
+<h2>Fixing unit model specifications<a class="headerlink" href="#fixing-unit-model-specifications" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have fixed our inlet feed conditions, we will now be fixing
+the operating conditions for the unit models in the flowsheet. Let us
+fix the outlet temperature of H101 to 328.15 K.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">328.15</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We’ll add constraints defining the reactor volume and conversion in
+relation to the stream properties. Particularly, we want to use our CSTR
+performance relation:</p>
+<p><span class="math notranslate nohighlight">\(V = \frac{v_0 X} {k(1-X)}\)</span>, where the CSTR reaction volume
+<span class="math notranslate nohighlight">\(V\)</span> will be specified, the inlet volumetric flow <span class="math notranslate nohighlight">\(v_0\)</span> is
+determined by stream properties, <span class="math notranslate nohighlight">\(k\)</span> is calculated by the reaction
+package, and <span class="math notranslate nohighlight">\(X\)</span> will be calculated. Reactor volume is commonly
+selected as a specification in simulation problems, and choosing
+conversion is often to perform reactor design.</p>
+<p>For the CSTR, we have to define the conversion in terms of ethylene
+oxide as well as the CSTR reaction volume. This requires us to create
+new variables and constraints relating reactor properties to stream
+properties. Note that the CSTR reaction volume variable
+(m.fs.R101.volume) does not need to be defined here since it is
+internally defined by the CSTR model. Additionally, the heat duty is not
+fixed, since the heat of reaction depends on the reactor conversion
+(through the extent of reaction and heat of reaction). We’ll estimate
+80% conversion for our initial flowsheet:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mf">0.80</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">dimensionless</span><span class="p">)</span>  <span class="c1"># fraction</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conv_constraint</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span>
+    <span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_oxide&quot;</span><span class="p">]</span> <span class="o">==</span>
+    <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_oxide&quot;</span><span class="p">]</span> <span class="o">-</span>
+     <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_oxide&quot;</span><span class="p">]))</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.80</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">volume</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">5.538</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span>
+</pre></div>
+</div>
+<p>Finally, we need to initialize the each unit operation in sequence to
+solve the flowsheet. In best practice, unit operations are initialized
+or solved, and outlet properties are propagated to connected inlet
+streams via arc definitions as follows:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize and solve each unit operation</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">arc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s03</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">arc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s04</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+<span class="c1"># set solver</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">reagent_feed_state</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">initialization</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">reagent_feed_state</span><span class="p">:</span> <span class="n">Property</span> <span class="n">initialization</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">catalyst_feed_state</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">initialization</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">catalyst_feed_state</span><span class="p">:</span> <span class="n">Property</span> <span class="n">initialization</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">initialization</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Property</span> <span class="n">initialization</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">:</span> <span class="n">Property</span> <span class="n">package</span> <span class="n">initialization</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">initialization</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">Property</span> <span class="n">initialization</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">initialization</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">Property</span> <span class="n">initialization</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">initialization</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">Property</span> <span class="n">initialization</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">Starting</span> <span class="n">initialization</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">Property</span> <span class="n">initialization</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">reactions</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span> <span class="mi">01</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">50</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Solve the model</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      239
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      231
+
+Total number of variables............................:       66
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:       57
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       66
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 1.76e+06 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 1.77e+04 2.33e-03  -1.0 2.32e-02    -  9.90e-01 9.90e-01h  1
+   2  0.0000000e+00 1.67e+02 5.83e-01  -1.0 2.29e-02    -  9.90e-01 9.91e-01h  1
+   3  0.0000000e+00 1.10e-06 8.89e+02  -1.0 2.14e-04    -  9.91e-01 1.00e+00h  1
+Cannot recompute multipliers for feasibility problem.  Error in eq_mult_calculator
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   1.0094083379891622e+05    1.0094083379891622e+05
+Constraint violation....:   7.2759576141834259e-12    1.1026859283447266e-06
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   7.2759576141834259e-12    1.0094083379891622e+05
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.</pre>
+</section>
+<section id="analyze-the-results-of-the-square-problem">
+<h2>Analyze the results of the square problem<a class="headerlink" href="#analyze-the-results-of-the-square-problem" title="Permalink to this headline">¶</a></h2>
+<p>What is the total operating cost?</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;operating cost = $&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">),</span> <span class="s1">&#39; per year&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>operating cost = $ 3458138.23702813  per year
+</pre></div>
+</div>
+<p>For this operating cost, what conversion did we achieve of ethylene
+oxide to ethylene glycol?</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Conversion achieved = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;%&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Assuming a 20</span><span class="si">% d</span><span class="s1">esign factor for reactor volume, total CSTR volume required = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="mf">1.2</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">volume</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+      <span class="s1">&#39;m^3 = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">pyunits</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="mf">1.2</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">volume</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">to_units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">gal</span><span class="p">)),</span> <span class="s1">&#39; gal&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">R101</span>                                                             <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>       <span class="p">:</span> <span class="n">Value</span>       <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+    <span class="n">Heat</span> <span class="n">Duty</span> <span class="p">:</span> <span class="o">-</span><span class="mf">5.6566e+06</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+       <span class="n">Volume</span> <span class="p">:</span>      <span class="mf">5.5380</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                                 <span class="n">Inlet</span>     <span class="n">Outlet</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_oxide&#39;</span><span class="p">)</span>      <span class="mf">58.000</span>     <span class="mf">11.600</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">)</span>               <span class="mf">239.60</span>     <span class="mf">193.20</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;sulfuric_acid&#39;</span><span class="p">)</span>      <span class="mf">0.33401</span>    <span class="mf">0.33401</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">)</span> <span class="mf">2.0000e-05</span>     <span class="mf">46.400</span>
+    <span class="n">Temperature</span>                                   <span class="mf">328.15</span>     <span class="mf">328.27</span>
+    <span class="n">Pressure</span>                                  <span class="mf">1.0000e+05</span> <span class="mf">1.0000e+05</span>
+<span class="o">====================================================================================</span>
+
+<span class="n">Conversion</span> <span class="n">achieved</span> <span class="o">=</span>  <span class="mf">80.0</span> <span class="o">%</span>
+
+<span class="n">Assuming</span> <span class="n">a</span> <span class="mi">20</span><span class="o">%</span> <span class="n">design</span> <span class="n">factor</span> <span class="k">for</span> <span class="n">reactor</span> <span class="n">volume</span><span class="p">,</span> <span class="n">total</span> <span class="n">CSTR</span> <span class="n">volume</span> <span class="n">required</span> <span class="o">=</span>  <span class="mf">6.6456</span> <span class="n">m</span><span class="o">^</span><span class="mi">3</span> <span class="o">=</span>  <span class="mf">1755.5817911513113</span>  <span class="n">gal</span>
+</pre></div>
+</div>
+</section>
+<section id="optimizing-ethylene-glycol-production">
+<h2>Optimizing Ethylene Glycol Production<a class="headerlink" href="#optimizing-ethylene-glycol-production" title="Permalink to this headline">¶</a></h2>
+<p>Now that the flowsheet has been squared and solved, we can run a small
+optimization problem to minimize our production costs. Suppose we
+require at least 200 million pounds/year of ethylene glycol produced and
+90% conversion of ethylene oxide, allowing for variable reactor volume
+(considering operating/non-capital costs only) and reactor temperature
+(heater outlet).</p>
+<p>Let us declare our objective function for this problem.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, we need to add the design constraints and unfix the decision
+variables as we had solved a square problem (degrees of freedom = 0)
+until now, as well as set bounds for the design variables:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">eg_prod_con</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">eg_prod</span> <span class="o">&gt;=</span> <span class="mi">200</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Mlb</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">yr</span><span class="p">)</span>  <span class="c1"># MM lb/year</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.90</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">volume</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">volume</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">0</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">volume</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="n">pyunits</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="mi">5000</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">gal</span><span class="p">,</span> <span class="n">to_units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">328.15</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">470.45</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>  <span class="c1"># highest component boiling point (ethylene glycol)</span>
+</pre></div>
+</div>
+<p>We have now defined the optimization problem and we are now ready to
+solve this problem.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      242
+Number of nonzeros in inequality constraint Jacobian.:        1
+Number of nonzeros in Lagrangian Hessian.............:      246
+
+Total number of variables............................:       68
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:       59
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       66
+Total number of inequality constraints...............:        1
+        inequality constraints with only lower bounds:        1
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  3.4581382e+06 1.76e+06 6.34e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  3.4605299e+06 1.75e+06 8.67e+00  -1.0 6.94e+05    -  5.94e-02 6.15e-03h  1
+   2  3.4673339e+06 1.72e+06 1.30e+01  -1.0 6.91e+05    -  4.43e-02 1.61e-02h  3
+   3  3.5036010e+06 1.57e+06 7.53e+01  -1.0 6.84e+05    -  1.01e-01 8.68e-02h  1
+   4  3.5773853e+06 1.27e+06 3.16e+02  -1.0 6.32e+05    -  7.40e-01 1.91e-01h  1
+   5  3.8866006e+06 1.72e+04 9.24e+03  -1.0 5.11e+05    -  4.81e-01 9.90e-01h  1
+   6  3.8896813e+06 1.59e+02 1.04e+02  -1.0 5.09e+03    -  9.90e-01 9.91e-01h  1
+   7  3.8897098e+06 1.05e-04 1.37e+03  -1.0 4.67e+01    -  9.90e-01 1.00e+00h  1
+   8  3.8897096e+06 2.04e-06 2.64e+02  -2.5 1.73e-01    -  9.97e-01 1.00e+00f  1
+   9  3.8897096e+06 4.66e-09 3.97e-07  -3.8 4.85e-03    -  1.00e+00 1.00e+00f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  3.8897096e+06 7.45e-09 3.69e-07  -5.7 2.65e-04    -  1.00e+00 1.00e+00f  1
+  11  3.8897096e+06 4.66e-09 3.02e-07  -7.0 3.12e-06    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 11
+
+                                   (scaled)                 (unscaled)
+Objective...............:   3.8897095750396615e+06    3.8897095750396615e+06
+Dual infeasibility......:   3.0225365574728907e-07    3.0225365574728907e-07
+Constraint violation....:   7.2759576141834259e-12    4.6566128730773926e-09
+Complementarity.........:   9.0909099377807583e-08    9.0909099377807583e-08
+Overall NLP error.......:   9.0909099377807583e-08    3.0225365574728907e-07
+
+
+Number of objective function evaluations             = 15
+Number of objective gradient evaluations             = 12
+Number of equality constraint evaluations            = 15
+Number of inequality constraint evaluations          = 15
+Number of equality constraint Jacobian evaluations   = 12
+Number of inequality constraint Jacobian evaluations = 12
+Number of Lagrangian Hessian evaluations             = 11
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.005
+Total CPU secs in NLP function evaluations           =      0.001
+
+EXIT: Optimal Solution Found.</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;operating cost = $&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">),</span> <span class="s1">&#39;per year&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Heater results&#39;</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;CSTR reactor results&#39;</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>operating cost = $ 3889709.575039662 per year
+
+Heater results
+
+====================================================================================
+Unit : fs.H101                                                             Time: 0.0
+------------------------------------------------------------------------------------
+    Unit Performance
+
+    Variables:
+
+    Key       : Value  : Fixed : Bounds
+    Heat Duty : 699.26 : False : (None, None)
+
+------------------------------------------------------------------------------------
+    Stream Table
+                                                 Inlet     Outlet
+    Molar Flowrate (&#39;Liq&#39;, &#39;ethylene_oxide&#39;)      58.000     58.000
+    Molar Flowrate (&#39;Liq&#39;, &#39;water&#39;)               239.60     239.60
+    Molar Flowrate (&#39;Liq&#39;, &#39;sulfuric_acid&#39;)      0.33401    0.33401
+    Molar Flowrate (&#39;Liq&#39;, &#39;ethylene_glycol&#39;) 2.0000e-05 2.0000e-05
+    Temperature                                   298.15     328.15
+    Pressure                                  1.0000e+05 1.0000e+05
+====================================================================================
+
+CSTR reactor results
+
+====================================================================================
+Unit : fs.R101                                                             Time: 0.0
+------------------------------------------------------------------------------------
+    Unit Performance
+
+    Variables:
+
+    Key       : Value       : Fixed : Bounds
+    Heat Duty : -6.3635e+06 : False : (None, None)
+       Volume :      18.927 : False : (0, 18.927058919999997)
+
+------------------------------------------------------------------------------------
+    Stream Table
+                                                 Inlet     Outlet
+    Molar Flowrate (&#39;Liq&#39;, &#39;ethylene_oxide&#39;)      58.000     5.8000
+    Molar Flowrate (&#39;Liq&#39;, &#39;water&#39;)               239.60     187.40
+    Molar Flowrate (&#39;Liq&#39;, &#39;sulfuric_acid&#39;)      0.33401    0.33401
+    Molar Flowrate (&#39;Liq&#39;, &#39;ethylene_glycol&#39;) 2.0000e-05     52.200
+    Temperature                                   328.15     338.37
+    Pressure                                  1.0000e+05 1.0000e+05
+====================================================================================
+</pre></div>
+</div>
+<p>Display optimal values for the decision variables and design variables:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Optimal Values&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;H101 outlet temperature = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;K&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Assuming a 20</span><span class="si">% d</span><span class="s1">esign factor for reactor volume, total CSTR volume required = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="mf">1.2</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">volume</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+      <span class="s1">&#39;m^3 = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">pyunits</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="mf">1.2</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">volume</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">to_units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">gal</span><span class="p">)),</span> <span class="s1">&#39; gal&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Ethylene glycol produced = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">eg_prod</span><span class="p">),</span> <span class="s1">&#39;MM lb/year&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Conversion achieved = &#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">conversion</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39; %&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Optimal</span> <span class="n">Values</span>
+
+<span class="n">H101</span> <span class="n">outlet</span> <span class="n">temperature</span> <span class="o">=</span>  <span class="mf">328.15</span> <span class="n">K</span>
+
+<span class="n">Assuming</span> <span class="n">a</span> <span class="mi">20</span><span class="o">%</span> <span class="n">design</span> <span class="n">factor</span> <span class="k">for</span> <span class="n">reactor</span> <span class="n">volume</span><span class="p">,</span> <span class="n">total</span> <span class="n">CSTR</span> <span class="n">volume</span> <span class="n">required</span> <span class="o">=</span>  <span class="mf">22.712470703999994</span> <span class="n">m</span><span class="o">^</span><span class="mi">3</span> <span class="o">=</span>  <span class="mf">5999.999999999999</span>  <span class="n">gal</span>
+
+<span class="n">Ethylene</span> <span class="n">glycol</span> <span class="n">produced</span> <span class="o">=</span>  <span class="mf">225.41547073949135</span> <span class="n">MM</span> <span class="n">lb</span><span class="o">/</span><span class="n">year</span>
+
+<span class="n">Conversion</span> <span class="n">achieved</span> <span class="o">=</span>  <span class="mf">90.0</span>  <span class="o">%</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

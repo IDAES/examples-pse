@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Flowsheet for NGCC + SOEC with Steam Integration &mdash; IDAES v2.0.0b2 Examples</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Design Flowsheet for NGCC + SOEC with Steam Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/Examples/Flowsheets/power_generation/ngcc/ngcc_soec.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="design-flowsheet-for-ngcc-soec-with-steam-integration">
+<h1>Design Flowsheet for NGCC + SOEC with Steam Integration<a class="headerlink" href="#design-flowsheet-for-ngcc-soec-with-steam-integration" title="Permalink to this heading">¶</a></h1>
+<p>This flowsheet example provides an off-design model for integration of
+an SOEC for hydrogen production with an NGCC. The NGCC nominally
+produces 650 MW net, and includes 97% CO2 capture. A detailed SOEC unit
+model is used here.</p>
+<section id="import-required-modules">
+<h2>Import Required Modules<a class="headerlink" href="#import-required-modules" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">from</span> <span class="nn">IPython.core.display</span> <span class="kn">import</span> <span class="n">SVG</span>
+<span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">use_idaes_solver_configuration_defaults</span>
+<span class="kn">import</span> <span class="nn">idaes</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util.scaling</span> <span class="k">as</span> <span class="nn">iscale</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util</span> <span class="kn">import</span> <span class="n">model_serializer</span> <span class="k">as</span> <span class="n">ms</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util</span> <span class="k">as</span> <span class="nn">iutil</span>
+<span class="kn">import</span> <span class="nn">ngcc_soec_costing</span> <span class="c1">### changed name of costing module</span>
+<span class="kn">from</span> <span class="nn">idaes.models_extra.power_generation.costing.power_plant_capcost</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">QGESSCosting</span><span class="p">,</span>
+    <span class="n">QGESSCostingData</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">import</span> <span class="nn">ngcc_soec</span>
+</pre></div>
+</div>
+</section>
+<section id="make-output-directories">
+<h2>Make Output Directories<a class="headerlink" href="#make-output-directories" title="Permalink to this heading">¶</a></h2>
+<p>This notebook can produce a large number of output files. To make it
+easier to manage, some subdirectories are used to organize output. This
+ensures that the directories exist.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_directory</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make a directory if it doesn&#39;t exist&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_pfds&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_tabulated&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="set-global-solver-options">
+<h2>Set Global Solver Options<a class="headerlink" href="#set-global-solver-options" title="Permalink to this heading">¶</a></h2>
+<p>Setting global solver options applies them to any solver created
+subsequently, including the ones used for initialization. The user
+scaling option disables Ipopt’s automatic scaling and allows it to use
+user provided variable scaling.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">use_idaes_solver_configuration_defaults</span><span class="p">()</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">nlp_scaling_method</span> <span class="o">=</span> <span class="s2">&quot;user-scaling&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="s2">&quot;ma57&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">OF_ma57_automatic_scaling</span> <span class="o">=</span> <span class="s2">&quot;yes&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="mf">1e-5</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s2">&quot;ipopt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="create-and-initialize-the-ngcc-soec-model">
+<h2>Create and Initialize the NGCC + SOEC Model<a class="headerlink" href="#create-and-initialize-the-ngcc-soec-model" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">scale_after_costing_model_added</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+    <span class="c1"># Scale costing variables</span>
+
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">gas_turbine_aux_load</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">steam_turbine_aux_load</span><span class="p">,</span> <span class="mf">1e-2</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">misc_aux_loads</span><span class="p">,</span> <span class="mf">1e-2</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">transformer_losses</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">aux_load</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">fuel_gas_flow</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">feedwater_flow</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">hrsg_duty</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">hrsg_gas_flow</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">absorber_gas_flow</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">stack_gas_flow</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater02</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater02</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">cmp01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">cmp01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">cmp03</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">deltaP</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-2</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">cmp04</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">deltaP</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-2</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">b3</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="p">[</span><span class="s1">&#39;6.1&#39;</span><span class="p">],</span> <span class="mf">1e-1</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">b5a</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">bare_erected_cost</span><span class="p">[</span><span class="s1">&#39;5.1.a.epri&#39;</span><span class="p">],</span> <span class="mf">1e-1</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">b5a</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="p">[</span><span class="s1">&#39;5.1.a.epri&#39;</span><span class="p">],</span> <span class="mf">1e-1</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">b6</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">bare_erected_cost</span><span class="p">[</span><span class="s1">&#39;5.1.b&#39;</span><span class="p">],</span> <span class="mf">1e-1</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">b6</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="p">[</span><span class="s1">&#39;5.1.b&#39;</span><span class="p">],</span> <span class="mf">1e-1</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">cond_pump</span><span class="o">.</span><span class="n">ratioP</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-2</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_compressor</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_compressor</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_turbine</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">cmp03</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">deltaP</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">cmp04</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">deltaP</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-4</span><span class="p">)</span>
+
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">inject_translator</span><span class="o">.</span><span class="n">zero_flow_eqn</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="s2">&quot;CH4&quot;</span><span class="p">],</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">sh_ip2</span><span class="o">.</span><span class="n">deltaP_tube_uturn_eqn</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">sh_ip3</span><span class="o">.</span><span class="n">deltaP_tube_uturn_eqn</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">reboiler</span><span class="o">.</span><span class="n">reboiler_condense_eqn</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">weight_eq</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_compressor</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit_eq</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit_eq</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_turbine</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit_eq</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit_eq</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit_eq</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit_eq</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater02</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit_eq</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater02</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">cmp01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_per_unit_eq</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sweep_pressure_eqn</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">makeup_mix</span><span class="o">.</span><span class="n">mixer1_pressure_eqn</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">sh_ip3</span><span class="o">.</span><span class="n">deltaP_tube_uturn_eqn</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">base_cost_constraint</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC_eq</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">cmp01</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_compressor</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost_constraint</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;NGCC_flowsheet_solution.json.gz&quot;</span><span class="p">):</span>
+    <span class="c1"># create the ngcc model</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">ngcc_soec</span><span class="o">.</span><span class="n">NgccSoecFlowsheet</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">calculate_scaling_factors</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+        <span class="n">load_from</span><span class="o">=</span><span class="s2">&quot;ngcc_soec_init.json.gz&quot;</span><span class="p">,</span>
+    <span class="n">save_to</span><span class="o">=</span><span class="s2">&quot;ngcc_soec_init.json.gz&quot;</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">fuel_cost</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">4.42</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">cap_specific_reboiler_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">2.4e6</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">cap_fraction</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.97</span><span class="p">)</span>
+
+    <span class="c1"># add capital costing</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span> <span class="o">=</span> <span class="n">QGESSCosting</span><span class="p">()</span>
+    <span class="n">ngcc_soec_costing</span><span class="o">.</span><span class="n">add_results_for_costing</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">ngcc_soec_costing</span><span class="o">.</span><span class="n">get_ngcc_soec_capital_cost</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">CE_index_year</span><span class="o">=</span><span class="s2">&quot;2018&quot;</span><span class="p">)</span>
+    <span class="n">scale_after_costing_model_added</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="c1"># load results from json</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading prior solved results&quot;</span><span class="p">)</span>
+    <span class="n">ms</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s2">&quot;NGCC_flowsheet_solution.json.gz&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># create the ngcc model</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">ngcc_soec</span><span class="o">.</span><span class="n">NgccSoecFlowsheet</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">iscale</span><span class="o">.</span><span class="n">calculate_scaling_factors</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+        <span class="n">load_from</span><span class="o">=</span><span class="s2">&quot;ngcc_soec_init.json.gz&quot;</span><span class="p">,</span>
+        <span class="n">save_to</span><span class="o">=</span><span class="s2">&quot;ngcc_soec_init.json.gz&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solve initial problem&quot;</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fix fuel cost and resolve&quot;</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">fuel_cost</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">4.42</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fix reboiler duty and resolve&quot;</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">cap_specific_reboiler_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">2.4e6</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fix capture fraction and resolve&quot;</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">cap_fraction</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.97</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># add capital costing</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Add initial costing and resolve&quot;</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span> <span class="o">=</span> <span class="n">QGESSCosting</span><span class="p">()</span>
+    <span class="n">ngcc_soec_costing</span><span class="o">.</span><span class="n">add_results_for_costing</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Add capital costing and resolve&quot;</span><span class="p">)</span>
+    <span class="n">ngcc_soec_costing</span><span class="o">.</span><span class="n">get_ngcc_soec_capital_cost</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">CE_index_year</span><span class="o">=</span><span class="s2">&quot;2018&quot;</span><span class="p">)</span>
+    <span class="n">scale_after_costing_model_added</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving results to json&quot;</span><span class="p">)</span>
+    <span class="n">ms</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s2">&quot;NGCC_flowsheet_solution.json.gz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2022</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span> <span class="mi">19</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">30</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="p">:</span> <span class="n">NGCC</span><span class="o">/</span><span class="n">SOEC</span> <span class="n">design</span> <span class="n">load</span> <span class="n">initial</span> <span class="kn">from</span> <span class="nn">ngcc_soec_init.json.gz</span>
+<span class="n">Loading</span> <span class="n">prior</span> <span class="n">solved</span> <span class="n">results</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">display_pfd</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Gas Turbine Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">HRSG Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Steam Turbine Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">SOEC Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">net_power_mw</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_turbine</span><span class="o">.</span><span class="n">throttle_valve</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">net_power_mw</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">_time</span><span class="p">,</span> <span class="n">Units</span><span class="o">=</span><span class="n">MW</span>
+    <span class="n">Key</span> <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Value</span>             <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Stale</span> <span class="p">:</span> <span class="n">Domain</span>
+    <span class="mf">0.0</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="mf">620.8339145348257</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+<span class="n">deltaP</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">_time</span><span class="p">,</span> <span class="n">ReferenceTo</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_turbine</span><span class="o">.</span><span class="n">throttle_valve</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">deltaP</span>
+    <span class="n">Key</span> <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Value</span>               <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Stale</span> <span class="p">:</span> <span class="n">Domain</span>
+    <span class="mf">0.0</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="o">-</span><span class="mf">3734386.1620979947</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">decision_vars</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">def</span> <span class="nf">make_decision_var</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">):</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="n">lb</span><span class="p">)</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="n">ub</span><span class="p">)</span>
+    <span class="n">decision_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+<span class="c1"># Add constraints for optimization</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_turbine</span><span class="o">.</span><span class="n">throttle_valve</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="o">-</span><span class="mf">1e5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;O2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">0.35</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">0.20</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">1030</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mi">1030</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_turbine_lp_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">2.9e5</span><span class="p">)</span>
+
+<span class="c1"># Design optimization will remove trim heaters, but they are required for dynamic</span>
+<span class="c1"># operation, so we force in 8 MW capacity heaters.  These bounds allow them to be</span>
+<span class="c1"># used since they exist.</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">heat</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">heat</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">heat</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">8.0e6</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">heat</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">8.0e6</span><span class="p">)</span>
+
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">makeup_water_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_pump</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">tube_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+<span class="c1"># make sure the delta T on the hydrogen side is 75K or less (it&#39;s</span>
+<span class="c1"># squared so one constraint covers both positive and negative delta T)</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delta_T_h_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mf">56.25</span>
+
+<span class="c1"># make sure the delta T on the oxygen side is 75K or less</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delta_T_o_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mf">56.25</span>
+
+<span class="c1"># make sure the oxygen inlet and hydrogen outlet are 75K or less apart</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delta_T_1_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mf">56.25</span>
+
+<span class="c1"># make sure the hydrogen inlet and oxygen outlet are 75K or less apart</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delta_T_2_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">mixed_state</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span> <span class="mf">56.25</span>
+
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">average_current_density_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">solid_oxide_cell</span><span class="o">.</span><span class="n">average_current_density</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">1000</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">8</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_pump</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_recycle_split</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">],</span> <span class="mf">0.40</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_recycle_split</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">],</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_split</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;outlet1&quot;</span><span class="p">],</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_compressor</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">potential_cell</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1.26</span><span class="p">,</span> <span class="mf">1.50</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">1020</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">1020</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="mf">2e6</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">7000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">7000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater01</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">7000</span><span class="p">)</span>
+<span class="n">make_decision_var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater02</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">7000</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj_design</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">total_variable_cost_rate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">variable_makeup_water_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+        <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">total_electric_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mf">1e6</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">+</span> <span class="c1"># power out is negative</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC</span><span class="o">*</span><span class="mf">1e6</span> <span class="o">*</span> <span class="mf">1.093</span> <span class="o">*</span> <span class="mf">0.0707</span> <span class="o">*</span> <span class="mf">1.341</span> <span class="o">/</span> <span class="mi">365</span> <span class="o">/</span> <span class="mi">24</span> <span class="c1"># anualized cap. + fixed O&amp;M for SOEC part</span>
+    <span class="p">)</span><span class="o">/</span><span class="mf">1e4</span>
+<span class="p">)</span>
+
+<span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">makeup_water_constraint</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="mf">1e-4</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># add temperature gradiaent constraints.</span>
+
+<span class="k">def</span> <span class="nf">_make_temperature_gradient_terms</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="n">soec</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">solid_oxide_cell</span>
+    <span class="n">dz</span> <span class="o">=</span> <span class="n">soec</span><span class="o">.</span><span class="n">zfaces</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">soec</span><span class="o">.</span><span class="n">zfaces</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># Going to assume that the zfaces are evenly spaced</span>
+    <span class="k">for</span> <span class="n">iz</span> <span class="ow">in</span> <span class="n">soec</span><span class="o">.</span><span class="n">iznodes</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">soec</span><span class="o">.</span><span class="n">zfaces</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">iz</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">soec</span><span class="o">.</span><span class="n">zfaces</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">iz</span><span class="p">)</span> <span class="o">-</span> <span class="n">dz</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-8</span>
+    <span class="n">dz</span> <span class="o">=</span> <span class="n">dz</span> <span class="o">*</span> <span class="n">soec</span><span class="o">.</span><span class="n">length_z</span>
+    <span class="k">def</span> <span class="nf">finite_difference</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span><span class="p">):</span>
+        <span class="c1"># Since this is mostly for reference, no need to worry about upwinding or whatever</span>
+        <span class="k">if</span> <span class="n">iz</span> <span class="o">==</span> <span class="n">soec</span><span class="o">.</span><span class="n">iznodes</span><span class="o">.</span><span class="n">first</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">ix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">iz</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">iz</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">iz</span> <span class="o">+</span> <span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="n">dz</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span> <span class="o">+</span> <span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="n">dz</span>
+        <span class="k">elif</span> <span class="n">iz</span> <span class="o">==</span> <span class="n">soec</span><span class="o">.</span><span class="n">iznodes</span><span class="o">.</span><span class="n">last</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">ix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">iz</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">iz</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">iz</span> <span class="o">-</span> <span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="n">dz</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span> <span class="o">-</span> <span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="n">dz</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">iz</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">iz</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">dz</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">expr</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">dz</span>
+
+    <span class="n">soec</span><span class="o">.</span><span class="n">dtemperature_z_dz</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">soec</span><span class="o">.</span><span class="n">iznodes</span><span class="p">,</span> <span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyo</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">K</span> <span class="o">/</span> <span class="n">pyo</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">m</span><span class="p">)</span>
+
+    <span class="nd">@soec</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">soec</span><span class="o">.</span><span class="n">iznodes</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">dtemperature_z_dz_eqn</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">iz</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">b</span><span class="o">.</span><span class="n">dtemperature_z_dz</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">iz</span><span class="p">]</span> <span class="o">==</span> <span class="n">finite_difference</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">temperature_z</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">iz</span><span class="p">)</span>
+
+    <span class="n">soec</span><span class="o">.</span><span class="n">fuel_electrode</span><span class="o">.</span><span class="n">dtemperature_dz</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span>
+        <span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+        <span class="n">soec</span><span class="o">.</span><span class="n">fuel_electrode</span><span class="o">.</span><span class="n">ixnodes</span><span class="p">,</span>
+        <span class="n">soec</span><span class="o">.</span><span class="n">fuel_electrode</span><span class="o">.</span><span class="n">iznodes</span><span class="p">,</span>
+        <span class="n">initialize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="n">pyo</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">K</span> <span class="o">/</span> <span class="n">pyo</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">m</span>
+    <span class="p">)</span>
+
+    <span class="nd">@soec</span><span class="o">.</span><span class="n">fuel_electrode</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">soec</span><span class="o">.</span><span class="n">fuel_electrode</span><span class="o">.</span><span class="n">ixnodes</span><span class="p">,</span> <span class="n">soec</span><span class="o">.</span><span class="n">fuel_electrode</span><span class="o">.</span><span class="n">iznodes</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">dtemperature_dz_eqn</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">b</span><span class="o">.</span><span class="n">dtemperature_dz</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span><span class="p">]</span> <span class="o">==</span> <span class="n">finite_difference</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iz</span><span class="p">)</span>
+
+    <span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">soec</span><span class="o">.</span><span class="n">dtemperature_z_dz</span><span class="p">,</span> <span class="n">soec</span><span class="o">.</span><span class="n">fuel_electrode</span><span class="o">.</span><span class="n">dtemperature_dz</span><span class="p">]</span>
+    <span class="n">cons</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">soec</span><span class="o">.</span><span class="n">dtemperature_z_dz_eqn</span><span class="p">,</span>
+        <span class="n">soec</span><span class="o">.</span><span class="n">fuel_electrode</span><span class="o">.</span><span class="n">dtemperature_dz_eqn</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">con</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">vars</span><span class="p">,</span> <span class="n">cons</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">var</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">iscale</span><span class="o">.</span><span class="n">set_scaling_factor</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="mf">5e-3</span><span class="p">)</span>
+            <span class="n">iscale</span><span class="o">.</span><span class="n">constraint_scaling_transform</span><span class="p">(</span><span class="n">con</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="mf">5e-3</span><span class="p">)</span>
+
+<span class="n">_make_temperature_gradient_terms</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">set_indexed_variable_bounds</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">subvar</span> <span class="ow">in</span> <span class="n">var</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">subvar</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+
+<span class="n">set_indexed_variable_bounds</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">solid_oxide_cell</span><span class="o">.</span><span class="n">fuel_electrode</span><span class="o">.</span><span class="n">dtemperature_dz</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">750</span><span class="p">,</span> <span class="mi">750</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">jac, nlp = iscale.get_jacobian(m, scaled=True)</span>
+<span class="sd">print(&quot;Extreme Jacobian entries:&quot;)</span>
+<span class="sd">for i in iscale.extreme_jacobian_entries(jac=jac, nlp=nlp, large=1000, small=0):</span>
+<span class="sd">    print(f&quot;    {i[0]:.2e}, [{i[1]}, {i[2]}]&quot;)</span>
+<span class="sd">print(&quot;Badly scaled variables:&quot;)</span>
+<span class="sd">for v, sv in iscale.badly_scaled_var_generator(</span>
+<span class="sd">    m, large=1e3, small=1e-6, zero=1e-12</span>
+<span class="sd">):</span>
+<span class="sd">    print(f&quot;    {v} -- {sv} -- {iscale.get_scaling_factor(v)}&quot;)</span>
+<span class="sd">print(f&quot;Jacobian Condition Number: {iscale.jacobian_cond(jac=jac):.2e}&quot;)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<pre class="literal-block">'njac, nlp = iscale.get_jacobian(m, scaled=True)nprint(&quot;Extreme Jacobian entries:&quot;)nfor i in iscale.extreme_jacobian_entries(jac=jac, nlp=nlp, large=1000, small=0):n    print(f&quot;    {i[0]:.2e}, [{i[1]}, {i[2]}]&quot;)nprint(&quot;Badly scaled variables:&quot;)nfor v, sv in iscale.badly_scaled_var_generator(n    m, large=1e3, small=1e-6, zero=1e-12n):n    print(f&quot;    {v} -- {sv} -- {iscale.get_scaling_factor(v)}&quot;)nprint(f&quot;Jacobian Condition Number: {iscale.jacobian_cond(jac=jac):.2e}&quot;)n'</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># initial solve for design, limited to 100 iterations</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-05
+linear_solver=ma57
+max_iter=100
+option_file_name=/tmp/tmpvixigdnm_ipopt.opt
+
+Using option file &quot;/tmp/tmpvixigdnm_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    17937
+Number of nonzeros in inequality constraint Jacobian.:       18
+Number of nonzeros in Lagrangian Hessian.............:    12182
+
+Reallocating memory for MA57: lfact (320069)
+Total number of variables............................:     4477
+                     variables with only lower bounds:      532
+                variables with lower and upper bounds:     2448
+                     variables with only upper bounds:       31
+Total number of equality constraints.................:     4465
+Total number of inequality constraints...............:        5
+        inequality constraints with only lower bounds:        1
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        4
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  4.9031325e+00 8.03e+01 1.28e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  4.9128085e+00 6.91e+01 3.81e+02  -1.0 2.93e+03    -  2.02e-01 1.39e-01h  1
+   2  4.9166515e+00 6.70e+01 3.83e+02  -1.0 3.93e+03    -  3.23e-01 3.13e-02h  1
+   3  4.9345300e+00 5.64e+01 6.18e+02  -1.0 3.71e+03    -  4.65e-01 1.57e-01h  1
+   4  4.9346876e+00 5.63e+01 1.95e+04  -1.0 1.60e+04    -  6.33e-01 2.09e-03h  1
+   5  4.9469001e+00 2.72e+01 2.09e+04  -1.0 1.57e+05    -  1.32e-01 5.17e-01H  1
+   6  4.9492781e+00 2.72e+01 3.67e+05  -1.0 5.83e+04  -4.0 1.01e-02 7.22e-04h  1
+   7  4.9045444e+00 2.63e+01 3.19e+05  -1.0 7.61e+04    -  1.19e-01 3.23e-02h  2
+   8  4.9101744e+00 2.63e+01 5.85e+05  -1.0 7.36e+04  -4.5 1.77e-02 2.30e-03h  3
+   9  4.9143996e+00 2.61e+01 7.09e+05  -1.0 7.34e+04  -5.0 2.75e-02 7.15e-03h  2
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  4.9524883e+00 2.23e+01 3.42e+05  -1.0 7.29e+04    -  4.57e-01 1.44e-01h  1
+  11  5.0773204e+00 1.12e+01 1.44e+05  -1.0 6.24e+04    -  5.56e-01 4.97e-01h  1
+  12  5.1030270e+00 5.51e+00 4.51e+04  -1.0 3.14e+04    -  6.24e-01 5.09e-01h  1
+  13  5.0995454e+00 1.38e+00 5.63e+04  -1.0 1.54e+04    -  3.41e-01 9.90e-01h  1
+  14  5.1986431e+00 3.79e-01 3.02e+04  -1.0 1.09e+03    -  4.74e-01 1.00e+00H  1
+  15  5.2045110e+00 2.60e-01 5.94e+05  -1.0 4.76e+02    -  4.02e-01 1.00e+00F  1
+  16  5.1703149e+00 6.48e-01 2.79e+05  -1.0 2.72e+03    -  5.30e-01 2.03e-01h  2
+  17  5.1822083e+00 6.20e-01 1.78e+05  -1.0 5.37e+03    -  3.62e-01 4.74e-02h  3
+  18  5.2164165e+00 3.16e-01 1.80e+03  -1.0 1.06e+02  -5.4 9.90e-01 6.25e-01h  1
+  19  5.2002588e+00 4.94e-01 2.11e+03  -1.0 6.21e+02    -  3.39e-01 9.27e-01F  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  20  5.1503259e+00 8.41e-01 8.17e+02  -1.0 1.41e+03    -  6.07e-01 4.51e-01f  1
+  21  5.2068808e+00 2.36e+00 9.80e+01  -1.0 9.51e+02    -  8.97e-01 1.00e+00f  1
+  22  5.2073584e+00 2.33e-01 4.59e+00  -1.0 5.39e+01  -5.9 9.91e-01 1.00e+00h  1
+  23  5.1970034e+00 4.03e-02 4.98e+03  -1.7 4.31e+02    -  9.94e-01 1.00e+00h  1
+  24  5.1504712e+00 5.69e-01 1.64e-01  -1.7 2.22e+04    -  1.00e+00 1.00e+00h  1
+  25  5.1588264e+00 8.29e-02 2.32e-02  -1.7 1.43e+04    -  1.00e+00 1.00e+00h  1
+  26  5.0959690e+00 1.69e+00 5.15e+04  -2.5 1.05e+04    -  7.00e-01 1.00e+00h  1
+  27  4.9623936e+00 4.61e+00 3.33e+04  -2.5 1.62e+04    -  3.52e-01 1.00e+00h  1
+  28  4.9055503e+00 5.00e-01 5.86e-02  -2.5 3.36e+03    -  1.00e+00 8.97e-01h  1
+  29  4.9262756e+00 6.02e-02 3.66e-03  -2.5 9.38e+02    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  30  4.9215226e+00 1.08e-02 2.43e-04  -2.5 3.37e+02    -  1.00e+00 1.00e+00h  1
+  31  4.9025166e+00 1.10e-01 8.00e+03  -3.8 9.18e+03    -  7.61e-01 4.62e-01h  1
+  32  4.8936797e+00 4.29e+00 1.14e+03  -3.8 4.00e+03    -  5.84e-01 8.94e-01h  1
+  33  4.8927282e+00 5.60e+00 2.05e-03  -3.8 4.79e+02    -  1.00e+00 1.00e+00h  1
+  34  4.8928670e+00 1.52e+00 1.48e-01  -3.8 4.81e+01    -  1.00e+00 1.00e+00h  1
+  35  4.8929153e+00 1.83e-02 1.48e-01  -3.8 1.23e+01    -  1.00e+00 1.00e+00h  1
+  36  4.8929398e+00 3.86e-03 3.42e-07  -3.8 6.26e+00    -  1.00e+00 1.00e+00h  1
+  37  4.8929398e+00 1.20e-10 1.50e-09  -3.8 2.36e-03    -  1.00e+00 1.00e+00h  1
+  38  4.8912921e+00 2.80e+00 3.24e+02  -5.7 2.91e+02    -  7.02e-01 9.20e-01f  1
+  39  4.8909406e+00 6.69e-01 2.31e+02  -5.7 1.72e+02    -  4.79e-01 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  40  4.8908827e+00 5.48e-01 4.55e+01  -5.7 1.86e+02    -  8.03e-01 1.89e-01h  1
+  41  4.8906613e+00 7.49e-01 4.06e+01  -5.7 9.45e+02    -  1.07e-01 2.11e-01h  1
+Reallocating memory for MA57: lfact (336882)
+  42  4.8906910e+00 2.04e-02 1.17e+01  -5.7 2.95e+01    -  7.13e-01 1.00e+00h  1
+  43  4.8906534e+00 8.53e-04 6.50e-01  -5.7 1.40e+01    -  9.44e-01 9.70e-01h  1
+  44  4.8906557e+00 1.10e-02 4.10e-02  -5.7 1.26e+00    -  9.37e-01 1.00e+00h  1
+  45  4.8906569e+00 6.22e-03 7.93e-03  -5.7 3.32e-01    -  8.07e-01 1.00e+00h  1
+  46  4.8906584e+00 5.70e-03 5.70e-05  -5.7 4.21e-01    -  1.00e+00 1.00e+00h  1
+  47  4.8906586e+00 5.37e-05 5.25e-07  -5.7 4.88e-02    -  1.00e+00 1.00e+00h  1
+  48  4.8906586e+00 1.42e-06 5.22e-09  -5.7 8.08e-03    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 48
+
+                                   (scaled)                 (unscaled)
+Objective...............:   4.8906586147667772e+00    4.8906586147667772e+00
+Dual infeasibility......:   5.2181499114816976e-09    1.8449331487198970e-06
+Constraint violation....:   1.4210352411447857e-06    1.4210352411447857e-06
+Complementarity.........:   1.8451155131055278e-06    1.8451155131055278e-06
+Overall NLP error.......:   1.8451155131055278e-06    1.8451155131055278e-06
+
+
+Number of objective function evaluations             = 68
+Number of objective gradient evaluations             = 49
+Number of equality constraint evaluations            = 68
+Number of inequality constraint evaluations          = 68
+Number of equality constraint Jacobian evaluations   = 49
+Number of inequality constraint Jacobian evaluations = 49
+Number of Lagrangian Hessian evaluations             = 48
+Total CPU secs in IPOPT (w/o function evaluations)   =      4.409
+Total CPU secs in NLP function evaluations           =     35.259
+
+EXIT: Optimal Solution Found.</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">display_pfd</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Gas</span> <span class="n">Turbine</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_15_1.svg" src="../../../../_images/output_15_1.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">HRSG</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_15_3.svg" src="../../../../_images/output_15_3.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Steam</span> <span class="n">Turbine</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_15_5.svg" src="../../../../_images/output_15_5.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOEC</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_15_7.svg" src="../../../../_images/output_15_7.svg" /><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Print freed decision vars</span>
+<span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">decision_vars</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fixed Costs for Optimized Design&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+
+<span class="n">tpc</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC</span><span class="p">)</span>  <span class="c1">### the main costing block is now under fs</span>
+<span class="n">tasc</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC</span><span class="p">)</span><span class="o">*</span><span class="mf">1.21</span><span class="o">*</span><span class="mf">1.093</span>
+<span class="n">ac</span> <span class="o">=</span> <span class="n">tasc</span><span class="o">*</span><span class="mf">0.0707</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TPC = </span><span class="si">{</span><span class="n">tpc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TASC = </span><span class="si">{</span><span class="n">tasc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annualized TASC (MM$/yr) = </span><span class="si">{</span><span class="n">ac</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Parameters</span>
+<span class="n">n_op</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">hourly_rate</span> <span class="o">=</span> <span class="mf">38.50</span>
+<span class="n">labor_burden</span> <span class="o">=</span> <span class="mi">30</span>
+
+<span class="c1"># Fixed O&amp;M components</span>
+<span class="n">annual_op_labor</span> <span class="o">=</span> <span class="n">n_op</span> <span class="o">*</span> <span class="n">hourly_rate</span> <span class="o">*</span> <span class="mi">8760</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">labor_burden</span><span class="o">/</span><span class="mi">100</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span>
+<span class="n">maint_labor</span> <span class="o">=</span> <span class="n">tpc</span> <span class="o">*</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="mf">0.019</span>
+<span class="n">maint_material</span> <span class="o">=</span> <span class="n">tpc</span> <span class="o">*</span> <span class="mf">0.6</span> <span class="o">*</span> <span class="mf">0.019</span>
+<span class="n">admin_labor</span> <span class="o">=</span> <span class="mf">0.25</span><span class="o">*</span><span class="p">(</span><span class="n">annual_op_labor</span> <span class="o">+</span> <span class="n">maint_labor</span><span class="p">)</span>
+<span class="n">prop_tax_ins</span> <span class="o">=</span> <span class="mf">0.02</span><span class="o">*</span><span class="n">tpc</span>
+<span class="n">soec_replace</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mf">4.2765</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fixed O&amp;M Costs&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;annual_op_labor (MM$/yr) = </span><span class="si">{</span><span class="n">annual_op_labor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;maint_labor (MM$/yr) = </span><span class="si">{</span><span class="n">maint_labor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;maint_material (MM$/yr) = </span><span class="si">{</span><span class="n">maint_material</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;admin_labor (MM$/yr) = </span><span class="si">{</span><span class="n">admin_labor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;prop_tax_ins (MM$/yr) = </span><span class="si">{</span><span class="n">prop_tax_ins</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;soec_replace (MM$/yr) = </span><span class="si">{</span><span class="n">soec_replace</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">total_fixed</span> <span class="o">=</span> <span class="n">annual_op_labor</span> <span class="o">+</span> <span class="n">maint_labor</span> <span class="o">+</span> <span class="n">maint_material</span> <span class="o">+</span> <span class="n">admin_labor</span> <span class="o">+</span> <span class="n">prop_tax_ins</span> <span class="o">+</span> <span class="n">soec_replace</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annualized Fixed O&amp;M = </span><span class="si">{</span><span class="n">total_fixed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SOEC TPC Breakdown&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+
+<span class="n">ngcc_soec_costing</span><span class="o">.</span><span class="n">display_capital_costs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="c1">### added new function to display the costs from power plant costing</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>fs.soec.sweep_recycle_split.split_fraction[0.0,out] 0.6379685251270774
+fs.soec.feed_recycle_split.split_fraction[0.0,out] 0.3236840970681735
+fs.soec.water_split.split_fraction[0.0,outlet1] 0.499579855845364
+fs.soec.sweep_compressor.control_volume.properties_in[0.0].flow_mol 5652.866390857601
+fs.soec.soec_module.solid_oxide_cell.potential[0.0] 1.3450240028927372
+fs.soec.feed_heater.control_volume.properties_out[0.0].temperature 933.7951569611402
+fs.soec.sweep_heater.control_volume.properties_out[0.0].temperature 924.4791104085825
+fs.soec.soec_module.number_cells 1087993.7247508862
+fs.soec.sweep_hx.area 5936.838756714665
+fs.soec.feed_hx01.area 6989.833159350519
+fs.soec.water_heater01.area 5700.59430341853
+fs.soec.water_heater02.area 6999.785882826588
+
+
+------------------------------------------
+Fixed Costs for Optimized Design
+------------------------------------------
+TPC = 1605.4486595613241
+TASC = 2123.2540157296376
+Annualized TASC (MM$/yr) = 150.11405891208537
+Fixed O&amp;M Costs
+annual_op_labor (MM$/yr) = 3.507504
+maint_labor (MM$/yr) = 12.201409812666062
+maint_material (MM$/yr) = 18.302114718999096
+admin_labor (MM$/yr) = 3.9272284531665154
+prop_tax_ins (MM$/yr) = 32.10897319122648
+soec_replace (MM$/yr) = 4.652805163897165
+Annualized Fixed O&amp;M = 74.70003533995532
+
+
+------------------------------------------
+SOEC TPC Breakdown
+------------------------------------------
+Total plant cost: $1605.45M
+Feedwater &amp; misc. BOP cost: $159.32M
+Carbon capture system cost: $782.03M
+Combustion turbine cost: $113.76M
+HRSG, ductwork, and stack cost: $102.22M
+Steam turbine cost: $75.69M
+Cooling water system cost: $53.33M
+Accessory plant electric cost: $80.41M
+Instrumentation and control cost: $24.83M
+Improvements to site cost: $28.38M
+Buildings and structures cost: $17.82M
+SOEC module cost: $72.85M
+Trim heater cost: $25.18M
+Hydrogen compressor cost: $21.10M
+Sweep turbomachinery cost: $10.87M
+Heat exchanger cost: $37.68M
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">total_fixed</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ac</span><span class="p">)</span>
+
+<span class="c1"># Check anualized fixed O&amp;M costs</span>
+<span class="k">assert</span> <span class="n">total_fixed</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">74.690994</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+
+<span class="c1"># Check anualized TASC</span>
+<span class="k">assert</span> <span class="n">ac</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">150.09339</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">74.70003533995532</span>
+<span class="mf">150.11405891208537</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># lock in the design vars</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">soec_module</span><span class="o">.</span><span class="n">number_cells</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">sweep_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">feed_hx01</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater01</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">water_heater02</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+
+<span class="c1"># Make sure some constraints imposed by the design optimization</span>
+<span class="c1"># are respected</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">water_demand_max_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">water_demand</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span>
+        <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">water_demand</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">/</span><span class="mi">100</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">process_water_discharge_max_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">process_water_discharge</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">/</span><span class="mi">100</span> <span class="o">&lt;=</span>
+        <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">process_water_discharge</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">/</span><span class="mi">100</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">aux_load_max_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">aux_load</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">/</span><span class="mf">1e3</span> <span class="o">&lt;=</span>
+        <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">aux_load</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">/</span><span class="mf">1e3</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">CO2_captured_max_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CO2_captured</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">/</span><span class="mf">1e5</span> <span class="o">&lt;=</span>
+        <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">CO2_captured</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">/</span><span class="mf">1e5</span><span class="p">)</span>
+    <span class="p">)</span>
+
+<span class="c1"># Deactivate Capital Costing</span>
+<span class="k">for</span> <span class="n">blk</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">_registered_unit_costing</span><span class="p">:</span>
+    <span class="n">blk</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+
+<span class="c1"># New objective without capital cost.</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj_design</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj_op</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">total_variable_cost_rate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">variable_makeup_water_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+        <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">total_electric_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mf">1e6</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="p">)</span><span class="o">/</span><span class="mf">1e4</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original Objective Value: </span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj_op</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="c1"># We should be starting at (or near) the optimal solution from</span>
+<span class="c1"># here, so in an effort to save a little time I cut bound_push down</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;bound_push&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-8</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Original Objective Value: 2.991502486223186
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-05
+linear_solver=ma57
+max_iter=100
+bound_push=1e-08
+option_file_name=/tmp/tmpir2b3adc_ipopt.opt
+
+Using option file &quot;/tmp/tmpir2b3adc_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:    17150
+Number of nonzeros in inequality constraint Jacobian.:       58
+Number of nonzeros in Lagrangian Hessian.............:    11792
+
+Reallocating memory for MA57: lfact (308757)
+Reallocating memory for MA57: lfact (324917)
+Total number of variables............................:     4311
+                     variables with only lower bounds:      502
+                variables with lower and upper bounds:     2312
+                     variables with only upper bounds:       31
+Total number of equality constraints.................:     4304
+Total number of inequality constraints...............:        9
+        inequality constraints with only lower bounds:        1
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        8
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  2.9915025e+00 1.33e-11 1.28e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  2.9915002e+00 1.11e-08 1.16e+06  -1.0 8.83e+02    -  6.23e-01 1.42e-04f  1
+   2  2.9915032e+00 1.28e-06 1.32e+04  -1.0 3.01e+00  -4.0 9.65e-01 1.00e+00f  1
+   3  2.9915109e+00 7.19e-07 5.84e+02  -1.0 1.73e+00    -  9.90e-01 1.00e+00f  1
+   4  2.9915165e+00 8.47e-07 1.51e+02  -1.0 5.01e-01    -  9.90e-01 1.00e+00f  1
+   5  2.9915158e+00 1.43e-08 1.71e+00  -1.0 6.42e-02    -  9.90e-01 1.00e+00h  1
+   6  2.9915158e+00 3.15e-12 1.07e+04  -1.7 4.22e-05    -  9.91e-01 1.00e+00h  1
+   7  2.9915158e+00 1.82e-12 2.03e-07  -1.7 1.63e-04    -  1.00e+00 1.00e+00H  1
+   8  2.9915158e+00 2.67e-12 6.84e-03  -3.8 3.32e-04    -  1.00e+00 1.00e+00h  1
+   9  2.9915149e+00 7.23e-09 6.67e-07  -3.8 4.25e-02    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  2.9915140e+00 6.73e-09 4.11e+01  -5.7 4.12e-02    -  9.82e-01 1.00e+00h  1
+  11  2.9915000e+00 2.71e-05 5.83e-04  -5.7 1.89e+00    -  1.00e+00 1.00e+00h  1
+  12  2.9915009e+00 9.12e-06 1.85e-04  -5.7 1.30e+00    -  1.00e+00 1.00e+00h  1
+Reallocating memory for MA57: lfact (342289)
+  13  2.9915012e+00 1.21e-06 4.90e-06  -5.7 3.91e-01    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 13
+
+                                   (scaled)                 (unscaled)
+Objective...............:   2.9915011559494018e+00    2.9915011559494018e+00
+Dual infeasibility......:   4.9013222955807123e-06    8.7945704867155297e-06
+Constraint violation....:   1.2114985207256623e-06    1.2114985207256623e-06
+Complementarity.........:   1.8650107488492883e-06    1.8650107488492883e-06
+Overall NLP error.......:   4.9013222955807123e-06    8.7945704867155297e-06
+
+
+Number of objective function evaluations             = 16
+Number of objective gradient evaluations             = 14
+Number of equality constraint evaluations            = 16
+Number of inequality constraint evaluations          = 16
+Number of equality constraint Jacobian evaluations   = 14
+Number of inequality constraint Jacobian evaluations = 14
+Number of Lagrangian Hessian evaluations             = 13
+Total CPU secs in IPOPT (w/o function evaluations)   =      1.681
+Total CPU secs in NLP function evaluations           =      7.098
+
+EXIT: Optimal Solution Found.</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">m.fs.ngcc.gt.write_pfd(fname=&quot;data_pfds/gt_soec_base.svg&quot;)</span>
+<span class="sd">m.fs.ngcc.hrsg.write_pfd(fname=&quot;data_pfds/hrsg_soec_base.svg&quot;)</span>
+<span class="sd">m.fs.ngcc.st.write_pfd(fname=&quot;data_pfds/st_soec_base.svg&quot;)</span>
+<span class="sd">m.fs.soec.write_pfd(fname=&quot;data_pfds/soec_soec_base.svg&quot;)</span>
+<span class="sd">display_pfd()</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_gt.csv&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_st.csv&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">steam_streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_hrsg_steam.csv&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">flue_gas_streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_hrsg_gas.csv&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec_stream_5kg_soec.csv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="soec-performance">
+<h3>SOEC Performance<a class="headerlink" href="#soec-performance" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;H2 production rate = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;h2_mass_production&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Water flowrate to SOEC = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_streams</span><span class="p">[</span><span class="s1">&#39;feed02_F&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stack conversion = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;water_utilization&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Overall conversion = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;water_utilization_overall&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of cells = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;Number_of_cells&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cell potential = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;cell_potential&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current density = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;soec_current_density&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOEC load (AC) = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;soec_power&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Balance of plant load = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;bop_power&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Natural gas flowrate = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">tags_streams</span><span class="p">[</span><span class="s1">&#39;fuel01_F&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total load = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;total_electric_power&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;NGCC net power = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;net_power&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Electric input = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;total_electric_power_per_h2&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GT Power = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;gt_power&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">H2</span> <span class="n">production</span> <span class="n">rate</span> <span class="o">=</span> <span class="mf">5.000</span> <span class="n">kg</span><span class="o">/</span><span class="n">s</span>
+<span class="n">Water</span> <span class="n">flowrate</span> <span class="n">to</span> <span class="n">SOEC</span> <span class="o">=</span> <span class="mf">55.854</span> <span class="n">kg</span><span class="o">/</span><span class="n">s</span>
+<span class="n">Stack</span> <span class="n">conversion</span> <span class="o">=</span> <span class="mf">56.4</span><span class="o">%</span>
+<span class="n">Overall</span> <span class="n">conversion</span> <span class="o">=</span> <span class="mf">80.0</span><span class="o">%</span>
+<span class="n">Number</span> <span class="n">of</span> <span class="n">cells</span> <span class="o">=</span> <span class="mf">1.0880e+06</span> <span class="n">cells</span>
+<span class="n">Cell</span> <span class="n">potential</span> <span class="o">=</span> <span class="mf">1.345</span> <span class="n">V</span>
+<span class="n">Current</span> <span class="n">density</span> <span class="o">=</span> <span class="o">-</span><span class="mf">7999.8</span> <span class="n">A</span><span class="o">/</span><span class="n">m</span><span class="o">**</span><span class="mi">2</span>
+<span class="n">SOEC</span> <span class="n">load</span> <span class="p">(</span><span class="n">AC</span><span class="p">)</span> <span class="o">=</span> <span class="mf">663.671</span> <span class="n">MW</span>
+<span class="n">Balance</span> <span class="n">of</span> <span class="n">plant</span> <span class="n">load</span> <span class="o">=</span> <span class="mf">18.213</span> <span class="n">MW</span>
+<span class="n">Natural</span> <span class="n">gas</span> <span class="n">flowrate</span> <span class="o">=</span> <span class="mf">25.951</span> <span class="n">kg</span><span class="o">/</span><span class="n">s</span>
+<span class="n">Total</span> <span class="n">load</span> <span class="o">=</span> <span class="mf">681.884</span> <span class="n">MW</span>
+<span class="n">NGCC</span> <span class="n">net</span> <span class="n">power</span> <span class="o">=</span> <span class="mf">623.87</span> <span class="n">MW</span>
+<span class="n">Electric</span> <span class="nb">input</span> <span class="o">=</span> <span class="mf">37.881</span> <span class="n">kWh</span><span class="o">/</span><span class="n">kg</span>
+<span class="n">GT</span> <span class="n">Power</span> <span class="o">=</span> <span class="mf">477.00</span> <span class="n">MW</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;total_electric_power_per_h2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">37.880</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s1">&#39;water_utilization&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">56.420884</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="samples">
+<h2>Samples<a class="headerlink" href="#samples" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">run_samples</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">df</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">if</span> <span class="n">run_samples</span><span class="p">:</span>
+    <span class="c1"># we already ran 477 GT Power and 5 kg/s, so save and we&#39;ll load result.</span>
+    <span class="n">save_to</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;data/ngcc_soec_</span><span class="si">{</span><span class="mi">477</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="mi">5000</span><span class="si">}</span><span class="s2">.json.gz&quot;</span>
+    <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_to</span><span class="p">)</span>
+
+    <span class="n">solver</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;max_iter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">150</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+    <span class="n">gt_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">477.</span><span class="p">,</span> <span class="mf">322.</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="mf">477.</span> <span class="o">-</span> <span class="mf">322.</span><span class="p">)</span><span class="o">/</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">hp_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">17</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">tags_output</span><span class="o">.</span><span class="n">table_heading</span><span class="p">())</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">save_to_last</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">gt_powers</span><span class="p">:</span>
+        <span class="n">gpstr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">gp</span><span class="p">))</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">gt_power</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="o">-</span><span class="n">gp</span><span class="o">*</span><span class="mf">1e6</span><span class="p">)</span>
+        <span class="n">save_to_last_prev</span> <span class="o">=</span> <span class="n">save_to_last</span>
+        <span class="n">save_to_last</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">hp</span> <span class="ow">in</span> <span class="p">[</span><span class="n">hh</span><span class="o">/</span><span class="mi">10</span> <span class="k">for</span> <span class="n">hh</span> <span class="ow">in</span> <span class="n">hp_powers</span><span class="p">]:</span>
+            <span class="c1"># This is meant to cut off cases that don&#39;t produce enough steam to</span>
+            <span class="c1"># make 5 kg/s h2</span>
+            <span class="k">if</span> <span class="n">hp</span> <span class="o">&gt;</span> <span class="mf">5.001</span> <span class="o">-</span> <span class="mf">0.25</span><span class="o">*</span><span class="p">(</span><span class="mf">477.0</span> <span class="o">-</span> <span class="n">gp</span><span class="p">)</span><span class="o">/</span><span class="mi">30</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">hydrogen_product_rate</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">hp</span><span class="p">)</span>
+            <span class="n">hpstr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">hp</span><span class="o">*</span><span class="mi">1000</span><span class="p">))</span>
+            <span class="n">save_to</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;data/ngcc_soec_</span><span class="si">{</span><span class="n">gpstr</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">hpstr</span><span class="si">}</span><span class="s2">.json.gz&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">save_to</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_to</span><span class="p">):</span>
+                <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_to</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">save_to_last</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">save_to_last</span> <span class="o">=</span> <span class="n">save_to</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fail&quot;</span><span class="p">)</span>
+                    <span class="k">break</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">pyo</span><span class="o">.</span><span class="n">check_optimal_termination</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fail&quot;</span><span class="p">)</span>
+                    <span class="k">break</span>
+                <span class="k">if</span> <span class="n">save_to_last</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">save_to_last</span> <span class="o">=</span> <span class="n">save_to</span>
+                <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_to</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Overall net power: </span><span class="si">{</span><span class="o">-</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ngcc</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">soec</span><span class="o">.</span><span class="n">total_electric_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mf">1e6</span><span class="si">}</span><span class="s2"> MW&quot;</span><span class="p">)</span>
+            <span class="c1">#for v in decision_vars:</span>
+            <span class="c1">#    print(f&quot;{v} {pyo.value(v)}&quot;)</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">tags_output</span><span class="o">.</span><span class="n">table_row</span><span class="p">(</span><span class="n">numeric</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># go to the closest part of the start of the next series.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_to_last</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_to_last_prev</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_soec.csv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

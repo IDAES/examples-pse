@@ -1,0 +1,629 @@
+Design Flowsheet for NGCC + SOEC with Steam Integration
+=======================================================
+
+This flowsheet example provides an off-design model for integration of
+an SOEC for hydrogen production with an NGCC. The NGCC nominally
+produces 650 MW net, and includeds 97% CO2 capture. A detailed SOEC unit
+model is used here.
+
+Import Required Modules
+-----------------------
+
+.. code:: ipython3
+
+    import os
+    import math
+    import numpy as np
+    import pytest
+    from IPython.core.display import SVG
+    import pyomo.environ as pyo
+    from idaes.core.solvers import use_idaes_solver_configuration_defaults
+    import idaes
+    import idaes.core.util.scaling as iscale
+    import idaes.core.util as iutil
+    import soec_flowsheet_costing
+    import ngcc_soec
+
+Make Output Directories
+-----------------------
+
+This notebook can produce a large number of output files. To make it
+easier to manage, some subdirectories are used to orginize output. This
+ensures that the drectories exist.
+
+.. code:: ipython3
+
+    def make_directory(path):
+        """Make a directory if it doesn't exist"""
+        try:
+            os.mkdir(path)
+        except FileExistsError:
+            pass
+        
+    make_directory("data")
+    make_directory("data_pfds")
+    make_directory("data_tabulated")
+
+Set Global Solver Options
+-------------------------
+
+Setting global solver options applies them to any solver created
+subsequently, including the ones used for initialization. The user
+scaling option disables Ipopt’s automatic scaling and allows it to use
+user provided variable scaling.
+
+.. code:: ipython3
+
+    use_idaes_solver_configuration_defaults()
+    idaes.cfg.ipopt.options.nlp_scaling_method = "user-scaling"
+    idaes.cfg.ipopt.options.linear_solver = "ma57"
+    idaes.cfg.ipopt.options.OF_ma57_automatic_scaling = "yes"
+    idaes.cfg.ipopt.options.ma57_pivtol = 1e-5
+    idaes.cfg.ipopt.options.ma57_pivtolmax = 0.1
+    idaes.cfg.ipopt.options.max_iter = 200
+    solver = pyo.SolverFactory("ipopt")
+
+Create and Initialize the NGCC + SOEC Model
+-------------------------------------------
+
+.. code:: ipython3
+
+    m = pyo.ConcreteModel()
+    m.fs = ngcc_soec.NgccSoecFlowsheet(default={"dynamic":False})
+    iscale.calculate_scaling_factors(m)
+    m.fs.initialize(
+        load_from="ngcc_soec_init.json.gz",
+        save_to="ngcc_soec_init.json.gz"
+    )
+    res = solver.solve(m, tee=True)
+    soec_flowsheet_costing.get_solo_soec_capital_costing(m.fs.soec)
+    res = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    2022-06-09 18:06:37 [INFO] idaes.init.fs: NGCC/SOEC design load initial from ngcc_soec_init.json.gz
+    Ipopt 3.13.2: nlp_scaling_method=user-scaling
+    tol=1e-06
+    linear_solver=ma57
+    ma57_pivtol=1e-05
+    ma57_pivtolmax=0.1
+    max_iter=200
+    option_file_name=/tmp/tmpof2610aj_ipopt.opt
+    
+    Using option file "/tmp/tmpof2610aj_ipopt.opt".
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma57.
+    
+    Number of nonzeros in equality constraint Jacobian...:    19286
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:    14667
+    
+    Total number of variables............................:     4373
+                         variables with only lower bounds:      372
+                    variables with lower and upper bounds:     2355
+                         variables with only upper bounds:       70
+    Total number of equality constraints.................:     4373
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 3.50e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    Reallocating memory for MA57: lfact (387510)
+    Reallocating memory for MA57: lfact (411602)
+       1  0.0000000e+00 2.56e+00 3.14e+06  -1.0 6.78e+04    -  9.81e-01 9.90e-01h  1
+       2  0.0000000e+00 1.67e+00 9.98e+05  -1.0 5.36e+04    -  8.51e-01 9.91e-01h  1
+       3  0.0000000e+00 1.01e-01 2.96e+04  -1.0 1.33e+04    -  9.83e-01 1.00e+00h  1
+       4  0.0000000e+00 3.83e-04 9.01e+03  -1.0 6.38e+02    -  9.90e-01 1.00e+00h  1
+       5  0.0000000e+00 1.49e-05 8.82e+01  -1.0 2.78e+01    -  9.90e-01 1.00e+00h  1
+       6  0.0000000e+00 6.08e-07 2.17e+03  -2.5 1.16e+00    -  9.98e-01 1.00e+00h  1
+    
+    Number of Iterations....: 6
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   6.0799920728604739e-07    6.0799920728604739e-07
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   6.0799920728604739e-07    6.0799920728604739e-07
+    
+    
+    Number of objective function evaluations             = 7
+    Number of objective gradient evaluations             = 7
+    Number of equality constraint evaluations            = 7
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 7
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 6
+    Total CPU secs in IPOPT (w/o function evaluations)   =      1.015
+    Total CPU secs in NLP function evaluations           =      3.312
+    
+    EXIT: Optimal Solution Found.
+    WARNING: DEPRECATED: The get_costing method is being deprecated in favor of
+        the new FlowsheetCostingBlock tools.  (deprecated in TBD) (called from
+        /tmp/ipykernel_3379/132183951.py:9)
+    WARNING: DEPRECATED: The get_costing method is being deprecated in favor of
+        the new FlowsheetCostingBlock tools.  (deprecated in TBD) (called from
+        /tmp/ipykernel_3379/132183951.py:9)
+    WARNING: DEPRECATED: The get_costing method is being deprecated in favor of
+        the new FlowsheetCostingBlock tools.  (deprecated in TBD) (called from
+        /tmp/ipykernel_3379/132183951.py:9)
+    WARNING: DEPRECATED: The get_costing method is being deprecated in favor of
+        the new FlowsheetCostingBlock tools.  (deprecated in TBD) (called from
+        /tmp/ipykernel_3379/132183951.py:9)
+    fs.soec.soec_module.costing.total_plant_cost
+    fs.soec.cmp01.costing.total_plant_cost
+    fs.soec.sweep_hx.costing.total_plant_cost
+    fs.soec.feed_hx01.costing.total_plant_cost
+    fs.soec.sweep_compressor.costing.total_plant_cost
+    Ipopt 3.13.2: nlp_scaling_method=user-scaling
+    tol=1e-06
+    linear_solver=ma57
+    ma57_pivtol=1e-05
+    ma57_pivtolmax=0.1
+    max_iter=200
+    option_file_name=/tmp/tmpngwoefqy_ipopt.opt
+    
+    Using option file "/tmp/tmpngwoefqy_ipopt.opt".
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma57.
+    
+    Number of nonzeros in equality constraint Jacobian...:    19337
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:    14689
+    
+    Total number of variables............................:     4390
+                         variables with only lower bounds:      381
+                    variables with lower and upper bounds:     2362
+                         variables with only upper bounds:       70
+    Total number of equality constraints.................:     4390
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 2.54e+06 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    Reallocating memory for MA57: lfact (389703)
+    Reallocating memory for MA57: lfact (414708)
+       1  0.0000000e+00 5.90e+05 1.42e+10  -1.0 3.38e+06    -  2.92e-03 9.90e-01h  1
+       2  0.0000000e+00 5.38e+03 4.52e+09  -1.0 6.31e+05    -  8.03e-01 9.91e-01h  1
+       3  0.0000000e+00 7.92e+00 1.35e+08  -1.0 1.33e+04    -  9.54e-01 1.00e+00h  1
+       4  0.0000000e+00 1.74e-02 1.09e+05  -1.0 6.38e+02    -  9.90e-01 1.00e+00h  1
+       5  0.0000000e+00 3.77e-05 9.33e+01  -1.0 2.86e+01    -  9.90e-01 1.00e+00h  1
+       6  0.0000000e+00 6.08e-07 9.23e-01  -1.0 1.20e+00    -  9.90e-01 1.00e+00h  1
+    
+    Number of Iterations....: 6
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   6.0800438811403623e-07    6.0800438811403623e-07
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   6.0800438811403623e-07    6.0800438811403623e-07
+    
+    
+    Number of objective function evaluations             = 7
+    Number of objective gradient evaluations             = 7
+    Number of equality constraint evaluations            = 7
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 7
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 6
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.911
+    Total CPU secs in NLP function evaluations           =      3.182
+    
+    EXIT: Optimal Solution Found.
+
+
+.. code:: ipython3
+
+    def display_pfd():
+        print("\n\nGas Turbine Section\n")
+        display(SVG(m.fs.ngcc.gt.write_pfd()))
+        print("\n\nHRSG Section\n")
+        display(SVG(m.fs.ngcc.hrsg.write_pfd()))
+        print("\n\nSteam Turbine Section\n")
+        display(SVG(m.fs.ngcc.st.write_pfd()))
+        print("\n\nSOEC Section\n")
+        display(SVG(m.fs.soec.write_pfd()))
+    
+    m.fs.ngcc.gt.write_pfd(fname="data_pfds/gt_soec_base.svg")
+    m.fs.ngcc.hrsg.write_pfd(fname="data_pfds/hrsg_soec_base.svg")
+    m.fs.ngcc.st.write_pfd(fname="data_pfds/st_soec_base.svg")
+    m.fs.soec.write_pfd(fname="data_pfds/soec_soec_base.svg")
+    
+    display_pfd()
+
+
+.. parsed-literal::
+
+    
+    
+    Gas Turbine Section
+    
+
+
+
+.. image:: output_9_1.svg
+
+
+.. parsed-literal::
+
+    
+    
+    HRSG Section
+    
+
+
+
+.. image:: output_9_3.svg
+
+
+.. parsed-literal::
+
+    
+    
+    Steam Turbine Section
+    
+
+
+
+.. image:: output_9_5.svg
+
+
+.. parsed-literal::
+
+    
+    
+    SOEC Section
+    
+
+
+
+.. image:: output_9_7.svg
+
+
+.. code:: ipython3
+
+    m.fs.ngcc.net_power_mw.display()
+    m.fs.ngcc.st.steam_turbine.throttle_valve[1].deltaP.display()
+
+
+.. parsed-literal::
+
+    net_power_mw : Size=1, Index=fs._time, Units=MW
+        Key : Lower : Value             : Upper : Fixed : Stale : Domain
+        0.0 :  None : 622.7120360634216 :  None : False : False :  Reals
+    deltaP : Size=1, Index=fs._time, ReferenceTo=fs.ngcc.st.steam_turbine.throttle_valve[1].control_volume.deltaP
+        Key : Lower : Value              : Upper : Fixed : Stale : Domain
+        0.0 :  None : -3551616.622353147 :  None : False : False :  Reals
+
+
+.. code:: ipython3
+
+    decision_vars = []
+    def make_decision_var(v, lb, ub):
+        v.unfix()
+        v.setlb(lb)
+        v.setub(ub)
+        decision_vars.append(v)
+    
+    # Add constraints for optimization
+    m.fs.ngcc.st.steam_turbine.throttle_valve[1].deltaP.setub(-1e5)
+    m.fs.soec.sweep_recycle_split.mixed_state[0].mole_frac_comp["O2"].setub(0.4)
+    m.fs.soec.sweep_recycle_split.mixed_state[0].temperature.setub(1030)
+    m.fs.soec.feed_recycle_split.mixed_state[0].temperature.setub(1030)
+    
+    @m.fs.Constraint(m.fs.time)
+    def makeup_water_constraint(b, t):
+        return m.fs.soec.water_pump.inlet.flow_mol[t] == m.fs.soec.feed_hx01.tube_inlet.flow_mol[t]
+    
+    # make sure the delta T on the hydrogen side is 40K or less (it's 
+    # squared so one constraint covers both positive and negative delta T)
+    @m.fs.Constraint(m.fs.time)
+    def delta_T_h_constraint(b, t):
+        return (
+            m.fs.soec.feed_heater.control_volume.properties_out[t].temperature -
+            m.fs.soec.feed_recycle_split.mixed_state[t].temperature
+        )**2/100 <= 16
+    
+    # make sure the delta T on the oxygen side is 40K or less
+    @m.fs.Constraint(m.fs.time)
+    def delta_T_o_constraint(b, t):
+        return (
+            m.fs.soec.sweep_heater.control_volume.properties_out[t].temperature -
+            m.fs.soec.sweep_recycle_split.mixed_state[t].temperature
+        )**2/100 <= 16
+    
+    # make sure the oxygen inlet and hydrogen outlet are 40K or less apart
+    @m.fs.Constraint(m.fs.time)
+    def delta_T_1_constraint(b, t):
+        return (
+            m.fs.soec.sweep_heater.control_volume.properties_out[t].temperature -
+            m.fs.soec.feed_recycle_split.mixed_state[t].temperature
+        )**2/100 <= 16
+    
+    # make sure the hydrogen inlet and oxygen outlet are 40K or less apart
+    @m.fs.Constraint(m.fs.time)
+    def delta_T_2_constraint(b, t):
+        return (
+            m.fs.soec.feed_heater.control_volume.properties_out[t].temperature -
+            m.fs.soec.sweep_recycle_split.mixed_state[t].temperature
+        )**2/100 <= 16
+    
+    m.fs.soec.water_pump.inlet.flow_mol.unfix()
+    make_decision_var(m.fs.soec.sweep_recycle_split.split_fraction[0, "out"], 0.50, 0.97)
+    make_decision_var(m.fs.soec.feed_recycle_split.split_fraction[0, "out"], 0.50, 0.98) 
+    make_decision_var(m.fs.soec.water_split.split_fraction[0, "outlet1"], 0.3, 0.7)
+    make_decision_var(m.fs.soec.sweep_compressor.inlet.flow_mol[0], 100, 8000)
+    make_decision_var(m.fs.soec.soec_module.potential_cell[0], 1.26, 1.38)
+    make_decision_var(m.fs.soec.feed_heater.control_volume.properties_out[0].temperature, 900, 1020)
+    make_decision_var(m.fs.soec.sweep_heater.control_volume.properties_out[0].temperature, 900, 1020)
+    
+    m.fs.obj = pyo.Objective(expr=(m.fs.ngcc.net_power[0] + m.fs.soec.total_electric_power[0])/1e6)
+
+.. code:: ipython3
+
+    res = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: nlp_scaling_method=user-scaling
+    tol=1e-06
+    linear_solver=ma57
+    ma57_pivtol=1e-05
+    ma57_pivtolmax=0.1
+    max_iter=200
+    option_file_name=/tmp/tmp4521uw3l_ipopt.opt
+    
+    Using option file "/tmp/tmp4521uw3l_ipopt.opt".
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma57.
+    
+    Number of nonzeros in equality constraint Jacobian...:    19368
+    Number of nonzeros in inequality constraint Jacobian.:        8
+    Number of nonzeros in Lagrangian Hessian.............:    14735
+    
+    Reallocating memory for MA57: lfact (347776)
+    Total number of variables............................:     4398
+                         variables with only lower bounds:      381
+                    variables with lower and upper bounds:     2369
+                         variables with only upper bounds:       71
+    Total number of equality constraints.................:     4391
+    Total number of inequality constraints...............:        4
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        4
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  6.5286053e+01 1.79e+02 4.79e+02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  6.5066939e+01 1.29e+02 3.60e+03  -1.0 7.21e+03    -  7.24e-01 2.80e-01h  1
+       2  6.3981667e+01 4.35e+00 6.68e+03  -1.0 2.14e+03    -  3.00e-01 9.90e-01h  1
+       3  6.3899876e+01 4.49e+00 4.64e+03  -1.0 1.87e+03    -  8.70e-01 2.92e-01h  1
+       4  6.3889634e+01 5.66e-01 2.75e+02  -1.0 4.48e+03    -  7.77e-01 9.41e-01h  1
+       5  6.3407224e+01 1.27e+00 2.80e+03  -1.0 1.51e+04    -  5.91e-01 5.00e-01f  2
+       6  6.1823933e+01 6.56e+00 1.19e+04  -1.0 3.47e+04    -  6.71e-01 5.00e-01f  2
+       7  6.0861476e+01 8.13e+00 6.65e+04  -1.0 7.94e+04    -  6.33e-01 1.25e-01h  4
+       8  5.9728351e+01 1.21e+01 1.39e+05  -1.0 1.33e+05    -  7.60e-01 8.29e-02f  4
+       9  5.9343446e+01 1.37e+01 2.11e+05  -1.0 3.19e+05    -  6.94e-01 1.92e-02h  6
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10  5.9242043e+01 1.39e+01 3.06e+05  -1.0 5.93e+05    -  9.42e-01 4.37e-03h  8
+      11  5.9158074e+01 1.43e+01 3.92e+05  -1.0 9.46e+05    -  9.90e-01 3.02e-03h  8
+      12  4.8072188e+01 6.31e+03 2.44e+05  -1.0 7.41e+05    -  9.99e-01 4.77e-01f  1
+      13  4.7986343e+01 1.27e+03 3.33e+04  -1.0 1.15e+05    -  9.80e-01 8.99e-01h  1
+      14  5.0323197e+01 1.32e+01 6.08e+04  -1.0 2.95e+04    -  7.64e-01 1.00e+00h  1
+      15  4.9713744e+01 5.69e-01 1.59e+00  -1.0 5.03e+03    -  1.00e+00 1.00e+00h  1
+      16  4.8089174e+01 1.75e+01 1.97e+05  -1.7 4.03e+04    -  4.95e-01 7.41e-01f  1
+      17  4.8460720e+01 3.38e-03 1.48e+00  -1.7 4.73e+02    -  1.00e+00 1.00e+00h  1
+      18  4.8209659e+01 4.27e-01 3.08e+04  -3.8 5.58e+03    -  9.77e-01 8.22e-01h  1
+      19  4.8257014e+01 3.84e-05 2.32e+03  -3.8 9.50e-01  -4.0 4.96e-01 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      20  4.8247833e+01 2.88e-03 1.76e+03  -3.8 1.27e+04    -  2.41e-01 1.88e-02f  1
+      21  4.8235907e+01 2.00e-03 1.62e+01  -3.8 5.89e+02    -  1.00e+00 3.13e-01f  1
+      22  4.8231343e+01 2.42e-03 1.72e+01  -3.8 4.05e+02    -  9.57e-01 3.98e-01f  1
+      23  4.8225824e+01 6.28e-04 2.31e-01  -3.8 1.84e+02    -  1.00e+00 1.00e+00h  1
+      24  4.8227461e+01 3.09e-06 5.26e-03  -3.8 7.01e+00    -  1.00e+00 1.00e+00h  1
+      25  4.8227539e+01 1.93e-07 3.30e-04  -3.8 5.16e-01    -  1.00e+00 1.00e+00h  1
+      26  4.8226355e+01 6.49e-06 8.58e-03  -5.7 2.20e+01    -  1.00e+00 1.00e+00f  1
+      27  4.8226547e+01 3.77e-07 6.41e-04  -5.7 8.95e-01    -  1.00e+00 1.00e+00h  1
+      28  4.8226557e+01 1.88e-08 3.18e-05  -5.7 4.04e-02    -  1.00e+00 1.00e+00h  1
+      29  4.8226558e+01 8.80e-10 1.49e-06  -5.7 1.86e-03    -  1.00e+00 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      30  4.8226544e+01 5.75e-08 1.01e-04  -7.0 2.59e-01    -  1.00e+00 1.00e+00h  1
+      31  4.8226546e+01 4.45e-09 7.56e-06  -7.0 1.06e-02    -  1.00e+00 1.00e+00h  1
+      32  4.8226546e+01 2.22e-10 3.76e-07  -7.0 4.78e-04    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 32
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   4.8226545902875309e+01    4.8226545902875309e+01
+    Dual infeasibility......:   3.7606556390108969e-07    2.4697932587969262e-09
+    Constraint violation....:   2.2178811565076728e-10    2.2178811565076728e-10
+    Complementarity.........:   9.0909096311388913e-08    9.0909096311388913e-08
+    Overall NLP error.......:   3.7606556390108969e-07    9.0909096311388913e-08
+    
+    
+    Number of objective function evaluations             = 78
+    Number of objective gradient evaluations             = 33
+    Number of equality constraint evaluations            = 78
+    Number of inequality constraint evaluations          = 78
+    Number of equality constraint Jacobian evaluations   = 33
+    Number of inequality constraint Jacobian evaluations = 33
+    Number of Lagrangian Hessian evaluations             = 32
+    Total CPU secs in IPOPT (w/o function evaluations)   =      2.619
+    Total CPU secs in NLP function evaluations           =     32.957
+    
+    EXIT: Optimal Solution Found.
+
+
+.. code:: ipython3
+
+    display_pfd()
+
+
+.. parsed-literal::
+
+    
+    
+    Gas Turbine Section
+    
+
+
+
+.. image:: output_13_1.svg
+
+
+.. parsed-literal::
+
+    
+    
+    HRSG Section
+    
+
+
+
+.. image:: output_13_3.svg
+
+
+.. parsed-literal::
+
+    
+    
+    Steam Turbine Section
+    
+
+
+
+.. image:: output_13_5.svg
+
+
+.. parsed-literal::
+
+    
+    
+    SOEC Section
+    
+
+
+
+.. image:: output_13_7.svg
+
+
+.. code:: ipython3
+
+    print(f"Overall net power: {-pyo.value(m.fs.obj)} MW")
+    for v in decision_vars:
+        print(f"{v} {pyo.value(v)}")
+
+
+.. parsed-literal::
+
+    Overall net power: -48.2265459028753 MW
+    fs.soec.sweep_recycle_split.split_fraction[0.0,out] 0.97
+    fs.soec.feed_recycle_split.split_fraction[0.0,out] 0.6142554936030024
+    fs.soec.water_split.split_fraction[0.0,outlet1] 0.5014039272374016
+    fs.soec.sweep_compressor.control_volume.properties_in[0.0].flow_mol 3863.3669749528385
+    fs.soec.soec_module.solid_oxide_cell.potential[0.0] 1.311689279712575
+    fs.soec.feed_heater.control_volume.properties_out[0.0].temperature 990.0000100581312
+    fs.soec.sweep_heater.control_volume.properties_out[0.0].temperature 990.00001283722
+
+
+.. code:: ipython3
+
+    run_samples = False
+    if run_samples:
+        import pandas as pd
+        gt_powers = np.linspace(480., 300., int((480. - 300.)/10.) + 1).tolist()
+        hp_powers = np.linspace(5, 2.5, int((5. - 2.5)/0.5) + 1).tolist()
+    
+        m.fs.ngcc.cap_specific_reboiler_duty.fix(2.4e6)
+        m.fs.ngcc.cap_fraction.fix(0.97)
+    
+        df = pd.DataFrame(columns=m.fs.tags_output.table_heading())
+        i = 1
+        for gp in gt_powers:
+            gpstr = str(math.ceil(gp))
+            m.fs.ngcc.gt.gt_power.fix(-gp*1e6)
+            save_to_last = f"data/ngcc_soec_{gpstr}_5000.json.gz"
+            for hp in hp_powers:
+                m.fs.soec.hydrogen_product_rate.fix(hp)
+                hpstr = str(math.ceil(hp*1000))
+                save_to = f"data/ngcc_soec_{gpstr}_{hpstr}.json.gz"
+                print(save_to)
+                if os.path.exists(save_to):
+                    iutil.from_json(m, fname=save_to, wts=iutil.StoreSpec(suffix=False))
+                else:
+                    res = solver.solve(m, tee=True)
+                    if not pyo.check_optimal_termination(res):
+                        break
+                    iutil.to_json(m, fname=save_to)
+                print(f"Overall net power: {-pyo.value(m.fs.obj)} MW")
+                for v in decision_vars:
+                    print(f"{v} {pyo.value(v)}")
+                m.fs.soec.water_pump.inlet.flow_mol.display()
+                df.loc[i] = m.fs.tags_output.table_row(numeric=True)
+                i += 1
+            # go to the closes part of the start of the next series.
+            iutil.from_json(m, fname=save_to_last, wts=iutil.StoreSpec(suffix=False))
+
