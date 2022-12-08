@@ -1720,9 +1720,10 @@ def write_pfd(m, fname=None):
         return s
 
 
-def get_model():
-    m = pyo.ConcreteModel()
-    m.fs = FlowsheetBlock(dynamic=False)
+def get_model(m):
+    if m is None:
+        m = pyo.ConcreteModel()
+        m.fs = FlowsheetBlock(dynamic=False)
     add_properties(m)
     add_models(m)
     add_arcs(m)
