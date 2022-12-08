@@ -41,7 +41,7 @@ The outputs used in the SOFC flowsheet include:
 
 __author__ = "Alex Noring"
 
-import os
+import json
 import numpy as np
 
 from pyomo.environ import (
@@ -73,24 +73,40 @@ def build_matrix(index1, index2, values):
 class SofcRomData(UnitModelBlockData):
 
     def build(self):
-        folder = "sofc_rom_parameters"
+        with open("sofc_rom_data.json", "r") as read_file:
+            data = json.load(read_file)
 
-        w1 = np.loadtxt(folder+'/rom_w1.dat')
-        w2 = np.loadtxt(folder+'/rom_w2.dat')
-        w3 = np.loadtxt(folder+'/rom_w3.dat')
-        w4 = np.loadtxt(folder+'/rom_w4.dat')
-        w5 = np.loadtxt(folder+'/rom_w5.dat')
+        w1 = np.array(data["w1"])
+        w2 = np.array(data["w2"])
+        w3 = np.array(data["w3"])
+        w4 = np.array(data["w4"])
+        w5 = np.array(data["w5"])
+        b1 = np.array(data["b1"])
+        b2 = np.array(data["b2"])
+        b3 = np.array(data["b3"])
+        b4 = np.array(data["b4"])
+        b5 = np.array(data["b5"])
+        meanX = np.array(data["meanX"])
+        meanY = np.array(data["meanY"])
+        stdX = np.array(data["stdX"])
+        stdY = np.array(data["stdY"])
 
-        b1 = np.loadtxt(folder+'/rom_b1.dat')
-        b2 = np.loadtxt(folder+'/rom_b2.dat')
-        b3 = np.loadtxt(folder+'/rom_b3.dat')
-        b4 = np.loadtxt(folder+'/rom_b4.dat')
-        b5 = np.loadtxt(folder+'/rom_b5.dat')
+        # w1 = np.loadtxt(folder+'/rom_w1.dat')
+        # w2 = np.loadtxt(folder+'/rom_w2.dat')
+        # w3 = np.loadtxt(folder+'/rom_w3.dat')
+        # w4 = np.loadtxt(folder+'/rom_w4.dat')
+        # w5 = np.loadtxt(folder+'/rom_w5.dat')
 
-        meanX = np.loadtxt(folder+'/rom_meanx.dat')
-        meanY = np.loadtxt(folder+'/rom_meany.dat')
-        stdX = np.loadtxt(folder+'/rom_stdx.dat')
-        stdY = np.loadtxt(folder+'/rom_stdy.dat')
+        # b1 = np.loadtxt(folder+'/rom_b1.dat')
+        # b2 = np.loadtxt(folder+'/rom_b2.dat')
+        # b3 = np.loadtxt(folder+'/rom_b3.dat')
+        # b4 = np.loadtxt(folder+'/rom_b4.dat')
+        # b5 = np.loadtxt(folder+'/rom_b5.dat')
+
+        # meanX = np.loadtxt(folder+'/rom_meanx.dat')
+        # meanY = np.loadtxt(folder+'/rom_meany.dat')
+        # stdX = np.loadtxt(folder+'/rom_stdx.dat')
+        # stdY = np.loadtxt(folder+'/rom_stdy.dat')
 
         all_weights = [w1, w2, w3, w4, w5]
         all_biases = [b1, b2, b3, b4, b5]
