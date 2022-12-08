@@ -421,16 +421,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             shell={"property_package": self.o2_side_prop_params},
             tube={"property_package": self.steam_prop_params},
         )
-        # self.water_heater01a = gum.Heater(
-        #     default = {"property_package":self.steam_prop_params})
-        # self.water_heater01b = gum.Heater(
-        #     default = {"property_package":self.steam_prop_params})
-        # self.water_heater01c = gum.Heater(
-        #     default = {"property_package":self.steam_prop_params})
-        # self.water_heater01d = gum.Heater(
-        #     default = {"property_package":self.steam_prop_params})
-        # self.water_heater02 = gum.Heater(
-        #     default = {"property_package":self.steam_prop_params})
         self.heat_pump_hot_terminus = gum.Heater(property_package=self.steam_prop_params)
 
         self.steam_mix = hum.HelmMixer(
@@ -804,7 +794,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             )
 
         # Evaporation via heat exchange with a hot gas
-        for hx in [self.water_evaporator01, self.water_evaporator05]:
+        for hx in [self.water_evaporator01, self.water_evaporator02, self.water_evaporator05]:
             hx.del_component("delta_temperature_in_equation")
             hx.del_component("delta_temperature_out_equation")
             hx.delta_temperature_in_equation = pyo.Constraint(self.time,
@@ -812,7 +802,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             hx.delta_temperature_out_equation = pyo.Constraint(self.time,
                                                                rule=rule_dT_out)
         # Evaporation via heat exchange with condensing water in H2 stream
-        for hx in [self.water_evaporator02, self.water_evaporator03, self.water_evaporator04]:
+        for hx in [self.water_evaporator03, self.water_evaporator04]:
             hx.del_component("delta_temperature_in_equation")
             hx.del_component("delta_temperature_out_equation")
 
@@ -1753,27 +1743,13 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         def dtemperature_dz_eqn(b, t, ix, iz):
             return b.dtemperature_dz[t, ix, iz] == finite_difference(b.temperature, t, ix, iz)
 
-        # soec.interconnect.dtemperature_dz = pyo.Var(
-        #     self.time,
-        #     soec.interconnect.ixnodes,
-        #     soec.interconnect.iznodes,
-        #     initialize=0,
-        #     units=pyo.units.K / pyo.units.m
-        # )
-
-        # @soec.interconnect.Constraint(self.time, soec.interconnect.ixnodes, soec.interconnect.iznodes)
-        # def dtemperature_dz_eqn(b, t, ix, iz):
-        #     return b.dtemperature_dz[t, ix, iz] == finite_difference(b.temperature, t, ix, iz)
-        #
         vars = [
             soec.dtemperature_z_dz,
             soec.fuel_electrode.dtemperature_dz,
-            # soec.interconnect.dtemperature_dz
         ]
         cons = [
             soec.dtemperature_z_dz_eqn,
             soec.fuel_electrode.dtemperature_dz_eqn,
-            # soec.interconnect.dtemperature_dz_eqn
         ]
         for var, con in zip(vars, cons):
             for idx, element in var.items():
@@ -1803,31 +1779,69 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
 
         delta_T_limit = 75
 
+        # @self.Constraint(self.time)
+        # def thermal_gradient_eqn_1(b, t):
+        #     return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]
+        #             - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]) <= delta_T_limit
+        #
+        # @self.Constraint(self.time)
+        # def thermal_gradient_eqn_2(b, t):
+        #     return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]
+        #             - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]) <= delta_T_limit
+        #
+        # @self.Constraint(self.time)
+        # def thermal_gradient_eqn_3(b, t):
+        #     return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]
+        #             - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]) >= -delta_T_limit
+        #
+        # @self.Constraint(self.time)
+        # def thermal_gradient_eqn_4(b, t):
+        #     return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]
+        #             - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]) >= -delta_T_limit
+
         @self.Constraint(self.time)
         def thermal_gradient_eqn_1(b, t):
-            return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]
-                    - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]) <= delta_T_limit
+            return (b.soec_module.fuel_outlet.temperature[t] - b.soec_module.fuel_inlet.temperature[t]) <= delta_T_limit
 
         @self.Constraint(self.time)
         def thermal_gradient_eqn_2(b, t):
-            return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]
-                    - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]) <= delta_T_limit
+            return (b.soec_module.fuel_outlet.temperature[t] - b.soec_module.fuel_inlet.temperature[t]) >= -delta_T_limit
 
         @self.Constraint(self.time)
         def thermal_gradient_eqn_3(b, t):
-            return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]
-                    - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]) >= -delta_T_limit
+            return (b.soec_module.oxygen_outlet.temperature[t] - b.soec_module.oxygen_inlet.temperature[t]) <= delta_T_limit
 
         @self.Constraint(self.time)
         def thermal_gradient_eqn_4(b, t):
-            return (b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 10]
-                    - b.soec_module.solid_oxide_cell.fuel_electrode.temperature[t, 1, 1]) >= -delta_T_limit
+            return (b.soec_module.oxygen_outlet.temperature[t] - b.soec_module.oxygen_inlet.temperature[t]) >= -delta_T_limit
+
+        @self.Constraint(self.time)
+        def thermal_gradient_eqn_5(b, t):
+            return (b.soec_module.fuel_outlet.temperature[t] - b.soec_module.oxygen_inlet.temperature[t]) <= delta_T_limit
+
+        @self.Constraint(self.time)
+        def thermal_gradient_eqn_6(b, t):
+            return (b.soec_module.fuel_outlet.temperature[t] - b.soec_module.oxygen_inlet.temperature[t]) >= -delta_T_limit
+
+        @self.Constraint(self.time)
+        def thermal_gradient_eqn_7(b, t):
+            return (b.soec_module.oxygen_outlet.temperature[t] - b.soec_module.fuel_inlet.temperature[t]) <= delta_T_limit
+
+        @self.Constraint(self.time)
+        def thermal_gradient_eqn_8(b, t):
+            return (b.soec_module.oxygen_outlet.temperature[t] - b.soec_module.fuel_inlet.temperature[t]) >= -delta_T_limit
+
 
         for con in [
             self.thermal_gradient_eqn_1,
             self.thermal_gradient_eqn_2,
             self.thermal_gradient_eqn_3,
-            self.thermal_gradient_eqn_4
+            self.thermal_gradient_eqn_4,
+            self.thermal_gradient_eqn_5,
+            self.thermal_gradient_eqn_6,
+            self.thermal_gradient_eqn_7,
+            self.thermal_gradient_eqn_8
+
         ]:
             iscale.constraint_scaling_transform(con[0], 1e-2)
 

@@ -580,7 +580,7 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
         """
         CE_index_units = getattr(pyunits, "MUSD_" + CE_index_year)
         # blk.max_heat_duty = pyo.Param(initialize=8e6, mutable=True, units=pyo.units.W)
-        blk.max_heat_duty = pyo.Var(initialize=9e6, bounds=(8e6, None), units=pyo.units.W)
+        blk.max_heat_duty = pyo.Var(initialize=9e6, bounds=(0, None), units=pyo.units.W)
         @blk.Expression()
         def total_plant_cost(b):
             U = 56 * pyo.units.W / pyo.units.m**2 / pyo.units.K
@@ -681,7 +681,7 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
         overestimating how much we need to pay for water so hopefully things will balance out
         """
         CE_index_units = getattr(pyunits, "MUSD_" + CE_index_year)
-        blk.max_heat_duty = pyo.Var(initialize=7e6, bounds=(1e6, None), units=pyo.units.W)
+        blk.max_heat_duty = pyo.Var(initialize=7e6, bounds=(0, None), units=pyo.units.W)
         @blk.Expression()
         def total_plant_cost(b):
             equipment_cost = (
