@@ -153,9 +153,10 @@ def get_solo_soec_capital_costing(fs, CE_index_year):
 
     flash_vessels = [
         fs.product_flash01,
-        fs.product_flash02,
+        # fs.product_flash02,
         fs.product_flash03,
         fs.product_flash04,
+        fs.product_flash05,
     ]
     for flash in flash_vessels:
         flash.diameter = pyo.Var(initialize=1, units=pyunits.m, bounds=(0, None))
@@ -719,9 +720,10 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
 def initialize_flowsheet_costing(fs):
     flash_vessels = [
         fs.product_flash01,
-        fs.product_flash02,
+        # fs.product_flash02,
         fs.product_flash03,
         fs.product_flash04,
+        fs.product_flash05
     ]
     for flash in flash_vessels:
         flash.diameter.value = pyo.value(
@@ -756,9 +758,10 @@ def scale_flowsheet_costing(fs):
 
     flash_vessels = [
         fs.product_flash01,
-        fs.product_flash02,
+        # fs.product_flash02,
         fs.product_flash03,
         fs.product_flash04,
+        fs.product_flash05,
     ]
     for flash in flash_vessels:
         ssf(flash.costing.base_cost_per_unit, 3e-5)

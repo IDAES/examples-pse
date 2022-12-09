@@ -17,11 +17,10 @@ import idaes.core.util.scaling as iscale
 import idaes.core.util.exceptions as idaes_except
 from idaes.models_extra.power_generation.properties.natural_gas_PR import get_prop, EosType
 from idaes.models_extra.power_generation.unit_models.soc_submodels import SolidOxideModuleSimple
-# from idaes.power_generation.unit_models.compressor_multistage import (
-#     CompressorMultistage)
 import idaes.models.unit_models as gum
 from idaes.models.unit_models.heat_exchanger import (
-    HeatExchangerFlowPattern
+    HeatExchangerFlowPattern,
+    delta_temperature_lmtd_smooth_callback
 )
 import idaes.models_extra.power_generation.unit_models.helm as hum
 from idaes.models.properties import iapws95
@@ -327,14 +326,16 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             hot_side_name="shell",
             cold_side_name="tube",
             shell={"property_package": self.o2_side_prop_params},
-            tube={"property_package": self.o2_side_prop_params}
+            tube={"property_package": self.o2_side_prop_params},
+            # delta_temperature_callback=delta_temperature_lmtd_smooth_callback
         )
 
         self.sweep_medium_exchanger = gum.HeatExchanger(
             hot_side_name="shell",
             cold_side_name="tube",
             shell={"property_package": self.o2_side_prop_params},
-            tube={"property_package": self.o2_side_prop_params}
+            tube={"property_package": self.o2_side_prop_params},
+            # delta_temperature_callback=delta_temperature_lmtd_smooth_callback
         )
 
         self.feed_hot_exchanger = gum.HeatExchanger(
@@ -342,6 +343,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             cold_side_name="tube",
             shell={"property_package": self.h2_side_prop_params},
             tube={"property_package": self.steam_prop_params},
+            # delta_temperature_callback=delta_temperature_lmtd_smooth_callback
         )
 
         self.feed_translator = gum.Translator(
@@ -355,7 +357,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.product_flash01 = gum.Flash(property_package=self.h2_condensing_prop_params)
         # Use vapor-only property package for compressors to prevent spurious liquid terms from popping up
         self.cmp01 = gum.Compressor(property_package=self.h2_side_prop_params)
-        self.product_flash02 = gum.Flash(property_package=self.h2_condensing_prop_params)
+        # self.product_flash02 = gum.Flash(property_package=self.h2_condensing_prop_params)
         self.cmp02 = gum.Compressor(property_package=self.h2_side_prop_params)
         self.product_flash03 = gum.Flash(property_package=self.h2_condensing_prop_params)
         self.cmp03 = gum.Compressor(property_package=self.h2_side_prop_params)
@@ -378,6 +380,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
+            # delta_temperature_callback=delta_temperature_lmtd_smooth_callback
         )
         # self.water_preheater = gum.Heater(
         #     default={"property_package":self.steam_prop_params}
@@ -396,30 +399,35 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
+            # delta_temperature_callback=delta_temperature_lmtd_smooth_callback
         )
         self.water_evaporator02 = gum.HeatExchanger(
             hot_side_name="shell",
             cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
+            # delta_temperature_callback=delta_temperature_lmtd_smooth_callback
         )
         self.water_evaporator03 = gum.HeatExchanger(
             hot_side_name="shell",
             cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
+            # delta_temperature_callback=delta_temperature_lmtd_smooth_callback
         )
         self.water_evaporator04 = gum.HeatExchanger(
             hot_side_name="shell",
             cold_side_name="tube",
             shell={"property_package": self.h2_condensing_prop_params},
             tube={"property_package": self.steam_prop_params},
+            # delta_temperature_callback=delta_temperature_lmtd_smooth_callback
         )
         self.water_evaporator05 = gum.HeatExchanger(
             hot_side_name="shell",
             cold_side_name="tube",
             shell={"property_package": self.o2_side_prop_params},
             tube={"property_package": self.steam_prop_params},
+            # delta_temperature_callback=delta_temperature_lmtd_smooth_callback
         )
         self.heat_pump_hot_terminus = gum.Heater(property_package=self.steam_prop_params)
 
@@ -567,14 +575,14 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.hstrm09 = Arc(
             doc="",
             source=self.water_evaporator02.shell_outlet,
-            destination=self.product_flash02.inlet,
-            # destination=self.cmp02.inlet,
-        )
-        self.hstrm10 = Arc(
-            doc="",
-            source=self.product_flash02.vap_outlet,
+            # destination=self.product_flash02.inlet,
             destination=self.cmp02.inlet,
         )
+        # self.hstrm10 = Arc(
+        #     doc="",
+        #     source=self.product_flash02.vap_outlet,
+        #     destination=self.cmp02.inlet,
+        # )
         self.hstrm11 = Arc(
             doc="",
             source=self.cmp02.outlet,
@@ -584,6 +592,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             doc="",
             source=self.water_evaporator03.shell_outlet,
             destination=self.product_flash03.inlet,
+            # destination=self.cmp03.inlet,
         )
         self.hstrm13 = Arc(
             doc="",
@@ -1019,7 +1028,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             ssf(self.cmp04.control_volume.properties_out[t].enth_mol_phase["Vap"], 1e-4)
 
         for cond in [self.product_flash01,
-                     self.product_flash02,
+                     # self.product_flash02,
                      self.product_flash03,
                      self.product_flash04,
                      self.product_flash05]:
@@ -1161,8 +1170,8 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             self.product_flash05.control_volume.properties_out[t] \
                 .temperature.fix(273.15 + 15)
         for i in range(1, 6):
-            # if i == 2:
-            #     continue
+            if i == 2: # or i == 3:
+                continue
             flash = getattr(self, f"product_flash0{i}")
             flash.deltaP.fix(0)
             flash.heat_duty.fix(0)
@@ -1316,8 +1325,8 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.water_evaporator02.shell.properties_in.release_state(shell_flags)
 
         propagate_state(self.hstrm09)
-        self.product_flash02.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
-        propagate_state(self.hstrm10)
+        # self.product_flash02.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
+        # propagate_state(self.hstrm10)
         self.cmp02.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         propagate_state(self.hstrm11)
 
