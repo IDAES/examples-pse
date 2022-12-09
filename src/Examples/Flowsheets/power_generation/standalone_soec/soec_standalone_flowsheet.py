@@ -173,7 +173,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.h2_pure_prop_params.set_default_scaling("mole_frac_phase_comp", 1, index=("Vap", "H2"))
 
     def _define_cell_params(self):
-        self.soec_module.number_cells.fix(4e5)
+        self.soec_module.number_cells.fix(1087915)
         soec = self.soec_module.solid_oxide_cell
 
         soec.fuel_channel.length_x.fix(873e-6)
@@ -513,11 +513,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             source=self.sweep_hot_exchanger.shell_outlet,
             destination=self.water_evaporator05.shell_inlet,
         )
-        # self.ostrm05 = Arc(
-        #     doc="Medium temp heat recovery to evaporator",
-        #     source=self.feed_medium_exchanger.shell_outlet,
-        #     destination=self.water_evaporator05.shell_inlet,
-        # )
         self.ostrm06 = Arc(
             doc="Evaporator to air preheater",
             source=self.water_evaporator05.shell_outlet,
@@ -880,18 +875,6 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             return 0 == (b.heat_pump_hot_terminus.heat_duty[t]
                          + b.heat_pump.heat_out[t])
 
-        # @self.cmp04.Expression(self.time)
-        # def surrogate_work_mechanical(b,t):
-        #     return ((b.coolers[12].control_volume.properties_out[t].gibbs_mol
-        #             - b.compressors[1].control_volume.properties_in[t].gibbs_mol)
-        #             / 0.85 * b.outlet.flow_mol[t])
-        # @self.cmp04.Expression(self.time)
-        # def surrogate_heat_duty(b,t):
-        #     return ((b.coolers[12].control_volume.properties_out[t].entr_mol
-        #             - b.compressors[1].control_volume.properties_in[t].entr_mol)
-        #              * b.outlet.temperature[t] * b.outlet.flow_mol[t]
-        #              - 0.15*b.surrogate_work_mechanical[t])
-
         self.cmp04.del_component(self.cmp04.work_mechanical)
 
         self.cmp04.work_mechanical = pyo.Var(self.time, units=pyo.units.W, initialize=1e6, bounds=(0, None))
@@ -989,16 +972,9 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
                     for p in ["Liq", "Vap"]:
                         ssf(blk[t].enth_mol_phase[p], 1e-4)
                         ssf(blk[t].enth_mol_phase[p], 1e-4)
-                # TODO rewrite in form compatable with create-on-demand property
                 if hasattr(heater.control_volume, "sat_vapor_eqn"):
                     cst(heater.control_volume.sat_vapor_eqn[t], 1e-4)
 
-        # scale_indexed_constraint(self.product_condenser_eqn,1e-6)
-        # scale_indexed_constraint(self.product_evaporator1_eqn,1e-6)
-        # scale_indexed_constraint(self.product_evaporator2_eqn,1e-6)
-        # scale_indexed_constraint(self.product_evaporator3_eqn,1e-6)
-        # scale_indexed_constraint(self.product_evaporator4_eqn,1e-6)
-        # scale_indexed_constraint(self.oxygen_evaporator_eqn,1e-6)
 
         for hx in [self.feed_hot_exchanger,
                    # self.feed_medium_exchanger,
@@ -1036,7 +1012,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
                 for blk in [cmp.control_volume.properties_in,
                             cmp.control_volume.properties_out,
                             cmp.properties_isentropic]:
-                    for p in ["Vap"]: #"Liq"]:
+                    for p in ["Vap"]:
                         ssf(blk[t].enth_mol_phase[p], 1e-4)
         for t in self.time:
             ssf(self.cmp04.control_volume.properties_in[t].enth_mol_phase["Vap"], 1e-4)
@@ -1098,23 +1074,18 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
 
     def _set_initial_inputs(self):
         self.feed_hot_exchanger.tube.properties_in[0].pressure.fix(1.2e5)
-        self.feed_hot_exchanger.tube.properties_in[0].flow_mol.fix(1320)
+        self.feed_hot_exchanger.tube.properties_in[0].flow_mol.fix(3100)
         self.feed_hot_exchanger.tube.properties_in[0].enth_mol.fix(
-            iapws95.htpx(T=(273.15 + 105) * pyo.units.K, P=1.2e5 * pyo.units.Pa))
-
-        # self.water_pump.control_volume.properties_in[0].pressure.fix(101000)
-        # self.water_pump.control_volume.properties_in[0].flow_mol.fix(1400)
-        # self.water_pump.control_volume.properties_in[0].enth_mol.fix(
-        #     iapws95.htpx(T=288.15*pyo.units.K, P=101000*pyo.units.Pa))
+            iapws95.htpx(T=489.18 * pyo.units.K, P=1.2e5 * pyo.units.Pa))
 
         self._set_gas_port(
-            self.sweep_blower.inlet, F=2250, T=288.15, P=101000, y=self.sweep_comp)
+            self.sweep_blower.inlet, F=5653, T=288.15, P=101000, y=self.sweep_comp)
         self._set_gas_port(
-            self.feed_recycle_mix.feed, F=1325, T=897, P=1.2e5, y=self.feed_comp)
+            self.feed_recycle_mix.feed, F=3100, T=837.80, P=1.2e5, y=self.feed_comp)
         self._set_gas_port(
-            self.feed_recycle_mix.recycle, F=1325, T=1020, P=1.2e5, y={"H2": 0.7, "H2O": 0.3}, fix=False)
+            self.feed_recycle_mix.recycle, F=3100, T=962.17, P=1.2e5, y={"H2": 0.8, "H2O": 0.2}, fix=False)
         self._set_gas_port(
-            self.sweep_recycle_mix.feed, F=2250, T=990, P=1.2e5, y=self.sweep_comp)
+            self.sweep_recycle_mix.feed, F=5653, T=887.23, P=1.2e5, y=self.sweep_comp)
         recycle_comp = {
             "O2": 0.35,
             "H2O": (1 - 0.35) / (1 - 0.2074) * 0.0099,
@@ -1123,55 +1094,23 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             "Ar": (1 - 0.35) / (1 - 0.2074) * 0.0092,
         }
         self._set_gas_port(
-            self.sweep_recycle_mix.recycle, F=2750, T=1020, P=1.2e5, y=recycle_comp, fix=False)
+            self.sweep_recycle_mix.recycle, F=6893, T=983.84, P=1.2e5, y=recycle_comp, fix=False)
 
-        #self.soec_module.potential_cell.fix(1.2877)
-        self.soec_module.potential_cell.fix(1.27)
-        # SOEC outlet temperatures
-        # self.soec.fuel_outlet.temperature.fix(1023)
-        # self.soec.oxygen_outlet.temperature.fix(1023)
-        # SOEC water utilization
-        # self.soec_single_pass_water_conversion.fix(0.63)
+        self.soec_module.potential_cell.fix(1.334)
         # Recycle splits
         self.sweep_recycle_split.split_fraction[:, "out"].fix(0.50)
         self.feed_recycle_split.split_fraction[:, "out"].fix(0.50)
-        # self.soec.oxygen_side_inlet.mole_frac_comp[:, "H2"].fix(0.23)
-        # self.soec.hydrogen_side_inlet.mole_frac_comp[:, "H2"].fix(0.01)
         self.sweep_blower.efficiency_isentropic.fix(0.8)
         self.sweep_blower.control_volume.properties_out[:].pressure.fix(1.2e5)
-        # self.sweep_hx.area.fix(2000)
         self.sweep_hot_exchanger.overall_heat_transfer_coefficient.fix(100)
-        self.sweep_hot_exchanger.area.fix(6000)
+        self.sweep_hot_exchanger.area.fix(5522)
         self.sweep_medium_exchanger.overall_heat_transfer_coefficient.fix(100)
-        self.sweep_medium_exchanger.area.fix(800)
-        # self.sweep_turbine.efficiency_isentropic.fix(0.85)
-        # self.sweep_turbine.control_volume.properties_out[:].temperature.fix(600)
-        # self.feed_hx01.area.fix(4000)
+        self.sweep_medium_exchanger.area.fix(8511)
         self.feed_hot_exchanger.overall_heat_transfer_coefficient.fix(100)
-        self.feed_hot_exchanger.area.fix(3750)
-        # self.feed_medium_exchanger.overall_heat_transfer_coefficient.fix(100)
-        # self.feed_medium_exchanger.area.fix(1200)
-        # self.feed_hx02.area.fix(1200)
-        self.feed_heater.control_volume.properties_out[:].temperature.fix(1020)
-        self.sweep_heater.control_volume.properties_out[:].temperature.fix(1020)
-        # self.water_split.split_fraction[:, "outlet1"].fix(0.3)
-        # self.water_split.split_fraction[:, "outlet2"].fix(0.25)
-        # self.water_pump.control_volume.properties_out[:].pressure.fix(1.013e5)
-        # self.water_pump.efficiency_isentropic[:].fix(0.8)
-        # self.water_economizer_product.area.fix(650)
-        # self.water_economizer_product.overall_heat_transfer_coefficient.fix(100)
-        # self.valve_water_evaporator_product.deltaP.fix(-30000)
-        # self.water_evaporator_product.area.fix(4000)
-        # self.water_evaporator_product.overall_heat_transfer_coefficient.fix(1600)
-        # self.water_superheater_product.area.fix(500)
-        # self.water_superheater_product.overall_heat_transfer_coefficient.fix(100)
-        # self.water_economizer_sweep.area.fix(1000)
-        # self.water_economizer_sweep.overall_heat_transfer_coefficient.fix(100)
-        # self.valve_water_evaporator_sweep.deltaP.fix(-30000)
-        # self.water_heater02.area.fix(2400)
-        # self.water_heater02.overall_heat_transfer_coefficient.fix(150)
-        # self.water_superheater_sweep.area.fix(200)
-        # self.water_superheater_sweep.overall_heat_transfer_coefficient.fix(100)
+        self.feed_hot_exchanger.area.fix(4640)
+        self.feed_heater.control_volume.properties_out[:].temperature.fix(929.13)
+        self.sweep_heater.control_volume.properties_out[:].temperature.fix(945.41)
+
 
         # self.h2_precooler.control_volume.properties_out[:].temperature.fix(300)
         self.cmp01.ratioP.fix(3)
@@ -1191,39 +1130,29 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
 
         self.heat_pump.coefficient_of_performance.fix(3.5)
 
-        # self.ic03.control_volume.properties_out[:].temperature.fix(300)
-        # self.cmp04.ratioP.fix(1.94)
-        # self.cmp04.efficiency_isentropic.fix(0.85)
-        # self.ic04.control_volume.properties_out[:].temperature.fix(300)
-        # self.cmp05.ratioP.fix(1.94)
-        # self.cmp05.efficiency_isentropic.fix(0.85)
-        # self.ic05.control_volume.properties_out[:].temperature.fix(300)
-        # self.cmp06.ratioP.fix(1.94)
-        # self.cmp06.efficiency_isentropic.fix(0.85)
-
         self.water_preheater.tube_outlet.enth_mol.fix(
-            iapws95.htpx(T=(273.15 + 70) * pyo.units.K, P=1.2e5 * pyo.units.Pa)
+            iapws95.htpx(T=306.3 * pyo.units.K, P=1.2e5 * pyo.units.Pa)
         )
         self.water_preheater.overall_heat_transfer_coefficient.fix(200)
 
         self.water_evaporator01.overall_heat_transfer_coefficient.fix(100)
         self.water_evaporator05.overall_heat_transfer_coefficient.fix(100)
-        self.water_evaporator01.shell_outlet.temperature.fix(273.15 + 80)
-        self.water_evaporator05.shell_outlet.temperature.fix(273.15 + 80)
+        self.water_evaporator01.shell_outlet.temperature.fix(349.84)
+        self.water_evaporator05.shell_outlet.temperature.fix(349.84)
 
-        self.water_evaporator02.shell_outlet.temperature.fix(273.15 + 80)
-        self.water_evaporator03.shell_outlet.temperature.fix(273.15 + 80)
-        self.water_evaporator04.shell_outlet.temperature.fix(273.15 + 80)
+        self.water_evaporator02.shell_outlet.temperature.fix(349.84)
+        self.water_evaporator03.shell_outlet.temperature.fix(349.84)
+        self.water_evaporator04.shell_outlet.temperature.fix(349.84)
         self.water_evaporator02.overall_heat_transfer_coefficient.fix(100)
         self.water_evaporator03.overall_heat_transfer_coefficient.fix(200)
         self.water_evaporator04.overall_heat_transfer_coefficient.fix(200)
 
-        self.water_preheater.area.fix(1200)
-        self.water_evaporator01.area.fix(1000)
-        self.water_evaporator02.area.fix(800)
-        self.water_evaporator03.area.fix(2000)
-        self.water_evaporator04.area.fix(1200)
-        self.water_evaporator05.area.fix(1800)
+        self.water_preheater.area.fix(1746)
+        self.water_evaporator01.area.fix(2018)
+        self.water_evaporator02.area.fix(1632)
+        self.water_evaporator03.area.fix(1513)
+        self.water_evaporator04.area.fix(5245)
+        self.water_evaporator05.area.fix(5267)
 
         # self.water_preheater.overall_heat_transfer_coefficient.fix(150)
         # self.water_preheater.area.fix(600)
@@ -1245,7 +1174,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         water_inlet.pressure.fix(1.013e5)
         water_inlet.enth_mol.fix(
             iapws95.htpx(T=(273.15 + 15) * pyo.units.K, P=1.013e5 * pyo.units.Pa))
-        water_inlet.flow_mol.fix(1325)
+        water_inlet.flow_mol.fix(3100)
 
         self.water_valve.outlet.pressure.fix(0.4e5)
 
@@ -1259,6 +1188,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
             self.heat_source.inlet.flow_mol[t].value = 10000
         self.heat_source.outlet.enth_mol.fix(
             iapws95.htpx(T=(273.15 + 5) * pyo.units.K, P=1.013e5 * pyo.units.Pa))
+        set_indexed_variable_bounds(self.heat_source.inlet.flow_mol[0], (0, None))
 
     def initialize_build(
             self,
@@ -1278,11 +1208,14 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
                 )
                 return
         solver_obj = get_solver(solver, optarg)
+        init_log = idaeslog.getInitLogger(self.name, outlvl)
+        solve_log = idaeslog.getSolveLogger(self.name, outlvl)
 
         def safe_solve(blk):
             assert degrees_of_freedom(blk) == 0
-            results = solver_obj.solve(blk)
-            pyo.check_optimal_termination(results)
+            with idaeslog.solver_log(solve_log, idaeslog.DEBUG) as slc:
+                results = solver_obj.solve(blk, tee=slc.tee)
+            pyo.assert_optimal_termination(results)
 
         self.feed_recycle_mix.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         self.sweep_recycle_mix.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
@@ -1296,8 +1229,8 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
 
         self.soec_module.initialize(
             outlvl=outlvl,
-            current_density_guess=-7000,
-            temperature_guess=1020.15
+            current_density_guess=-8000,
+            temperature_guess=960,
         )
 
         propagate_state(self.ostrm01)
@@ -1313,7 +1246,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.sweep_blower.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         propagate_state(self.sweep01)
 
-        self.sweep_medium_exchanger.tube_outlet.temperature.fix(273.15 + 60)
+        self.sweep_medium_exchanger.tube_outlet.temperature.fix(360.08)
         tube_flags = self.sweep_medium_exchanger.tube.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         safe_solve(self.sweep_medium_exchanger.tube)
         self.sweep_medium_exchanger.tube_outlet.temperature.unfix()
@@ -1321,41 +1254,37 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
 
         propagate_state(self.sweep02)
 
-        self.sweep_hot_exchanger.initialize(duty=(4.6e+07, pyo.units.W))
+        self.sweep_hot_exchanger.initialize(duty=(80555059, pyo.units.W))
 
         propagate_state(self.sweep03)
         propagate_state(self.ostrm04)
 
-        # self.feed_medium_exchanger.initialize(duty=(4.6e+06,pyo.units.W))
-
-        # propagate_state(self.feed01)
         self.feed_hot_exchanger.initialize(outlvl=outlvl, solver=solver, optarg=optarg,
-                                           duty=(2.18e+07, pyo.units.W))
+                                           duty=(40310061, pyo.units.W))
 
         propagate_state(self.feed02a)
         self.feed_translator.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         propagate_state(self.feed02b)
 
-        # propagate_state(self.ostrm05)
         shell_flags = self.water_evaporator05.shell.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         safe_solve(self.water_evaporator05.shell)
         self.water_evaporator05.shell.properties_in.release_state(shell_flags)
 
         propagate_state(self.ostrm06)
         self.sweep_medium_exchanger.initialize(outlvl=outlvl, solver=solver, optarg=optarg,
-                                               duty=(1.8e+06, pyo.units.W))
+                                               duty=(8917353, pyo.units.W))
         propagate_state(self.sweep02)
 
         propagate_state(self.hstrm04)
 
         self.water_preheater.tube_outlet.enth_mol.fix(
-            iapws95.htpx(T=(273.15 + 70) * pyo.units.K, P=1.2e5 * pyo.units.Pa)
+            iapws95.htpx(T=306.30 * pyo.units.K, P=1.2e5 * pyo.units.Pa)
         )
-        self.water_evaporator01.shell_outlet.temperature.fix(273.15 + 80)
-        self.water_evaporator02.shell_outlet.temperature.fix(273.15 + 80)
-        self.water_evaporator03.shell_outlet.temperature.fix(273.15 + 80)
-        self.water_evaporator04.shell_outlet.temperature.fix(273.15 + 80)
-        self.water_evaporator05.shell_outlet.temperature.fix(273.15 + 80)
+        self.water_evaporator01.shell_outlet.temperature.fix(349.84)
+        self.water_evaporator02.shell_outlet.temperature.fix(349.84)
+        self.water_evaporator03.shell_outlet.temperature.fix(349.84)
+        self.water_evaporator04.shell_outlet.temperature.fix(349.84)
+        self.water_evaporator05.shell_outlet.temperature.fix(349.84)
 
         for hx in [self.water_evaporator01, self.water_evaporator02,
                    self.water_evaporator03, self.water_evaporator04,
@@ -1419,11 +1348,11 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         safe_solve(self.water_valve)
         self.water_valve.inlet.unfix()
         propagate_state(self.water02)
-        self.water_split.split_fraction[:, "outlet1"].fix(0.1)
-        self.water_split.split_fraction[:, "outlet2"].fix(0.06)
-        self.water_split.split_fraction[:, "outlet3"].fix(0.18)
-        self.water_split.split_fraction[:, "outlet4"].fix(0.12)
-        self.water_split.split_fraction[:, "outlet5"].fix(0.19)
+        self.water_split.split_fraction[:, "outlet1"].fix(0.0890)
+        self.water_split.split_fraction[:, "outlet2"].fix(0.1035)
+        self.water_split.split_fraction[:, "outlet3"].fix(0.0871)
+        self.water_split.split_fraction[:, "outlet4"].fix(0.2735)
+        self.water_split.split_fraction[:, "outlet5"].fix(0.2971)
 
         self.water_split.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         self.water_split.split_fraction.unfix()
@@ -1457,7 +1386,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
         self.sweep_recycle_mix.feed.unfix()
         self.sweep_recycle_mix.recycle.unfix()
 
-        self.heat_source.inlet.flow_mol.fix(4000)
+        self.heat_source.inlet.flow_mol.fix(10)
         self.heat_source.initialize(outlvl=outlvl, solver=solver, optarg=optarg)
         safe_solve(self.heat_source)
         self.heat_source.inlet.flow_mol.unfix()

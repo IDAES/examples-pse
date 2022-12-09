@@ -580,12 +580,12 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
         """
         CE_index_units = getattr(pyunits, "MUSD_" + CE_index_year)
         # blk.max_heat_duty = pyo.Param(initialize=8e6, mutable=True, units=pyo.units.W)
-        blk.max_heat_duty = pyo.Var(initialize=9e6, bounds=(0, None), units=pyo.units.W)
+        blk.unit_model.max_heat_duty = pyo.Var(initialize=9e6, bounds=(0, None), units=pyo.units.W)
         @blk.Expression()
         def total_plant_cost(b):
             U = 56 * pyo.units.W / pyo.units.m**2 / pyo.units.K
             DT = 20 * pyo.units.K
-            heat_duty = b.max_heat_duty
+            heat_duty = b.unit_model.max_heat_duty
             area = heat_duty / U / DT
             # Add factor of two to pathways cost to account for corrosion-resistant materials for trim heaters
             return pyunits.convert(
@@ -594,18 +594,18 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
                 * pyo.units.convert(area, pyo.units.ft**2),
                 to_units=CE_index_units,
             )
-        @blk.Constraint(blk.flowsheet().time)
+        @blk.unit_model.Constraint(blk.flowsheet().time)
         def max_heat_duty_ineq(b, t):
-            return b.unit_model.heat_duty[t] <= b.max_heat_duty
-        @blk.Constraint(blk.flowsheet().time)
+            return b.heat_duty[t] <= b.max_heat_duty
+        @blk.unit_model.Constraint(blk.flowsheet().time)
         def max_heat_duty_eqn(b, t):
-            return b.unit_model.heat_duty[t] == b.max_heat_duty
+            return b.heat_duty[t] == b.max_heat_duty
 
-        iscale.set_scaling_factor(blk.max_heat_duty, 1e-6)
+        iscale.set_scaling_factor(blk.unit_model.max_heat_duty, 1e-6)
         for t in blk.flowsheet().time:
-            iscale.constraint_scaling_transform(blk.max_heat_duty_ineq[t], 1e-6)
-            iscale.constraint_scaling_transform(blk.max_heat_duty_eqn[t], 1e-6)
-        blk.max_heat_duty_ineq.deactivate()
+            iscale.constraint_scaling_transform(blk.unit_model.max_heat_duty_ineq[t], 1e-6)
+            iscale.constraint_scaling_transform(blk.unit_model.max_heat_duty_eqn[t], 1e-6)
+        blk.unit_model.max_heat_duty_ineq.deactivate()
 
     def cost_reciprocating_piston_hydrogen_compressor(blk, CE_index_year="2018"):
         # TODO determine if intercooling is taken into account
@@ -681,7 +681,7 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
         overestimating how much we need to pay for water so hopefully things will balance out
         """
         CE_index_units = getattr(pyunits, "MUSD_" + CE_index_year)
-        blk.max_heat_duty = pyo.Var(initialize=7e6, bounds=(0, None), units=pyo.units.W)
+        blk.unit_model.max_heat_duty = pyo.Var(initialize=7e6, bounds=(0, None), units=pyo.units.W)
         @blk.Expression()
         def total_plant_cost(b):
             equipment_cost = (
@@ -695,25 +695,25 @@ class SOFCPathwaysCostingData(FlowsheetCostingBlockData):
             )  # 25% installation labor, 20% engineering fee, 15% + 15% process and product contingencies
             ref_param = 10275e3 * pyo.units.BTU / pyo.units.hr
             process_param = pyo.units.convert(
-                b.max_heat_duty, pyo.units.BTU / pyo.units.hr
+                b.unit_model.max_heat_duty, pyo.units.BTU / pyo.units.hr
             )
             alpha = 1
             return pyunits.convert(
                 ref_cost * (process_param / ref_param) ** alpha,
                 to_units=CE_index_units
             )
-        @blk.Constraint(blk.flowsheet().time)
+        @blk.unit_model.Constraint(blk.flowsheet().time)
         def max_heat_duty_ineq(b, t):
-            return -b.unit_model.heat_out[t] <= b.max_heat_duty
-        @blk.Constraint(blk.flowsheet().time)
+            return -b.heat_out[t] <= b.max_heat_duty
+        @blk.unit_model.Constraint(blk.flowsheet().time)
         def max_heat_duty_eqn(b, t):
-            return -b.unit_model.heat_out[t] == b.max_heat_duty
+            return -b.heat_out[t] == b.max_heat_duty
 
-        iscale.set_scaling_factor(blk.max_heat_duty, 1e-6)
+        iscale.set_scaling_factor(blk.unit_model.max_heat_duty, 1e-6)
         for t in blk.flowsheet().time:
-            iscale.constraint_scaling_transform(blk.max_heat_duty_ineq[t], 1e-6)
-            iscale.constraint_scaling_transform(blk.max_heat_duty_eqn[t], 1e-6)
-        blk.max_heat_duty_ineq.deactivate()
+            iscale.constraint_scaling_transform(blk.unit_model.max_heat_duty_ineq[t], 1e-6)
+            iscale.constraint_scaling_transform(blk.unit_model.max_heat_duty_eqn[t], 1e-6)
+        blk.unit_model.max_heat_duty_ineq.deactivate()
 
 
 def initialize_flowsheet_costing(fs):
@@ -733,9 +733,9 @@ def initialize_flowsheet_costing(fs):
     QGESSCostingData.costing_initialization(fs.costing)
 
     fs.max_raw_water_withdrawal.set_value(pyo.value(fs.raw_water_withdrawal[0]))
-    fs.feed_heater.costing.max_heat_duty.set_value(pyo.value(fs.feed_heater.heat_duty[0]))
-    fs.sweep_heater.costing.max_heat_duty.set_value(pyo.value(fs.sweep_heater.heat_duty[0]))
-    fs.heat_pump.costing.max_heat_duty.set_value(pyo.value(-fs.heat_pump.heat_out[0]))
+    fs.feed_heater.max_heat_duty.set_value(pyo.value(fs.feed_heater.heat_duty[0]))
+    fs.sweep_heater.max_heat_duty.set_value(pyo.value(fs.sweep_heater.heat_duty[0]))
+    fs.heat_pump.max_heat_duty.set_value(pyo.value(-fs.heat_pump.heat_out[0]))
 
     calculate_variable_from_constraint(fs.costing.total_TPC, fs.costing.total_TPC_eqn)
 
