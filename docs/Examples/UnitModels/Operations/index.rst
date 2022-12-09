@@ -11,5 +11,7 @@ Descriptive examples showing how to use some common IDAES unit models.
     Heat Exchanger NTU <heat_exchanger_NTU>
     Mixer <mixer_doc>
     Pump <pump_doc>
-    Turbine <turbine_doc>
     Skeleton Unit <skeleton_unit_doc>
+    StateJunction <statejunction_doc>
+    Turbine <turbine_doc>
+    Valve <valve_doc>
