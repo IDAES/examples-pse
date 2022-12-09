@@ -11,4 +11,6 @@ Descriptive examples showing how to use some common IDAES unit models.
     Product <product_doc>
     Pump <pump_doc>
     Skeleton Unit <skeleton_unit_doc>
+    StateJunction <statejunction_doc>
     Translator <translator_doc>
+    Valve <valve_doc>
