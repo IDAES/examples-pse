@@ -41,9 +41,9 @@ from idaes.core.util.initialization import propagate_state
 from compressed_gas_tank import CompressedGasTank
 import idaes.logger as idaeslog
 import sofc as SOFC
-from sofc_costing import get_capital_cost, get_fixed_costs, get_variable_costs
+from sofc_costing import get_variable_costs
 
-def build_model(m):
+def _build_caes_model(m):
     
     # create unti model instances
     m.fs.air_compressor = PressureChanger(
@@ -76,7 +76,7 @@ def build_model(m):
     )
     TransformationFactory("network.expand_arcs").apply_to(m)
 
-def set_inputs(m):
+def _set_caes_inputs(m):
     
     # *********** COMPRESSOR INPUTS ***********
     # Air inlet to compressor
@@ -113,7 +113,7 @@ def set_inputs(m):
     # Fix the outlet flow to zero: during charge
     m.fs.storage_tank.control_volume.properties_out[0].flow_mol.fix(0)
 
-def add_bounds(m):
+def _add_caes_bounds(m):
 
     m.fs.air_compressor.control_volume.properties_out[0].\
         pressure.setub(1e5)
@@ -132,7 +132,7 @@ def add_bounds(m):
         pressure.setub(1e8)
     m.fs.storage_tank.previous_state[0].pressure.setub(1e8)
 
-def initialize(m, outlvl=idaeslog.NOTSET, solver=None, optarg=None):
+def _initialize_caes(m, outlvl=idaeslog.NOTSET, solver=None, optarg=None):
 
     # m.fs.storage_tank.display()
     iscale.calculate_scaling_factors(m)
@@ -160,10 +160,12 @@ def initialize(m, outlvl=idaeslog.NOTSET, solver=None, optarg=None):
         flow_mol_phase["Vap"].value = 0
     m.fs.storage_tank.initialize(outlvl=idaeslog.NOTSET, optarg=solver.options)
 
-    solver.solve(m, tee=True)
+    init_results = solver.solve(m, tee=False)
+    print("CAES unit model initialization solver status:",
+          init_results.solver.termination_condition)
     print("*************  Storage Unit Models Initialized   **************")
 
-def build_costing(m, solver=None):
+def _build_fs_costing(m, solver=None):
 
     # Chemical engineering cost index for 2019
     m.CE_index = 607.5
@@ -233,11 +235,12 @@ def build_costing(m, solver=None):
     def total_variable_nonfuel_cost(fs):
         return fs.caes_variable_cost + fs.sofc_variable_nonfuel_cost
 
-    solver.solve(m, tee=True)
-
+    costing_results = solver.solve(m, tee=False)
+    print("Model initialization with cost constraints, solver status:",
+          costing_results.solver.termination_condition)
     print("*************  Storage Costing Initialized   **************")
 
-def integrate_storage(m):
+def _integrate_caes_with_sofc(m, solver=None):
 
     # Deactivating and writing new constraints to integrate storage
     del m.fs.steam_cycle_heat_duty
@@ -259,22 +262,34 @@ def integrate_storage(m):
                 fs.auxiliary_load[t] -
                 m.fs.air_compressor.control_volume.work[t] * 1e-3)
 
-    solver.solve(m, tee=True)
+    ies_init_results = solver.solve(m, tee=False)
+    print("Integrated SOFC + CAES model initialization, solver status:",
+          ies_init_results.solver.termination_condition)
 
     print("************  Initialized after integrating storage  *************")
 
-def build_caes_charge(m, solver=None):
+def build_model_sofc_caes_charge(m, solver=None):
+
+    # build SOFC model
+    m = SOFC.get_model(m)
+    SOFC.initialize(m)
 
     # build the storage model, set model inputs, and add bounds
-    build_model(m)
-    set_inputs(m)
-    add_bounds(m)
+    _build_caes_model(m)
+    _set_caes_inputs(m)
+    _add_caes_bounds(m)
 
     # check if the storage model is complete by asserting DOF = 0
     assert degrees_of_freedom(m) == 0
 
     # initialize the charge storage model
-    initialize(m, solver=solver)
+    _initialize_caes(m, solver=solver)
+
+    # add costing
+    _build_fs_costing(m, solver=solver)
+
+    # initialize unit models in storage
+    _integrate_caes_with_sofc(m, solver=solver)
 
     return m
 
@@ -293,17 +308,6 @@ if __name__ == "__main__":
     m = ConcreteModel()
     m.fs = FlowsheetBlock(dynamic= False)
 
-    # build SOFC model
-    m = SOFC.get_model(m)
-    SOFC.initialize(m)
-
     # build storage model
-    m = build_caes_charge(m, solver=solver)
-
-    # add costing
-    build_costing(m, solver=solver)
-
-    # initialize unit models in storage
-    integrate_storage(m)
-    
+    m = build_model_sofc_caes_charge(m, solver=solver)
 
