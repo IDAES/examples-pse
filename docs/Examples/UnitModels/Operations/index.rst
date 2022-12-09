@@ -10,3 +10,5 @@ Descriptive examples showing how to use some common IDAES unit models.
     Pump <pump_doc>
     Separator <separator_doc>
     Skeleton Unit <skeleton_unit_doc>
+    StateJunction <statejunction_doc>
+    Valve <valve_doc>
