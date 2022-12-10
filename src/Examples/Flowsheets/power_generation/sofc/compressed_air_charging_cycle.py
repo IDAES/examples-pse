@@ -11,8 +11,8 @@
 # at the URL "https://github.com/IDAES/idaes-pse".
 ##############################################################################
 """
-This is an example flowsheet for the charge cycle of a natural gas fuel cell
-(NGFC) power plant with carbon capture integrated with compressed air energy
+This is an example flowsheet for the charge cycle of a solid oxide fuel cell
+(SOFC) power plant with carbon capture integrated with a compressed air energy
 storage. The model uses a reduced order model created by PNNL to calculate
 the performance of the solid oxide fuel cell.
 The power plant model builds a simple steam cycle using the the efficiency
@@ -304,10 +304,11 @@ if __name__ == "__main__":
     idaes.cfg.ipopt.options.bound_push = 1e-20
     solver = pyo.SolverFactory("ipopt")
 
-    # # create charge model
+    # create charge model
     m = ConcreteModel()
     m.fs = FlowsheetBlock(dynamic= False)
 
     # build storage model
     m = build_model_sofc_caes_charge(m, solver=solver)
+    results = solver.solve(m, tee=True, symbolic_solver_labels=True)
 
