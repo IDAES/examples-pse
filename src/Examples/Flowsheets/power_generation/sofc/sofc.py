@@ -32,6 +32,7 @@ from idaes.core import FlowsheetBlock
 from idaes.core.solvers import use_idaes_solver_configuration_defaults
 from idaes.core.util.initialization import propagate_state
 from idaes.core.util.tags import svg_tag
+import idaes.logger as idaeslog
 
 from idaes.models.properties.modular_properties.base.generic_property import (
     GenericParameterBlock)
@@ -857,6 +858,11 @@ def scale_flowsheet(m):
     iscale.set_scaling_factor(m.fs.condenser.control_volume.properties_out[0].mole_frac_comp, 1e1)
     iscale.set_scaling_factor(m.fs.flash.control_volume.properties_in[0].mole_frac_comp, 1e1)
     iscale.set_scaling_factor(m.fs.flash.control_volume.properties_out[0].mole_frac_comp, 1e1)
+
+    # hide missing scaling factor wornings
+    scaling_log = idaeslog.getLogger(
+        "idaes.core.util.scaling", level=idaeslog.ERROR
+    )
 
     iscale.calculate_scaling_factors(m)
 
