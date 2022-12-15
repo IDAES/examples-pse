@@ -108,6 +108,8 @@ contents:
             description: Detailed examples on importing and implementing IDAES unit models in flowsheets
             notebooks:
               - compressor: "Compressor Unit Model with Span-Wagner Property Package for supercritical CO2"
+              - feed: Feed unit model with modular property package
+              - feed flash: Feed Flash unit model with modular property package
               - flash: Flash unit model with modular property package
               - heater: >
                   Heat a liquid mixture of benzene-toluene using a simple heater unit model and
@@ -117,11 +119,13 @@ contents:
               - heat exchanger lc: Heat Exchanger Lumped-Capacitance unit model heating a benzene-toluene mixture using steam
               - heat exchanger NTU: Heat Exchanger NTU unit model for heat integration of two aqueous MEA streams
               - mixer: Mixer unit model with ideal property package
+              - product: Product unit model with modular property package
               - pump: Pump unit model with iapws property package
-              - turbine: Turbine unit model with iapws property package
               - separator: Separator unit model with modular property package
               - skeleton unit: Skeleton unit model demonstrating custom variables, ports, and constraints
               - statejunction: StateJunction with modular property package
+              - translator: Translator unit model with modular property packages
+              - turbine: Turbine unit model with iapws property package
               - valve: Valve unit model with iapws property package
           -
             name: Reactors
@@ -171,6 +175,11 @@ contents:
                 title: "Natural Gas Fuel Cell (NGFC) Flowsheet"
                 notebooks:
                   - rsofc_soec: Run a combined RSOFC-SOEC simulation with power plant costing
+              -
+                name: sofc
+                title: "Solid Oxide Fuel Cell (SOFC) Flowsheet"
+                notebooks:
+                  - sofc: Simulate an SOFC power plant at partial load
               -
                 name: subcritical
                 title: "Subcritical Pulverized Coal Fired Power Plant Flowsheets"
