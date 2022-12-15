@@ -8,5 +8,6 @@ This folder contains files that illustrate simulation and optimization of flowsh
     sofc+soec/index
     rsofc/index
     sofc/index
+    soec/index
     subcritical/index
     supercritical/index
