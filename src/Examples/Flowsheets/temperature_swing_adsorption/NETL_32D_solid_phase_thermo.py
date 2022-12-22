@@ -12,7 +12,7 @@
 #################################################################################
 """
 This package provides the necessary constraints for solid phase properties of
-an iron-based oxygen carrier
+the NETL_32D sorbent.
 Components - H2O, Carbamate('Car'), SiO
 
 Parameters and equations written in this model were primarily derived from:
