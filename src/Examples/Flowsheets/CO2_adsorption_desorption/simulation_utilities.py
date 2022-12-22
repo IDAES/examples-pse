@@ -1,4 +1,4 @@
-# Utility functions for the CO2 Adsorption Desorption cycle with NETL_32D sorbent example
+# Utility functions for the CO2 adsorption/desorption onto NETL_32D sorbent example
 
 # Author: Chinedu Okoli
 
