@@ -1,4 +1,4 @@
-# Utility functions for the CO2 TSA cycle with NETL_32D sorbent example
+# Utility functions for the CO2 Adsorption Desorption cycle with NETL_32D sorbent example
 
 # Author: Chinedu Okoli
 
@@ -685,7 +685,7 @@ def results_summary(m, adsorption_temperature, desorption_temperature):
 
     var_dict = _var_dict(m, adsorption_temperature, desorption_temperature)
 
-    print("\nReport fixed bed TSA\n")
+    print("\nReport fixed bed adsorption/desorption\n")
     for (
         k,
         v,
