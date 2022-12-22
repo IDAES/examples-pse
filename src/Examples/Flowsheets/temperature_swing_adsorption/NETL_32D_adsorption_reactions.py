@@ -13,12 +13,16 @@
 """
 Property package for the reaction of CO2 with an adorbent (NETL 32D).
 Overall adsorption reactions for CO2 and H2O adsorption:
-Note that the reactions are only a simplified way of showing the reactions key
+Note that the reactions are only a simplified way of showing the key
 reactions taking place and should not be used for element balances
 (1) H2O(g) <=> H2O(s)
 (2) SiO + CO2(g) <=> SiO(g) + Car(s)
 
 Parameters and equations written in this model were primarily derived from:
+A. Lee, D.S. Mebane, D.J. Fauth, D.C. Miller, A Model for the Adsorption 
+ Kinetics of CO2 on Amine-Impregnated Mesoporous Sorbents in the Presence of 
+ Water. Presented at the 28th International Pittsburgh Coal Conference, 
+ Pittsburgh, PA, 2011.
 A. Lee, D.C. Miller, A One-Dimensional (1-D) Three-Region Model for a
  Bubbling Fluidized-Bed Adsorber, Ind. Eng. Chem. Res. 52 (2013) 469–484.
 
@@ -81,7 +85,7 @@ class ReactionParameterData(ReactionParameterBlock):
     Property Parameter Block Class
 
     Contains parameters and indexing sets associated with reaction properties
-    for CO2 adsorption using the NETL 32D sorbent.
+    for CO2 adsorption onto the NETL 32D sorbent.
 
     """
 
@@ -364,7 +368,7 @@ class _ReactionBlock(ReactionBlockBase):
 @declare_process_block_class("ReactionBlock", block_class=_ReactionBlock)
 class ReactionBlockData(ReactionBlockDataBase):
     """
-    Heterogeneous reaction package for methane reacting with Fe2O3 based OC
+    Heterogeneous reaction package
     """
 
     # Create Class ConfigBlock
