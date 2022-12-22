@@ -12,7 +12,7 @@
 #################################################################################
 """
 This package provides the necessary constraints for gas phase properties for
-the oxidation of a chemical looping oxygen carrier.
+the adsorption of gases (with the IDAES 1D fixed bed model).
 Components - Oxygen (O2), Nitrogen (N2), Carbon Dioxide (CO2), Water (H2O)
 
 Equations written in this model were derived from:
@@ -77,7 +77,7 @@ class PhysicalParameterData(PhysicalParameterBlock):
     """
     Property Parameter Block Class
     Contains parameters and indexing sets associated with properties for
-    oxidation of oxygen carrier with oxygen.
+    gas adsorption.
     """
 
     def build(self):
@@ -585,7 +585,7 @@ class _GasPhaseStateBlock(StateBlock):
 @declare_process_block_class("GasPhaseStateBlock", block_class=_GasPhaseStateBlock)
 class GasPhaseStateBlockData(StateBlockData):
     """
-    Property package for gas phase properties of methane combustion in CLC FR
+    Property package for gas phase properties 
     """
 
     def build(self):
