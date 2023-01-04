@@ -600,8 +600,7 @@ class SolidPhaseStateBlockData(StateBlockData):
     def calculate_scaling_factors(self):
         super().calculate_scaling_factors()
 
-        # scale some variables
-        # nothing here
+        # scale some variables - no variables to scale
 
         # scale some constraints
         if self.is_property_constructed("material_flow_terms"):

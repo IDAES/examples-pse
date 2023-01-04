@@ -1,3 +1,15 @@
+#################################################################################
+# The Institute for the Design of Advanced Energy Systems Integrated Platform
+# Framework (IDAES IP) was produced under the DOE Institute for the
+# Design of Advanced Energy Systems (IDAES), and is copyright (c) 2018-2021
+# by the software owners: The Regents of the University of California, through
+# Lawrence Berkeley National Laboratory,  National Technology & Engineering
+# Solutions of Sandia, LLC, Carnegie Mellon University, West Virginia University
+# Research Corporation, et al.  All rights reserved.
+#
+# Please see the files COPYRIGHT.md and LICENSE.md for full copyright and
+# license information.
+#################################################################################
 # Utility functions for the CO2 Adsorption Desorption cycle with NETL_32D sorbent example
 
 # Author: Chinedu Okoli
@@ -18,6 +30,11 @@ from pyomo.dae import ContinuousSet, Integral
 def heat_computation(
     m, tj_ads, tj_des, adsorption_temperature, desorption_temperature
 ):
+    """
+    These functions calculate heat transfer behavior across the temporal and
+    spatial domains for the adsorption, desorption, preheating, and precooling
+    stages.
+    """
     ###########################################################################
     #  Cooling duty required during adsorption
     ###########################################################################
@@ -164,6 +181,12 @@ def heat_computation(
 
 
 def performance_results(m, tj_ads, tj_des):
+    """
+    These functions calculate adsorption and desorption performance in the beds
+    by determining a number of quantities including component concentrations
+    in the solid and gas phases, thermal energy results and productivity in
+    terms of the adsorbed/desorbed components.
+    """
     # Create dictionaries of relevant trajectory data for performance calculations
     time_elements_ads = tj_ads.time  # m.fs_ads.FB.time_set.get_finite_elements()
     time_elements_des = tj_des.time  # m.fs_des.FB.time_set.get_finite_elements()
@@ -625,6 +648,9 @@ def performance_results(m, tj_ads, tj_des):
 
 
 def _var_dict(m, adsorption_temperature, desorption_temperature):
+    """
+    This function internally translate model results into a results dictionary.
+    """
 
     var_dict = {}
 
@@ -682,6 +708,9 @@ def _var_dict(m, adsorption_temperature, desorption_temperature):
 
 
 def results_summary(m, adsorption_temperature, desorption_temperature):
+    """
+    This function reports the results dictionary.
+    """
 
     var_dict = _var_dict(m, adsorption_temperature, desorption_temperature)
 
@@ -695,6 +724,9 @@ def results_summary(m, adsorption_temperature, desorption_temperature):
 
 
 def plot_results_temporal(fs, tji):
+    """
+    This function generates temporal results plots with spatial contours.
+    """
     tf = fs.time.last()
     t_lower_plot = 200  # smallest time step (sec) to show in plot results
 
@@ -1028,6 +1060,9 @@ def plot_results_temporal(fs, tji):
 
 
 def plot_results_spatial(fs, tji):
+    """
+    This function generates spatial results plots with temporal contours.
+    """
     tf = fs.time.last()
 
     Solid_temp = {}
