@@ -108,6 +108,7 @@ class PhysicalParameterData(PhysicalParameterBlock):
              4: ["CH3OH", ("Vap", "Liq")]}
 
         # Antoine coefficients assume pressure in mmHG and temperature in K
+        # Antoine coefficients assume pressure in mmHG and temperature in K
         self.vapor_pressure_coeff = {('CH4', 'A'): 15.2243,
                                      ('CH4', 'B'): 897.84,
                                      ('CH4', 'C'): -7.16,
@@ -146,13 +147,12 @@ class PhysicalParameterData(PhysicalParameterBlock):
              'temperature': {'method': None},
              'pressure': {'method': None},
              'flow_mol_phase': {'method': None},
-             'density_mol': {'method': '_density_mol'},
-             'vapor_pressure': {'method': '_vapor_pressure'},
-             'mole_frac_phase': {'method': '_mole_frac_phase'},
-             'enthalpy_comp_liq': {'method': '_enthalpy_comp_liq'},
-             'enthalpy_comp_vap': {'method': '_enthalpy_comp_vap'},
-             'enthalpy_liq': {'method': '_enthalpy_liq'},
-             'enthalpy_vap': {'method': '_enthalpy_vap'}})
+             'dens_mol_phase': {'method': '_dens_mol_phase'},
+             'mole_frac_phase': {'method': '_mole_frac_phase'}})
+
+        obj.define_custom_properties(
+            {'vapor_pressure': {'method': '_vapor_pressure',
+                                'units': obj.derived_units.PRESSURE}})
 
         obj.add_default_units({'time': pyunits.s,
                                'length': pyunits.m,

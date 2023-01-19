@@ -361,29 +361,29 @@ class StateBlockData(StateBlockData):
         self.eq_P_vap = Constraint(self._params.component_list,
                                    rule=rule_P_vap)
 
-    def _density_mol(self):
-        self.density_mol = Var(self._params.phase_list,
+    def _dens_mol_phase(self):
+        self.dens_mol_phase = Var(self._params.phase_list,
                                units=pyunits.kmol/pyunits.m**3,
                                doc="Molar density")
 
-        def density_mol_calculation(self, p):
+        def dens_mol_phase_calculation(self, p):
             if p == "Vap":
                 return self.pressure == (
-                    self.density_mol[p] *
+                    self.dens_mol_phase[p] *
                     pyunits.convert(Constants.gas_constant,
                                     pyunits.MJ/pyunits.kmol/pyunits.K) *
                     pyunits.convert(self.temperature, pyunits.K))
             elif p == "Liq":
                 # dummy value
-                return self.density_mol[p] == 11.1*pyunits.kmol/pyunits.m**3
+                return self.dens_mol_phase[p] == 11.1*pyunits.kmol/pyunits.m**3
         try:
             # Try to build constraint
-            self.density_mol_calculation = Constraint(
-                self._params.phase_list, rule=density_mol_calculation)
+            self.dens_mol_phase_calculation = Constraint(
+                self._params.phase_list, rule=dens_mol_phase_calculation)
         except AttributeError:
             # If constraint fails, clean up so that DAE can try again later
-            self.del_component(self.density_mol)
-            self.del_component(self.density_mol_calculation)
+            self.del_component(self.dens_mol_phase)
+            self.del_component(self.dens_mol_phase_calculation)
             raise
 
     def get_material_flow_terms(self, p, j):
@@ -410,13 +410,13 @@ class StateBlockData(StateBlockData):
         """Create material density terms."""
         if p == "Liq":
             if j in self._params.component_list:
-                return self.density_mol[p] * \
+                return self.dens_mol_phase[p] * \
                         self.mole_frac_phase_comp['Liq', j]
             else:
                 return 0
         elif p == "Vap":
             if j in self._params.component_list:
-                return self.density_mol[p] * \
+                return self.dens_mol_phase[p] * \
                         self.mole_frac_phase_comp['Vap', j]
             else:
                 return 0
@@ -424,10 +424,10 @@ class StateBlockData(StateBlockData):
     def get_enthalpy_density_terms(self, p):
         """Create enthalpy density terms."""
         if p == "Liq":
-            return self.density_mol[p] * self._params.Cp * \
+            return self.dens_mol_phase[p] * self._params.Cp * \
                    pyunits.convert(self.temperature, pyunits.K)
         elif p == "Vap":
-            return (self.density_mol[p] * (
+            return (self.dens_mol_phase[p] * (
                     self._params.Cp -
                     pyunits.convert(Constants.gas_constant,
                                     pyunits.MJ/pyunits.kmol/pyunits.K) *
