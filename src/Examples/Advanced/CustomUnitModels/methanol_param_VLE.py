@@ -108,7 +108,6 @@ class PhysicalParameterData(PhysicalParameterBlock):
              4: ["CH3OH", ("Vap", "Liq")]}
 
         # Antoine coefficients assume pressure in mmHG and temperature in K
-        # Antoine coefficients assume pressure in mmHG and temperature in K
         self.vapor_pressure_coeff = {('CH4', 'A'): 15.2243,
                                      ('CH4', 'B'): 897.84,
                                      ('CH4', 'C'): -7.16,

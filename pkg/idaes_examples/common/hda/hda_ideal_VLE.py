@@ -388,7 +388,7 @@ class HDAParameterData(PhysicalParameterBlock):
              'energy_internal_mol_phase_comp': {
                      'method': '_energy_internal_mol_phase_comp'},
              'energy_internal_mol_phase': {
-                     'method': '_enenrgy_internal_mol_phase'},
+                     'method': '_energy_internal_mol_phase'},
              'enth_mol_phase_comp': {'method': '_enth_mol_phase_comp'},
              'enth_mol_phase': {'method': '_enth_mol_phase'},
              'entr_mol_phase_comp': {'method': '_entr_mol_phase_comp'},
