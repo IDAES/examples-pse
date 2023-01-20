@@ -146,13 +146,12 @@ class PhysicalParameterData(PhysicalParameterBlock):
              'temperature': {'method': None},
              'pressure': {'method': None},
              'flow_mol_phase': {'method': None},
-             'density_mol': {'method': '_density_mol'},
-             'vapor_pressure': {'method': '_vapor_pressure'},
-             'mole_frac_phase': {'method': '_mole_frac_phase'},
-             'enthalpy_comp_liq': {'method': '_enthalpy_comp_liq'},
-             'enthalpy_comp_vap': {'method': '_enthalpy_comp_vap'},
-             'enthalpy_liq': {'method': '_enthalpy_liq'},
-             'enthalpy_vap': {'method': '_enthalpy_vap'}})
+             'dens_mol_phase': {'method': '_dens_mol_phase'},
+             'mole_frac_phase': {'method': '_mole_frac_phase'}})
+
+        obj.define_custom_properties(
+            {'vapor_pressure': {'method': '_vapor_pressure',
+                                'units': obj.derived_units.PRESSURE}})
 
         obj.add_default_units({'time': pyunits.s,
                                'length': pyunits.m,
