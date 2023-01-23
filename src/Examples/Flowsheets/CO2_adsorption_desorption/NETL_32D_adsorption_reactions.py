@@ -226,19 +226,24 @@ class ReactionParameterData(ReactionParameterBlock):
     def define_metadata(cls, obj):
         obj.add_properties(
             {
-                "specie_concentration": {
-                    "method": "_specie_concentration",
-                    "units": "mol/kg",
-                },
-                "rate_constant": {
+                "k_rxn": {
                     "method": "_rate_constant",
                     "units": "mol/m**3/s]",
                 },
-                "Kequil_rxn": {"method": "_Kequil_rxn", "units": None},
                 "reaction_rate": {
                     "method": "_reaction_rate",
                     "units": "mol_rxn/m**3/s",
                 },
+            }
+        )
+        
+        obj.define_custom_properties(
+            {
+                "specie_concentration": {
+                    "method": "_specie_concentration",
+                    "units": "mol/kg",
+                },
+                "Kequil_rxn": {"method": "_Kequil_rxn", "units": None},
             }
         )
 
@@ -325,7 +330,7 @@ class _ReactionBlock(ReactionBlockBase):
 
                 if hasattr(blk[k], "rate_constant_eqn"):
                     calculate_variable_from_constraint(
-                        blk[k].rate_constant[j], blk[k].rate_constant_eqn[j]
+                        blk[k].k_rxn[j], blk[k].rate_constant_eqn[j]
                     )
 
                 if hasattr(blk[k], "gen_rate_expression"):
@@ -489,7 +494,7 @@ class ReactionBlockData(ReactionBlockDataBase):
 
     # Rate constant method
     def _rate_constant(self):
-        self.rate_constant = Var(
+        self.k_rxn = Var(
             self._params.rate_reaction_idx,
             domain=Reals,
             initialize=1,
@@ -501,7 +506,7 @@ class ReactionBlockData(ReactionBlockDataBase):
             temperature_smooth = smooth_max(
                 b.solid_state_ref.temperature, 298.15 * pyunits.K, 1e-8
             )
-            return b.rate_constant[j] == b._params.k0_rxn[j] * temperature_smooth * exp(
+            return b.k_rxn[j] == b._params.k0_rxn[j] * temperature_smooth * exp(
                 -b._params.energy_activation[j]
                 / (
                     pyunits.convert(
@@ -519,7 +524,7 @@ class ReactionBlockData(ReactionBlockDataBase):
             )
         except AttributeError:
             # If constraint fails, clean up so that DAE can try again later
-            self.del_component(self.rate_constant)
+            self.del_component(self.k_rxn)
             self.del_component(self.rate_constant_eqn)
             raise
 
@@ -578,7 +583,7 @@ class ReactionBlockData(ReactionBlockDataBase):
 
         def rate_rule(b, r):
             if r == "R1":
-                return b.reaction_rate[r] * b.Kequil_rxn[r] == b.rate_constant[r] * (
+                return b.reaction_rate[r] * b.Kequil_rxn[r] == b.k_rxn[r] * (
                     (
                         b.Kequil_rxn[r]
                         * b.gas_state_ref.pressure
@@ -590,7 +595,7 @@ class ReactionBlockData(ReactionBlockDataBase):
                     )
                 )
             elif r == "R2":
-                return b.reaction_rate[r] * b.Kequil_rxn[r] == b.rate_constant[r] * (
+                return b.reaction_rate[r] * b.Kequil_rxn[r] == b.k_rxn[r] * (
                     b.Kequil_rxn[r]
                     * (
                         (
@@ -672,14 +677,14 @@ class ReactionBlockData(ReactionBlockDataBase):
                     )
                     iscale.set_scaling_factor(v, sf)
 
-        if hasattr(self, "rate_constant"):
+        if hasattr(self, "k_rxn"):
             rate_constant_dict = self._params.k0_rxn
-            for r, v in self.rate_constant.items():
+            for r, v in self.k_rxn.items():
                 scale = 1 / value(rate_constant_dict[r])
 
                 if iscale.get_scaling_factor(v) is None:
                     sf = iscale.get_scaling_factor(
-                        self.rate_constant[r], default=scale, warning=False
+                        self.k_rxn[r], default=scale, warning=False
                     )
                     iscale.set_scaling_factor(v, sf)
 
@@ -707,7 +712,7 @@ class ReactionBlockData(ReactionBlockDataBase):
         if self.is_property_constructed("rate_constant_eqn"):
             for r, c in self.rate_constant_eqn.items():
                 iscale.constraint_scaling_transform(
-                    c, iscale.get_scaling_factor(self.rate_constant[r]), overwrite=True
+                    c, iscale.get_scaling_factor(self.k_rxn[r]), overwrite=True
                 )
 
         if self.is_property_constructed("gen_rate_expression"):

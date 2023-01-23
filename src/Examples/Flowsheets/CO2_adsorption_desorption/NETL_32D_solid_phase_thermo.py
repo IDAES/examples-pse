@@ -208,12 +208,19 @@ class PhysicalParameterData(PhysicalParameterBlock):
                 # TODO - also use flow_mass state var if moving or bubbling fludized
                 # bed unit models are used
                 # "flow_mass": {"method": None, "units": "kg/s"},
-                "dens_mass_particle": {"method": None, "units": None},
                 "temperature": {"method": None, "units": "K"},
                 "mass_frac_comp": {"method": None, "units": None},
-                "mass_frac_comp_max": {"method": "_mass_frac_comp_max", "units": None},
                 "cp_mass": {"method": "_cp_mass", "units": "J/kg.K"},
                 "enth_mass": {"method": "_enth_mass", "units": "J/kg"},
+            }
+        )
+        
+        obj.define_custom_properties(
+            {
+                "dens_mass_particle": {"method": None,
+                                       "units": pyunits.dimensionless},
+                "mole_frac_comp_max": {"method": "_mole_frac_comp_max",
+                                       "units": pyunits.dimensionless},
             }
         )
 

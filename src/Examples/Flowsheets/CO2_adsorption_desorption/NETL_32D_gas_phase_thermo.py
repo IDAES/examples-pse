@@ -376,7 +376,6 @@ class PhysicalParameterData(PhysicalParameterBlock):
                 "pressure": {"method": None},
                 "temperature": {"method": None},
                 "mole_frac_comp": {"method": None},
-                "mole_frac_comp_max": {"method": "_mole_frac_comp_max", "units": None},
                 "mw": {"method": "_mw"},
                 "cp_mol": {"method": "_cp_mol"},
                 "cp_mol_comp": {"method": "_cp_mol_comp"},
@@ -390,6 +389,12 @@ class PhysicalParameterData(PhysicalParameterBlock):
                 "visc_d": {"method": "_visc_d"},
                 "therm_cond": {"method": "_therm_cond"},
                 "diffusion_comp": {"method": "_diffusion_comp"},
+            }
+        )
+        
+        obj.define_custom_properties(
+            {
+                "mole_frac_comp_max": {"method": "_mole_frac_comp_max", "units": pyunits.dimensionless},
             }
         )
 
