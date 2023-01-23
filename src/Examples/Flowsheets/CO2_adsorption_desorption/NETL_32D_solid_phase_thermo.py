@@ -219,7 +219,7 @@ class PhysicalParameterData(PhysicalParameterBlock):
             {
                 "dens_mass_particle": {"method": None,
                                        "units": pyunits.dimensionless},
-                "mole_frac_comp_max": {"method": "_mole_frac_comp_max",
+                "mass_frac_comp_max": {"method": "_mass_frac_comp_max",
                                        "units": pyunits.dimensionless},
             }
         )
