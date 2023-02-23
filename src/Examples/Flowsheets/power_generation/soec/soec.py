@@ -1238,7 +1238,7 @@ class SoecStandaloneFlowsheetData(FlowsheetBlockData):
 
         self.soec_module.initialize(
             outlvl=outlvl,
-            current_density_guess=-8000,
+            current_density_guess=0,
             temperature_guess=960,
         )
 
