@@ -1,0 +1,284 @@
+Tutorial: Valve Unit Model with IAPWS Property Package
+======================================================
+
+.. image:: valve_1.svg
+
+Learning Outcomes
+-----------------
+
+-  Demonstrate use of the valve unit model in IDAES
+
+Problem Statement
+-----------------
+
+In this example, we will be passing a liquid stream through a valve.
+
+**Stream Inputs:**
+
+Flow Rate = 1000 mol/s
+
+Temperature = 298 K
+
+Inlet Pressure = 202650 Pa
+
+Outlet Pressure = 101325 Pa
+
+Valve Opening = 0.5 (fraction)
+
+For more details, please refer to the IDAES documentation:
+https://idaes-pse.readthedocs.io/en/stable
+
+Importing necessary tools
+-------------------------
+
+In the following cell, we will be importing the necessary components
+from Pyomo and IDAES.
+
+.. code:: ipython3
+
+    # Import math functions
+    import math
+    
+    # Import objects from pyomo package 
+    from pyomo.environ import ConcreteModel, Constraint, value, SolverFactory, units
+    
+    # Import the solver
+    from idaes.core.solvers import get_solver
+    
+    # Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model
+    from idaes.core import FlowsheetBlock
+    
+    # Import the Valve unit model
+    from idaes.models.unit_models import Valve
+    
+    # Import the option to set the valve function
+    from idaes.models.unit_models import ValveFunctionType
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+    
+    # Import the iapws95 property package to create a property block for the flowsheet
+    from idaes.models.properties import iapws95
+    
+    # Import the degrees_of_freedom function from the idaes.core.util.model_statistics package
+    # DOF = Number of Model Variables - Number of Model Constraints
+    from idaes.core.util.model_statistics import degrees_of_freedom
+
+Setting up the flowsheet
+------------------------
+
+In the following cell, we will create the ``ConcreteModel`` foundation,
+attach the steady state flowsheet, and declare the property parameter
+block that will used.
+
+More information on this general workflow can be found here:
+https://idaes-pse.readthedocs.io/en/stable/how_to_guides/workflow/general.html
+
+.. code:: ipython3
+
+    m = ConcreteModel()
+    
+    m.fs = FlowsheetBlock(dynamic=False) # dynamic or ss flowsheet needs to be specified here
+    
+    m.fs.properties = iapws95.Iapws95ParameterBlock()
+
+In the following cell, we will be creating the valve unit model,
+assigning the valve function and property package to it, and determining
+the initial degrees of freedom associated with the valve unit model. The
+``ValveFunctionType`` determines how the flow coefficient will be
+calculated.
+
+.. code:: ipython3
+
+    m.fs.valve = Valve(
+        valve_function_callback=ValveFunctionType.linear,
+        property_package=m.fs.properties
+    )
+    
+    DOF_initial = degrees_of_freedom(m)
+    print('The initial degrees of freedom is: {0}'.format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial degrees of freedom is: 3
+
+
+Fixing input specifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, we will be calculating and specifying the inlet
+conditions for the valve block and re-evaluating the degrees of freedom
+to ensure the problem is square (i.e. DOF=0).
+
+.. code:: ipython3
+
+    # Assign the known inlet conditions to variables
+    fin = 1000  # mol/s
+    pin = 202650  # Pa
+    pout = 101325  # Pa
+    tin = 298  # K
+    
+    # Determine inlet enthalpy
+    hin = iapws95.htpx(T=tin * units.K, P=pin * units.Pa)  # J/mol
+    
+    # Determine flow coefficient - equation depends on the valve function specified earlier
+    cv = 1000 / math.sqrt(pin - pout) / 0.5
+    
+    # Fix the inlet conditions
+    m.fs.valve.inlet.enth_mol[0].fix(hin)
+    m.fs.valve.inlet.flow_mol[0].fix(fin)
+    m.fs.valve.inlet.pressure[0].fix(pin)
+    m.fs.valve.outlet.pressure[0].set_value(pout) # Sets the target value for the outlet pressure, but does not fix it
+    m.fs.valve.Cv.fix(cv)
+    m.fs.valve.valve_opening.fix(0.5)
+    
+    # Call the degrees_of_freedom function, get final DOF
+    DOF_final = degrees_of_freedom(m)
+    print('The final degrees of freedom is: {0}'.format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final degrees of freedom is: 0
+
+
+Flowsheet Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.
+
+More information on these levels can be found in the IDAES
+documentation:
+https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html?highlight=log%20level#idaes-solve-loggers
+
+.. code:: ipython3
+
+    m.fs.valve.initialize(outlvl=idaeslog.WARNING)
+
+Obtaining Simulation Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, the flowsheet will be solved using the IDAES
+``get_solver`` tool. Setting ``tee=True`` will display the solver
+output.
+
+.. code:: ipython3
+
+    solver = get_solver()
+    result = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    max_iter=200
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:       10
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:        3
+    
+    Total number of variables............................:        6
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        2
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        6
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 0.00e+00 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    
+    Number of Iterations....: 0
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   0.0000000000000000e+00    0.0000000000000000e+00
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   0.0000000000000000e+00    0.0000000000000000e+00
+    
+    
+    Number of objective function evaluations             = 1
+    Number of objective gradient evaluations             = 1
+    Number of equality constraint evaluations            = 1
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 1
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 0
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+
+
+View Results
+~~~~~~~~~~~~
+
+As expected, the report will show that pressure of the stream is halved
+after going through the valve.
+
+.. code:: ipython3
+
+    m.fs.valve.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.valve                                                            Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key               : Value       : Units                                 : Fixed : Bounds
+          Mechanical Work :      0.0000 :                                  watt : False : (None, None)
+                  Opening :     0.50000 :                         dimensionless :  True : (0, 1)
+          Pressure Change : -1.0132e+05 :                                pascal : False : (None, None)
+           Pressure Ratio :     0.50000 :                         dimensionless : False : (None, None)
+        Valve Coefficient :      6.2831 : meter ** 0.5 * mole / kilogram ** 0.5 :  True : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                             Units           Inlet     Outlet  
+        Molar Flow          mole / second     1000.0     1000.0
+        Mass Flow       kilogram / second     18.015     18.015
+        T                          kelvin     298.00     298.02
+        P                          pascal 2.0265e+05 1.0132e+05
+        Vapor Fraction      dimensionless     0.0000     0.0000
+        Molar Enthalpy       joule / mole     1880.6     1880.6
+    ====================================================================================
+
+

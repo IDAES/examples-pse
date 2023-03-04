@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGCC Baseline and Turndown &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">NGCC Baseline and Turndown</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/Examples/Flowsheets/power_generation/ngcc/ngcc.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ngcc-baseline-and-turndown">
+<h1>NGCC Baseline and Turndown<a class="headerlink" href="#ngcc-baseline-and-turndown" title="Permalink to this heading">¶</a></h1>
+<p>This notebook runs a series of net electric power outputs from 650 MW to
+160 MW (about 100% to 25%) for an NGCC with 97% CO2 capture. The NGCC
+model is based on the NETL report “Cost and Performance Baseline for
+Fossil Energy Plants Volume 1: Bituminous Coal and Natural Gas to
+Electricity.” Sept 2019, Case B31B
+(<a class="reference external" href="https://www.netl.doe.gov/projects/files/CostAndPerformanceBaselineForFossilEnergyPlantsVol1BitumCoalAndNGtoElectBBRRev4-1_092419.pdf">https://www.netl.doe.gov/projects/files/CostAndPerformanceBaselineForFossilEnergyPlantsVol1BitumCoalAndNGtoElectBBRRev4-1_092419.pdf</a>).</p>
+<section id="imports">
+<h2>Imports<a class="headerlink" href="#imports" title="Permalink to this heading">¶</a></h2>
+<p>Import the modules that will be used.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">IPython.core.display</span> <span class="kn">import</span> <span class="n">SVG</span>
+<span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+<span class="kn">import</span> <span class="nn">idaes</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">use_idaes_solver_configuration_defaults</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util.scaling</span> <span class="k">as</span> <span class="nn">iscale</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util</span> <span class="k">as</span> <span class="nn">iutil</span>
+<span class="kn">import</span> <span class="nn">ngcc</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+</pre></div>
+</div>
+</section>
+<section id="make-output-directories">
+<h2>Make Output Directories<a class="headerlink" href="#make-output-directories" title="Permalink to this heading">¶</a></h2>
+<p>This notebook can produce a large number of output files. To make it
+easier to manage, some subdirectories are used to organize output. This
+ensures that the directories exist.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_directory</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a directory if it doesn&#39;t exist&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_pfds&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_tabulated&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="global-solver-settings">
+<h2>Global Solver Settings<a class="headerlink" href="#global-solver-settings" title="Permalink to this heading">¶</a></h2>
+<p>Use the IDAES configuration system for solver settings. These will apply
+to all Ipopt instances created, including the ones created in
+initialization methods.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">use_idaes_solver_configuration_defaults</span><span class="p">()</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">nlp_scaling_method</span> <span class="o">=</span> <span class="s2">&quot;user-scaling&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="s2">&quot;ma57&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">OF_ma57_automatic_scaling</span> <span class="o">=</span> <span class="s2">&quot;yes&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ma57_pivtol</span> <span class="o">=</span> <span class="mf">1e-5</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ma57_pivtolmax</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s2">&quot;ipopt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="create-the-ngcc-model">
+<h2>Create the NGCC model<a class="headerlink" href="#create-the-ngcc-model" title="Permalink to this heading">¶</a></h2>
+<p>Create the NGCC model and initialize it or read the saved initialization
+if available. The base initialized NGCC model is configured to match the
+baseline report with 90% capture using a Cansolv system.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">ngcc</span><span class="o">.</span><span class="n">NgccFlowsheet</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">iscale</span><span class="o">.</span><span class="n">calculate_scaling_factors</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+    <span class="n">load_from</span><span class="o">=</span><span class="s2">&quot;ngcc_init.json.gz&quot;</span><span class="p">,</span>
+    <span class="n">save_to</span><span class="o">=</span><span class="s2">&quot;ngcc_init.json.gz&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">2023-03-04 01:37:55 [INFO] idaes.init.fs: NGCC load initial from ngcc_init.json.gz
+WARNING: model contains export suffix
+    'fs.fg_translate.properties_out[0.0].scaling_factor' that contains 16
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.fg_translate.properties_in[0.0].scaling_factor' that contains 5
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.reboiler.control_volume.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.reboiler.control_volume.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.return_mix.mixed_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.return_mix.reclaimer_state[0.0].scaling_factor' that contains 66
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.return_mix.dryer_state[0.0].scaling_factor' that contains 66
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.return_mix.reboiler_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.return_mix.pump_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.cond_pump.control_volume.properties_out[0.0].scaling_factor' that
+    contains 64 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.cond_pump.control_volume.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.hotwell.mixed_state[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.hotwell.makeup_state[0.0].scaling_factor' that contains 65
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.hotwell.condensate_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.main_condenser.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.main_condenser.cold_side.properties_in[0.0].scaling_factor' that
+    contains 66 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.main_condenser.hot_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.main_condenser.hot_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix 'fs.st.main_condenser.scaling_factor'
+    that contains 2 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine_lp_split.soec_state[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine_lp_split.reboiler_state[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine_lp_split.turbine_state[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine_lp_split.mixed_state[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine_lp_mix.mixed_state[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine_lp_mix.hrsg_state[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine_lp_mix.turbine_state[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.outlet_stage.contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.outlet_stage.contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[11].contr
+    ol_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[11].contr
+    ol_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[10].contr
+    ol_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[10].contr
+    ol_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[9].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[9].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[8].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[8].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[7].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[7].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[6].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[6].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[5].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[5].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[4].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[4].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[3].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[3].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[2].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[2].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[1].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.lp_stages[1].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[10].contr
+    ol_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[10].contr
+    ol_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[9].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[9].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[8].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[8].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[7].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[7].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[6].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[6].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[5].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[5].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[4].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[4].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[3].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[3].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[2].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[2].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[1].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.ip_stages[1].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[7].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[7].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[6].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[6].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[5].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[5].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[4].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[4].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[3].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[3].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[2].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[2].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[1].contro
+    l_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.hp_stages[1].contro
+    l_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine.inlet_mix.mixed_state[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine.inlet_mix.inlet_1_state[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.inlet_stage[1].cont
+    rol_volume.properties_out[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.inlet_stage[1].cont
+    rol_volume.properties_in[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.throttle_valve[1].c
+    ontrol_volume.properties_out[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.st.steam_turbine.throttle_valve[1].c
+    ontrol_volume.properties_in[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine.inlet_split.outlet_1_state[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.st.steam_turbine.inlet_split.mixed_state[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp4.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp4.cold_side.properties_in[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp4.hot_side.properties_out[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp4.hot_side.properties_in[0.0].scaling_factor' that contains
+    19 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp3.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp3.cold_side.properties_in[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp3.hot_side.properties_out[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp3.hot_side.properties_in[0.0].scaling_factor' that contains
+    19 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp2.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp2.cold_side.properties_in[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp2.hot_side.properties_out[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp2.hot_side.properties_in[0.0].scaling_factor' that contains
+    19 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp1.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp1.cold_side.properties_in[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp1.hot_side.properties_out[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_hp1.hot_side.properties_in[0.0].scaling_factor' that contains
+    19 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_hp.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_hp.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_hp.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_hp.hot_side.properties_in[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.hrsg.evap_hp.scaling_factor' that
+    contains 3 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_hp_valve.control_volume.properties_out[0.0].scaling_factor'
+    that contains 63 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_hp_valve.control_volume.properties_in[0.0].scaling_factor'
+    that contains 63 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_hp_valve.control_volume.scaling_factor' that contains 1
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp5.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp5.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp5.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp5.hot_side.properties_in[0.0].scaling_factor' that
+    contains 19 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp4.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp4.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp4.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp4.hot_side.properties_in[0.0].scaling_factor' that
+    contains 19 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp3.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp3.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp3.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp3.hot_side.properties_in[0.0].scaling_factor' that
+    contains 19 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp2.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp2.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp2.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp2.hot_side.properties_in[0.0].scaling_factor' that
+    contains 19 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp1.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp1.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp1.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_hp1.hot_side.properties_in[0.0].scaling_factor' that
+    contains 19 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip3.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip3.cold_side.properties_in[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip3.hot_side.properties_out[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip3.hot_side.properties_in[0.0].scaling_factor' that contains
+    19 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip2.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip2.cold_side.properties_in[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip2.hot_side.properties_out[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip2.hot_side.properties_in[0.0].scaling_factor' that contains
+    19 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter_ip2.toDryer_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter_ip2.toReclaimer_state[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter_ip2.toEjector_state[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter_ip2.Cold_reheat_state[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter_ip2.mixed_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer_ip1.mixed_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer_ip1.Cold_reheat_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer_ip1.sh_ip1_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip1.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip1.cold_side.properties_in[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip1.hot_side.properties_out[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_ip1.hot_side.properties_in[0.0].scaling_factor' that contains
+    19 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_ip.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_ip.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_ip.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_ip.hot_side.properties_in[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.hrsg.evap_ip.scaling_factor' that
+    contains 3 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_ip2.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_ip2.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_ip2.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_ip2.hot_side.properties_in[0.0].scaling_factor' that
+    contains 19 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter_ip1.toNGPH_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter_ip1.toIP_ECON2_state[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter_ip1.mixed_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_ip1.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_ip1.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_ip1.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_ip1.hot_side.properties_in[0.0].scaling_factor' that
+    contains 19 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.pump_hp.control_volume.properties_out[0.0].scaling_factor' that
+    contains 64 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.pump_hp.control_volume.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.pump_ip.control_volume.properties_out[0.0].scaling_factor' that
+    contains 64 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.pump_ip.control_volume.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter1.toHP_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter1.toIP_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.splitter1.mixed_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_lp.cold_side.properties_out[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_lp.cold_side.properties_in[0.0].scaling_factor' that contains
+    63 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_lp.hot_side.properties_out[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.sh_lp.hot_side.properties_in[0.0].scaling_factor' that contains
+    19 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer_lp2.mixed_state[0.0].scaling_factor' that contains 18
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer_lp2.bypass_state[0.0].scaling_factor' that contains 18
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer_lp2.fromLP_SH_state[0.0].scaling_factor' that contains 18
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.split_fg_lp.toMixer_state[0.0].scaling_factor' that contains 16
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.split_fg_lp.toLP_SH_state[0.0].scaling_factor' that contains 16
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.split_fg_lp.mixed_state[0.0].scaling_factor' that contains 16
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer_soec.mixed_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer_soec.soec_makeup_state[0.0].scaling_factor' that contains
+    66 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer_soec.main_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_lp.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_lp.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_lp.hot_side.properties_out[0.0].scaling_factor' that
+    contains 18 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.evap_lp.hot_side.properties_in[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.hrsg.evap_lp.scaling_factor' that
+    contains 3 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.drum_lp.liq_state[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.drum_lp.vap_state[0.0].scaling_factor' that contains 63 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.drum_lp.mixed_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer1.mixed_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer1.Preheater_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.mixer1.econ_lp_state[0.0].scaling_factor' that contains 63
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_lp.cold_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_lp.cold_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_lp.hot_side.properties_out[0.0].scaling_factor' that
+    contains 19 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.hrsg.econ_lp.hot_side.properties_in[0.0].scaling_factor' that contains
+    19 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.gts3.properties_isentropic[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.gts3.control_volume.properties_out[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.gts3.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.gts2.properties_isentropic[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.gts2.control_volume.properties_out[0.0].scaling_factor' that
+    contains 12 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.gts2.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.gts1.properties_isentropic[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.gts1.control_volume.properties_out[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.gts1.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.flue_translator.properties_out[0.0].scaling_factor' that contains
+    10 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.flue_translator.properties_in[0.0].scaling_factor' that contains 20
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.cmb1.control_volume.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.cmb1.control_volume.properties_in[0.0].scaling_factor' that
+    contains 13 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.mx3.mixed_state[0.0].scaling_factor' that contains 7 component keys
+    that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.mx3.air_state[0.0].scaling_factor' that contains 9 component keys
+    that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.mx3.gas_state[0.0].scaling_factor' that contains 9 component keys
+    that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.translator3.properties_out[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.translator3.properties_in[0.0].scaling_factor' that contains 12
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.mx2.mixed_state[0.0].scaling_factor' that contains 7 component keys
+    that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.mx2.air_state[0.0].scaling_factor' that contains 9 component keys
+    that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.mx2.gas_state[0.0].scaling_factor' that contains 9 component keys
+    that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.translator2.properties_out[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.translator2.properties_in[0.0].scaling_factor' that contains 12
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.mx1.mixed_state[0.0].scaling_factor' that contains 7 component keys
+    that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.mx1.air_state[0.0].scaling_factor' that contains 9 component keys
+    that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.mx1.gas_state[0.0].scaling_factor' that contains 9 component keys
+    that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.translator1.properties_out[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.translator1.properties_in[0.0].scaling_factor' that contains 12
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.inject1.mixed_state[0.0].scaling_factor' that contains 11 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.inject1.air_state[0.0].scaling_factor' that contains 13 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.inject1.gas_state[0.0].scaling_factor' that contains 13 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.ng_preheat.cold_side.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.ng_preheat.cold_side.properties_in[0.0].scaling_factor' that
+    contains 13 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.ng_preheat.hot_side.properties_out[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.ng_preheat.hot_side.properties_in[0.0].scaling_factor' that
+    contains 63 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix 'fs.gt.ng_preheat.scaling_factor' that
+    contains 3 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.inject_translator.properties_out[0.0].scaling_factor' that contains
+    18 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.inject_translator.properties_in[0.0].scaling_factor' that contains
+    12 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.valve03.control_volume.properties_out[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.valve03.control_volume.properties_in[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.valve02.control_volume.properties_out[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.valve02.control_volume.properties_in[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.valve01.control_volume.properties_out[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.valve01.control_volume.properties_in[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.splt1.air09_state[0.0].scaling_factor' that contains 5 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.splt1.air07_state[0.0].scaling_factor' that contains 5 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.splt1.air05_state[0.0].scaling_factor' that contains 5 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.splt1.air04_state[0.0].scaling_factor' that contains 5 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.splt1.mixed_state[0.0].scaling_factor' that contains 7 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.cmp1.properties_isentropic[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.cmp1.control_volume.properties_out[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.cmp1.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.vsv.control_volume.properties_out[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.gt.vsv.control_volume.properties_in[0.0].scaling_factor' that contains
+    9 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.exhaust_1.properties[0.0].scaling_factor' that contains 8 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.feed_fuel1.properties[0.0].scaling_factor' that contains 21
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.gt.feed_air1.properties[0.0].scaling_factor' that contains 12
+    component keys that are not exported as part of the NL file.  Skipping.
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+max_iter=200
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+option_file_name=/tmp/tmpe1kzqxku_ipopt.opt
+
+Using option file &quot;/tmp/tmpe1kzqxku_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:     7661
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     5948
+
+Total number of variables............................:     2404
+                     variables with only lower bounds:       87
+                variables with lower and upper bounds:     1447
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:     2404
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.50e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (111709)
+   1  0.0000000e+00 3.49e-01 1.12e+04  -1.0 3.06e+03    -  9.90e-01 9.90e-01h  1
+   2  0.0000000e+00 3.15e-03 5.14e+02  -1.0 3.02e+03    -  9.89e-01 9.91e-01h  1
+   3  0.0000000e+00 2.94e-07 9.98e+02  -1.0 3.74e+01    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   2.9407920010271482e-07    2.9407920010271482e-07
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   2.9407920010271482e-07    2.9407920010271482e-07
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.110
+Total CPU secs in NLP function evaluations           =      0.946
+
+EXIT: Optimal Solution Found.</pre>
+</section>
+<section id="show-pfds-with-baseline-results">
+<h2>Show PFDs with baseline results<a class="headerlink" href="#show-pfds-with-baseline-results" title="Permalink to this heading">¶</a></h2>
+<p>This displays PFDs in the notebook, and saves them to files. The full
+NGCC model is too big to show well in a single PFD, so it is broken into
+the three main sections, gas turbine, heat recovery steam generator
+(HRSG), and steam turbine.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">display_pfd</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Gas Turbine Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">HRSG Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Steam Turbine Section</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">()))</span>
+
+<span class="n">display_pfd</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s2">&quot;data_pfds/gt_baseline.svg&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s2">&quot;data_pfds/hrsg_baseline.svg&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">write_pfd</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s2">&quot;data_pfds/st_baseline.svg&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Gas</span> <span class="n">Turbine</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_10_1.svg" src="../../../../_images/output_10_1.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">HRSG</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_10_3.svg" src="../../../../_images/output_10_3.svg" /><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Steam</span> <span class="n">Turbine</span> <span class="n">Section</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_10_5.svg" src="../../../../_images/output_10_5.svg" /></section>
+<section id="test-key-model-outputs-against-netl-baseline">
+<h2>Test key model outputs against NETL baseline<a class="headerlink" href="#test-key-model-outputs-against-netl-baseline" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Assert results approximatly agree with baseline reoprt</span>
+<span class="k">assert</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_mw</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">646</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">gross_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="o">-</span><span class="mf">690e6</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">100</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">lhv_efficiency</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">52.8</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">total_variable_cost_rate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_mw</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">37.2799</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">fuel_cost_rate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_mw</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">31.6462</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">other_variable_cost_rate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_mw</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">5.63373</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">gt_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="o">-</span><span class="mf">477e6</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+
+<span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;net_power&quot;</span><span class="p">,</span> <span class="s2">&quot;gross_power&quot;</span><span class="p">,</span> <span class="s2">&quot;gt_power&quot;</span><span class="p">]</span>
+<span class="n">netl_baseline</span> <span class="o">=</span> <span class="p">[</span><span class="mi">646</span><span class="p">,</span> <span class="mi">690</span><span class="p">,</span> <span class="mi">477</span><span class="p">]</span>
+<span class="n">idaes_prediction</span> <span class="o">=</span> <span class="p">[</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_mw</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="o">-</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">gross_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="mf">1e-6</span><span class="p">,</span> <span class="o">-</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">gt_power</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="mf">1e-6</span><span class="p">]</span>
+
+<span class="n">label_location</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">))</span>
+
+<span class="n">width</span><span class="o">=</span><span class="mf">0.4</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">netl_data</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">netl_baseline</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;NETL Baseline&quot;</span><span class="p">)</span>
+<span class="n">idaes_sim</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">label_location</span> <span class="o">+</span> <span class="p">(</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="n">idaes_prediction</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;IDAES Prediction&quot;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Power (MW)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">label_location</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">Legend</span> <span class="n">at</span> <span class="mh">0x7f70757f6dc0</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_13_1.png" src="../../../../_images/output_13_1.png" />
+</section>
+<section id="run-turndown-cases-5-mw-interval">
+<h2>Run turndown cases 5 MW interval<a class="headerlink" href="#run-turndown-cases-5-mw-interval" title="Permalink to this heading">¶</a></h2>
+<p>Here we set the CO2 capture rate to 97% and set the specific reboiler
+duty to PZ advanced solvent system. The minimum power is 160 MW net,
+which corresponds to a bit under 25%. This is roughly the minimum load
+for the NGCC modeled. Results are tabulated for tags in the tags_output
+tag group in a Pandas data frame.</p>
+<p>To run the series, change run_series to True. Running the turndown
+series takes a while, unless previous saved results are available.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">run_series</span><span class="o">=</span><span class="kc">False</span>
+<span class="k">if</span> <span class="n">run_series</span><span class="p">:</span>
+    <span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="mf">1e-6</span>
+    <span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s2">&quot;ipopt&quot;</span><span class="p">)</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cap_specific_reboiler_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">2.4e6</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cap_fraction</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.97</span><span class="p">)</span>
+    <span class="n">powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">650</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="mi">650</span> <span class="o">-</span> <span class="mi">160</span><span class="p">)</span><span class="o">/</span><span class="mi">5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">powers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">powers</span><span class="p">)</span>
+    <span class="n">powers</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">646</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">tags_output</span><span class="o">.</span><span class="n">table_heading</span><span class="p">())</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">powers</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simulation for net power = &quot;</span><span class="p">,</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;data/ngcc_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="si">}</span><span class="s2">.json.gz&quot;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+            <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_mw</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">symbolic_solver_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pyo</span><span class="o">.</span><span class="n">check_optimal_termination</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+                <span class="k">break</span>
+            <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">tags_output</span><span class="p">[</span><span class="s2">&quot;net_power&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">tags_output</span><span class="o">.</span><span class="n">table_row</span><span class="p">(</span><span class="n">numeric</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">650</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">gt</span><span class="o">.</span><span class="n">streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_stream_650mw_gt.csv&quot;</span><span class="p">)</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">steam_streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_stream_650mw_st.csv&quot;</span><span class="p">)</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">steam_streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_stream_650mw_hrsg_steam.csv&quot;</span><span class="p">)</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">hrsg</span><span class="o">.</span><span class="n">flue_gas_streams_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc_stream_650mw_hrsg_gas.csv&quot;</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/ngcc.csv&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Display the results from the run stored in a pandas dataframe</span>
+    <span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_rows&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_columns&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="c1"># Plot results</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;net_power (MW)&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;lhv_efficiency (%)&quot;</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Net Power (MW)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;LHV Efficiency (%)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Net Power vs. Efficiency&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">jac, nlp = iscale.get_jacobian(m, scaled=True)</span>
+<span class="sd">print(&quot;Extreme Jacobian entries:&quot;)</span>
+<span class="sd">for i in iscale.extreme_jacobian_entries(jac=jac, nlp=nlp, large=100):</span>
+<span class="sd">    print(f&quot;    {i[0]:.2e}, [{i[1]}, {i[2]}]&quot;)</span>
+<span class="sd">print(&quot;Badly scaled variables:&quot;)</span>
+<span class="sd">for v, sv in iscale.badly_scaled_var_generator(</span>
+<span class="sd">    m, large=1e2, small=1e-2, zero=1e-12</span>
+<span class="sd">):</span>
+<span class="sd">    print(f&quot;    {v} -- {sv} -- {iscale.get_scaling_factor(v)}&quot;)</span>
+<span class="sd">print(f&quot;Jacobian Condition Number: {iscale.jacobian_cond(jac=jac):.2e}&quot;)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<pre class="literal-block">'njac, nlp = iscale.get_jacobian(m, scaled=True)nprint(&quot;Extreme Jacobian entries:&quot;)nfor i in iscale.extreme_jacobian_entries(jac=jac, nlp=nlp, large=100):n    print(f&quot;    {i[0]:.2e}, [{i[1]}, {i[2]}]&quot;)nprint(&quot;Badly scaled variables:&quot;)nfor v, sv in iscale.badly_scaled_var_generator(n    m, large=1e2, small=1e-2, zero=1e-12n):n    print(f&quot;    {v} -- {sv} -- {iscale.get_scaling_factor(v)}&quot;)nprint(f&quot;Jacobian Condition Number: {iscale.jacobian_cond(jac=jac):.2e}&quot;)n'</pre>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

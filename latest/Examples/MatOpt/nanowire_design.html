@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nanowire Design &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Nanowire Design</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/Examples/MatOpt/nanowire_design.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="nanowire-design">
+<h1>Nanowire Design<a class="headerlink" href="#nanowire-design" title="Permalink to this heading">¶</a></h1>
+<p>This notebook serves as an example application of the MatOpt framework.
+We consider an example optimization problem of designing a semiconductor
+compound nanowire.</p>
+<section id="importing-packages">
+<h2>Importing Packages<a class="headerlink" href="#importing-packages" title="Permalink to this heading">¶</a></h2>
+<p>We start by importing several standard Python modules for convienience.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+</pre></div>
+</div>
+<p>Next, we import MatOpt.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.apps.matopt</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+</section>
+<section id="representing-materials">
+<h2>Representing Materials<a class="headerlink" href="#representing-materials" title="Permalink to this heading">¶</a></h2>
+<p>To begin, we define a <strong>Lattice</strong> object. For semiconductor materials,
+<strong>WurtziteLattice</strong> is an appropriate type of lattice. This object will
+serve to define neighbor connections and helps us generically create
+other objects. We construct our lattice from a class method constructor
+that aligns the resulting lattice with certain orientations expressed by
+hexagonal Miller Indices.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">IAD</span> <span class="o">=</span> <span class="mf">3.7265</span> <span class="c1"># Angstrom</span>
+<span class="n">orientation</span> <span class="o">=</span> <span class="s1">&#39;0001&#39;</span>
+<span class="n">lattice</span> <span class="o">=</span> <span class="n">WurtziteLattice</span><span class="o">.</span><span class="n">alignedWith</span><span class="p">(</span><span class="n">IAD</span><span class="p">,</span> <span class="n">orientation</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, we define a <strong>Shape</strong> object that we will use to specify a design
+space. Additionally, in this example our design space is linearly
+periodic, so we will define a <strong>Tiling</strong> object to hold information
+about the periodicity. In this example, <strong>Cylinder</strong> and
+<strong>LinearTiling</strong> are the appropriate types, respectively.</p>
+<p>Note that we shift the shape of our design space slightly, in order to
+avoid confusion about which lattice sites (out of those that lie
+perfectly on the shape facet) should be included.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nAtomRadius</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">nAtomUnitLength</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">origin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">axisDirection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">radius</span> <span class="o">=</span> <span class="n">lattice</span><span class="o">.</span><span class="n">getShellSpacing</span><span class="p">(</span><span class="n">orientation</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">nAtomRadius</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">height</span> <span class="o">=</span> <span class="n">lattice</span><span class="o">.</span><span class="n">getLayerSpacing</span><span class="p">(</span><span class="n">orientation</span><span class="p">)</span> <span class="o">*</span> <span class="n">lattice</span><span class="o">.</span><span class="n">getUniqueLayerCount</span><span class="p">(</span><span class="n">orientation</span><span class="p">)</span> <span class="o">*</span> <span class="n">nAtomUnitLength</span>
+<span class="n">shape</span> <span class="o">=</span> <span class="n">Cylinder</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">axisDirection</span><span class="p">)</span>
+<span class="n">shape</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="o">-</span><span class="mf">0.001</span> <span class="o">*</span> <span class="n">shape</span><span class="o">.</span><span class="n">Vh</span><span class="p">)</span>
+<span class="n">tiling</span> <span class="o">=</span> <span class="n">LinearTiling</span><span class="o">.</span><span class="n">fromCylindricalShape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Given the parameters for a design space, we can construct a <strong>Canvas</strong>
+object to hold information about lattice locations and nearest
+neighbors. In this example, the object is first constructed from
+<code class="docutils literal notranslate"><span class="pre">lattice</span></code> and <code class="docutils literal notranslate"><span class="pre">shape</span></code> and then made periodic with <code class="docutils literal notranslate"><span class="pre">tiling</span></code>. A
+Canvas can be constructed and manipulated via user-defined algorithms.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">canvas</span> <span class="o">=</span> <span class="n">Canvas</span><span class="o">.</span><span class="n">fromLatticeAndShape</span><span class="p">(</span><span class="n">lattice</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+<span class="n">canvas</span><span class="o">.</span><span class="n">makePeriodic</span><span class="p">(</span><span class="n">tiling</span><span class="p">,</span> <span class="n">lattice</span><span class="o">.</span><span class="n">getNeighbors</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">canvas</span></code> object holds information about the design space and the
+lattice sites, but it does not specify any material building block
+information. In this example, we are considering an InAs nanowire. To
+represent material configurations, we will use a <strong>Design</strong> object. We
+first construct an empty Design from <code class="docutils literal notranslate"><span class="pre">canvas</span></code> and then place <strong>Atom</strong>
+(i.e., building block) objects into this Design via methods provided by
+<code class="docutils literal notranslate"><span class="pre">lattice</span></code>.</p>
+<p>To debug our work so far, we can create material structure files to load
+and plot with standard visualization tools. Here, we create a PDB
+(protein data bank format, www.rcsb.org) file for the Design object.
+These files can be plotted with visualization packages such as AtomEye
+or OVITO.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">design</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="n">canvas</span><span class="p">)</span>
+<span class="n">lattice</span><span class="o">.</span><span class="n">setDesign</span><span class="p">(</span><span class="n">design</span><span class="p">,</span> <span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;In&#39;</span><span class="p">),</span> <span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;As&#39;</span><span class="p">))</span>
+<span class="n">design</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;canvas.pdb&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="building-a-model">
+<h2>Building a Model<a class="headerlink" href="#building-a-model" title="Permalink to this heading">¶</a></h2>
+<p>In this example, we will build a model that maximizes the cohesive
+energy of the nanowire as an indicator of it’s thermal stability. To
+begin, we start by creating a <strong>MatOptModel</strong> object to hold information
+about the model. Notice that we use a list of empty atoms as our set of
+building blocks because we will use a cohesive energy function for
+semiconductor materials that is indepedent of atom types. Thus, we do
+not need to specify the types of building blocks in our model.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">MatOptModel</span><span class="p">(</span><span class="n">canvas</span><span class="p">,</span> <span class="p">[</span><span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)])</span>
+</pre></div>
+</div>
+<p>By default, several basic variables are pre-defined. See the first
+example, <strong>Monometallic_Nanocluster_Design.ipynb</strong> for a description of
+basic variables, expressions, and constraint rules.</p>
+<p>First, we fix the core layers of the nanowire specified by the ratio of
+the core radius and the canvas radius.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">coreRatio</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">CoreLayers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">canvas</span><span class="o">.</span><span class="n">Points</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">coreRatio</span> <span class="o">*</span> <span class="n">radius</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FixedTo</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sites</span><span class="o">=</span><span class="n">CoreLayers</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Next, we introduce constraints that require atoms to be placed on top of
+each other radially, avoiding hollow pockets below the surface.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">CanvasMinusCoreLayers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">canvas</span><span class="o">.</span><span class="n">Points</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CoreLayers</span><span class="p">]</span>
+<span class="n">NeighborsInside</span> <span class="o">=</span> <span class="p">[[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">canvas</span><span class="o">.</span><span class="n">NeighborhoodIndexes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="p">(</span>
+        <span class="n">j</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">canvas</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">canvas</span><span class="o">.</span><span class="n">Points</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">&lt;</span>
+        <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">DBL_TOL</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">canvas</span><span class="o">.</span><span class="n">Points</span><span class="p">)]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ImpliesNeighbors</span><span class="p">(</span><span class="n">concs</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="p">,</span> <span class="n">GreaterThan</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
+                                   <span class="n">sites</span><span class="o">=</span><span class="n">CanvasMinusCoreLayers</span><span class="p">,</span>
+                                   <span class="n">neighborhoods</span><span class="o">=</span><span class="n">NeighborsInside</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Next, we define a descriptor for each site’s contribution to the overall
+cohesion as a function of each site’s coordination environment. We
+derive this individual atom contribution from the Khor-Das Sarma-type
+empirical potential energy function. The parameters come from the
+literature.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">CNBounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.22479870084561238</span>
+<span class="n">q</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.9092660150083058</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.3684513</span>
+<span class="n">BPs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">CNBounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CNBounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">Vals</span> <span class="o">=</span> <span class="p">[(</span><span class="n">p</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">cn</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">-</span> <span class="n">q</span> <span class="o">*</span> <span class="n">cn</span><span class="p">)</span> <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="n">BPs</span><span class="p">]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">addSitesDescriptor</span><span class="p">(</span><span class="s1">&#39;Vi&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">Vals</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">Vals</span><span class="p">)),</span>
+                     <span class="n">rules</span><span class="o">=</span><span class="n">PiecewiseLinear</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">Vals</span><span class="p">,</span> <span class="n">breakpoints</span><span class="o">=</span><span class="n">BPs</span><span class="p">,</span> <span class="n">input_desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Ci</span><span class="p">,</span> <span class="n">con_type</span><span class="o">=</span><span class="s1">&#39;UB&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Next, we define the cohesive energy as a sum of contributions from all
+<code class="docutils literal notranslate"><span class="pre">Vi</span></code> descriptors.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">size</span> <span class="o">=</span> <span class="mi">216</span>
+<span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Ecoh&#39;</span><span class="p">,</span> <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Vi</span><span class="p">,</span><span class="n">coefs</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">size</span><span class="p">))))</span>
+</pre></div>
+</div>
+<p>Finally, we add constraints on the size and composition of the resulting
+designs.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">addGlobalDescriptor</span><span class="p">(</span><span class="s1">&#39;Size&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="n">rules</span><span class="o">=</span><span class="n">EqualTo</span><span class="p">(</span><span class="n">SumSites</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">Yi</span><span class="p">)))</span>
+</pre></div>
+</div>
+</section>
+<section id="solving-the-model">
+<h2>Solving the Model<a class="headerlink" href="#solving-the-model" title="Permalink to this heading">¶</a></h2>
+<p>Given a fully formed Pyomo model, we have several capabilities to
+optimize and visualize the solution. In this example, we simply call the
+<code class="docutils literal notranslate"><span class="pre">maximize</span></code> method to optimize the cohesive energy.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">optimalDesign</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">optimalDesign</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">maximize</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Ecoh</span><span class="p">,</span> <span class="n">tilim</span><span class="o">=</span><span class="mi">360</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s1">&#39;cplex&#39;</span><span class="p">)</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer Community Edition 12.9.0.0
+  with Simplex, Mixed Integer &amp; Barrier Optimizers
+5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55 5655-Y21
+Copyright IBM Corp. 1988, 2019.  All Rights Reserved.
+
+Type &#39;help&#39; for a list of available commands.
+Type &#39;help&#39; followed by a command name for more
+information on commands.
+
+CPLEX&gt; Logfile &#39;cplex.log&#39; closed.
+Logfile &#39;/tmp/tmpch95iozu.cplex.log&#39; open.
+CPLEX&gt; New value for absolute mixed integer optimality gap tolerance: 0
+CPLEX&gt; New value for mixed integer optimality gap tolerance: 0
+CPLEX&gt; New value for time limit in seconds: 360
+CPLEX&gt; Problem &#39;/tmp/tmpa2x9xy2r.pyomo.lp&#39; read.
+Read time = 0.01 sec. (0.81 ticks)
+CPLEX&gt; Problem name         : /tmp/tmpa2x9xy2r.pyomo.lp
+Objective sense      : Maximize
+Variables            :    3439  [Nneg: 1,  Fix: 1,  Box: 520,  Free: 1,
+                                 Binary: 2400,  General Integer: 516]
+Objective nonzeros   :       1
+Linear constraints   :    9119  [Less: 6516,  Greater: 2080,  Equal: 523]
+  Nonzeros           :   22127
+  RHS nonzeros       :    3498
+
+Variables            : Min LB: 0.000000         Max UB: 216.0000
+Objective nonzeros   : Min   : 1.000000         Max   : 1.000000
+Linear constraints   :
+  Nonzeros           : Min   : 0.004629630      Max   : 1.000000
+  RHS nonzeros       : Min   : 0.1308177        Max   : 16.00000
+CPLEX&gt; CPLEX Error  1016: Community Edition. Problem size limits exceeded. Purchase at https://ibm.co/2s0wqSa.
+
+Error termination, CPLEX Error  1016.
+Solution time =    0.00 sec.
+Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+
+CPLEX&gt; CPLEX Error  1217: No solution exists.
+No file written.
+CPLEX&gt; ERROR: evaluating object as numeric value: obj
+        (object: &lt;class &#39;pyomo.core.base.objective.ScalarObjective&#39;&gt;)
+    No value for uninitialized NumericValue object obj
+MaOpt can not find usable solver (CPLEX or NEOS-CPLEX)
+</pre></div>
+</div>
+</section>
+<section id="processing-solutions">
+<h2>Processing Solutions<a class="headerlink" href="#processing-solutions" title="Permalink to this heading">¶</a></h2>
+<p>Once the model is solved, we can plot the resulting design. In this
+case, we will first label atoms with their identities and then replicate
+the design four times to better visualize the periodic pattern.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">optimalDesign</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">optimalDesign</span><span class="o">.</span><span class="n">Canvas</span><span class="o">.</span><span class="n">Points</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">optimalDesign</span><span class="o">.</span><span class="n">Contents</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lattice</span><span class="o">.</span><span class="n">isASite</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                <span class="n">optimalDesign</span><span class="o">.</span><span class="n">setContent</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;In&#39;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">lattice</span><span class="o">.</span><span class="n">isBSite</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                <span class="n">optimalDesign</span><span class="o">.</span><span class="n">setContent</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Atom</span><span class="p">(</span><span class="s1">&#39;As&#39;</span><span class="p">))</span>
+    <span class="n">optimalDesign</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;result.pdb&#39;</span><span class="p">)</span>
+    <span class="n">periodicDesign</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">optimalDesign</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">optimalDesign</span><span class="o">.</span><span class="n">Canvas</span><span class="o">.</span><span class="n">Points</span><span class="p">):</span>
+            <span class="n">periodicDesign</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">shape</span><span class="o">.</span><span class="n">Vh</span><span class="p">,</span> <span class="n">optimalDesign</span><span class="o">.</span><span class="n">Contents</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">optimalDesign</span><span class="o">.</span><span class="n">Canvas</span><span class="o">.</span><span class="n">Points</span><span class="p">):</span>
+            <span class="n">periodicDesign</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">shape</span><span class="o">.</span><span class="n">Vh</span><span class="p">,</span> <span class="n">optimalDesign</span><span class="o">.</span><span class="n">Contents</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">periodicDesign</span><span class="o">.</span><span class="n">toPDB</span><span class="p">(</span><span class="s1">&#39;periodic_result.pdb&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

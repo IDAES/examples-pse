@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HDA Flowsheet Costing &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">HDA Flowsheet Costing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/Examples/Flowsheets/HDA_flowsheet_with_costing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hda-flowsheet-costing">
+<h1>HDA Flowsheet Costing<a class="headerlink" href="#hda-flowsheet-costing" title="Permalink to this heading">¶</a></h1>
+<section id="note">
+<h2>Note<a class="headerlink" href="#note" title="Permalink to this heading">¶</a></h2>
+<p>This tutorial will demonstrate adding capital and operating costs to the
+two HDA examples, the basic <a class="reference external" href="../../Tutorials/Basics/HDA_flowsheet_solution.ipynb">HDA with
+Flash</a> and a
+comparison with the <a class="reference external" href="HDA_flowsheet_with_distillation_solution.ipynb">HDA with
+Distillation</a>.</p>
+</section>
+<section id="learning-outcomes">
+<h2>Learning outcomes<a class="headerlink" href="#learning-outcomes" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Import external pre-built steady-state flowsheets using the IDAES
+unit model library</p></li>
+<li><p>Define and add costing blocks using the IDAES Process Costing
+Framework</p></li>
+<li><p>Fomulate and solve a process economics optimization problem</p>
+<ul>
+<li><p>Defining an objective function</p></li>
+<li><p>Setting variable bounds</p></li>
+<li><p>Adding additional constraints</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="problem-statement">
+<h2>Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this heading">¶</a></h2>
+<p>Hydrodealkylation is a chemical reaction that often involves reacting an
+aromatic hydrocarbon in the presence of hydrogen gas to form a simpler
+aromatic hydrocarbon devoid of functional groups. In this example,
+toluene will be reacted with hydrogen gas at high temperatures to form
+benzene via the following reaction:</p>
+<p><strong>C6H5CH3 + H2 → C6H6 + CH4</strong></p>
+<p>This reaction is often accompanied by an equilibrium side reaction which
+forms diphenyl, which we will neglect for this example.</p>
+<p>This example is based on the 1967 AIChE Student Contest problem as
+present by Douglas, J.M., Chemical Design of Chemical Processes, 1988,
+McGraw-Hill.</p>
+<p>Users may refer to the prior examples linked at the top of this notebook
+for detailed process descriptions of the two HDA configurations. As
+before, the properties required for this module are defined in</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">hda_ideal_VLE.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">idaes.models.properties.activity_coeff_models.BTX_activity_coeff_VLE</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hda_reaction.py</span></code></p></li>
+</ul>
+<p>Additionally, we will be importing externally-defined flowsheets for the
+two HDA configurations from</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">hda_flowsheets_for_costing_notebook.py</span></code></p></li>
+</ul>
+</section>
+<section id="import-and-run-hda-flowsheets">
+<h2>Import and run HDA Flowsheets<a class="headerlink" href="#import-and-run-hda-flowsheets" title="Permalink to this heading">¶</a></h2>
+<p>First, we will generate solved flowsheets for each HDA model. The
+external scripts build and set inputs for the flowsheets, initialize
+unit models and streams, and solve the flowsheets before returning the
+model objects. Note that the HDA flowsheets contain all unit models and
+stream connections, and no costing equations.</p>
+<p>The flowsheet utilizes the Wegstein method to iteratively solve circular
+dependencies such as recycle streams, and is intended to approach a
+feasible solution. As such, the calls below will fail to converge after
+3 iterations and pass to IPOPT to obtain an optimal solution as
+expected:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Source file for prebuilt flowsheets</span>
+<span class="kn">from</span> <span class="nn">hda_flowsheets_for_costing_notebook</span> <span class="kn">import</span> <span class="n">hda_with_flash</span>
+<span class="c1"># Build hda model with second flash unit and return model object</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">hda_with_flash</span><span class="p">(</span><span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Building flowsheet...
+
+Setting inputs...
+
+Initializing flowsheet...
+
+Limiting Wegstein tear to 3 iterations to obtain initial solution, if not converged IPOPT will pick up and continue.
+
+fs.s03
+fs.H101
+fs.R101
+fs.F101
+fs.S101
+fs.C101
+fs.M101
+2023-03-04 01:43:25 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:25 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:25 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:25 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:25 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:25 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:25 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:25 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:25 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+2023-03-04 01:43:25 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:25 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.H101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.H101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:26 [INFO] idaes.init.fs.R101.control_volume: Initialization Complete
+2023-03-04 01:43:26 [INFO] idaes.init.fs.R101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:27 [INFO] idaes.init.fs.F101.control_volume: Initialization Complete
+2023-03-04 01:43:27 [INFO] idaes.init.fs.F101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:27 [INFO] idaes.init.fs.S101.purge_state: Initialization Complete
+2023-03-04 01:43:27 [INFO] idaes.init.fs.S101.recycle_state: Initialization Complete
+2023-03-04 01:43:27 [INFO] idaes.init.fs.S101: Initialization Step 2 Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:27 [INFO] idaes.init.fs.C101.control_volume: Initialization Complete
+2023-03-04 01:43:27 [INFO] idaes.init.fs.C101: Initialization Complete: optimal - Optimal Solution Found
+2023-03-04 01:43:27 [INFO] idaes.init.fs.M101.mixed_state: Initialization Complete
+2023-03-04 01:43:27 [INFO] idaes.init.fs.M101: Initialization Complete: optimal - Optimal Solution Found
+WARNING: Wegstein failed to converge in 3 iterations
+2023-03-04 01:43:27 [INFO] idaes.init.fs.F102.control_volume: Initialization Complete
+2023-03-04 01:43:27 [INFO] idaes.init.fs.F102: Initialization Complete: optimal - Optimal Solution Found
+Solving flowsheet...
+
+Ipopt 3.13.2: tol=1e-06
+max_iter=5000
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     1031
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      934
+
+Total number of variables............................:      340
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:      146
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:      340
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 6.60e+04 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 8.69e+03 1.42e+03  -1.0 2.00e+04    -  9.71e-01 4.67e-01H  1
+   2  0.0000000e+00 3.05e+03 1.56e+03  -1.0 1.60e+04    -  9.79e-01 4.90e-01h  1
+   3  0.0000000e+00 1.58e+03 1.55e+05  -1.0 1.41e+04    -  9.90e-01 4.99e-01h  1
+   4  0.0000000e+00 5.49e+02 8.87e+08  -1.0 8.43e+03    -  1.00e+00 9.57e-01h  1
+   5  0.0000000e+00 4.25e+03 2.87e+10  -1.0 8.02e+02    -  1.00e+00 9.90e-01h  1
+   6  0.0000000e+00 2.25e+03 1.51e+10  -1.0 8.39e+00    -  1.00e+00 1.00e+00h  1
+   7  0.0000000e+00 2.27e+01 1.40e+08  -1.0 2.45e-03    -  1.00e+00 1.00e+00f  1
+   8  0.0000000e+00 2.45e-03 1.23e+04  -1.0 2.38e-05    -  1.00e+00 1.00e+00h  1
+   9  0.0000000e+00 2.24e-08 3.40e-01  -2.5 1.06e-07    -  1.00e+00 1.00e+00h  1
+Cannot recompute multipliers for feasibility problem.  Error in eq_mult_calculator
+
+Number of Iterations....: 9
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   2.8284425679755700e+05    2.8284425679755700e+05
+Constraint violation....:   5.8207660913467407e-11    2.2351741790771484e-08
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   5.8207660913467407e-11    2.8284425679755700e+05
+
+
+Number of objective function evaluations             = 11
+Number of objective gradient evaluations             = 10
+Number of equality constraint evaluations            = 11
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 10
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 9
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.014
+Total CPU secs in NLP function evaluations           =      0.001
+
+EXIT: Optimal Solution Found.
+Complete.</pre>
+</section>
+<section id="idaes-process-costing-framework">
+<h2>IDAES Process Costing Framework<a class="headerlink" href="#idaes-process-costing-framework" title="Permalink to this heading">¶</a></h2>
+<p>IDAES provides a library of capital costing correlations based on those
+in the following source:</p>
+<p><em>Process and Product Design Principles: Synthesis, Analysis, and
+Evaluation</em>. Seider, Seader, Lewin, Windagdo, 3rd Ed. John Wiley and
+Sons Chapter 22. Cost Accounting and Capital Cost Estimation 22.2 Cost
+Indexes and Capital Investment.</p>
+<p>Currently, IDAES supports calculation of capital costing for a wide
+array of unit operations, vesseel sizing and material properties, and
+specific unit options such as column tray types and heat exchanger
+configurations. Users may find further information on specific costing
+methods and options in the IDAES Process Costing Framework documentation
+(link pending).</p>
+</section>
+<section id="add-operating-cost-equations">
+<h2>Add Operating Cost Equations<a class="headerlink" href="#add-operating-cost-equations" title="Permalink to this heading">¶</a></h2>
+<p>Before adding capital costing blocks, we will add operating cost
+equations taken from the basic <a class="reference external" href="../../Tutorials/Basics/HDA_flowsheet_solution.ipynb">HDA with
+Flash</a> and the
+<a class="reference external" href="HDA_flowsheet_with_distillation_solution.ipynb">HDA with
+Distillation</a>
+examples. The examples assume constant cooling and heating coefficients
+over an annual cost basis. The IDAES Generic Costing Framework does not
+currently support variable cost calculations.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Required imports</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">Expression</span>
+
+<span class="c1"># Operating costs for HDA with second flash (model m)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cooling_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="mf">0.212e-7</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span>
+                                   <span class="mf">0.212e-7</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="mf">2.2e-7</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+                                   <span class="mf">1.9e-7</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span>
+                                           <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span> <span class="o">+</span>
+                                            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cooling_cost</span><span class="p">)))</span>
+</pre></div>
+</div>
+</section>
+<section id="add-capital-costing">
+<h2>Add Capital Costing<a class="headerlink" href="#add-capital-costing" title="Permalink to this heading">¶</a></h2>
+<p>Below, we will add add capital costing blocks to the imported flowsheets
+and evaluate the economic impact of replacing the second Flash with a
+Distillation column. First, let’s import and define the main flowsheet
+costing block:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import costing methods - classes, heaters, vessels, compressors, columns</span>
+<span class="kn">from</span> <span class="nn">idaes.models.costing.SSLW</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SSLWCosting</span><span class="p">,</span>
+    <span class="n">SSLWCostingData</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">UnitModelCostingBlock</span>
+
+<span class="c1"># Costing block</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span> <span class="o">=</span> <span class="n">SSLWCosting</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Next, we will build the relevant costing blocks for the equipment we
+wish to cost. Note how the costing block, methods and flags are passed
+as arguments in the costing block call itself. Each unit model will have
+a single costing block, but each flowsheet model (m and n) will also
+have a single costing block for flowsheet-level properties.</p>
+<p>Users should note that IDAES costing methods support a wide array of
+heating sources (e.g. fired, steam boiler, hot water) and do not support
+direct capital costing of coolers. If users wish to cost Heater units
+acting as coolers, it is necessary to cost a “dummy” <a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/reference_guides/model_libraries/generic/unit_models/heat_exchanger.html">0D shell and tube
+exchanger</a>
+with appropriate aliased hot stream properties and proper cooling water
+properties. This is not demonstrated here, as the HDA examples take
+advantage of Flash and Condenser operations to recover liquid product.</p>
+<p>Capital costing is independent of unit model connections, and building
+cost equations may be done piecewise in this fashion. Default options
+are passed explicitly to demonstrate proper syntax and usage. Now that
+all required properties are defined, let’s cost our models connecting
+costing blocks, methods and unit models in each flowsheet.</p>
+<section id="flexibility-of-costing-block-definitions">
+<h3>Flexibility of Costing Block Definitions<a class="headerlink" href="#flexibility-of-costing-block-definitions" title="Permalink to this heading">¶</a></h3>
+<p>IDAES supports many ways to define batches of costing blocks, and
+several are shown in the example. Users may employ whichever method fits
+their modeling needs for explicit or concise code. In the code below,
+note how the unit model itself is never passed to the costing method;
+when the full model is executed, the costing block will automatically
+connect its parent block with child equation blocks.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Compressor</span></code> unit models with isothermal or adiabatic thermodynamics
+are too simple to cost and are therefore excluded from the economic
+analysis.</p>
+<p>Let’s define costing for the heater unit:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.models.costing.SSLW</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">HeaterMaterial</span><span class="p">,</span>
+    <span class="n">HeaterSource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># Costing for heater - m.fs.H101</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">H101</span><span class="o">.</span><span class="n">costing</span> <span class="o">=</span> <span class="n">UnitModelCostingBlock</span><span class="p">(</span>
+    <span class="n">flowsheet_costing_block</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="p">,</span>
+    <span class="n">costing_method</span><span class="o">=</span><span class="n">SSLWCostingData</span><span class="o">.</span><span class="n">cost_fired_heater</span><span class="p">,</span>
+    <span class="n">costing_method_arguments</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;material_type&quot;</span><span class="p">:</span> <span class="n">HeaterMaterial</span><span class="o">.</span><span class="n">CarbonSteel</span><span class="p">,</span>
+            <span class="s2">&quot;heat_source&quot;</span><span class="p">:</span> <span class="n">HeaterSource</span><span class="o">.</span><span class="n">Fuel</span><span class="p">,</span>
+        <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The costing module provides a <code class="docutils literal notranslate"><span class="pre">unit_mapping</span></code> dictionary linking
+generic unit model classes with recommended costing methods. In this
+example, StoichiometricReactor and Flash vessels utilize different
+vessel costing methods with similar arguments. The diameter and length
+attributes need to exist in order to cost vessel sizing and material
+requirements, and we add them if they don’t exist already. The
+<code class="docutils literal notranslate"><span class="pre">unit_mapping</span></code> method provides an opportunity to automatically select
+the correct vessel orientation (vertical or horizontal) based on the
+unit type; passing a <code class="docutils literal notranslate"><span class="pre">StoichiometricReactor</span></code> or <code class="docutils literal notranslate"><span class="pre">PFR</span></code> class object
+will call the <code class="docutils literal notranslate"><span class="pre">cost_horizontal_vessel</span></code> method, while passing a
+<code class="docutils literal notranslate"><span class="pre">Flash</span></code> or <code class="docutils literal notranslate"><span class="pre">CSTR</span></code> class object will call the
+<code class="docutils literal notranslate"><span class="pre">cost_vertical_vessel</span></code> method.</p>
+<p>All vessels are assigned costing succintly via a loop below - users may
+define each block individually if desired:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.models.costing.SSLW</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">VesselMaterial</span><span class="p">,</span>
+    <span class="n">TrayType</span><span class="p">,</span>
+    <span class="n">TrayMaterial</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">idaes.core.util.constants</span> <span class="kn">import</span> <span class="n">Constants</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">Var</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">,</span> <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span><span class="p">,</span> <span class="n">Param</span><span class="p">,</span> <span class="n">value</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models</span> <span class="kn">import</span> <span class="n">StoichiometricReactor</span><span class="p">,</span> <span class="n">Flash</span>
+<span class="c1"># Map unit models to unit classes</span>
+<span class="c1"># Will pass to unit_mapping which calls costing methods based on unit class</span>
+<span class="n">unit_class_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">:</span> <span class="n">StoichiometricReactor</span><span class="p">,</span>
+                      <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="p">:</span> <span class="n">Flash</span><span class="p">,</span>
+                      <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="p">:</span> <span class="n">Flash</span><span class="p">,}</span>
+
+<span class="c1"># Costing for vessels - m.fs.R101, m.fs.F101, m.fs.F102</span>
+
+<span class="c1"># Loop over units</span>
+<span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">R101</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F101</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="p">]:</span>
+    <span class="c1"># Get correct unit class for unit model</span>
+    <span class="n">unit_class</span> <span class="o">=</span> <span class="n">unit_class_mapping</span><span class="p">[</span><span class="n">unit</span><span class="p">]</span>
+
+    <span class="c1"># Add dimension variables and constraint if they don&#39;t exist</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s2">&quot;diameter&quot;</span><span class="p">):</span>
+        <span class="n">unit</span><span class="o">.</span><span class="n">diameter</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s2">&quot;length&quot;</span><span class="p">):</span>
+        <span class="n">unit</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s2">&quot;volume&quot;</span><span class="p">):</span>  <span class="c1"># if volume exists, set diameter from volume</span>
+        <span class="n">unit</span><span class="o">.</span><span class="n">volume_eq</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">unit</span><span class="o">.</span><span class="n">volume</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">unit</span><span class="o">.</span><span class="n">length</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">diameter</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="n">Constants</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># fix diameter directly</span>
+        <span class="n">unit</span><span class="o">.</span><span class="n">diameter</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.2214</span> <span class="o">*</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="p">)</span>
+    <span class="c1"># Either way, fix L/D to calculate L from D</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">L_over_D</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">unit</span><span class="o">.</span><span class="n">length</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">diameter</span><span class="p">)</span>
+
+    <span class="c1"># Define vessel costing</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">costing</span> <span class="o">=</span> <span class="n">UnitModelCostingBlock</span><span class="p">(</span>
+        <span class="n">flowsheet_costing_block</span><span class="o">=</span><span class="n">unit</span><span class="o">.</span><span class="n">parent_block</span><span class="p">()</span><span class="o">.</span><span class="n">costing</span><span class="p">,</span>  <span class="c1"># e.g. m.fs.R101.costing</span>
+        <span class="n">costing_method</span><span class="o">=</span><span class="n">SSLWCostingData</span><span class="o">.</span><span class="n">unit_mapping</span><span class="p">[</span><span class="n">unit_class</span><span class="p">],</span>  <span class="c1"># e.g. cost_vertical_vessel()</span>
+        <span class="n">costing_method_arguments</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;material_type&quot;</span><span class="p">:</span> <span class="n">VesselMaterial</span><span class="o">.</span><span class="n">CarbonSteel</span><span class="p">,</span>
+            <span class="s2">&quot;shell_thickness&quot;</span><span class="p">:</span> <span class="mf">1.25</span> <span class="o">*</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">inch</span><span class="p">,</span>
+
+            <span class="p">}</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="solve-flowsheet-costing-blocks">
+<h2>Solve Flowsheet Costing Blocks<a class="headerlink" href="#solve-flowsheet-costing-blocks" title="Permalink to this heading">¶</a></h2>
+<p>Now, we may solve the full flowsheet for all costing blocks:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define solver</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">get_solver</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">()</span>
+
+<span class="c1"># Check that the degrees of freedom are zero</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+<span class="k">assert</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check physical units consistency, solve and check solver status</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">TerminationCondition</span>
+<span class="kn">from</span> <span class="nn">pyomo.util.check_units</span> <span class="kn">import</span> <span class="n">assert_units_consistent</span>
+
+<span class="n">assert_units_consistent</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">symbolic_solver_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">results</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+max_iter=200
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:     1067
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      942
+
+Total number of variables............................:      358
+                     variables with only lower bounds:       15
+                variables with lower and upper bounds:      146
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:      358
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 1.00e+05 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 8.81e+04 5.49e+03  -1.0 9.20e+04    -  2.62e-01 1.20e-01h  1
+   2  0.0000000e+00 6.34e+04 2.46e+03  -1.0 8.10e+04    -  5.83e-01 2.87e-01h  1
+   3  0.0000000e+00 3.40e+04 5.65e+03  -1.0 5.80e+04    -  5.72e-01 4.86e-01h  1
+   4  0.0000000e+00 2.33e+04 5.28e+05  -1.0 3.01e+04    -  7.04e-01 5.09e-01h  1
+   5  0.0000000e+00 1.13e+04 2.99e+09  -1.0 1.49e+04    -  8.02e-01 9.65e-01h  1
+   6  0.0000000e+00 5.50e+03 1.54e+09  -1.0 8.18e+02    -  9.90e-01 6.10e-01h  1
+   7  0.0000000e+00 5.23e+03 1.44e+09  -1.0 3.84e+02    -  9.92e-01 5.07e-02h  1
+   8  0.0000000e+00 5.22e+03 1.44e+09  -1.0 3.70e+02    -  1.00e+00 5.85e-04h  1
+   9r 0.0000000e+00 5.22e+03 1.00e+03   2.3 0.00e+00    -  0.00e+00 3.66e-07R  5
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10r 0.0000000e+00 6.47e+04 1.34e+04   2.3 1.78e+05    -  2.30e-03 1.09e-03f  1
+  11r 0.0000000e+00 3.63e+04 4.53e+04   2.3 7.67e+03    -  7.32e-02 3.13e-03f  1
+  12r 0.0000000e+00 3.93e+04 4.20e+04   2.3 6.14e+03    -  6.79e-02 1.14e-01f  1
+  13r 0.0000000e+00 3.99e+04 2.20e+04   2.3 6.23e+02    -  4.86e-01 3.05e-01f  1
+  14r 0.0000000e+00 5.25e+04 1.67e+04   2.3 1.89e+03    -  2.37e-01 1.00e+00f  1
+  15r 0.0000000e+00 5.74e+04 8.19e+02   2.3 1.50e+03    -  9.73e-01 7.07e-01f  1
+  16r 0.0000000e+00 5.79e+04 7.74e+02   0.9 5.93e+02    -  9.40e-01 5.52e-01f  1
+  17r 0.0000000e+00 5.77e+04 4.91e+03   0.9 4.87e+02    -  9.04e-01 4.24e-01f  1
+  18r 0.0000000e+00 6.06e+04 1.62e+03   0.9 5.45e+02    -  1.00e+00 6.92e-01f  1
+  19r 0.0000000e+00 6.61e+04 2.32e+02   0.9 2.04e+02    -  1.00e+00 9.52e-01f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  20r 0.0000000e+00 7.62e+04 1.03e+03   0.2 1.71e+02    -  8.32e-01 8.32e-01f  1
+  21r 0.0000000e+00 7.57e+04 8.29e+01   0.2 6.76e+02    -  1.00e+00 1.00e+00f  1
+  22r 0.0000000e+00 7.23e+04 4.74e+01  -0.5 1.37e+02    -  1.00e+00 9.01e-01f  1
+  23r 0.0000000e+00 5.71e+04 3.30e+01  -0.5 7.91e+02    -  1.00e+00 1.00e+00f  1
+  24r 0.0000000e+00 5.85e+04 6.01e-01  -0.5 1.26e+02    -  1.00e+00 1.00e+00h  1
+  25r 0.0000000e+00 4.88e+04 1.78e+02  -2.8 4.53e+02    -  9.80e-01 7.63e-01f  1
+  26r 0.0000000e+00 2.12e+04 2.63e+02  -2.8 2.29e+03    -  4.88e-01 2.16e-01f  1
+  27r 0.0000000e+00 2.05e+04 5.27e+02  -2.8 3.17e+03    -  1.00e+00 3.36e-01f  1
+  28r 0.0000000e+00 2.00e+04 7.36e+02  -2.8 3.93e+03    -  3.18e-02 1.06e-01f  1
+  29r 0.0000000e+00 7.19e+03 7.22e+02  -2.8 4.19e+03    -  1.00e+00 3.22e-01f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  30r 0.0000000e+00 8.95e+03 2.50e+03  -2.8 6.03e+02    -  1.00e+00 7.72e-01f  1
+  31r 0.0000000e+00 5.53e+03 1.10e+03  -2.8 1.82e+03    -  7.92e-01 3.40e-01f  1
+  32r 0.0000000e+00 3.65e+03 7.38e+02  -2.8 1.83e+03    -  6.45e-01 5.76e-01f  1
+  33r 0.0000000e+00 4.19e+02 7.29e+02  -2.8 8.86e+02    -  6.85e-01 8.10e-01f  1
+  34r 0.0000000e+00 2.59e+02 3.88e+02  -2.8 8.93e+01    -  1.00e+00 1.00e+00f  1
+  35r 0.0000000e+00 2.37e+02 3.62e+02  -2.8 8.07e+00    -  1.00e+00 1.00e+00h  1
+  36r 0.0000000e+00 2.37e+02 1.60e+00  -2.8 2.49e+00    -  1.00e+00 1.00e+00h  1
+  37r 0.0000000e+00 2.37e+02 3.54e-02  -2.8 6.73e-02    -  1.00e+00 1.00e+00h  1
+  38r 0.0000000e+00 2.40e+02 6.94e+02  -4.3 1.16e+02    -  1.00e+00 5.13e-01f  1
+  39r 0.0000000e+00 1.40e+02 1.92e+03  -4.3 6.99e+01    -  9.98e-01 4.06e-01f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  40r 0.0000000e+00 8.34e+01 2.11e+03  -4.3 4.21e+01    -  1.00e+00 6.67e-01f  1
+  41r 0.0000000e+00 2.54e+01 6.31e+02  -4.3 2.23e+01    -  7.35e-01 1.00e+00f  1
+  42  0.0000000e+00 2.26e+01 1.16e+07  -1.0 4.76e+01    -  9.90e-01 1.25e-01h  4
+  43  0.0000000e+00 2.00e+01 5.45e+06  -1.0 4.09e+01    -  9.90e-01 1.25e-01h  4
+  44  0.0000000e+00 1.59e+01 4.92e+06  -1.0 3.49e+01    -  9.91e-01 2.50e-01h  3
+  45  0.0000000e+00 1.23e+01 4.33e+06  -1.0 2.41e+01    -  1.00e+00 2.50e-01h  3
+  46  0.0000000e+00 7.56e+00 5.75e+06  -1.0 1.54e+01    -  1.00e+00 5.00e-01h  2
+  47  0.0000000e+00 3.06e+01 1.36e+07  -1.0 1.62e+00    -  1.00e+00 1.00e+00h  1
+  48  0.0000000e+00 3.18e-04 1.31e+03  -1.0 3.34e+01    -  1.00e+00 1.00e+00h  1
+  49  0.0000000e+00 2.98e-08 2.61e-01  -3.8 9.06e-08    -  1.00e+00 1.00e+00h  1
+Cannot recompute multipliers for feasibility problem.  Error in eq_mult_calculator
+
+Number of Iterations....: 49
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   1.5041500809430196e+04    1.5041500809430196e+04
+Constraint violation....:   2.9103830456733704e-11    2.9802322387695312e-08
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   2.9103830456733704e-11    1.5041500809430196e+04
+
+
+Number of objective function evaluations             = 74
+Number of objective gradient evaluations             = 19
+Number of equality constraint evaluations            = 74
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 51
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 49
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.066
+Total CPU secs in NLP function evaluations           =      0.006
+
+EXIT: Optimal Solution Found.</pre>
+<p>For comparison, we will call and build the HDA flowsheet replacing the
+second <code class="docutils literal notranslate"><span class="pre">Flash</span></code> with a <code class="docutils literal notranslate"><span class="pre">TrayColumn</span></code> distillation unit model. The
+flowsheet costing occurs in the external script
+<code class="docutils literal notranslate"><span class="pre">hda_flowsheets_for_costing_notebook.py</span></code> and is not shown here:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.common.log</span> <span class="kn">import</span> <span class="n">LoggingIntercept</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">StringIO</span>
+
+<span class="n">stream</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">LoggingIntercept</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="s2">&quot;idaes&quot;</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">):</span>
+    <span class="c1"># Source file for prebuilt flowsheets</span>
+    <span class="kn">from</span> <span class="nn">hda_flowsheets_for_costing_notebook</span> <span class="kn">import</span> <span class="n">hda_with_distillation</span>
+    <span class="c1"># Build hda model with distillation column and return model object</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">hda_with_distillation</span><span class="p">(</span><span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Building</span> <span class="n">flowsheet</span><span class="o">...</span>
+
+<span class="n">Setting</span> <span class="n">inputs</span><span class="o">...</span>
+
+<span class="n">Initializing</span> <span class="n">flowsheet</span><span class="o">...</span>
+
+<span class="n">Limiting</span> <span class="n">Wegstein</span> <span class="n">tear</span> <span class="n">to</span> <span class="mi">3</span> <span class="n">iterations</span> <span class="n">to</span> <span class="n">obtain</span> <span class="n">initial</span> <span class="n">solution</span><span class="p">,</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span> <span class="n">IPOPT</span> <span class="n">will</span> <span class="n">pick</span> <span class="n">up</span> <span class="ow">and</span> <span class="k">continue</span><span class="o">.</span>
+
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">Wegstein</span> <span class="n">failed</span> <span class="n">to</span> <span class="n">converge</span> <span class="ow">in</span> <span class="mi">3</span> <span class="n">iterations</span>
+<span class="n">Solving</span> <span class="n">flowsheet</span><span class="o">...</span>
+
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.H102.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span> <span class="s1">&#39;fs.H102.control_volume.scaling_factor&#39;</span>
+    <span class="n">that</span> <span class="n">contains</span> <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span>
+    <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.F101.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">26</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.F101.control_volume.properties_in[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span> <span class="s1">&#39;fs.F101.control_volume.scaling_factor&#39;</span>
+    <span class="n">that</span> <span class="n">contains</span> <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span>
+    <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.R101.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.R101.control_volume.properties_in[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span> <span class="s1">&#39;fs.R101.control_volume.scaling_factor&#39;</span>
+    <span class="n">that</span> <span class="n">contains</span> <span class="mi">2</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span>
+    <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.H101.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">26</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.H101.control_volume.properties_in[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">Adding</span> <span class="n">distillation</span> <span class="n">column</span> <span class="ow">and</span> <span class="n">resolving</span> <span class="n">flowsheet</span><span class="o">...</span>
+
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.D101.condenser.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span>
+    <span class="n">contains</span> <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>
+    <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.H102.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span> <span class="s1">&#39;fs.H102.control_volume.scaling_factor&#39;</span>
+    <span class="n">that</span> <span class="n">contains</span> <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span>
+    <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.F101.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">26</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.F101.control_volume.properties_in[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span> <span class="s1">&#39;fs.F101.control_volume.scaling_factor&#39;</span>
+    <span class="n">that</span> <span class="n">contains</span> <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span>
+    <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.R101.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.R101.control_volume.properties_in[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span> <span class="s1">&#39;fs.R101.control_volume.scaling_factor&#39;</span>
+    <span class="n">that</span> <span class="n">contains</span> <span class="mi">2</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span>
+    <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.H101.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">26</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.H101.control_volume.properties_in[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">Complete</span><span class="o">.</span>
+
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.D101.condenser.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span>
+    <span class="n">contains</span> <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>
+    <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.H102.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span> <span class="s1">&#39;fs.H102.control_volume.scaling_factor&#39;</span>
+    <span class="n">that</span> <span class="n">contains</span> <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span>
+    <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.F101.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">26</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.F101.control_volume.properties_in[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span> <span class="s1">&#39;fs.F101.control_volume.scaling_factor&#39;</span>
+    <span class="n">that</span> <span class="n">contains</span> <span class="mi">1</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span>
+    <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.R101.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.R101.control_volume.properties_in[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span> <span class="s1">&#39;fs.R101.control_volume.scaling_factor&#39;</span>
+    <span class="n">that</span> <span class="n">contains</span> <span class="mi">2</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span>
+    <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.H101.control_volume.properties_out[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">26</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">model</span> <span class="n">contains</span> <span class="n">export</span> <span class="n">suffix</span>
+    <span class="s1">&#39;fs.H101.control_volume.properties_in[0.0].scaling_factor&#39;</span> <span class="n">that</span> <span class="n">contains</span>
+    <span class="mi">25</span> <span class="n">component</span> <span class="n">keys</span> <span class="n">that</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">exported</span> <span class="k">as</span> <span class="n">part</span> <span class="n">of</span> <span class="n">the</span> <span class="n">NL</span> <span class="n">file</span><span class="o">.</span>  <span class="n">Skipping</span><span class="o">.</span>
+</pre></div>
+</div>
+</section>
+<section id="results-comparison-and-visualization">
+<h2>Results Comparison and Visualization<a class="headerlink" href="#results-comparison-and-visualization" title="Permalink to this heading">¶</a></h2>
+<p>For the two flowsheets above, let’s sum the total operating and capital
+costs of each scenario. We will display overall process economics
+results and compare the two flowsheets:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports and data gathering</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;dark_background&#39;</span><span class="p">)</span>  <span class="c1"># if using browser in dark mode, uncomment this line</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="c1"># Automatically get units that we costed - this will exclude C101 for both flowsheets</span>
+
+<span class="n">two_flash_unitlist</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span> <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+                      <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">unit</span><span class="p">),</span> <span class="s2">&quot;costing&quot;</span><span class="p">)]</span>
+<span class="n">distillation_unitlist</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span> <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+                       <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">unit</span><span class="p">),</span> <span class="s2">&quot;costing&quot;</span><span class="p">)]</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compare equipment purchase costs (actual capital costs)</span>
+
+<span class="n">two_flash_capcost</span> <span class="o">=</span> <span class="p">{</span><span class="n">unit</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">value</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="o">/</span><span class="mf">1e3</span><span class="p">)</span>
+                     <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="n">two_flash_unitlist</span><span class="p">}</span>
+<span class="n">distillation_capcost</span> <span class="o">=</span> <span class="p">{</span><span class="n">unit</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">value</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">capital_cost</span><span class="o">/</span><span class="mf">1e3</span><span class="p">)</span>
+                      <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="n">distillation_unitlist</span><span class="p">}</span>
+
+<span class="n">two_flash_capdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">two_flash_capcost</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Equipment&#39;</span><span class="p">,</span><span class="s1">&#39;Two Flash&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Equipment&#39;</span><span class="p">)</span>
+<span class="n">distillation_capdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">distillation_capcost</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                             <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Equipment&#39;</span><span class="p">,</span><span class="s1">&#39;Distillation&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Equipment&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add dataframes, merge same indices, replace NaNs with 0s, and transpose</span>
+<span class="n">capcosts</span> <span class="o">=</span> <span class="n">two_flash_capdf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">distillation_capdf</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+<span class="c1"># Sort according to an easier order to view</span>
+<span class="n">capcosts</span> <span class="o">=</span> <span class="n">capcosts</span><span class="p">[[</span><span class="s1">&#39;fs.H101&#39;</span><span class="p">,</span> <span class="s1">&#39;fs.R101&#39;</span><span class="p">,</span> <span class="s1">&#39;fs.F101&#39;</span><span class="p">,</span> <span class="s1">&#39;fs.F102&#39;</span><span class="p">,</span> <span class="s1">&#39;fs.D101&#39;</span><span class="p">,</span> <span class="s1">&#39;fs.H102&#39;</span><span class="p">]]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Costs in $1000:&#39;</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">capcosts</span><span class="p">)</span>  <span class="c1"># view dataframe before plotting</span>
+
+<span class="n">capplot</span> <span class="o">=</span> <span class="n">capcosts</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="n">stacked</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;HDA Total Capital Costs&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;$1000&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Costs in $1000:
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Equipment</th>
+      <th>fs.H101</th>
+      <th>fs.R101</th>
+      <th>fs.F101</th>
+      <th>fs.F102</th>
+      <th>fs.D101</th>
+      <th>fs.H102</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Distillation</th>
+      <td>13.283334</td>
+      <td>13.552294</td>
+      <td>7.781332</td>
+      <td>0.000000</td>
+      <td>7.60743</td>
+      <td>3.32944</td>
+    </tr>
+    <tr>
+      <th>Two Flash</th>
+      <td>13.283334</td>
+      <td>10.755878</td>
+      <td>7.781332</td>
+      <td>7.781332</td>
+      <td>0.00000</td>
+      <td>0.00000</td>
+    </tr>
+  </tbody>
+</table>
+</div><img alt="../../_images/output_22_2.png" src="../../_images/output_22_2.png" />
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compare operating costs (per year)</span>
+
+<span class="n">two_flash_opcost</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;cooling&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cooling_cost</span><span class="o">/</span><span class="mf">1e3</span><span class="p">),</span>
+                    <span class="s1">&#39;heating&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span><span class="o">/</span><span class="mf">1e3</span><span class="p">)}</span>
+<span class="n">distillation_opcost</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;cooling&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span> <span class="n">n</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cooling_cost</span><span class="o">/</span><span class="mf">1e3</span><span class="p">),</span>
+                     <span class="s1">&#39;heating&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span> <span class="n">n</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heating_cost</span><span class="o">/</span><span class="mf">1e3</span><span class="p">)}</span>
+
+<span class="n">two_flash_opdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">two_flash_opcost</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Utilities&#39;</span><span class="p">,</span><span class="s1">&#39;Two Flash&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Utilities&#39;</span><span class="p">)</span>
+<span class="n">distillation_opdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">distillation_opcost</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                             <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Utilities&#39;</span><span class="p">,</span><span class="s1">&#39;Distillation&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Utilities&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add dataframes, merge same indices, replace NaNs with 0s, and transpose</span>
+<span class="n">opcosts</span> <span class="o">=</span> <span class="n">two_flash_opdf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">distillation_opdf</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Costs in $1000:&#39;</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">opcosts</span><span class="p">)</span>  <span class="c1"># view dataframe before plotting</span>
+
+<span class="n">opplot</span> <span class="o">=</span> <span class="n">opcosts</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="n">stacked</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;HDA Operating Costs&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;$1000/year&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Costs in $1000:
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Utilities</th>
+      <th>cooling</th>
+      <th>heating</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Distillation</th>
+      <td>60.192008</td>
+      <td>367.404722</td>
+    </tr>
+    <tr>
+      <th>Two Flash</th>
+      <td>47.028803</td>
+      <td>372.093536</td>
+    </tr>
+  </tbody>
+</table>
+</div><img alt="../../_images/output_23_2.png" src="../../_images/output_23_2.png" />
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compare total costs (capital costs and operating costs)</span>
+
+<span class="n">two_flash_totcost</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;capital&#39;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">two_flash_capcost</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">two_flash_capcost</span><span class="p">),</span>
+                    <span class="s1">&#39;operating&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">)</span><span class="o">/</span><span class="mf">1e3</span><span class="p">}</span>
+<span class="n">distillation_totcost</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;capital&#39;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">distillation_capcost</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">distillation_capcost</span><span class="p">),</span>
+                     <span class="s1">&#39;operating&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">operating_cost</span><span class="p">)</span><span class="o">/</span><span class="mf">1e3</span><span class="p">}</span>
+
+<span class="n">two_flash_totdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">two_flash_totcost</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Costs&#39;</span><span class="p">,</span><span class="s1">&#39;Two Flash&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Costs&#39;</span><span class="p">)</span>
+<span class="n">distillation_totdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">distillation_totcost</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                             <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Costs&#39;</span><span class="p">,</span><span class="s1">&#39;Distillation&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Costs&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add dataframes, merge same indices, replace NaNs with 0s, and transpose</span>
+<span class="n">totcosts</span> <span class="o">=</span> <span class="n">two_flash_totdf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">distillation_totdf</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Costs in $1000:&#39;</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">totcosts</span><span class="p">)</span>  <span class="c1"># view dataframe before plotting</span>
+
+<span class="n">totplot</span> <span class="o">=</span> <span class="n">totcosts</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="n">stacked</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;HDA Total Plant Cost (TPC)&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;$1000/year&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Costs in $1000:
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Costs</th>
+      <th>capital</th>
+      <th>operating</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Distillation</th>
+      <td>45.553829</td>
+      <td>427.596731</td>
+    </tr>
+    <tr>
+      <th>Two Flash</th>
+      <td>39.601876</td>
+      <td>419.122339</td>
+    </tr>
+  </tbody>
+</table>
+</div><img alt="../../_images/output_24_2.png" src="../../_images/output_24_2.png" />
+<p>Finally, let’s compare the total costs on a production basis. This will
+account for the greater efficiency provided by the distillation column
+relative to the less-expensive second flash unit:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">two_flash_cost</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="mf">1e3</span><span class="o">*</span><span class="nb">sum</span><span class="p">(</span><span class="n">two_flash_totcost</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">two_flash_totcost</span><span class="p">))</span>
+<span class="n">two_flash_prod</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">F102</span><span class="o">.</span><span class="n">vap_outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">)</span>
+<span class="n">distillation_cost</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="mf">1e3</span><span class="o">*</span><span class="nb">sum</span><span class="p">(</span><span class="n">distillation_totcost</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">distillation_totcost</span><span class="p">))</span>
+<span class="n">distillation_prod</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">D101</span><span class="o">.</span><span class="n">condenser</span><span class="o">.</span><span class="n">distillate</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Two flash case over one year: $</span><span class="si">{</span><span class="n">two_flash_cost</span><span class="o">/</span><span class="mf">1e3</span><span class="si">:</span><span class="s2">0.0f</span><span class="si">}</span><span class="s2">K / </span><span class="si">{</span><span class="n">two_flash_prod</span><span class="o">/</span><span class="mf">1e3</span><span class="si">:</span><span class="s2">0.0f</span><span class="si">}</span><span class="s2"> kmol benzene = $</span><span class="si">{</span><span class="n">two_flash_cost</span><span class="o">/</span><span class="p">(</span><span class="n">two_flash_prod</span><span class="o">/</span><span class="mf">1e3</span><span class="p">)</span><span class="si">:</span><span class="s2">0.2f</span><span class="si">}</span><span class="s2"> per kmol benzene produced&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Distillation case over one year: $</span><span class="si">{</span><span class="n">distillation_cost</span><span class="o">/</span><span class="mf">1e3</span><span class="si">:</span><span class="s2">0.0f</span><span class="si">}</span><span class="s2">K / </span><span class="si">{</span><span class="n">distillation_prod</span><span class="o">/</span><span class="mf">1e3</span><span class="si">:</span><span class="s2">0.0f</span><span class="si">}</span><span class="s2"> kmol benzene = $</span><span class="si">{</span><span class="n">distillation_cost</span><span class="o">/</span><span class="p">(</span><span class="n">distillation_prod</span><span class="o">/</span><span class="mf">1e3</span><span class="p">)</span><span class="si">:</span><span class="s2">0.2f</span><span class="si">}</span><span class="s2"> per kmol benzene produced&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Two flash case over one year: $459K / 4477 kmol benzene = $102.45 per kmol benzene produced
+Distillation case over one year: $473K / 5108 kmol benzene = $92.63 per kmol benzene produced
+</pre></div>
+</div>
+</section>
+</section>
+<section id="summary">
+<h1>Summary<a class="headerlink" href="#summary" title="Permalink to this heading">¶</a></h1>
+<p>In this example, IDAES Process Costing Framework methods were applied to
+two HDA flowsheets for capital cost estimation. The costing blocks calls
+showcased multiple methods to define unit costing, demonstrating the
+flexibility and best practice of the costing framework. In the basic
+examples, the two-flash HDA did not include costing and the distillation
+HDA estimated a reactor capital cost comprising 3.3% of the total plant
+cost (TPC). With more rigorous costing, IDAES obtained total capital
+costs of 8.5% TPC (two flash HDA) and 9.6% (distillation HDA) and better
+modeled the impact of equipment cost on process economics. As printed
+above, the IDAES Process Costing Framework confirmed that replacing the
+second flash drum with a distillation column results in increased
+equipment costs, increased production and decreased cost per unit
+product.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,295 @@
+Heat Exchanger Lumped-Capacitance Unit Model with Two Property Packages
+=======================================================================
+
+.. image:: heat_exchanger_4.svg
+
+**Problem Statement**: In this example, we will be heating a
+benzene-toluene mixture using steam.
+
+**Tube Side Inlet**
+
+Flow Rate = 250 mol/s
+
+Mole fraction (Benzene) = 0.4
+
+Mole fraction (Toluene) = 0.6
+
+Pressure = 101325 Pa
+
+Temperature = 380 K
+
+**Shell Side Inlet**
+
+Flow Rate = 100 mol/s
+
+Mole fraction (Steam) = 1
+
+Pressure = 101325 Pa
+
+Temperature = 400 K
+
+The 0D lumped-capacitance heat exchanger unit model makes the assumption
+that the temperature difference bewtween discrete “lumps” in the heat
+exchanger is negligible. Likewise, this model can be useful for
+transient simulations in which temperature gradients within the heat
+exchanger can be ignored. This example will demonstrate the simulation
+of the lumped-capacitance heat exchanger by fixing the following degrees
+of freedom: - heat transfer area - overall heat transfer coefficients
+(one for cold-side and one for hot-side)
+
+The IDAES library’s ``HeatExchangerLumpedCapacitance`` is modelled after
+the heat exchanger 0D model and has added the capabilities of supporting
+a wall temperature as well as heat holdup for transient simulations;
+more details on the lumped capacitance heat exchanger may be found here:
+https://idaes-pse.readthedocs.io/en/latest/reference_guides/model_libraries/generic/unit_models/heat_exchanger_lc.html.
+
+IDAES documentation reference for the simpler heat exchanger 0D model:
+https://idaes-pse.readthedocs.io/en/latest/reference_guides/model_libraries/generic/unit_models/heat_exchanger.html
+
+Importing necessary tools
+-------------------------
+
+First, import the required IDAES and Pyomo modules. Note that the
+hot-side (shell) and cold-side (tube) properties leverage separate
+property packages:
+
+.. code:: ipython3
+
+    # Import pyomo package 
+    from pyomo.environ import ConcreteModel, Constraint, value, units
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+    
+    # Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model
+    from idaes.core import FlowsheetBlock
+    
+    # Import the IAPWS property package to create a properties block for steam in the flowsheet
+    from idaes.models.properties import iapws95
+    
+    from idaes.models.properties.iapws95 import htpx
+    
+    from idaes.models.properties.modular_properties import GenericParameterBlock
+    
+    # Import the BT_ideal property package to create a properties block for the tube side in the flowsheet
+    from idaes.models.properties.modular_properties.examples.BT_ideal \
+        import configuration
+    
+    #Import the degrees_of_freedom function from the idaes.core.util.model_statistics package
+    from idaes.core.util.model_statistics import degrees_of_freedom
+    
+    #Import the default IPOPT solver
+    from idaes.core.solvers import get_solver
+    
+    #Import a heat exchanger unit
+    from idaes.models.unit_models import HeatExchangerLumpedCapacitance, HeatExchangerFlowPattern
+
+Setting up the flowsheet
+------------------------
+
+Then, create the ``ConcreteModel`` foundation, attach the steady state
+flowsheet, and declare the property parameter block that will used for
+the shell and tube sides.
+
+More information on this general workflow can be found here:
+https://idaes-pse.readthedocs.io/en/stable/how_to_guides/workflow/general.html
+
+.. code:: ipython3
+
+    m = ConcreteModel()
+    
+    m.fs = FlowsheetBlock(dynamic=False)
+    
+    m.fs.properties_shell = iapws95.Iapws95ParameterBlock()
+    
+    m.fs.properties_tube = GenericParameterBlock(**configuration)
+
+Then, import and define the ``HeatExchanger`` unit, and add it to the
+flowsheet. As mentioned above, we will designate the shell as the hot
+side and the tube as the cold side. The ``dynamic_heat_balance`` is set
+to ``False`` in this case, meaning heat holdup in the wall material is
+not considered.
+
+The unit is created below:
+
+.. code:: ipython3
+
+    # Create an instance of the heat exchanger unit, attaching it to the flowsheet
+    # Specify that the property packages to be used with the heat exchanger are the ones we created earlier.
+    m.fs.heat_exchanger = HeatExchangerLumpedCapacitance(
+            hot_side_name="shell",
+            cold_side_name="tube",
+            shell={"property_package": m.fs.properties_shell},
+            tube={"property_package": m.fs.properties_tube},
+            flow_pattern=HeatExchangerFlowPattern.crossflow,
+            dynamic_heat_balance=False,)
+    
+    # Call the degrees_of_freedom function, get initial DOF
+    DOF_initial = degrees_of_freedom(m)
+    print("The initial DOF is {0}".format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial DOF is 12
+
+
+.. code:: ipython3
+
+    assert DOF_initial == 12
+
+Fixing input specifications
+---------------------------
+
+In the following cell, we will use a function to calculate enthalpy,
+then specify all of the necessary inputs for the heat exchanger, and
+re-evaluate the degrees of freedom to ensure the problem is square
+(i.e. DOF=0)
+
+.. code:: ipython3
+
+    h = htpx(400*units.K, P = 101325*units.Pa)  # calculate IAPWS enthalpy
+    
+    m.fs.heat_exchanger.shell_inlet.flow_mol.fix(100) # mol/s
+    m.fs.heat_exchanger.shell_inlet.pressure.fix(101325) # Pa
+    m.fs.heat_exchanger.shell_inlet.enth_mol.fix(h) # J/mol
+    
+    DOF_initial = degrees_of_freedom(m)
+    print("The DOF is {0}".format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The DOF is 9
+
+
+.. code:: ipython3
+
+    m.fs.heat_exchanger.tube_inlet.flow_mol.fix(250) # mol/s
+    m.fs.heat_exchanger.tube_inlet.mole_frac_comp[0, "benzene"].fix(0.4)
+    m.fs.heat_exchanger.tube_inlet.mole_frac_comp[0, "toluene"].fix(0.6)
+    m.fs.heat_exchanger.tube_inlet.pressure.fix(101325) # Pa
+    m.fs.heat_exchanger.tube_inlet.temperature[0].fix(380) # K
+    
+    DOF_final = degrees_of_freedom(m)
+    print("The DOF is {0}".format(DOF_final))
+
+
+.. parsed-literal::
+
+    The DOF is 4
+
+
+Fix overall heat transfer coefficient (HTC) and the heat transfer area
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Unlike the other heat exchanger unit models which only require one heat
+transfer coeffcient, the lump-capacitance model requires an overall heat
+transfer coeffcient to be specified for the hot and cold sides. Below,
+we fix the heat exchanger area and heat transfer coefficients, which
+yields a fully defined problem with zero degrees of freedom that may be
+initialized and solved:
+
+.. code:: ipython3
+
+    m.fs.heat_exchanger.area.fix(50) # m2
+    m.fs.heat_exchanger.ua_hot_side.fix(200 * 1000) # W/m2/K
+    m.fs.heat_exchanger.ua_cold_side.fix(200 * 1000) # W/m2/K
+    m.fs.heat_exchanger.crossflow_factor.fix(0.6)
+    
+    DOF_final = degrees_of_freedom(m)
+    print("The DOF is {0}".format(DOF_final))
+
+
+.. parsed-literal::
+
+    The DOF is 0
+
+
+.. code:: ipython3
+
+    assert DOF_final == 0
+
+Now that the problem is square (zero degrees of freedom), we can
+initialize and solve the full model:
+
+.. code:: ipython3
+
+    # Initialize the flowsheet, and set the output at INFO
+    m.fs.heat_exchanger.initialize(outlvl=idaeslog.INFO)
+    
+    # Solve the simulation using ipopt
+    # Note: If the degrees of freedom = 0, we have a square problem
+    opt = get_solver()
+    solve_status = opt.solve(m)
+    
+    # Display a readable report
+    m.fs.heat_exchanger.report()
+
+
+.. parsed-literal::
+
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.hot_side: Initialization Complete
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_in: Starting initialization
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_in: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_in: Equilibrium temperature initialization completed.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_in: State variable initialization completed.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_in: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_in: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_out: Starting initialization
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_out: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_out: Equilibrium temperature initialization completed.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_out: State variable initialization completed.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_out: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side.properties_out: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger.cold_side: Initialization Complete
+    2023-03-04 01:48:11 [INFO] idaes.init.fs.heat_exchanger: Initialization Completed, optimal - Optimal Solution Found
+    
+    ====================================================================================
+    Unit : fs.heat_exchanger                                                   Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key              : Value   : Units                           : Fixed : Bounds
+        Crossflow Factor : 0.60000 :                   dimensionless :  True : (None, None)
+                 HX Area :  50.000 :                      meter ** 2 :  True : (0, None)
+          HX Coefficient :  2000.0 : kilogram / kelvin / second ** 3 : False : (0, None)
+               Heat Duty :  73086. :                            watt : False : (None, None)
+    
+        Expressions: 
+    
+        Key             : Value      : Units
+        Delta T Driving :     1.2181 : kelvin
+             Delta T In :     17.621 : kelvin
+            Delta T Out : 9.1977e-06 : kelvin
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                          Units        shell Inlet shell Outlet tube Inlet tube Outlet
+        Molar Flow                       mole / second       100        100.00           -           -
+        Mass Flow                    kilogram / second    1.8015        1.8015           -           -
+        T                                       kelvin    400.00        380.00           -           -
+        P                                       pascal    101325    1.0132e+05           -           -
+        Vapor Fraction                   dimensionless    1.0000        1.0000           -           -
+        Molar Enthalpy                    joule / mole    49187.        48456.           -           -
+        Total Molar Flowrate             mole / second         -             -         250      250.00
+        Total Mole Fraction benzene      dimensionless         -             -     0.40000     0.40000
+        Total Mole Fraction toluene      dimensionless         -             -     0.60000     0.60000
+        Temperature                             kelvin         -             -         380      382.38
+        Pressure                                pascal         -             -  1.0132e+05  1.0132e+05
+    ====================================================================================
+
+
+.. code:: ipython3
+
+    from pyomo.environ import assert_optimal_termination
+    import pytest
+    
+    # Check if termination condition is optimal
+    assert_optimal_termination(solve_status)
+    
+    assert value(m.fs.heat_exchanger.shell.properties_out[0].temperature) == pytest.approx(380.0, abs=1e-2)
+    assert value(m.fs.heat_exchanger.tube.properties_out[0].temperature) == pytest.approx(382.38, abs=1e-2)
+

@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Management Framework Tutorial &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Data Management Framework Tutorial</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/Examples/Tools/data_management_framework.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data-management-framework-tutorial">
+<h1>Data Management Framework Tutorial<a class="headerlink" href="#data-management-framework-tutorial" title="Permalink to this heading">¶</a></h1>
+<p>This tutorial will introduce you to the use of the IDAES Data Management
+Framework (DMF). The purpose of the DMF is to give IDAES users an easy
+and consistent way to manage the data they use and create, with a
+particular focus on (a) the ability to annotate all data items with a
+combination of pre-defined and user-defined metadata, and (b) the
+ability to link between data items to record relationships between them.</p>
+<p>In this tutorial, you will learn: * Basic DMF terms and concepts * How
+to create a new DMF instance * How to add your data to the DMF * How
+to set up <em>relations</em> to show dependencies and provenance of resources
+* How to find, load, and remove data from the DMF</p>
+<section id="conventions">
+<h2>Conventions<a class="headerlink" href="#conventions" title="Permalink to this heading">¶</a></h2>
+<p>The typographic conventions used in this tutorial are as follows.</p>
+<p>Names of files will be in “double quotes”, new terms will be in
+<em>italics</em>, and keywords and source code snippets will be in
+<code class="docutils literal notranslate"><span class="pre">fixed-width</span> <span class="pre">type</span></code>.</p>
+<p>Sections that offer additional detail that may be skipped are set off in
+blocks like this:</p>
+<div class="alert alert-block alert-info docutils container">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&amp;</span><span class="c1">#9998; &lt;b&gt;Details:&lt;/b&gt;</span>
+<span class="n">Detailed</span> <span class="n">information</span> <span class="n">goes</span> <span class="n">here</span><span class="o">...</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="basic-concepts">
+<h2>Basic concepts<a class="headerlink" href="#basic-concepts" title="Permalink to this heading">¶</a></h2>
+<p>This section describes the DMF conceptually, introducing standard terms
+used in this context. The terms are summarized at the end of the
+section.</p>
+<section id="workspaces">
+<h3>Workspaces<a class="headerlink" href="#workspaces" title="Permalink to this heading">¶</a></h3>
+<p>The DMF is designed to support multiple users, or multiple different
+projects for the same user. Different users or projects are isolated
+from each other through the concept of a DMF <em>workspace</em>. Each DMF
+instance is initialized with a given workspace, and all its DMF
+operations are confined to that workspace.</p>
+<p>For the default (and only, at this time) storage engine, the a directory
+in the filesystem is used for each workspace. As long as file
+permissions allow it, multiple users can share the same workspace, but
+note that there is no authentication required to modify DMF contents, so
+users must take care to coordinate their actions.</p>
+<div class="alert alert-block alert-info docutils container">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&amp;</span><span class="c1">#9998; &lt;b&gt;Details:&lt;/b&gt;</span>
+<span class="n">There</span> <span class="ow">is</span> <span class="n">a</span> <span class="k">global</span> <span class="n">configuration</span> <span class="n">stored</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">user</span><span class="s1">&#39;s home directory in a file called &quot;.dmf&quot;.&lt;br/&gt;</span>
+<span class="n">This</span> <span class="n">file</span> <span class="n">records</span><span class="p">,</span> <span class="n">among</span> <span class="n">other</span> <span class="n">things</span><span class="p">,</span> <span class="n">the</span> <span class="s1">&#39;current&#39;</span> <span class="n">workspace</span><span class="o">.</span> <span class="n">This</span> <span class="n">avoids</span> <span class="n">having</span> <span class="n">to</span> <span class="n">specify</span> <span class="n">the</span> <span class="n">workspace</span>
+<span class="k">with</span> <span class="n">every</span> <span class="n">command</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">command</span><span class="o">-</span><span class="n">line</span> <span class="n">interface</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="resources-and-relations">
+<h3>Resources and relations<a class="headerlink" href="#resources-and-relations" title="Permalink to this heading">¶</a></h3>
+<p>The DMF is designed to store <em>resources</em>, which can be any sort of
+digital data, and to allow users to add structured metadata to describe
+the author, date, and origin of those resources. Users can explicitly
+register the <em>relations</em>, or named connections, between resources in the
+DMF, and use these to navigate between resources.</p>
+</section>
+<section id="files">
+<h3>Files<a class="headerlink" href="#files" title="Permalink to this heading">¶</a></h3>
+<p>Usually, but not always, each resource will be associated with one or
+more files, such as a data file, an image, or a spreadsheet. These files
+are by default copied into the DMF’s workspace at the time the resource
+is added. After this, the file may be changed or deleted without
+affecting the DMF. There is an option to instead refer to the location
+of the file (in the filesystem). This has the advantage of efficiency –
+no data is copied – and will also, for better or worse, let the file’s
+contents change even as the resource ID stays the same. In this case, it
+is considered the user’s problem to protect the file from being moved or
+deleted.</p>
+</section>
+<section id="terms">
+<h3>Terms<a class="headerlink" href="#terms" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><em>resource</em>: Digital data, with attached metadata, that is managed by
+the DMF</p></li>
+<li><p><em>relation</em>: Connection between two resources, which has a named type.
+Connections are directional in their sense – resource A “derived
+from” resource B – but can be navigated in both the “in” and “out”
+direction.</p></li>
+<li><p><em>JSON</em>: Short for JavaScript Object Notation, this is a standard way
+to format structured data. See <a class="reference external" href="https://json.org">https://json.org</a> for more information.</p></li>
+</ul>
+</section>
+</section>
+<section id="initialization">
+<h2>Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading">¶</a></h2>
+<p>Physically, the default (and currently only) storage engine of the DMF
+is a simple directory on the disk. This directory corresponds t
+<em>workspace</em>.</p>
+<div class="alert alert-block alert-info"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&amp;</span><span class="c1">#9998; &lt;b&gt;Details:&lt;/b&gt;</span>
+</pre></div>
+</div>
+<p>In the workspace directory, there are two files and a sub-directory:</p>
+<ul><li><p>“config.yaml”: Workspace configuration information.</p>
+<li><p>“resourcedb.json”: Metadata for all resources (JSON format)</p>
+<li><p>“files/”: Data files associated with resources</p>
+</ul></div><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.core.dmf</span> <span class="kn">import</span> <span class="n">DMF</span>  <span class="c1"># import main class</span>
+<span class="kn">import</span> <span class="nn">shutil</span><span class="o">,</span> <span class="nn">os</span>
+
+<span class="n">workspace_dir</span> <span class="o">=</span> <span class="s2">&quot;my_workspace&quot;</span>
+<span class="c1"># clean slate: remove anything from previous runs</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">workspace_dir</span><span class="p">):</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">workspace_dir</span><span class="p">)</span>
+<span class="c1"># create our workspace</span>
+<span class="n">dmf</span> <span class="o">=</span> <span class="n">DMF</span><span class="p">(</span><span class="n">workspace_dir</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># create means &#39;create the directory&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">01</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">386</span> <span class="p">[</span><span class="n">WARNING</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">dmfbase</span><span class="p">:</span> <span class="n">Unable</span> <span class="n">to</span> <span class="nb">open</span> <span class="k">global</span> <span class="n">DMF</span> <span class="n">configuration</span> <span class="n">file</span> <span class="k">for</span> <span class="n">reading</span><span class="p">:</span> <span class="n">File</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">runner</span><span class="o">/.</span><span class="n">dmf</span><span class="o">.</span> <span class="n">Using</span> <span class="n">default</span> <span class="n">configuration</span> <span class="n">values</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">01</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">387</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">workspace</span><span class="p">:</span> <span class="n">Create</span> <span class="n">new</span> <span class="n">configuration</span> <span class="n">at</span> <span class="s1">&#39;/tmp/tmpr11nwzke/my_workspace/config.yaml&#39;</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">01</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">388</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">dmfbase</span><span class="p">:</span> <span class="n">Saving</span> <span class="n">configuration</span> <span class="n">location</span> <span class="n">to</span><span class="p">:</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">runner</span><span class="o">/.</span><span class="n">dmf</span>
+</pre></div>
+</div>
+<section id="idaes-model-setup">
+<h3>IDAES model setup<a class="headerlink" href="#idaes-model-setup" title="Permalink to this heading">¶</a></h3>
+<p>In this example, we will work with the Flash unit model introduced in
+the ‘Flash_Unit’ tutorial. We will use the DMF to store, and connect,
+the inputs, model, and results. The following block of code creates the
+Flash unit model and its containing flowsheet block. Refer to the
+tutorial for details. Note that we add the level of indirection to make
+this a Python string, so we can save the code easily as a <em>resource</em>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_setup</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">from pyomo.environ import ConcreteModel, SolverFactory, Constraint, value</span>
+<span class="s2">from idaes.core import FlowsheetBlock</span>
+<span class="s2">from idaes.models.properties.activity_coeff_models.BTX_activity_coeff_VLE </span><span class="se">\</span>
+<span class="s2">    import BTXParameterBlock</span>
+<span class="s2">from idaes.models.unit_models import Flash</span>
+<span class="s2">m = ConcreteModel()</span>
+<span class="s2">m.fs = FlowsheetBlock(dynamic=False)</span>
+<span class="s2">m.fs.properties = BTXParameterBlock(valid_phase=(&#39;Liq&#39;, &#39;Vap&#39;),</span>
+<span class="s2">                                    activity_coeff_model=&quot;Ideal&quot;,</span>
+<span class="s2">                                    state_vars=&quot;FTPz&quot;)</span>
+<span class="s2">m.fs.flash = Flash(property_package=m.fs.properties)</span>
+<span class="s2">&quot;&quot;&quot;</span>
+<span class="n">exec</span><span class="p">(</span><span class="n">model_setup</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="adding-resources">
+<h2>Adding resources<a class="headerlink" href="#adding-resources" title="Permalink to this heading">¶</a></h2>
+<p>Using the Python API, the user adds resources to the DMF by either
+creating an instance of the <code class="docutils literal notranslate"><span class="pre">Resource</span></code> class, and adding it, or
+implicitly creating and adding a resource in one step by importing a
+file. One resource can also refer to multiple files. There is standard
+metadata that describes who, what, when, and how a resource was created.
+In addition, arbitrary structured data can be added in a “data” section
+of each resource.</p>
+<p>When adding, the basic workflow is: 0. Initialize DMF 1. Create/add
+resources 2. Create relations between these resources (more detail
+later) 3. Update the DMF to save all the relations</p>
+<p>We have already initialized the DMF. So, now we create and add some
+resources. First, the Flash code:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.core.dmf.resource</span> <span class="kn">import</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">ResourceTypes</span>
+
+<span class="c1"># Add the Flash code block as a resource</span>
+<span class="n">flash_code</span> <span class="o">=</span> <span class="n">Resource</span><span class="p">(</span><span class="n">type_</span><span class="o">=</span><span class="n">ResourceTypes</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">&quot;codes&quot;</span><span class="p">:</span> <span class="p">[{</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="s2">&quot;python&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;desc&quot;</span><span class="p">:</span> <span class="s2">&quot;Create Flash unit model and containing flowsheet&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;inline&quot;</span><span class="p">:</span> <span class="n">model_setup</span>
+    <span class="p">}],</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;flash_code&quot;</span>
+<span class="p">})</span>
+<span class="n">dmf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">flash_code</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;ad990aa1680c4233b1250f695ba7ac9a&#39;</span>
+</pre></div>
+</div>
+<p>Now we put the values that will be fed to the Flash unit model inlet
+into another resource.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Put inlet values into a dict</span>
+<span class="n">inlet_values</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;flow_mol&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mi">368</span><span class="p">,</span>
+    <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="mi">101325</span><span class="p">,</span>
+    <span class="s2">&quot;mole_frac_comp&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;benzene&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="s2">&quot;toluene&quot;</span><span class="p">:</span> <span class="mf">0.5</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="c1"># Save the inlet values as another resource</span>
+<span class="n">inlet_params</span> <span class="o">=</span> <span class="n">Resource</span><span class="p">(</span><span class="n">type_</span><span class="o">=</span><span class="n">ResourceTypes</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;Flash&quot;</span><span class="p">,</span> <span class="s2">&quot;inlet_values&quot;</span><span class="p">:</span> <span class="n">inlet_values</span><span class="p">}})</span>
+<span class="n">dmf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">inlet_params</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;3a24e00189d0402486cf70b6afee7cc9&#39;</span>
+</pre></div>
+</div>
+<section id="create-a-relation">
+<h3>Create a relation<a class="headerlink" href="#create-a-relation" title="Permalink to this heading">¶</a></h3>
+<p>Once created, resources are connected to each other, where needed, by
+creating <em>relations</em> between them. The DMF defines a few types of
+possible relations:</p>
+<ul class="simple">
+<li><p><em>derived</em>: object is derived from subject</p></li>
+<li><p><em>contains</em>: subject contains the object</p></li>
+<li><p><em>uses</em>: subject uses the object</p></li>
+<li><p><em>version</em>: object is a (new) version of the subject</p></li>
+</ul>
+<p>The terms <em>subject</em> and <em>object</em>, above, describe the direction of the
+relation with respect to the two resources. To take a simple example,
+imagine I have resources that represent a shoebox and a pair of shoes.
+To represent the relationship of the shoebox containing the shoes, then
+the shoebox is the subject and the shoes are the object of the relation
+“contains”.</p>
+<p>Relations, unlike resources, are not added directly to the DMF. Instead
+they are created with a method that also requires both resources to be
+provided, and then you call <code class="docutils literal notranslate"><span class="pre">update()</span></code> to save them. The relation is
+represented in both the subject and object of the relation. For example,
+given the shoes resource from the example above, one can find that they
+are the object of the “contains” relation with a shoebox resource.</p>
+<p>We can connect the two resources we just created with the relation
+“uses”, in the sense of the Flash unit model using the inlet values. The
+Flash unit code is the subject, and the inlet values are the object, of
+this relation.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.core.dmf.resource</span> <span class="kn">import</span> <span class="n">create_relation</span><span class="p">,</span> <span class="n">Predicates</span>
+
+<span class="n">create_relation</span><span class="p">(</span><span class="n">flash_code</span><span class="p">,</span> <span class="n">Predicates</span><span class="o">.</span><span class="n">uses</span><span class="p">,</span> <span class="n">inlet_params</span><span class="p">)</span>
+<span class="n">dmf</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>  <span class="c1"># sync to DMF storage</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2</span>
+</pre></div>
+</div>
+<p>Now, we finish constructing the Flash unit with the parameter values,
+then solve the model.</p>
+<p>For good measure, we save the status of the solution in another
+resource, and connect that to the flash model with the <em>derived</em>
+relation.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+
+<span class="c1"># Set inlet values using dict created above</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">inlet_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;mole_frac_comp&quot;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chem</span><span class="p">,</span> <span class="n">frac</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">chem</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">frac</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">inlet</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+<span class="c1"># Finish Flash unit setup</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>  <span class="c1"># quiet</span>
+
+<span class="c1"># Solve the model</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># also, quiet</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+
+<span class="c1"># Save the result in the DMF</span>
+<span class="n">result_rsrc</span> <span class="o">=</span> <span class="n">Resource</span><span class="p">(</span><span class="n">type_</span><span class="o">=</span><span class="n">ResourceTypes</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">status</span><span class="p">),</span> <span class="s2">&quot;solver&quot;</span><span class="p">:</span> <span class="s2">&quot;ipopt&quot;</span><span class="p">}})</span>
+<span class="n">dmf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">result_rsrc</span><span class="p">)</span>
+<span class="n">create_relation</span><span class="p">(</span><span class="n">flash_code</span><span class="p">,</span> <span class="n">Predicates</span><span class="o">.</span><span class="n">derived</span><span class="p">,</span> <span class="n">result_rsrc</span><span class="p">)</span>
+<span class="n">dmf</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+</pre></div>
+</div>
+<pre class="literal-block">Problem:
+- Lower bound: -inf
+  Upper bound: inf
+  Number of objectives: 1
+  Number of constraints: 41
+  Number of variables: 41
+  Sense: unknown
+Solver:
+- Status: ok
+  Message: Ipopt 3.13.2x3a Optimal Solution Found
+  Termination condition: optimal
+  Id: 0
+  Error rc: 0
+  Time: 0.00811314582824707
+Solution:
+- number of solutions: 0
+  number of solutions displayed: 0</pre>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">3</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="searching-for-resources">
+<h2>Searching for resources<a class="headerlink" href="#searching-for-resources" title="Permalink to this heading">¶</a></h2>
+<p>To retrieve and use previously added items from the DMF, you need to
+first locate them. There are four primary ways to do locate a resource:
+* Find by resource ID: Of course, this is fast, but you first need to
+know the identifier. * Find by query: You can search by any of the
+fields in the resource. * Find by name: A special case of find by
+query, you can search on the ‘name’ you gave the resource. * Find by
+relations: Given one resource, you can search for other resources to
+which it is related.</p>
+<section id="finding-resources-by-id">
+<h3>Finding resources by ID<a class="headerlink" href="#finding-resources-by-id" title="Permalink to this heading">¶</a></h3>
+<p>We first show how to retrieve a resource by its ID. The method is a
+generator because an ID prefix is allowed, so you need to look at the
+first (and only) result explicitly.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># use id from resource above</span>
+<span class="n">rsrc</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dmf</span><span class="o">.</span><span class="n">find_by_id</span><span class="p">(</span><span class="n">flash_code</span><span class="o">.</span><span class="n">id</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rsrc</span><span class="o">.</span><span class="n">v</span><span class="p">[</span><span class="s2">&quot;codes&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;inline&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">SolverFactory</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">,</span> <span class="n">value</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties.activity_coeff_models.BTX_activity_coeff_VLE</span>     <span class="kn">import</span> <span class="n">BTXParameterBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models</span> <span class="kn">import</span> <span class="n">Flash</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">BTXParameterBlock</span><span class="p">(</span><span class="n">valid_phase</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;Vap&#39;</span><span class="p">),</span>
+                                    <span class="n">activity_coeff_model</span><span class="o">=</span><span class="s2">&quot;Ideal&quot;</span><span class="p">,</span>
+                                    <span class="n">state_vars</span><span class="o">=</span><span class="s2">&quot;FTPz&quot;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">flash</span> <span class="o">=</span> <span class="n">Flash</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="finding-resources-by-query">
+<h3>Finding resources by query<a class="headerlink" href="#finding-resources-by-query" title="Permalink to this heading">¶</a></h3>
+<p>The query syntax that is supported is a filter that is in the style of
+the filters used by the MongoDB database engine. To simplify the common
+case, a <code class="docutils literal notranslate"><span class="pre">name</span></code> parameter is also provided to find resources by name.
+For the purposes of this tutorial, we will show the use of both methods.</p>
+<p>First, let’s find the Flash inlet parameters by looking for the value of
+“unit” in the “data” section. Note that this type of search requires
+that you know something about the structure of the metadata inside a
+resource.</p>
+<div class="alert alert-block alert-info docutils container">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&amp;</span><span class="c1">#9998; &lt;b&gt;Details:&lt;/b&gt;</span>
+</pre></div>
+</div>
+<p>A full description of possible fields (i.e., a schema) for a resource
+is in idaes.core.dmf.resource.RESOURCE_SCHEMA. The syntax for this
+description is a standard called JSON Schema.</p>
+</div>
+<p>For the purposes of understanding this query, you need to know 3 things:
+1. The query itself is contained in a Python dict given to the
+<code class="docutils literal notranslate"><span class="pre">filter_dict</span></code> parameter of the <code class="docutils literal notranslate"><span class="pre">find_one()</span></code> method. 2. You can
+search for nested fields, such as the “unit” field in the “data”
+section, by using dots between the field names. 3. By putting a tilde
+(“~”) before the value, the value will be treated like a regular
+expression. Here, we use this to find anything with the word “flash” in
+it, without worrying about upper and lower case.</p>
+<div class="alert alert-block alert-info docutils container">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&amp;</span><span class="c1">#9998; &lt;b&gt;Details:&lt;/b&gt; By default, resources in which &lt;em&gt;any&lt;/em&gt; item of the</span>
+<span class="n">provided</span> <span class="nb">list</span> <span class="n">matches</span> <span class="n">an</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">resource</span><span class="p">,</span> <span class="n">will</span> <span class="n">match</span><span class="o">.</span> <span class="n">To</span> <span class="n">ask</span> <span class="k">for</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="nb">all</span><span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span> <span class="n">of</span> <span class="n">the</span> <span class="n">provided</span>
+<span class="nb">list</span> <span class="n">items</span> <span class="n">to</span> <span class="n">match</span><span class="p">,</span> <span class="n">add</span> <span class="s2">&quot;!&quot;</span> <span class="n">after</span> <span class="n">the</span> <span class="n">key</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="s2">&quot;datafiles!&quot;</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">re</span>
+
+<span class="n">rsrc</span> <span class="o">=</span> <span class="n">dmf</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">filter_dict</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;data.unit&quot;</span><span class="p">:</span> <span class="s2">&quot;~.*flash.*&quot;</span><span class="p">},</span> <span class="n">re_flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">rsrc</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;id_&#39;</span><span class="p">:</span> <span class="s1">&#39;3a24e00189d0402486cf70b6afee7cc9&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;data&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;aliases&#39;</span><span class="p">:</span> <span class="p">[],</span>
+ <span class="s1">&#39;collaborators&#39;</span><span class="p">:</span> <span class="p">[],</span>
+ <span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="mf">1677894449.474633</span><span class="p">,</span>
+ <span class="s1">&#39;modified&#39;</span><span class="p">:</span> <span class="mf">1677894449.474633</span><span class="p">,</span>
+ <span class="s1">&#39;creator&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;runner&#39;</span><span class="p">},</span>
+ <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;Flash&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;inlet_values&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;flow_mol&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+   <span class="s1">&#39;temperature&#39;</span><span class="p">:</span> <span class="mi">368</span><span class="p">,</span>
+   <span class="s1">&#39;pressure&#39;</span><span class="p">:</span> <span class="mi">101325</span><span class="p">,</span>
+   <span class="s1">&#39;mole_frac_comp&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;benzene&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;toluene&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">}}},</span>
+ <span class="s1">&#39;datafiles&#39;</span><span class="p">:</span> <span class="p">[],</span>
+ <span class="s1">&#39;datafiles_dir&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;desc&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;relations&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;predicate&#39;</span><span class="p">:</span> <span class="s1">&#39;uses&#39;</span><span class="p">,</span>
+   <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="s1">&#39;ad990aa1680c4233b1250f695ba7ac9a&#39;</span><span class="p">,</span>
+   <span class="s1">&#39;role&#39;</span><span class="p">:</span> <span class="s1">&#39;object&#39;</span><span class="p">}],</span>
+ <span class="s1">&#39;tags&#39;</span><span class="p">:</span> <span class="p">[],</span>
+ <span class="s1">&#39;version_info&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="mf">1677894449.474633</span><span class="p">,</span>
+  <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">},</span>
+ <span class="s1">&#39;doc_id&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="findin-resources-by-name">
+<h3>Findin resources by name<a class="headerlink" href="#findin-resources-by-name" title="Permalink to this heading">¶</a></h3>
+<p>Finding by name is relatively simple, you just pass the <code class="docutils literal notranslate"><span class="pre">name</span></code>
+parameter to the <code class="docutils literal notranslate"><span class="pre">find()</span></code> or <code class="docutils literal notranslate"><span class="pre">find_one()</span></code> method. Note that the name
+must match exactly what was placed there.</p>
+<div class="alert alert-block alert-info docutils container">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&amp;</span><span class="c1">#9998; &lt;b&gt;Details:&lt;/b&gt; Searching by name is really just a special case of searching</span>
+<span class="n">by</span> <span class="s1">&#39;alias&#39;</span><span class="o">.</span> <span class="n">Each</span> <span class="n">resource</span> <span class="n">has</span> <span class="n">a</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">string</span> <span class="n">aliases</span> <span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tags</span> <span class="n">that</span> <span class="n">are</span> <span class="n">associated</span>
+<span class="k">with</span> <span class="n">it</span><span class="o">.</span> <span class="n">The</span> <span class="n">first</span> <span class="n">alias</span> <span class="ow">is</span> <span class="n">designated</span> <span class="k">as</span> <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">resource</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Find the Flash code resource by its name</span>
+<span class="n">rsrc</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dmf</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;flash_code&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Result metadata:&quot;</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">rsrc</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Result</span> <span class="n">metadata</span><span class="p">:</span>
+</pre></div>
+</div>
+<pre class="literal-block">{'<a href="#id3"><span class="problematic" id="id4">id_</span></a>': 'ad990aa1680c4233b1250f695ba7ac9a',
+ 'type': 'code',
+ 'aliases': ['flash_code'],
+ 'collaborators': [],
+ 'created': 1677894449.466004,
+ 'modified': 1677894449.466004,
+ 'creator': {'name': 'runner'},
+ 'data': {},
+ 'datafiles': [],
+ 'datafiles_dir': '',
+ 'desc': '',
+ 'relations': [{'predicate': 'uses',
+   'identifier': '3a24e00189d0402486cf70b6afee7cc9',
+   'role': 'subject'},
+  {'predicate': 'derived',
+   'identifier': '0fd9c8ea78714b8cb0833ea5287e4fd3',
+   'role': 'subject'}],
+ 'tags': [],
+ 'version_info': {'created': 1677894449.466004,
+  'version': [0, 0, 0],
+  'name': ''},
+ 'codes': [{'type': 'block',
+   'language': 'python',
+   'desc': 'Create Flash unit model and containing flowsheet',
+   'inline': 'nfrom pyomo.environ import ConcreteModel, SolverFactory, Constraint, valuenfrom idaes.core import FlowsheetBlocknfrom idaes.models.properties.activity_coeff_models.BTX_activity_coeff_VLE     import BTXParameterBlocknfrom idaes.models.unit_models import Flashnm = ConcreteModel()nm.fs = FlowsheetBlock(dynamic=False)nm.fs.properties = BTXParameterBlock(valid_phase=('Liq', 'Vap'),n                                    activity_coeff_model=&quot;Ideal&quot;,n                                    state_vars=&quot;FTPz&quot;)nm.fs.flash = Flash(property_package=m.fs.properties)n'}],
+ 'doc_id': 1}</pre>
+</section>
+<section id="finding-resources-by-relations">
+<h3>Finding resources by relations<a class="headerlink" href="#finding-resources-by-relations" title="Permalink to this heading">¶</a></h3>
+<p>Finally, you can also find a resource by navigating to it from an
+existing resource. For example, we can find all the resources that are
+connected to our Flash unit model. This will discover: * Flash code ─
+uses → Flash inlet parameters * Flash code ─ derived → Status of solve</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">depth</span><span class="p">,</span> <span class="n">triple</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">dmf</span><span class="o">.</span><span class="n">find_related</span><span class="p">(</span><span class="n">rsrc</span><span class="p">,</span>  <span class="c1"># &lt;-- this was the flash code we found above</span>
+                                            <span class="n">outgoing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># &lt;-- look at outgoing edges</span>
+                                            <span class="n">meta</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">]):</span> <span class="c1"># &lt;-- extract this metadata</span>
+    <span class="k">if</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">ResourceTypes</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s2">&quot;status&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">triple</span><span class="o">.</span><span class="n">predicate</span><span class="si">}</span><span class="s2"> --&gt; Status:&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="s2">&quot;inlet_values&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">triple</span><span class="o">.</span><span class="n">predicate</span><span class="si">}</span><span class="s2"> --&gt; inlet values:&quot;</span><span class="p">)</span>
+            <span class="n">display</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;inlet_values&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uses</span> <span class="o">--&gt;</span> <span class="n">inlet</span> <span class="n">values</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;flow_mol&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+ <span class="s1">&#39;temperature&#39;</span><span class="p">:</span> <span class="mi">368</span><span class="p">,</span>
+ <span class="s1">&#39;pressure&#39;</span><span class="p">:</span> <span class="mi">101325</span><span class="p">,</span>
+ <span class="s1">&#39;mole_frac_comp&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;benzene&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;toluene&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">}}</span>
+</pre></div>
+</div>
+<pre class="literal-block">derived --&gt; Status:
+
+Problem:
+- Lower bound: -inf
+  Upper bound: inf
+  Number of objectives: 1
+  Number of constraints: 41
+  Number of variables: 41
+  Sense: unknown
+Solver:
+- Status: ok
+  Message: Ipopt 3.13.2x3a Optimal Solution Found
+  Termination condition: optimal
+  Id: 0
+  Error rc: 0
+  Time: 0.00811314582824707
+Solution:
+- number of solutions: 0
+  number of solutions displayed: 0</pre>
+</section>
+</section>
+<section id="working-with-files">
+<h2>Working with files<a class="headerlink" href="#working-with-files" title="Permalink to this heading">¶</a></h2>
+<p>A resource provides a relatively simple way to access any related files,
+with the <code class="docutils literal notranslate"><span class="pre">get_datafiles()</span></code> method. In the simplest case, this returns
+a list of <code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code> objects that can be used however the user
+desires. If you pass in a “mode”, then the method will attempt to open
+files in that mode and return a Python file object instead.</p>
+<p>To illustrate this, let’s create a resource for this notebook itself, as
+a file. Then, we can find a special code block in the notebook, showing
+that we can actually read the resulting file.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add a new resource for the notebook file</span>
+<span class="n">notebook</span> <span class="o">=</span> <span class="n">dmf</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="s2">&quot;data_management_framework.ipynb&quot;</span><span class="p">)</span>
+
+<span class="c1"># Special:Start</span>
+<span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="n">notebook</span><span class="o">.</span><span class="n">get_datafiles</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">):</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Special:Start&quot;</span><span class="p">),</span> <span class="n">text</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s2">&quot;Special:End&quot;</span><span class="p">)</span>
+    <span class="n">block</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;for&quot;</span><span class="p">):])</span>
+<span class="c1"># Special:End</span>
+</pre></div>
+</div>
+<pre class="literal-block">for fp in notebook.get_datafiles(mode=&quot;r&quot;):n&quot;,
+    &quot;    text = fp.read()n&quot;,
+    &quot;    start, end = text.find(&quot;Special:Start&quot;), text.rfind(&quot;Special:End&quot;)n&quot;,
+    &quot;    block = text[start:end]n&quot;,
+    &quot;    print(block[block.find(&quot;for&quot;):])n&quot;,
+    &quot;#</pre>
+</section>
+<section id="removing-resources">
+<h2>Removing resources<a class="headerlink" href="#removing-resources" title="Permalink to this heading">¶</a></h2>
+<p>Resources can be removed using either their unique identifier (found in
+the “.id” attribute), or <em>en masse</em> using a search expression, as you
+would give to the <code class="docutils literal notranslate"><span class="pre">find()</span></code> method. The latter is not recommended
+unless you know what you are doing.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># uncomment and run this to remove the notebook resource</span>
+<span class="c1"># dmf.remove(notebook.id)</span>
+</pre></div>
+</div>
+</section>
+<section id="jupyter-magics">
+<h2>Jupyter “magics”<a class="headerlink" href="#jupyter-magics" title="Permalink to this heading">¶</a></h2>
+<p>To make working with the DMF in Jupyter Notebooks a little easier, a few
+Jupyter “magics” have been defined. Magics are special keywords that are
+prefixed with a ‘%’, that call underlying Python code. There are a
+number of built-in magics that you can see
+<a class="reference external" href="https://ipython.readthedocs.io/en/stable/interactive/magics.html">here</a>.</p>
+<p>The magics defined for the DMF are: * <code class="docutils literal notranslate"><span class="pre">%dmf</span> <span class="pre">workspaces</span></code>: List all
+possible workspaces (does not require %dmf init) * <code class="docutils literal notranslate"><span class="pre">%dmf</span> <span class="pre">init</span></code>: Call
+this to set the DMF workspace used by all other magics *
+<code class="docutils literal notranslate"><span class="pre">%dmf</span> <span class="pre">status</span></code>: Show information about current DMF status *
+<code class="docutils literal notranslate"><span class="pre">%dmf</span> <span class="pre">list</span></code>: List contents of current workspace * <code class="docutils literal notranslate"><span class="pre">%dmf</span> <span class="pre">help</span></code>: Show
+help on an object or method for IDAES</p>
+<p>Below are some examples of using these magics.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Need to import this to register the magics with your Jupyter Notebook</span>
+<span class="kn">from</span> <span class="nn">idaes.core.dmf</span> <span class="kn">import</span> <span class="n">magics</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">dmf</span> workspaces
+</pre></div>
+</div>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Path</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>./my_workspace</p></td>
+<td><p>none</p></td>
+<td><p>none</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;1 workspace(s) found&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">dmf</span> init my_workspace
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">01</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">832</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">dmf</span><span class="o">.</span><span class="n">dmfbase</span><span class="p">:</span> <span class="n">Saving</span> <span class="n">configuration</span> <span class="n">location</span> <span class="n">to</span><span class="p">:</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">runner</span><span class="o">/.</span><span class="n">dmf</span>
+</pre></div>
+</div>
+<p><em>Success!</em> Using workspace at “my_workspace”</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">dmf</span> status
+</pre></div>
+</div>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>_id: bafee5c7bdaf4a9b9f742089eb6e6b45</p></li>
+<li><p>created: 2023-03-04T01:47:29.832220</p></li>
+<li><p>modified: 2023-03-04T01:47:29.832220</p></li>
+<li><p>name: my_workspace</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">dmf</span> list
+</pre></div>
+</div>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>I
+D</p></th>
+<th class="head"><p>Name(s)</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Modified</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>a
+d
+9
+9
+0
+a
+a
+1
+6
+8
+0
+c
+4
+2
+3
+3
+b
+1
+2
+5
+0
+f
+6
+9
+5
+b
+a
+7
+a
+c
+9
+a</p></td>
+<td><p>flash_code</p></td>
+<td><p>code</p></td>
+<td><p>16
+77894449.466004</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>3
+a
+2
+4
+e
+0
+0
+1
+8
+9
+d
+0
+4
+0
+2
+4
+8
+6
+c
+f
+7
+0
+b
+6
+a
+f
+e
+e
+7
+c
+c
+9</p></td>
+<td></td>
+<td><p>data</p></td>
+<td><p>16
+77894449.474633</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>0
+f
+d
+9
+c
+8
+e
+a
+7
+8
+7
+1
+4
+b
+8
+c
+b
+0
+8
+3
+3
+e
+a
+5
+2
+8
+7
+e
+4
+f
+d
+3</p></td>
+<td></td>
+<td><p>data</p></td>
+<td><p>16
+77894449.715906</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>4
+8
+d
+a
+4
+8
+d
+6
+c
+a
+8
+7
+4
+5
+7
+e
+a
+4
+9
+c
+9
+c
+5
+5
+2
+d
+9
+a
+a
+e
+6
+9</p></td>
+<td></td>
+<td><p>no
+tebook</p></td>
+<td><p>16
+77894449.761714</p></td>
+<td><p>data_manag
+ement_framework.ipynb</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">True</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="thank-you">
+<h1>Thank you!<a class="headerlink" href="#thank-you" title="Permalink to this heading">¶</a></h1>
+<p>That’s the end of the tutorial. Thanks for your interest.</p>
+<p>For more information on the DMF APIs and command-line interfaces, see
+the <a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/user_guide/components/dmf/index.html">DMF section of the IDAES
+documentation</a>.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

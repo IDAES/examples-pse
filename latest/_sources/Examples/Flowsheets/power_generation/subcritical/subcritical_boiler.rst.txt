@@ -1,0 +1,3466 @@
+Subcritical Power Plant Flowsheet Example
+=========================================
+
+Subcritical Boiler Recirculation System
+---------------------------------------
+
+This example demonstrates a steady-state simulation of a subcritical
+pulverized coal boiler - recirculation system only. The boiler maintains
+circulation through the steam drum, downcomer, and waterwall by natural
+circulation. Natural circulation boilers rely on feedwater temperature
+and the resulting density differences in the drum and vertical tubes in
+the waterwall to promote circulation by gravity. See the
+``supercritical_steam_cycle.py`` for more information on how to assemble
+the flowsheet.
+
+This example does not represent any particular power plant but should be
+a reasonable approximation of a subcritical boiler (recirculation
+system).
+
+1. Introduction
+---------------
+
+This example demonstrates a simulation of a subcritical pulverized coal
+boiler - recirculation system only. ``subcritical_boiler.py`` includes
+four modules (main, create_model, initialize and set_inputs).
+
+The ``main()`` function creates the Pyomo concrete model and calls for
+the other functions to build the flowsheet, set inputs, initialize each
+unit, and solve the flowsheet.
+
+The ``create_model()`` function imports three units from power plant
+library (drum, downcomer, and waterwall sections). Then, it builds two
+arcs one to connect the drum liquid outlet to the downcomer tube/pipe
+model, and the other to connect the downcomer outlet to the first
+section of the waterwall sections model (first from bottom up). The
+waterwall sections model consists of several tube models interconnected,
+where, the outlet of each section connects with the next section.
+Finally, the last section connects with the drum (water_steam_inlet).
+
+In the drum the water steam mixture is separated, and the vapor leaves
+the top of the drum (as steam outlet). The separation is calculated
+using the IAPWS95 steam properties. Feedwater enters the drum from the
+economizer. The steam leaving the ``drum`` is heated in the
+superheaters, using hot flue gases, before it passes to the
+high-pressure turbine inlet as main steam. At this point superheaters
+have not been included in this simulation.
+
+The ``initialize()`` function uses the initial guess to initialize the
+models. Each model at the time, and using the solution from the previous
+interconnected model. The ``set_inputs()`` function unfixes the inlet
+streams of the intermediate units and fixes the appropiate variables
+(feedwater_inlet flow_mol and enth_mol).
+
+2. Problem Statement
+====================
+
+For a given feedwater flowrate and enthalpy, heat duty to each water
+wall section, drum level, and unit dimensions, calculate the drum steam
+outlet, slag temperature at each water wall section, inlet pressure of
+the feedwater system, and recirculation flowrate of the system.
+
+2.1. Main Inputs:
+-----------------
+
+-  FeedWater Inlet (F - mol/s, h - j/mol) from the economizer
+-  Drum: drum level - m, number of downcomers, and dimensions
+-  Downcomer: number of downcomer tubes, and dimensions
+-  Waterwall Section: number of water wall sections, slag thickness, and
+   tube dimensions
+-  Heat Duty (in Watts) from fire side of the boiler, for this
+   simplified simulation heat duty to each water wall section is fixed
+
+2.2. Main Outputs:
+------------------
+
+-  Streams (F - mol/s, P - Pa, h - j/mol)
+-  Feedwater pressure (Pa)
+-  vapor fraction in raisers (waterwall sections)
+-  slag temperature (used in heat fire side model in the future) (in K)
+-  recirculation flowrate of the system (mol/s)
+
+.. code:: ipython3
+
+    from IPython.display import Image
+    Image("sub_boiler_1.png")
+
+
+
+
+.. image:: output_3_0.png
+
+
+
+3. Results
+----------
+
+.. code:: ipython3
+
+    import os
+    # Import Pyomo libraries
+    import pyomo.environ as pyo
+    from pyomo.network import Arc
+    # Import IDAES core
+    from idaes.core import FlowsheetBlock
+    from idaes.core.util.model_statistics import degrees_of_freedom
+    from idaes.core.util import model_serializer as ms
+    import idaes.core.util.scaling as iscale
+    # Import Unit Model Modules
+    from idaes.models.properties import iapws95
+    
+    # Import IDAES standard unit model
+    import idaes.logger as idaeslog
+    from idaes.models_extra.power_generation.unit_models.drum import Drum
+    from idaes.models_extra.power_generation.unit_models.downcomer import Downcomer
+    from idaes.models_extra.power_generation.unit_models.waterwall_section import \
+        WaterwallSection
+    from idaes.models_extra.power_generation.properties.flue_gas_ideal import \
+        FlueGasParameterBlock
+    
+    # import subcritical functions
+    import idaes.models_extra.power_generation.flowsheets.subcritical_power_plant.subcritical_boiler as sub
+    
+    
+    # Create a Concrete Model as the top level object
+    m = pyo.ConcreteModel()
+    # Add a flowsheet object to the model
+    m.fs = FlowsheetBlock(dynamic=False)
+    # Add property packages to flowsheet library
+    m.fs.prop_water = iapws95.Iapws95ParameterBlock()
+    m.fs.prop_gas = FlueGasParameterBlock()
+    
+    # create drum, downcomer, waterwall section models and connections
+    sub.create_model(m)
+    # set inputs (equipment dimensions and inlet conditions)
+    sub.set_inputs(m)
+    # initialize each model at the time
+    sub.initialize(m, outlvl=0)
+
+
+.. parsed-literal::
+
+    2023-03-04 01:41:37 [INFO] idaes.init.unknown: Starting initialization...
+    
+    
+    Initializing from json file
+
+
+
+
+.. parsed-literal::
+
+    <pyomo.core.base.PyomoModel.ConcreteModel at 0x7f7700d59f90>
+
+
+
+.. code:: ipython3
+
+    # solve simulation with fixed feedwater inlet flowrate and enthalpy, fixed heat duty to waterwalls, and fixed drum level.
+    solver = pyo.SolverFactory('ipopt')
+    optarg = {"tol":1e-6,
+             "max_iter":20}
+    solver.options=optarg
+    
+    # fix inlets
+    m.fs.drum.feedwater_inlet.flow_mol[:].fix()
+    m.fs.drum.feedwater_inlet.pressure[:].unfix()
+    m.fs.drum.feedwater_inlet.enth_mol[:].fix()
+    
+    # set scaling parameters
+    for i in m.fs.ww_zones:
+        iscale.set_scaling_factor(m.fs.Waterwalls[i].heat_flux_conv[0], 1e-5)
+    iscale.calculate_scaling_factors(m)
+    
+    # solve IDAES flowsheet
+    results = solver.solve(m, tee=True)
+    
+    # print custom results
+    print('\nDrum feedwater inlet')
+    m.fs.drum.feedwater_inlet.display()
+    print('\nWaterWall Outlet')
+    m.fs.drum.water_steam_inlet.display()
+    print('\ndowncomer inlet')
+    m.fs.downcomer.inlet.display()
+    print('\nwaterwall inlet')
+    m.fs.Waterwalls[1].inlet.display()
+
+
+.. parsed-literal::
+
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.drum.control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.drum.control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.drum.deltaP_gravity[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.drum.deltaP_contraction[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.downcomer.control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.downcomer.control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.downcomer.N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.downcomer.friction_factor_darcy[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.downcomer.deltaP_gravity[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.downcomer.deltaP_friction[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.downcomer.control_volume.properties_in[0.0].visc_d_phase[Liq]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[1].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[1].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[1].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[1].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[1].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[1].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[1].energy_holdup_metal[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[2].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[2].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[2].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[2].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[2].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[2].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[2].energy_holdup_metal[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[3].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[3].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[3].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[3].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[3].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[3].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[3].energy_holdup_metal[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[4].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[4].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[4].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[4].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[4].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[4].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[4].energy_holdup_metal[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[5].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[5].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[5].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[5].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[5].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[5].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[5].energy_holdup_metal[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[6].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[6].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[6].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[6].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[6].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[6].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[6].energy_holdup_metal[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[7].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[7].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[7].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[7].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[7].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[7].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[7].energy_holdup_metal[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[8].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[8].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[8].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[8].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[8].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[8].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[8].energy_holdup_metal[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[9].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[9].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[9].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[9].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[9].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[9].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[9].energy_holdup_metal[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[10].control_volume.volume
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[10].control_volume.heat
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[10].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[10].N_Re[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[10].tube_diameter
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[10].energy_holdup_slag[0.0]
+    2023-03-04 01:41:38 [WARNING] idaes.core.util.scaling: Missing scaling factor for fs.Waterwalls[10].energy_holdup_metal[0.0]
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    Ipopt 3.13.2: tol=1e-06
+    max_iter=20
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:     1258
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:      763
+    
+    Total number of variables............................:      430
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:       59
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:      430
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 2.01e+01 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 3.15e-02 3.29e+00  -1.0 1.24e+03    -  9.90e-01 1.00e+00h  1
+       2  0.0000000e+00 7.66e-07 5.95e-02  -1.0 9.27e-01    -  9.90e-01 1.00e+00h  1
+    
+    Number of Iterations....: 2
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   7.6635910772893112e-07    7.6635910772893112e-07
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   7.6635910772893112e-07    7.6635910772893112e-07
+    
+    
+    Number of objective function evaluations             = 3
+    Number of objective gradient evaluations             = 3
+    Number of equality constraint evaluations            = 3
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 3
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 2
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.040
+    Total CPU secs in NLP function evaluations           =      0.068
+    
+    EXIT: Optimal Solution Found.
+    
+    Drum feedwater inlet
+    feedwater_inlet : Size=1
+        Key  : Name     : Value
+        None : enth_mol : {0.0: 22723.907}
+             : flow_mol : {0.0: 4630.6098}
+             : pressure : {0.0: 10905220.125495514}
+    
+    WaterWall Outlet
+    water_steam_inlet : Size=1
+        Key  : Name     : Value
+        None : enth_mol : {0.0: 26586.63382162109}
+             : flow_mol : {0.0: 199462.575143795}
+             : pressure : {0.0: 10905220.125495514}
+    
+    downcomer inlet
+    inlet : Size=1
+        Key  : Name     : Value
+        None : enth_mol : {0.0: 25981.507762193723}
+             : flow_mol : {0.0: 199462.575143795}
+             : pressure : {0.0: 10878220.502154762}
+    
+    waterwall inlet
+    inlet : Size=1
+        Key  : Name     : Value
+        None : enth_mol : {0.0: 25981.507762193723}
+             : flow_mol : {0.0: 199462.575143795}
+             : pressure : {0.0: 11113859.366815457}
+
+
+3.1. Sensitivity Analysis 1: Slag Layer Thickness
+-------------------------------------------------
+
+This sensitivity analysis demonstrates one of the main features of the
+waterwall section model, by computing the temperature of the slag
+deposited on the tube surface. The results show that for a given fire
+side heat duty for each zone the slag layer temperature in each water
+wall section increases when slag layer thickness increase.
+
+The slag temperature is a very important parameter, because if slag
+temperature exceeds the melting temperature, this can cause fast build
+up of slag layer and may cause damage of the boiler waterwall.
+
+.. code:: ipython3
+
+    # slack thickness (upper bound 0.009)
+    slag_thk = [0.001, 0.002, 0.003]
+    
+    steam_outlet = []
+    vap_frac = []
+    slag_temp = []
+    count = 0
+    for i in slag_thk:
+        count = count+1
+        m.fs.Waterwalls[1].slag_thickness.fix(i)
+        m.fs.Waterwalls[2].slag_thickness.fix(i)
+        m.fs.Waterwalls[3].slag_thickness.fix(i)
+        m.fs.Waterwalls[4].slag_thickness.fix(i)
+        m.fs.Waterwalls[5].slag_thickness.fix(i)
+        m.fs.Waterwalls[6].slag_thickness.fix(i)
+        m.fs.Waterwalls[7].slag_thickness.fix(i)
+        m.fs.Waterwalls[8].slag_thickness.fix(i)
+        m.fs.Waterwalls[9].slag_thickness.fix(i)
+        m.fs.Waterwalls[10].slag_thickness.fix(i)
+    
+        results = solver.solve(m, tee=False)
+        if results.solver.termination_condition == \
+            pyo.TerminationCondition.optimal:
+            print('iter '+str(count)+ ' = EXIT- Optimal Solution Found.')
+        else:
+            print('iter '+str(count)+ ' = infeasible')
+        steam_outlet.append(pyo.value(m.fs.drum.steam_outlet.flow_mol[0]))
+        vap_frac.append(pyo.value(m.fs.Waterwalls[10].control_volume.properties_out[0].vapor_frac))
+        slag_temp.append(pyo.value(m.fs.Waterwalls[10].temp_slag_boundary[0]))
+
+
+.. parsed-literal::
+
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 1 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 2 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 3 = EXIT- Optimal Solution Found.
+
+
+3.1. Results
+------------
+
+As it can be observed below, the steam flowrate and vapor fraction have
+not been impacted by incrementing the slag thickness, however, the slag
+temperature increased considerably. In reality, the slag thickness
+impacts the heat transfer in the system, therefore, the heat to the
+water wall must change. The model did not capture this issue because
+heat transfer is fixed. An integrated fire-water side model would
+capture this phenomenon and change the heat to the waterwall, obtaning
+different steam outlet and vapor fractions.
+
+.. code:: ipython3
+
+    print('Vapor flowrate from drum mol/s')
+    print(steam_outlet)
+    print('\nVapor fraction from waterwall section 10')
+    print(vap_frac)
+    print('\nSlag temperature in K')
+    print(slag_temp)
+
+
+.. parsed-literal::
+
+    Vapor flowrate from drum mol/s
+    [4630.609799999983, 4630.609799999986, 4630.609799999992]
+    
+    Vapor fraction from waterwall section 10
+    [0.023215431750349427, 0.023215431750351883, 0.023215431750350887]
+    
+    Slag temperature in K
+    [665.5274485403781, 729.2839253291403, 793.0487730170142]
+
+
+3.2. Sensitivity Analysis 2: Boiler Load
+----------------------------------------
+
+The heat transfer and energy balance play a very important role in this
+system, for example, since the drum level and pressure are fixed, the
+heat transfer rate (or heat duty) to the water side will determine the
+amount of steam produced.
+
+This sensitivity analysis demonstrates that increasing the boiler load
+or coal flowrate (in this case incrementing the heat duty) results in
+increasing the feedwater flowrate and therefore the flowrate of steam
+leaving the drum unit.
+
+Degrees of Freedom: In this case, the system is fully determined by
+fixing the feedwater_inlet enthalpy and pressure, drum level, and heat
+duty to water wall. Then we perform several simulations by gradually
+increasing the heat duty to the waterwalls and calculating the
+feedwater_inlet flowrate for each case.
+
+.. code:: ipython3
+
+    # reload initial point
+    from idaes.core.util import model_serializer as ms
+    ms.from_json(m, fname="subcritical_boiler_init.json.gz")
+    
+    # create dictionaries to store results
+    vap_frac = []  # vapor fraction outlet (zone 10)
+    flow = []  # feedwater flowrate
+    recir_flow = []  # recirculation flow
+    recir_ratio = []  # recirculation ratio
+    slag_temp = []  # slag layer temperature
+    
+    # incrementing 10 % each run
+    flow_it = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7,
+               1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4,
+               2.5, 2.6, 2.7, 2.8, 2.9, 3.0]
+    count1=0
+    for i in flow_it:
+        count1 = count1+1
+        m.fs.Waterwalls[1].heat_fireside[:].fix(2.3e7*i)
+        m.fs.Waterwalls[2].heat_fireside[:].fix(1.5e7*i)
+        m.fs.Waterwalls[3].heat_fireside[:].fix(6.8e6*i)
+        m.fs.Waterwalls[4].heat_fireside[:].fix(1.2e7*i)
+        m.fs.Waterwalls[5].heat_fireside[:].fix(1.2e7*i)
+        m.fs.Waterwalls[6].heat_fireside[:].fix(1.2e7*i)
+        m.fs.Waterwalls[7].heat_fireside[:].fix(1.0e7*i)
+        m.fs.Waterwalls[8].heat_fireside[:].fix(9.9e6*i)
+        m.fs.Waterwalls[9].heat_fireside[:].fix(2.1e7*i)
+        m.fs.Waterwalls[10].heat_fireside[:].fix(2.0e7*i)
+        # unfix flowrate
+        m.fs.drum.feedwater_inlet.flow_mol[:].unfix()
+        m.fs.drum.feedwater_inlet.pressure[:].fix()
+        m.fs.drum.feedwater_inlet.enth_mol[:].fix()
+        results = solver.solve(m, tee=False)
+        if results.solver.termination_condition == \
+            pyo.TerminationCondition.optimal:
+            print('iter '+str(count1)+ ' = EXIT- Optimal Solution Found.')
+        else:
+            print('iter '+str(count1)+ ' = infeasible')
+        vap_frac.append(pyo.value(m.fs.Waterwalls[10].control_volume.
+                                  properties_out[0].vapor_frac))
+        # recirculation flowrate
+        recir_flow.append(pyo.value(m.fs.drum.flash.liq_outlet.flow_mol[0]))
+        # recirculation ratio
+        recir_ratio.append(pyo.value(m.fs.drum.flash.liq_outlet.flow_mol[0]/m.fs.drum.feedwater_inlet.flow_mol[0]))
+        # feedwater flowrate
+        flow.append(pyo.value(m.fs.drum.feedwater_inlet.flow_mol[0]))
+        # slag layer temperature
+        slag_temp.append(pyo.value(m.fs.Waterwalls[10].temp_slag_boundary[0]))
+    
+
+
+
+.. parsed-literal::
+
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 1 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 2 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 3 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 4 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 5 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 6 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 7 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 8 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 9 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 10 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 11 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 12 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 13 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 14 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 15 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 16 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 17 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 18 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 19 = EXIT- Optimal Solution Found.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[10].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[9].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[8].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[7].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[6].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[5].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[4].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[3].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[2].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.Waterwalls[1].control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_out[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.properties_in[0.0].scaling_factor' that
+        contains 63 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'fs.downcomer.control_volume.scaling_factor' that contains 1 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.SaturatedWater_state[0.0].scaling_factor' that contains 63
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.mixer.FeedWater_state[0.0].scaling_factor' that contains 65
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.liq_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.vap_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.flash.mixed_state[0.0].scaling_factor' that contains 63 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_out[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'fs.drum.control_volume.properties_in[0.0].scaling_factor' that contains
+        63 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'fs.drum.control_volume.scaling_factor'
+        that contains 1 component keys that are not exported as part of the NL
+        file.  Skipping.
+    iter 20 = EXIT- Optimal Solution Found.
+
+
+.. code:: ipython3
+
+    # import plotting libraries
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    x = []
+    for i in flow_it:
+        x.append((i-1)*100)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(x, flow, label=str('feedwater (steam) flowrate'))
+    plt.legend()
+    ax.set_xlabel('heat duty - % increment')
+    ax.set_ylabel('Flowrate mol/s')
+    plt.show()
+
+
+
+.. image:: output_13_0.png
+
+
+.. code:: ipython3
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(x, recir_flow, label=str('recirculation flowrate'))
+    plt.legend()
+    ax.set_xlabel('heat duty - % increment')
+    ax.set_ylabel('Flowrate mol/s')
+    plt.show()
+
+
+
+.. image:: output_14_0.png
+
+
+.. code:: ipython3
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(x, recir_ratio, label=str('recirculation ratio'))
+    plt.legend()
+    ax.set_xlabel('heat duty - % increment')
+    ax.set_ylabel('ratio')
+    plt.show()
+
+
+
+.. image:: output_15_0.png
+
+
+.. code:: ipython3
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(x, slag_temp, label=str('slag layer temperature'))
+    plt.legend()
+    ax.set_xlabel('heat duty - % increment')
+    ax.set_ylabel('temp in K')
+    plt.show()
+
+
+
+.. image:: output_16_0.png
+
+
+3.2. Results
+------------
+
+As can be observed above, the feedwater flowrate and steam flowrate
+leaving the drum increase due to the increase of heat duty. The
+recirculation flowrate decreases slightly due to the increase of the
+friction force inside the waterwall tubes, which is caused by the
+increase in vapor fraction. The recirculation ratio, defined as the
+ratio of flowrate of water in the circuity to the flowrate of the
+feedwater, decreases as heat duty increases. Finally, the slag layer
+temperature increases as the heat duty increases. Total heat transfer
+resistance includes the contributions from the slag layer, tube metal,
+and convection of the fluid with the slag layer as the highest
+contributor. Thus, since the slag thickness is fixed, the total heat
+transfer resistance does not change much. Therefore, as the heat duty is
+increased, the temperature difference between the slag layer and fluid
+becomes larger, while the fluid temperature remains almost constant.
+

@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CO2 Adsorption Desorption simulation example with a 1D Fixed Bed model &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">CO2 Adsorption Desorption simulation example with a 1D Fixed Bed model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/Flowsheets/CO2_adsorption_desorption/CO2_Adsorption_Desorption_example_1DFixedBed.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="co2-adsorption-desorption-simulation-example-with-a-1d-fixed-bed-model">
+<h1>CO2 Adsorption Desorption simulation example with a 1D Fixed Bed model<a class="headerlink" href="#co2-adsorption-desorption-simulation-example-with-a-1d-fixed-bed-model" title="Permalink to this heading">¶</a></h1>
+<p>This jupyter notebook shows an example of a CO2 Adsorption Desorption
+cycle with the IDAES 1D FixedBed model. The IDAES 1D FixedBed model is a
+dynamic and axially varying reactor/adsorption model which is able to
+model the gas and solid interactions of the modeled species in detail.
+The sorbent used for this example is the NETL_32D sorbent with its
+details and parameters obtained from the following references: - A. Lee,
+D.C. Miller, A One-Dimensional (1-D) Three-Region Model for a Bubbling
+Fluidized-Bed Adsorber, Ind. Eng. Chem. Res. 52 (2013) 469–484 - Lee,
+A.; Mebane, D.; Fauth, D. J.; Miller, D. C. A Model for the Adsorption
+Kinetics of CO2 on Amine-Impregnated Mesoporous Sorbents in the Presence
+of Water. Presented at the 28th International Pittsburgh Coal
+Conference, Pittsburgh, PA, 2011.</p>
+<p>The notebook demonstrates how to use the IDAES 1DFixedBed model for an
+adsorption/desorption application with distinct adsorption and
+desorption steps. This example leverages custom libraries and functions
+specific to the NETL_32D solid sorbent and associated gas phase
+properties and surface reactions. In this system, the silicon monoxide
+(SiO(s)) sorbent reduces carbon dioxide (CO2(g)) to carbamate (denoted
+Car(s)) while simultaneously absorbing water vapor (H2O(g)) to produce a
+solid solution-state hydrate (H2O(s)). The solid phase is considered a
+one-dimensional domain with three regions for bubble, cloud wake and
+emulsion properties for bubbling bed systems; in the case of a fixed bed
+reactor non-bulk gas behavior is neglected and assumed to be homogeneous
+everywhere not near the solid surface.</p>
+<p>The notebook also shows how to simulate the adsorption and desorption
+steps using the PETSc integrator. PETSc leverages nonlinear equation and
+differential algebraic equation solvers to solve time-trajectory
+problems. These solvers are applicable for systems with zero degrees of
+freedom, such as a fully-specified bed reactor model. See
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/reference_guides/core/solvers.html#petsc-utilities">https://idaes-pse.readthedocs.io/en/stable/reference_guides/core/solvers.html#petsc-utilities</a>
+for more details.</p>
+<section id="cycle-details">
+<h2>Cycle details<a class="headerlink" href="#cycle-details" title="Permalink to this heading">¶</a></h2>
+<p>The system contains the following equipment and stream properties: - Bed
+height: 9 m - Bed diameter: 1 m - Adsorption time: 30 hrs - Desorption
+time: 2 hrs - Adsorption temperature: 303.15 K - Desorption temperature:
+470 K - Flue gas inlet conditions (Temperature and mole fractions
+obtained from NETL baseline report. Exhibit 5-22 B31B case) -
+Temperature: 315 K - Pressure: 106.5 kPa - Flowrate: 3.544 mol/s - Mole
+fractions: CO2: 0.0408, H2O: 0.0875, N2: 0.7517, O2: 0.12</p>
+</section>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this heading">¶</a></h2>
+<p>Some additional information regarding the problem: - Isothermal
+conditions: heat duty requirements of each step are calculated from gas
+and sorbent properties, i.e., loading, density, heat of adsorption, and
+heat capacity - Heating and cooling modes not modeled in detail: cycle
+times are assumed negligible in comparison to adsorption and desorption
+- Adsorption and desorption steps are modeled in different flowsheets -
+Initial condition (except temperature) of sorbent in desorption step is
+set to final condition of sorbent in adsorption step</p>
+</section>
+</section>
+<section id="step-1-import-relevant-libraries-and-packages">
+<h1>Step 1: Import relevant libraries and packages<a class="headerlink" href="#step-1-import-relevant-libraries-and-packages" title="Permalink to this heading">¶</a></h1>
+<ul class="simple">
+<li><p>numpy (numerical python library which provides numerical computing
+tools)</p></li>
+<li><p>time (time python library which will be used to track the simulation
+time)</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+</pre></div>
+</div>
+<p>For the flowsheet, we will need several components from the pyomo
+libraries.</p>
+<ul class="simple">
+<li><p>ConcreteModel (to create the Pyomo model that will contain the IDAES
+flowsheet)</p></li>
+<li><p>TransformationFactory (to apply certain transformations)</p></li>
+<li><p>SolverFactory (to solve the problem)</p></li>
+<li><p>Var (to create a Pyomo variable)</p></li>
+<li><p>value (to return the numerical value of Pyomo objects such as
+variables, constraints or expressions)</p></li>
+<li><p>units (to handle units in Pyomo and IDAES)</p></li>
+</ul>
+<p>For further details on these components, please refer to the pyomo
+documentation: <a class="reference external" href="https://pyomo.readthedocs.io/en/latest/">https://pyomo.readthedocs.io/en/latest/</a></p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConcreteModel</span><span class="p">,</span>
+    <span class="n">TransformationFactory</span><span class="p">,</span>
+    <span class="n">SolverFactory</span><span class="p">,</span>
+    <span class="n">Var</span><span class="p">,</span>
+    <span class="n">value</span><span class="p">,</span>
+    <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>To build, initialize, and solve IDAES flowsheets we will need several
+core components/utilities:</p>
+<ul class="simple">
+<li><p>FlowsheetBlock (the flowsheet block contains idaes properties, time,
+and unit models)</p></li>
+<li><p>EnergyBalanceType (to specify the energy balance type)</p></li>
+<li><p>petsc (PETSc integrator)</p></li>
+<li><p>get_solver (IDAES solver utility)</p></li>
+<li><p>iscale (is used to apply scaling factors in variables and
+constraints)</p></li>
+<li><p>propagate_state (is used to initialize models, propagating the state
+variables from one unit model to another)</p></li>
+<li><p>degrees_of_freedom (useful for debugging, this method returns the DOF
+of the model)</p></li>
+<li><p>idaeslog (is used to set output messages like warnings or errors)</p></li>
+</ul>
+<p>For further details on these components, please refer to the IDAES
+documentation: <a class="reference external" href="https://idaes-pse.readthedocs.io/en/latest/">https://idaes-pse.readthedocs.io/en/latest/</a></p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span><span class="p">,</span> <span class="n">EnergyBalanceType</span>
+<span class="kn">import</span> <span class="nn">idaes.core.solvers.petsc</span> <span class="k">as</span> <span class="nn">petsc</span>  <span class="c1"># PETSc utilities module</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util</span> <span class="kn">import</span> <span class="n">scaling</span> <span class="k">as</span> <span class="n">iscale</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">get_solver</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">To build the IDAES flowsheet for the CO2 Adsorption Desorption
+example, we will need the following: 1) the 1D Fixed Bed unit model</div>
+<div class="line">2) the NETL 32D property package</div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">idaes.models_extra.gas_solid_contactors.unit_models.fixed_bed_1D</span> <span class="kn">import</span> <span class="n">FixedBed1D</span>
+<span class="kn">from</span> <span class="nn">NETL_32D_gas_phase_thermo</span> <span class="kn">import</span> <span class="n">GasPhaseParameterBlock</span>
+<span class="kn">from</span> <span class="nn">NETL_32D_solid_phase_thermo</span> <span class="kn">import</span> <span class="n">SolidPhaseParameterBlock</span>
+<span class="kn">from</span> <span class="nn">NETL_32D_adsorption_reactions</span> <span class="kn">import</span> <span class="n">HeteroReactionParameterBlock</span>
+</pre></div>
+</div>
+<p>To simplify and automate this example at the flowsheet level, several
+custom methods were defined in an external script. The methods are
+custom, and as such are imported separately from the set of IDAES and
+Pyomo methods above. These utility functions perform a variety of
+numerical and reporting tasks:</p>
+<ul class="simple">
+<li><p>heat_computation (used to calculate the heat requirements of the CO2
+Adsorption Desorption cycle)</p></li>
+<li><p>performance_results (used to evaluate the performance of the CO2
+Adsorption Desorption cycle)</p></li>
+<li><p>results_summary (provides summarized results of the CO2 Adsorption
+Desorption cycle)</p></li>
+<li><p>plot_results_temporal (plots the temporal profiles of the flowsheet
+simulation)</p></li>
+<li><p>plot_results_spatial (plots the spatial profiles of the flowsheet
+simulation)</p></li>
+<li><p>fb_model_setup (function that builds the 1D FixedBed model)</p></li>
+<li><p>fb_fixed_conditions (function that fixes the initial and boundary
+conditions of the 1D FixedBed model)</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">simulation_utilities</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">heat_computation</span><span class="p">,</span>
+    <span class="n">performance_results</span><span class="p">,</span>
+    <span class="n">results_summary</span><span class="p">,</span>
+    <span class="n">plot_results_temporal</span><span class="p">,</span>
+    <span class="n">plot_results_spatial</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">The function “fb_model_setup” below builds instances of the 1D
+FixedBed model for the adsorption and desorption simulations. While
+the effort required to define the reactor is low in terms of lines of
+code, we will need to do this for both the adsorption and desorption
+steps. Therefore, defining this setup as a single function will make
+later steps easier to follow. As arguments it takes the following: 1)
+The flowsheet block of the simulation, i.e., the adsorption flowsheet</div>
+<div class="line">2) The number of time finite elements</div>
+<div class="line">3) The number of spatial finite elements</div>
+</div>
+<p>It returns a flowsheet object which contains an instance of the 1D
+FixedBed model</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fb_model_setup</span><span class="p">(</span>
+    <span class="n">fs</span><span class="p">,</span>
+    <span class="n">ntfe</span><span class="p">,</span>  <span class="c1"># number of time finite elements</span>
+    <span class="n">nxfe</span><span class="p">,</span>  <span class="c1"># number of space finite elements</span>
+<span class="p">):</span>
+
+    <span class="c1"># Set up thermo props and reaction props</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">gas_properties</span> <span class="o">=</span> <span class="n">GasPhaseParameterBlock</span><span class="p">()</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">solid_properties</span> <span class="o">=</span> <span class="n">SolidPhaseParameterBlock</span><span class="p">()</span>
+
+    <span class="n">fs</span><span class="o">.</span><span class="n">hetero_reactions</span> <span class="o">=</span> <span class="n">HeteroReactionParameterBlock</span><span class="p">(</span>
+        <span class="n">solid_property_package</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">,</span>
+        <span class="n">gas_property_package</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">gas_properties</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">fs</span><span class="o">.</span><span class="n">FB</span> <span class="o">=</span> <span class="n">FixedBed1D</span><span class="p">(</span>
+        <span class="n">finite_elements</span><span class="o">=</span><span class="n">nxfe</span><span class="p">,</span>
+        <span class="n">transformation_method</span><span class="o">=</span><span class="s2">&quot;dae.finite_difference&quot;</span><span class="p">,</span>
+        <span class="n">energy_balance_type</span><span class="o">=</span><span class="n">EnergyBalanceType</span><span class="o">.</span><span class="n">none</span><span class="p">,</span>
+        <span class="n">pressure_drop_type</span><span class="o">=</span><span class="s2">&quot;ergun_correlation&quot;</span><span class="p">,</span>
+        <span class="n">gas_phase_config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">gas_properties</span><span class="p">},</span>
+        <span class="n">solid_phase_config</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">,</span>
+            <span class="s2">&quot;reaction_package&quot;</span><span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">hetero_reactions</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Discretize time domain</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">discretizer</span> <span class="o">=</span> <span class="n">TransformationFactory</span><span class="p">(</span><span class="s2">&quot;dae.finite_difference&quot;</span><span class="p">)</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">discretizer</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">nfe</span><span class="o">=</span><span class="n">ntfe</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="s2">&quot;BACKWARD&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fs</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">The function “fb_fix_conditions” fixes the initial and boundary
+conditions of an instance of the 1D FixedBed model. It also has checks
+to ensure that the degrees of freedom are zero, and that the velocity
+into the bed is less than the minimum fluidization velocity of the
+bed. Similarly to the function above, we will need to run this for the
+adsorption and desorption steps, and it is clearer to define the code
+once as a single function here. As arguments it takes the following:
+1) The flowsheet block of the simulation, i.e., the adsorption
+flowsheet</div>
+<div class="line">2) The reactor bed diameter</div>
+<div class="line">3) The reactor bed height</div>
+<div class="line">4) A dictionary of gas phase state data for which the gas phase state
+variables of the model should be fixed to</div>
+<div class="line">5) A dictionary of solid phase state data for which the solid phase
+state variables of the model should be fixed to. If None, the solid
+phase state variables are fixed to their current values.</div>
+</div>
+<p>No object is returned by this function.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fb_fix_conditions</span><span class="p">(</span>
+    <span class="n">fs</span><span class="p">,</span> <span class="n">bed_diameter</span><span class="p">,</span> <span class="n">bed_height</span><span class="p">,</span> <span class="n">gas_phase_state_dict</span><span class="p">,</span> <span class="n">solid_phase_state_dict</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
+    <span class="c1"># Fix bed geometry variables</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">FB</span><span class="o">.</span><span class="n">bed_diameter</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">bed_diameter</span><span class="p">)</span>  <span class="c1"># m</span>
+    <span class="n">fs</span><span class="o">.</span><span class="n">FB</span><span class="o">.</span><span class="n">bed_height</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">bed_height</span><span class="p">)</span>  <span class="c1"># m</span>
+
+    <span class="c1"># Fix boundary values for gas for all time</span>
+    <span class="n">blk</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">FB</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">:</span>
+        <span class="c1"># Gas values</span>
+        <span class="n">blk</span><span class="o">.</span><span class="n">gas_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">gas_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;flow_mol&quot;</span><span class="p">])</span>
+        <span class="n">blk</span><span class="o">.</span><span class="n">gas_inlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">gas_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">])</span>
+        <span class="n">blk</span><span class="o">.</span><span class="n">gas_inlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">gas_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;pressure&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">gas_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;mole_frac_comp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">blk</span><span class="o">.</span><span class="n">gas_inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+    <span class="c1"># Specify gas phase and solid phase initial conditions for all space</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">blk</span><span class="o">.</span><span class="n">length_domain</span><span class="p">:</span>
+        <span class="n">blk</span><span class="o">.</span><span class="n">gas_phase</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">gas_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;flow_mol&quot;</span><span class="p">])</span>
+        <span class="n">blk</span><span class="o">.</span><span class="n">gas_phase</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span>
+            <span class="n">gas_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">]</span>
+        <span class="p">)</span>  <span class="c1"># K</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">gas_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;mole_frac_comp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">blk</span><span class="o">.</span><span class="n">gas_phase</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">solid_phase_state_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Fix to existing values if dict is empty</span>
+            <span class="n">blk</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">dens_mass_particle</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+            <span class="n">blk</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+            <span class="n">blk</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">mass_frac_comp</span><span class="p">[:]</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">blk</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">dens_mass_particle</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span>
+                <span class="n">solid_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;dens_mass_particle&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">blk</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span>
+                <span class="n">solid_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">solid_phase_state_dict</span><span class="p">[</span><span class="s2">&quot;mass_frac_comp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">blk</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">mass_frac_comp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+    <span class="n">dof</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;degrees of freedom = &quot;</span><span class="p">,</span> <span class="n">dof</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Degrees of freedom is not equal to zero. This is unexpected.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span>
+
+    <span class="c1"># Assert that inlet gas velocity is less than v_mf</span>
+    <span class="c1"># Use solid temperature as the thermal mass of solid &gt;&gt; than that of gas</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="mf">3.14</span>  <span class="c1"># [-]</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="mf">8.314</span>  <span class="c1"># Gas constant [J/mol/K]</span>
+
+    <span class="nd">@blk</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s2">&quot;gas inlet velocity, m/s&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">gas_inlet_velocity</span><span class="p">(</span><span class="n">blk</span><span class="p">):</span>
+        <span class="n">v_gas_inlet</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">blk</span><span class="o">.</span><span class="n">gas_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">pi</span> <span class="o">*</span> <span class="n">value</span><span class="p">(</span><span class="n">blk</span><span class="o">.</span><span class="n">bed_diameter</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">R</span> <span class="o">*</span> <span class="n">blk</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span> <span class="o">/</span> <span class="n">blk</span><span class="o">.</span><span class="n">gas_inlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">v_gas_inlet</span>
+
+    <span class="n">v_mf</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span>  <span class="c1"># minimum fluidization velocity [m/s]</span>
+        <span class="n">blk</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_params</span><span class="o">.</span><span class="n">velocity_mf</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;inlet gas velocity = &quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">(</span><span class="n">blk</span><span class="o">.</span><span class="n">gas_inlet_velocity</span><span class="p">),</span> <span class="s1">&#39; m/s&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;min. fluid velocity = &quot;</span><span class="p">,</span> <span class="n">v_mf</span><span class="p">,</span> <span class="s1">&#39; m/s&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">blk</span><span class="o">.</span><span class="n">gas_inlet_velocity</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">v_mf</span>
+    <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The inlet gas velocity is greater than the minimum fluidization velocity. &#39;</span>
+              <span class="s1">&#39;This is unexpected for a Fixed Bed.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-setup-and-run-simulation">
+<h1>Step 2: Setup and run simulation<a class="headerlink" href="#step-2-setup-and-run-simulation" title="Permalink to this heading">¶</a></h1>
+<p>Now that the system properties and all required utility functions are
+defined, we will build the model itself.</p>
+<p>First, create the model object:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>We limit the maximum number of iterations and apply appropriate scaling
+for the linear solver for initialization:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Solver arguments</span>
+<span class="n">optarg</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="s2">&quot;nlp_scaling_method&quot;</span><span class="p">:</span> <span class="s2">&quot;user-scaling&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;linear_solver&quot;</span><span class="p">:</span> <span class="s2">&quot;ma27&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># Create a solver</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">(</span><span class="s2">&quot;ipopt&quot;</span><span class="p">)</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">optarg</span>
+</pre></div>
+</div>
+<p>Let’s define the size of the system:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Number of spatial elements</span>
+<span class="n">nxfe</span> <span class="o">=</span> <span class="mi">50</span>
+
+<span class="c1"># Design variables for static and dynamic models</span>
+<span class="n">bed_diameter</span> <span class="o">=</span> <span class="mi">9</span>  <span class="c1"># m</span>
+<span class="n">bed_height</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># m</span>
+</pre></div>
+</div>
+<section id="adsorption-simulation">
+<h2>Adsorption simulation<a class="headerlink" href="#adsorption-simulation" title="Permalink to this heading">¶</a></h2>
+<p>First, we will run the adsorption step by defining the simulation
+domain, add initial conditions, and set up and solve the model.</p>
+<section id="setup-simulation-horizon-and-create-time-set">
+<h3>Setup simulation horizon and create time set<a class="headerlink" href="#setup-simulation-horizon-and-create-time-set" title="Permalink to this heading">¶</a></h3>
+<p>We specify the time discretization to an exact set of temporal points
+according to the problem horizon:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Time horizon</span>
+<span class="n">horizon</span> <span class="o">=</span> <span class="mi">108000</span>  <span class="c1"># s</span>
+
+<span class="c1"># Create time_set list</span>
+<span class="n">t_element_size</span> <span class="o">=</span> <span class="n">horizon</span> <span class="o">/</span> <span class="mi">4</span>  <span class="c1"># s</span>
+<span class="n">ntfe</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">horizon</span> <span class="o">/</span> <span class="n">t_element_size</span><span class="p">)</span>
+<span class="n">time_set</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="n">ntfe</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="initial-conditions-for-gas-and-solid-phases">
+<h3>Initial conditions for gas and solid phases<a class="headerlink" href="#initial-conditions-for-gas-and-solid-phases" title="Permalink to this heading">¶</a></h3>
+<p>Next, we set reasoanble initial conditions for the gas and solid phases
+at time = 0, with a constant adsorption temperature:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Flue gas inlet conditions to adsorption system (flue gas stream) -</span>
+<span class="c1"># Temperature and mole fractions obtained from NETL baseline report.</span>
+<span class="c1"># Exhibit 5-22 B31B case.</span>
+<span class="n">adsorption_temperature</span> <span class="o">=</span> <span class="mf">303.15</span>  <span class="c1"># K</span>
+
+<span class="c1"># Dictionary of initial and boundary conditions for gas phase</span>
+<span class="n">gas_phase_state_dict_ads</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;flow_mol&quot;</span><span class="p">:</span> <span class="mf">3.544</span><span class="p">,</span>  <span class="c1"># mol/s</span>
+    <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">adsorption_temperature</span><span class="p">,</span>  <span class="c1"># K</span>
+    <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="mf">1.2452e5</span><span class="p">,</span>  <span class="c1"># Pa</span>
+    <span class="s2">&quot;mole_frac_comp&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># [-]</span>
+        <span class="s2">&quot;CO2&quot;</span><span class="p">:</span> <span class="mf">0.0408</span><span class="p">,</span>
+        <span class="s2">&quot;H2O&quot;</span><span class="p">:</span> <span class="mf">0.0875</span><span class="p">,</span>
+        <span class="s2">&quot;N2&quot;</span><span class="p">:</span> <span class="mf">0.7517</span><span class="p">,</span>
+        <span class="s2">&quot;O2&quot;</span><span class="p">:</span> <span class="mf">0.12</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="c1"># Dictionary of initial conditions for solid phase</span>
+<span class="n">solid_phase_state_dict_ads</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;dens_mass_particle&quot;</span><span class="p">:</span> <span class="mi">442</span><span class="p">,</span>  <span class="c1"># kg/m3</span>
+    <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">adsorption_temperature</span><span class="p">,</span>  <span class="c1"># K</span>
+    <span class="s2">&quot;mass_frac_comp&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># [-]</span>
+        <span class="s2">&quot;H2O_s&quot;</span><span class="p">:</span> <span class="mf">1e-8</span><span class="p">,</span>
+        <span class="s2">&quot;Car&quot;</span><span class="p">:</span> <span class="mf">1e-8</span><span class="p">,</span>
+        <span class="s2">&quot;SiO&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="setup-the-adsorption-model">
+<h3>Setup the adsorption model<a class="headerlink" href="#setup-the-adsorption-model" title="Permalink to this heading">¶</a></h3>
+<p>Then, we call our previously defined methods to build the model and fix
+initial conditions:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the adsorption flowsheet</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">time_set</span><span class="o">=</span><span class="n">time_set</span><span class="p">,</span> <span class="n">time_units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+
+<span class="c1"># Setup an instance of the 1D FixedBed model for the adsorption simulation</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span> <span class="o">=</span> <span class="n">fb_model_setup</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="p">,</span> <span class="n">ntfe</span><span class="p">,</span> <span class="n">nxfe</span><span class="p">)</span>
+
+<span class="c1"># Fix initial and boundary conditions</span>
+<span class="n">fb_fix_conditions</span><span class="p">(</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="p">,</span>
+    <span class="n">bed_diameter</span><span class="p">,</span>
+    <span class="n">bed_height</span><span class="p">,</span>
+    <span class="n">gas_phase_state_dict_ads</span><span class="p">,</span>
+    <span class="n">solid_phase_state_dict_ads</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="o">=</span>  <span class="mi">0</span>
+<span class="n">inlet</span> <span class="n">gas</span> <span class="n">velocity</span> <span class="o">=</span>  <span class="mf">0.0011281517419625495</span>  <span class="n">m</span><span class="o">/</span><span class="n">s</span>
+<span class="nb">min</span><span class="o">.</span> <span class="n">fluid</span> <span class="n">velocity</span> <span class="o">=</span>  <span class="mf">0.0091</span>  <span class="n">m</span><span class="o">/</span><span class="n">s</span>
+</pre></div>
+</div>
+</section>
+<section id="adsorption-model-initialize-and-solve">
+<h3>Adsorption model - initialize and solve<a class="headerlink" href="#adsorption-model-initialize-and-solve" title="Permalink to this heading">¶</a></h3>
+<p>Finally for the adsorption model, we initialize and solve.</p>
+<section id="apply-scaling-transformation">
+<h4>Apply scaling transformation<a class="headerlink" href="#apply-scaling-transformation" title="Permalink to this heading">¶</a></h4>
+<p>We first scale the model variables and equations to reduce
+ill-conditioning and improve its convergence properties:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">iscale</span><span class="o">.</span><span class="n">calculate_scaling_factors</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="initialize-model">
+<h4>Initialize model<a class="headerlink" href="#initialize-model" title="Permalink to this heading">¶</a></h4>
+<p>The model initialization is done with the block triangularization
+initialization method in the 1D FixedBed model as this is faster than
+using the traditional sequential heirarchichal initialization approach.
+See the 1D FixedBed model and documentation for more details on this
+method.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run start time</span>
+<span class="n">t_start_ads</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="c1"># Initialize model</span>
+<span class="n">calc_var_kwds</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="mf">1e-5</span><span class="p">}</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="o">.</span><span class="n">FB</span><span class="o">.</span><span class="n">block_triangularization_initialize</span><span class="p">(</span>
+    <span class="n">gas_phase_state_args</span><span class="o">=</span><span class="n">gas_phase_state_dict_ads</span><span class="p">,</span>
+    <span class="n">solid_phase_state_args</span><span class="o">=</span><span class="n">solid_phase_state_dict_ads</span><span class="p">,</span>
+    <span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+    <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
+    <span class="n">calc_var_kwds</span><span class="o">=</span><span class="n">calc_var_kwds</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Run end time</span>
+<span class="n">t_end_ads</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="c1"># Initialization time</span>
+<span class="n">adsorption_initialization_time</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="n">t_end_ads</span> <span class="o">-</span> <span class="n">t_start_ads</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="petsc-integrator">
+<h4>PETSc integrator<a class="headerlink" href="#petsc-integrator" title="Permalink to this heading">¶</a></h4>
+<p>As mentioned earlier, the PETSc integrator is used for simulating the
+time trajectory. After starting the clock and instantiating the time
+variables, PETSc performs and element-wise discretization to define and
+solve the dynamic system of equations. See
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/reference_guides/core/solvers.html#petsc-utilities">https://idaes-pse.readthedocs.io/en/stable/reference_guides/core/solvers.html#petsc-utilities</a>
+for more details.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">petscsolvelog</span> <span class="o">=</span> <span class="n">idaeslog</span><span class="o">.</span><span class="n">getSolveLogger</span><span class="p">(</span><span class="s2">&quot;petsc-dae&quot;</span><span class="p">)</span>
+<span class="n">petscsolvelog</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>  <span class="c1"># comment this line to see PETSc solver output</span>
+
+<span class="c1"># Run start time</span>
+<span class="n">t_start_ads</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="c1"># Setup PETSc integrator and simulate adsorption flowsheet</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="o">.</span><span class="n">time_var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="o">.</span><span class="n">time_var</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">first</span><span class="p">())</span>
+
+<span class="n">result_ads</span> <span class="o">=</span> <span class="n">petsc</span><span class="o">.</span><span class="n">petsc_dae_by_time_element</span><span class="p">(</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="p">,</span>
+    <span class="n">time</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+    <span class="n">timevar</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="o">.</span><span class="n">time_var</span><span class="p">,</span>
+    <span class="n">keepfiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">symbolic_solver_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">skip_initial</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">ts_options</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;--ts_type&quot;</span><span class="p">:</span> <span class="s2">&quot;beuler&quot;</span><span class="p">,</span>  <span class="c1"># backward euler integration</span>
+        <span class="s2">&quot;--ts_dt&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>  <span class="c1"># set initial step to 200</span>
+        <span class="s2">&quot;--ts_rtol&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="s2">&quot;--ts_monitor&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--ts_save_trajectory&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;--ksp_rtol&quot;</span><span class="p">:</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="s2">&quot;--snes_type&quot;</span><span class="p">:</span> <span class="s2">&quot;newtontr&quot;</span><span class="p">,</span>  <span class="c1"># newton trust region non-linear solver</span>
+        <span class="s2">&quot;--ts_monitor&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--ts_save_trajectory&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;--ts_max_snes_failures&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="n">tj_ads</span> <span class="o">=</span> <span class="n">result_ads</span><span class="o">.</span><span class="n">trajectory</span>  <span class="c1"># trajectory data</span>
+
+<span class="c1"># Run end time</span>
+<span class="n">t_end_ads</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="c1"># Initialization time</span>
+<span class="n">adsorption_simulation_time</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="n">t_end_ads</span> <span class="o">-</span> <span class="n">t_start_ads</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="plot-the-adsorption-simulation-results">
+<h3>Plot the adsorption simulation results<a class="headerlink" href="#plot-the-adsorption-simulation-results" title="Permalink to this heading">¶</a></h3>
+<p>After running the adsorption simulation, the dynamic profiles are
+plotted.</p>
+<p>In the temporal plots below, quantities are reported as functions of
+time and contoured for six points along the length of the bed. The time
+and spatial dimensions are exchanged in the spatial plots, with
+quantities reported as functions of lengh and contoured for five time
+points.</p>
+<p>The gas flowrate is constant at the inlet and decreases over the length
+of the bed as CO2 is removed from the gas. At each spatial point, the
+CO2 content of the gas increases over time as the bed becomes more
+saturated with CO2 and the mass transfer driving force decreases.
+Assessing the two gas flowrate plots, adsorption occurs steadily over
+time with a much larger capture rate in the initial spatial region; this
+region grows from 10% to 25% of the bed length as the bed becomes more
+saturated with CO2 over time.</p>
+<p>The bed pressure stays relatively constant over time, and exhibits a
+linear drop over the length of the reactor. There are no temporal or
+spatial gradients in gas or solid temperature.</p>
+<p>The saturation trend is strongly apparent in the composition trends. The
+CO2 content of the gas quickly drops from the initial concentration over
+the length of the bed, and steadily rises over time as the driving force
+of mass transfer decreases. Water vapor concentration in the gas follows
+a similar trend.</p>
+<p>Following the solid-state reaction, the concentration of carbmate
+steadily increases over time with formation skewing heavily towards the
+initial spatial region of the bed. The spatial contours of the temporal
+carbamate composition plot cross as a result of the solid reaction rate
+heavily favoring the initial section of the bed and suddenly dropping
+about at about 20% of the reactor length. The mass fraction and mol/kg
+plots differ slightly due to water and CO2 absorbing at different rates,
+but otherwise demonstrate similar trends.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot temporal result profiles</span>
+<span class="n">plot_results_temporal</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="p">,</span> <span class="n">tj_ads</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_41_0.png" src="../../../_images/output_41_0.png" />
+<img alt="../../../_images/output_41_1.png" src="../../../_images/output_41_1.png" />
+<img alt="../../../_images/output_41_2.png" src="../../../_images/output_41_2.png" />
+<img alt="../../../_images/output_41_3.png" src="../../../_images/output_41_3.png" />
+<img alt="../../../_images/output_41_4.png" src="../../../_images/output_41_4.png" />
+<img alt="../../../_images/output_41_5.png" src="../../../_images/output_41_5.png" />
+<img alt="../../../_images/output_41_6.png" src="../../../_images/output_41_6.png" />
+<img alt="../../../_images/output_41_7.png" src="../../../_images/output_41_7.png" />
+<img alt="../../../_images/output_41_8.png" src="../../../_images/output_41_8.png" />
+<img alt="../../../_images/output_41_9.png" src="../../../_images/output_41_9.png" />
+<img alt="../../../_images/output_41_10.png" src="../../../_images/output_41_10.png" />
+<img alt="../../../_images/output_41_11.png" src="../../../_images/output_41_11.png" />
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot spatial result profiles</span>
+<span class="n">plot_results_spatial</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="p">,</span> <span class="n">tj_ads</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_42_0.png" src="../../../_images/output_42_0.png" />
+<img alt="../../../_images/output_42_1.png" src="../../../_images/output_42_1.png" />
+<img alt="../../../_images/output_42_2.png" src="../../../_images/output_42_2.png" />
+<img alt="../../../_images/output_42_3.png" src="../../../_images/output_42_3.png" />
+<img alt="../../../_images/output_42_4.png" src="../../../_images/output_42_4.png" />
+<img alt="../../../_images/output_42_5.png" src="../../../_images/output_42_5.png" />
+<img alt="../../../_images/output_42_6.png" src="../../../_images/output_42_6.png" />
+<img alt="../../../_images/output_42_7.png" src="../../../_images/output_42_7.png" />
+<img alt="../../../_images/output_42_8.png" src="../../../_images/output_42_8.png" />
+<img alt="../../../_images/output_42_9.png" src="../../../_images/output_42_9.png" />
+<img alt="../../../_images/output_42_10.png" src="../../../_images/output_42_10.png" />
+<img alt="../../../_images/output_42_11.png" src="../../../_images/output_42_11.png" />
+</section>
+</section>
+<section id="desorption-simulation">
+<h2>Desorption simulation<a class="headerlink" href="#desorption-simulation" title="Permalink to this heading">¶</a></h2>
+<p>The desorption simulation begins when the adsorption simulation ends. It
+uses the final state of the sorbent (besides temperature which is set at
+the desorption temperature) in the adsorption mode as the initial state
+of the sorbent in the desorption mode.</p>
+<section id="id1">
+<h3>Setup simulation horizon and create time set<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
+<p>As in the adsorption simulation, we first specify the time
+discretization:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Space and time discretization arguments</span>
+<span class="n">horizon</span> <span class="o">=</span> <span class="mi">7200</span>  <span class="c1"># s</span>
+
+<span class="c1"># Setup for PETSc run</span>
+<span class="n">t_element_size</span> <span class="o">=</span> <span class="n">horizon</span>  <span class="c1"># s</span>
+<span class="n">ntfe</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">horizon</span> <span class="o">/</span> <span class="n">t_element_size</span><span class="p">)</span>
+<span class="n">time_set</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="n">ntfe</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="initial-and-boundary-conditions-for-gas-phase">
+<h3>Initial and boundary conditions for gas phase<a class="headerlink" href="#initial-and-boundary-conditions-for-gas-phase" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>The initial conditions of the solid phase will be copied from the
+final conditions of the model in the adsorption simulation.</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Desorption operating conditions</span>
+<span class="n">desorption_temperature</span> <span class="o">=</span> <span class="mi">470</span>  <span class="c1"># K</span>
+
+<span class="n">gas_phase_state_dict_des</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;flow_mol&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>  <span class="c1"># mol/s</span>
+    <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">desorption_temperature</span><span class="p">,</span>  <span class="c1"># K</span>
+    <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="mf">1.06525e5</span><span class="p">,</span>  <span class="c1"># Pa</span>
+    <span class="s2">&quot;mole_frac_comp&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;CO2&quot;</span><span class="p">:</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="s2">&quot;H2O&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;N2&quot;</span><span class="p">:</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="s2">&quot;O2&quot;</span><span class="p">:</span> <span class="mf">1e-8</span><span class="p">},</span>  <span class="c1"># [-]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="setup-the-desorption-model">
+<h3>Setup the desorption model<a class="headerlink" href="#setup-the-desorption-model" title="Permalink to this heading">¶</a></h3>
+<p>Then, we build the model and fix initial conditions:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the desorption flowsheet</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_des</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">time_set</span><span class="o">=</span><span class="n">time_set</span><span class="p">,</span> <span class="n">time_units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Setup an instance of the 1D FixedBed model for the desorption simulation</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_des</span> <span class="o">=</span> <span class="n">fb_model_setup</span><span class="p">(</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="p">,</span>
+    <span class="n">ntfe</span><span class="p">,</span>
+    <span class="n">nxfe</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="desorption-model-initialize-and-solve">
+<h3>Desorption model - initialize and solve<a class="headerlink" href="#desorption-model-initialize-and-solve" title="Permalink to this heading">¶</a></h3>
+<p>Finally for the desorption model, we initialize and solve.</p>
+<p>Copy state values of solid phase (besides temperature) from last time
+point in adsorption model to all time point in desorption model. Also
+set temperature state variable of desorption model to desorption
+temperature.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">blk_des</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="o">.</span><span class="n">FB</span>
+<span class="n">tf_ads</span> <span class="o">=</span> <span class="n">tj_ads</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Get final time from adsorption trajectory results</span>
+<span class="n">tf_ads_index</span> <span class="o">=</span> <span class="n">tj_ads</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">tf_ads</span><span class="p">)</span>  <span class="c1"># Get index at final time</span>
+<span class="n">component_list</span> <span class="o">=</span> <span class="n">blk_des</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">solid_phase_config</span><span class="o">.</span><span class="n">property_package</span><span class="o">.</span><span class="n">component_list</span>
+
+<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="o">.</span><span class="n">time</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">blk_des</span><span class="o">.</span><span class="n">length_domain</span><span class="p">:</span>
+        <span class="n">blk_des</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">desorption_temperature</span><span class="p">)</span>
+        <span class="n">blk_des</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">dens_mass_particle</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span>
+            <span class="n">tj_ads</span><span class="o">.</span><span class="n">get_vec</span><span class="p">(</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="o">.</span><span class="n">FB</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">tf_ads</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">dens_mass_particle</span>
+            <span class="p">)[</span><span class="n">tf_ads_index</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">component_list</span><span class="p">:</span>
+            <span class="n">blk_des</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">mass_frac_comp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span>
+                <span class="n">value</span><span class="p">(</span>
+                    <span class="n">tj_ads</span><span class="o">.</span><span class="n">get_vec</span><span class="p">(</span>
+                        <span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="o">.</span><span class="n">FB</span><span class="o">.</span><span class="n">solid_properties</span><span class="p">[</span><span class="n">tf_ads</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">mass_frac_comp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="p">)[</span><span class="n">tf_ads_index</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+</pre></div>
+</div>
+<section id="fix-initial-and-boundary-conditions">
+<h4>Fix initial and boundary conditions<a class="headerlink" href="#fix-initial-and-boundary-conditions" title="Permalink to this heading">¶</a></h4>
+<p>We fix the conditions from the final adsorption model state as our new
+initial conditions for the desorption model:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fb_fix_conditions</span><span class="p">(</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="p">,</span>
+    <span class="n">bed_diameter</span><span class="p">,</span>
+    <span class="n">bed_height</span><span class="p">,</span>
+    <span class="n">gas_phase_state_dict_des</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="o">=</span>  <span class="mi">0</span>
+<span class="n">inlet</span> <span class="n">gas</span> <span class="n">velocity</span> <span class="o">=</span>  <span class="mf">0.00576901488631887</span>  <span class="n">m</span><span class="o">/</span><span class="n">s</span>
+<span class="nb">min</span><span class="o">.</span> <span class="n">fluid</span> <span class="n">velocity</span> <span class="o">=</span>  <span class="mf">0.0091</span>  <span class="n">m</span><span class="o">/</span><span class="n">s</span>
+</pre></div>
+</div>
+</section>
+<section id="calculate-scaling-of-desorption-model">
+<h4>Calculate scaling of desorption model<a class="headerlink" href="#calculate-scaling-of-desorption-model" title="Permalink to this heading">¶</a></h4>
+<p>Then, we apply scaling to the model:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">iscale</span><span class="o">.</span><span class="n">calculate_scaling_factors</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="initialize-desorption-model">
+<h4>Initialize desorption model<a class="headerlink" href="#initialize-desorption-model" title="Permalink to this heading">¶</a></h4>
+<p>The desorption model initialization is done with the block
+triangularization initialization method, as was done with the adsorption
+model.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run start time</span>
+<span class="n">t_start_des</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="c1"># Initialize model</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="o">.</span><span class="n">FB</span><span class="o">.</span><span class="n">block_triangularization_initialize</span><span class="p">(</span>
+    <span class="n">gas_phase_state_args</span><span class="o">=</span><span class="n">gas_phase_state_dict_des</span><span class="p">,</span>
+    <span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+    <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
+    <span class="n">calc_var_kwds</span><span class="o">=</span><span class="n">calc_var_kwds</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Run end time</span>
+<span class="n">t_end_des</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="c1"># Initialization time</span>
+<span class="n">desorption_initialization_time</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="n">t_end_des</span> <span class="o">-</span> <span class="n">t_start_des</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="setup-petsc-integrator-and-simulate-desorption-step">
+<h4>Setup PETSc integrator and simulate desorption step<a class="headerlink" href="#setup-petsc-integrator-and-simulate-desorption-step" title="Permalink to this heading">¶</a></h4>
+<p>Now that the model is fully defined, we can call the PETSc integrator to
+simulate the dynamics of the problem:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run start time</span>
+<span class="n">t_start_des</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="c1"># Setup PETSc integrator and simulate desorption flowsheet</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="o">.</span><span class="n">time_var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="o">.</span><span class="n">time_var</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">first</span><span class="p">())</span>
+
+<span class="n">result_des</span> <span class="o">=</span> <span class="n">petsc</span><span class="o">.</span><span class="n">petsc_dae_by_time_element</span><span class="p">(</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="p">,</span>
+    <span class="n">time</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+    <span class="n">timevar</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="o">.</span><span class="n">time_var</span><span class="p">,</span>
+    <span class="n">keepfiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">symbolic_solver_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">skip_initial</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">ts_options</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;--ts_type&quot;</span><span class="p">:</span> <span class="s2">&quot;beuler&quot;</span><span class="p">,</span>  <span class="c1"># backward euler integration</span>
+        <span class="s2">&quot;--ts_dt&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>  <span class="c1"># set initial step to 200</span>
+        <span class="s2">&quot;--ts_rtol&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="s2">&quot;--ts_monitor&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--ts_save_trajectory&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;--ksp_rtol&quot;</span><span class="p">:</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="s2">&quot;--snes_type&quot;</span><span class="p">:</span> <span class="s2">&quot;newtontr&quot;</span><span class="p">,</span>  <span class="c1"># newton trust region non-linear solver</span>
+        <span class="s2">&quot;--ts_monitor&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--ts_save_trajectory&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;--ts_max_snes_failures&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="n">tj_des</span> <span class="o">=</span> <span class="n">result_des</span><span class="o">.</span><span class="n">trajectory</span>  <span class="c1"># trajectory data</span>
+
+<span class="c1"># Run end time</span>
+<span class="n">t_end_des</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="c1"># Initialization time</span>
+<span class="n">desorption_simulation_time</span> <span class="o">=</span> <span class="n">value</span><span class="p">(</span><span class="n">t_end_des</span> <span class="o">-</span> <span class="n">t_start_des</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="plot-the-desorption-simulation-results">
+<h3>Plot the desorption simulation results<a class="headerlink" href="#plot-the-desorption-simulation-results" title="Permalink to this heading">¶</a></h3>
+<p>Similar to the results of the adsorption model, the plots below are
+presented as temporal plots with spatial contours and spatial plots with
+time contours to fully capture the model trends.</p>
+<p>The gas flowrate spikes initially as large quantities of CO2 are
+recovered, and then the flowrate drops rapidly as the CO2 is carried
+away. An interesting note is that this occurs over the same time period
+everywhere across the length of the bed, peaking around 1000 seconds
+into the simulation. In the spatial plot, the peak is missed between the
+first and second contours; instead, the spatial plots captures a similar
+shifting inflection point around 10-25% of the way into the bed as the
+mass transfer driving force suddenly decreases.</p>
+<p>The bed pressure drops suddenly as CO2 is initially desorbed from the
+bed, and a steady state is reached at larger time points. As in the
+adsorption case, the desorption results show no temporal or spatial
+gradients in gas or solid temperature.</p>
+<p>The CO2 content of the gas sharply rises initially, and steadily
+decreases as CO2 is carried away in the sweep gas. A greater amount of
+CO2 is recovered closer to the reactor inlet. As the sweep gas is nearly
+pure water vapor, the water concentration in the gas sharply drops as
+CO2 is desorbed from the bed and recovers to near unity towards the
+temporal end of the simulation.</p>
+<p>Carbamate disappears quickly as CO2 is recovered and the hydrate is
+broken down, occuring evenly across the length of the reactor bed.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot temporal result profiles</span>
+<span class="n">plot_results_temporal</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_des</span><span class="p">,</span> <span class="n">tj_des</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_63_0.png" src="../../../_images/output_63_0.png" />
+<img alt="../../../_images/output_63_1.png" src="../../../_images/output_63_1.png" />
+<img alt="../../../_images/output_63_2.png" src="../../../_images/output_63_2.png" />
+<img alt="../../../_images/output_63_3.png" src="../../../_images/output_63_3.png" />
+<img alt="../../../_images/output_63_4.png" src="../../../_images/output_63_4.png" />
+<img alt="../../../_images/output_63_5.png" src="../../../_images/output_63_5.png" />
+<img alt="../../../_images/output_63_6.png" src="../../../_images/output_63_6.png" />
+<img alt="../../../_images/output_63_7.png" src="../../../_images/output_63_7.png" />
+<img alt="../../../_images/output_63_8.png" src="../../../_images/output_63_8.png" />
+<img alt="../../../_images/output_63_9.png" src="../../../_images/output_63_9.png" />
+<img alt="../../../_images/output_63_10.png" src="../../../_images/output_63_10.png" />
+<img alt="../../../_images/output_63_11.png" src="../../../_images/output_63_11.png" />
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot spatial result profiles</span>
+<span class="n">plot_results_spatial</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs_ads</span><span class="p">,</span> <span class="n">tj_ads</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_64_0.png" src="../../../_images/output_64_0.png" />
+<img alt="../../../_images/output_64_1.png" src="../../../_images/output_64_1.png" />
+<img alt="../../../_images/output_64_2.png" src="../../../_images/output_64_2.png" />
+<img alt="../../../_images/output_64_3.png" src="../../../_images/output_64_3.png" />
+<img alt="../../../_images/output_64_4.png" src="../../../_images/output_64_4.png" />
+<img alt="../../../_images/output_64_5.png" src="../../../_images/output_64_5.png" />
+<img alt="../../../_images/output_64_6.png" src="../../../_images/output_64_6.png" />
+<img alt="../../../_images/output_64_7.png" src="../../../_images/output_64_7.png" />
+<img alt="../../../_images/output_64_8.png" src="../../../_images/output_64_8.png" />
+<img alt="../../../_images/output_64_9.png" src="../../../_images/output_64_9.png" />
+<img alt="../../../_images/output_64_10.png" src="../../../_images/output_64_10.png" />
+<img alt="../../../_images/output_64_11.png" src="../../../_images/output_64_11.png" />
+</section>
+</section>
+<section id="step-3-generate-performance-results">
+<h2>Step 3: Generate performance results<a class="headerlink" href="#step-3-generate-performance-results" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">###########################################################################</span>
+<span class="c1">#  Heat requirements</span>
+<span class="c1">###########################################################################</span>
+<span class="n">heat_computation</span><span class="p">(</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">tj_ads</span><span class="p">,</span> <span class="n">tj_des</span><span class="p">,</span> <span class="n">adsorption_temperature</span><span class="p">,</span> <span class="n">desorption_temperature</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">WARNING</span><span class="p">:</span> <span class="n">Element</span> <span class="mf">27000.0</span> <span class="n">already</span> <span class="n">exists</span> <span class="ow">in</span> <span class="n">Set</span> <span class="n">fs_ads</span><span class="o">.</span><span class="n">FB</span><span class="o">.</span><span class="n">time_set</span><span class="p">;</span> <span class="n">no</span> <span class="n">action</span>
+    <span class="n">taken</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">Element</span> <span class="mf">54000.0</span> <span class="n">already</span> <span class="n">exists</span> <span class="ow">in</span> <span class="n">Set</span> <span class="n">fs_ads</span><span class="o">.</span><span class="n">FB</span><span class="o">.</span><span class="n">time_set</span><span class="p">;</span> <span class="n">no</span> <span class="n">action</span>
+    <span class="n">taken</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">Element</span> <span class="mf">81000.0</span> <span class="n">already</span> <span class="n">exists</span> <span class="ow">in</span> <span class="n">Set</span> <span class="n">fs_ads</span><span class="o">.</span><span class="n">FB</span><span class="o">.</span><span class="n">time_set</span><span class="p">;</span> <span class="n">no</span> <span class="n">action</span>
+    <span class="n">taken</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">###########################################################################</span>
+<span class="c1">#  Performance results</span>
+<span class="c1">###########################################################################</span>
+<span class="n">performance_results</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tj_ads</span><span class="p">,</span> <span class="n">tj_des</span><span class="p">)</span>
+
+<span class="n">results_summary</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">adsorption_temperature</span><span class="p">,</span> <span class="n">desorption_temperature</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Report</span> <span class="n">fixed</span> <span class="n">bed</span> <span class="n">adsorption</span><span class="o">/</span><span class="n">desorption</span>
+
+<span class="n">Adsorption</span> <span class="n">temperature</span> <span class="p">[</span><span class="n">K</span><span class="p">]:</span> <span class="mf">303.1500</span>
+<span class="n">Desorption</span> <span class="n">temperature</span> <span class="p">[</span><span class="n">K</span><span class="p">]:</span> <span class="mf">470.0000</span>
+<span class="n">Column</span> <span class="n">diameter</span> <span class="p">[</span><span class="n">m</span><span class="p">]:</span> <span class="mf">9.0000</span>
+<span class="n">Column</span> <span class="n">length</span> <span class="p">[</span><span class="n">m</span><span class="p">]:</span> <span class="mf">1.0000</span>
+<span class="n">CO2</span> <span class="n">mole</span> <span class="n">fraction</span> <span class="n">at</span> <span class="n">feed</span> <span class="p">[</span><span class="o">%</span><span class="p">]:</span> <span class="mf">4.0800</span>
+<span class="n">Feed</span> <span class="n">flow</span> <span class="n">rate</span> <span class="p">[</span><span class="n">mol</span><span class="o">/</span><span class="n">s</span><span class="p">]:</span> <span class="mf">3.5440</span>
+<span class="n">Feed</span> <span class="n">velocity</span> <span class="p">[</span><span class="n">m</span><span class="o">/</span><span class="n">s</span><span class="p">]:</span> <span class="mf">0.0011</span>
+<span class="n">Minimum</span> <span class="n">fluidization</span> <span class="n">velocity</span> <span class="p">[</span><span class="n">m</span><span class="o">/</span><span class="n">s</span><span class="p">]:</span> <span class="mf">0.0091</span>
+<span class="n">Time</span> <span class="n">of</span> <span class="n">adsorption</span> <span class="n">step</span> <span class="p">[</span><span class="n">h</span><span class="p">]:</span> <span class="mf">30.0000</span>
+<span class="n">Time</span> <span class="n">of</span> <span class="n">desorption</span> <span class="n">step</span> <span class="p">[</span><span class="n">h</span><span class="p">]:</span> <span class="mf">2.0000</span>
+<span class="n">Cycle</span> <span class="n">time</span> <span class="p">[</span><span class="n">h</span><span class="p">]:</span> <span class="mf">32.0000</span>
+<span class="n">CO2</span> <span class="nb">input</span> <span class="n">per</span> <span class="n">cycle</span> <span class="p">[</span><span class="n">kg</span><span class="o">/</span><span class="n">bed</span><span class="o">/</span><span class="n">cycle</span><span class="p">]:</span> <span class="mf">687.1164</span>
+<span class="n">CO2</span> <span class="n">released</span> <span class="n">per</span> <span class="n">cycle</span> <span class="p">[</span><span class="n">kg</span><span class="o">/</span><span class="n">bed</span><span class="o">/</span><span class="n">cycle</span><span class="p">]:</span> <span class="mf">60.9462</span>
+<span class="n">CO2</span> <span class="n">adsorbed</span> <span class="n">per</span> <span class="n">cycle</span> <span class="p">[</span><span class="n">kg</span><span class="o">/</span><span class="n">bed</span><span class="o">/</span><span class="n">cycle</span><span class="p">]:</span> <span class="mf">632.8896</span>
+<span class="n">CO2</span> <span class="n">desorbed</span> <span class="n">per</span> <span class="n">cycle</span> <span class="p">[</span><span class="n">kg</span><span class="o">/</span><span class="n">bed</span><span class="o">/</span><span class="n">cycle</span><span class="p">]:</span> <span class="mf">612.9607</span>
+<span class="n">Purity</span> <span class="p">[</span><span class="o">-</span><span class="p">]:</span> <span class="mf">0.2150</span>
+<span class="n">Recovery</span> <span class="p">[</span><span class="o">-</span><span class="p">]:</span> <span class="mf">0.9685</span>
+<span class="n">Productivity</span> <span class="p">[</span><span class="n">kg</span> <span class="n">CO2</span><span class="o">/</span><span class="n">ton</span><span class="o">/</span><span class="n">h</span><span class="p">]:</span> <span class="mf">979.7350</span>
+<span class="n">Specific</span> <span class="n">energy</span> <span class="p">[</span><span class="n">MJ</span><span class="o">/</span><span class="n">kg</span> <span class="n">CO2</span><span class="p">]:</span> <span class="mf">1.4651</span>
+<span class="n">Heat</span> <span class="n">duty</span> <span class="n">per</span> <span class="n">bed</span> <span class="p">[</span><span class="n">MW</span><span class="p">]:</span> <span class="mf">0.1247</span>
+<span class="n">Cooling</span> <span class="n">duty</span> <span class="n">per</span> <span class="n">bed</span> <span class="p">[</span><span class="n">MW</span><span class="p">]:</span> <span class="o">-</span><span class="mf">0.0257</span>
+<span class="n">CO2</span> <span class="n">adsorbed</span> <span class="n">per</span> <span class="n">cycle</span> <span class="n">CO2</span> <span class="n">balance</span> <span class="p">[</span><span class="n">kg</span><span class="o">/</span><span class="n">bed</span><span class="o">/</span><span class="n">cycle</span><span class="p">]:</span> <span class="mf">626.1702</span>
+<span class="n">CO2</span> <span class="n">adsorbed</span> <span class="n">per</span> <span class="n">cycle</span> <span class="n">carbamate</span> <span class="n">balance</span> <span class="p">[</span><span class="n">kg</span><span class="o">/</span><span class="n">bed</span><span class="o">/</span><span class="n">cycle</span><span class="p">]:</span> <span class="mf">632.8896</span>
+<span class="n">CO2</span> <span class="n">desorbed</span> <span class="n">per</span> <span class="n">cycle</span> <span class="n">CO2</span> <span class="n">balance</span> <span class="p">[</span><span class="n">kg</span><span class="o">/</span><span class="n">bed</span><span class="o">/</span><span class="n">cycle</span><span class="p">]:</span> <span class="mf">1189.9355</span>
+<span class="n">CO2</span> <span class="n">desorbed</span> <span class="n">per</span> <span class="n">cycle</span> <span class="n">carbamate</span> <span class="n">balance</span> <span class="p">[</span><span class="n">kg</span><span class="o">/</span><span class="n">bed</span><span class="o">/</span><span class="n">cycle</span><span class="p">]:</span> <span class="mf">612.9607</span>
+<span class="n">Cycles</span> <span class="n">per</span> <span class="n">year</span><span class="p">:</span> <span class="mf">273.7500</span>
+<span class="n">Total</span> <span class="n">CO2</span> <span class="n">captured</span> <span class="n">per</span> <span class="n">year</span> <span class="n">per</span> <span class="n">bed</span><span class="p">[</span><span class="n">tonne</span><span class="o">/</span><span class="n">year</span><span class="o">/</span><span class="n">bed</span><span class="p">]:</span> <span class="mf">167.7980</span>
+<span class="n">Amount</span> <span class="n">of</span> <span class="n">CO2</span> <span class="n">to</span> <span class="n">atmosphere</span> <span class="p">[</span><span class="n">kg</span><span class="o">/</span><span class="n">s</span><span class="p">]:</span> <span class="mf">0.0006</span>
+</pre></div>
+</div>
+</section>
+<section id="simulation-time-results">
+<h2>Simulation time results<a class="headerlink" href="#simulation-time-results" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Adsorption initialization time: &#39;</span><span class="p">,</span> <span class="n">adsorption_initialization_time</span><span class="p">,</span> <span class="s1">&#39; s&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Adsorption simulation time: &#39;</span><span class="p">,</span> <span class="n">adsorption_simulation_time</span><span class="p">,</span> <span class="s1">&#39; s&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Desorption initialization time: &#39;</span><span class="p">,</span> <span class="n">desorption_initialization_time</span><span class="p">,</span> <span class="s1">&#39; s&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Desorption simulation time: &#39;</span><span class="p">,</span> <span class="n">desorption_simulation_time</span><span class="p">,</span> <span class="s1">&#39; s&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">total_simulation_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">adsorption_initialization_time</span> <span class="o">+</span> <span class="n">adsorption_simulation_time</span>
+                         <span class="o">+</span> <span class="n">desorption_initialization_time</span> <span class="o">+</span> <span class="n">desorption_simulation_time</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total simulation time: &#39;</span><span class="p">,</span> <span class="n">total_simulation_time</span><span class="p">,</span> <span class="s1">&#39; s&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Adsorption</span> <span class="n">initialization</span> <span class="n">time</span><span class="p">:</span>  <span class="mf">6.293773174285889</span>  <span class="n">s</span>
+<span class="n">Adsorption</span> <span class="n">simulation</span> <span class="n">time</span><span class="p">:</span>  <span class="mf">283.4317800998688</span>  <span class="n">s</span>
+
+<span class="n">Desorption</span> <span class="n">initialization</span> <span class="n">time</span><span class="p">:</span>  <span class="mf">2.9242117404937744</span>  <span class="n">s</span>
+<span class="n">Desorption</span> <span class="n">simulation</span> <span class="n">time</span><span class="p">:</span>  <span class="mf">4.448941707611084</span>  <span class="n">s</span>
+
+<span class="n">Total</span> <span class="n">simulation</span> <span class="n">time</span><span class="p">:</span>  <span class="mf">297.0987067222595</span>  <span class="n">s</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="summary">
+<h1>Summary<a class="headerlink" href="#summary" title="Permalink to this heading">¶</a></h1>
+<p>This example demonstrates implementation of the 1D FixedBed model within
+IDAES. External property packages for multiple phase domains and
+interfaces, as well as mass transfer and reaction properties, were
+integrated into two simulations. The simulations are connected via their
+final (adsorption) and initial (desorption) states, and each utilizes
+the PETSc integrator to calculate temporal profiles over the spatial
+domains.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

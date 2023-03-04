@@ -1,0 +1,1165 @@
+Autothermal Reformer Flowsheet Optimization with OMLT (TensorFlow Keras) Surrogate Object
+=========================================================================================
+
+1. Introduction
+---------------
+
+This example demonstrates autothermal reformer optimization leveraging
+the OMLT package utilizing TensorFlow Keras neural networks. In this
+notebook, sampled simulation data will be used to train and validate a
+surrogate model. IDAES surrogate plotting tools will be utilized to
+visualize the surrogates on training and validation data. Once
+validated, integration of the surrogate into an IDAES flowsheet will be
+demonstrated.
+
+2. Problem Statement
+====================
+
+Within the context of a larger NGFC system, the autothermal reformer
+generates syngas from air, steam and natural gas for use in a
+solid-oxide fuel cell (SOFC).
+
+2.1. Main Inputs:
+-----------------
+
+-  Bypass fraction (dimensionless) - split fraction of natural gas to
+   bypass AR unit and feed directly to the power island
+-  NG-Steam Ratio (dimensionless) - proportion of natural relative to
+   steam fed into AR unit operation
+
+2.2. Main Outputs:
+------------------
+
+-  Steam flowrate (kg/s) - inlet steam fed to AR unit
+-  Reformer duty (kW) - required energy input to AR unit
+-  Composition (dimensionless) - outlet mole fractions of components
+   (Ar, C2H6, C3H8, C4H10, CH4, CO, CO2, H2, H2O, N2, O2)
+
+.. code:: ipython3
+
+    from IPython.display import Image
+    Image("AR_PFD.png")
+
+
+
+
+.. image:: output_3_0.png
+
+
+
+3. Training and Validating Surrogates
+-------------------------------------
+
+First, let’s import the required Python, Pyomo and IDAES modules:
+
+.. code:: ipython3
+
+    # Import statements
+    import os
+    import numpy as np
+    import pandas as pd
+    import random as rn
+    import tensorflow as tf
+    
+    # Import Pyomo libraries
+    from pyomo.environ import ConcreteModel, SolverFactory, value, Var, \
+        Constraint, Set, Objective, maximize
+    from pyomo.common.timing import TicTocTimer
+    
+    # Import IDAES libraries
+    from idaes.core.surrogate.sampling.data_utils import split_training_validation
+    from idaes.core.surrogate.sampling.scaling import OffsetScaler
+    from idaes.core.surrogate.keras_surrogate import KerasSurrogate, save_keras_json_hd5, load_keras_json_hd5
+    from idaes.core.surrogate.plotting.sm_plotter import surrogate_scatter2D, surrogate_parity, surrogate_residual
+    from idaes.core.surrogate.surrogate_block import SurrogateBlock
+    from idaes.core import FlowsheetBlock
+    
+    # fix environment variables to ensure consist neural network training
+    os.environ['PYTHONHASHSEED'] = '0'
+    os.environ['CUDA_VISIBLE_DEVICES'] = ''
+    np.random.seed(46)
+    rn.seed(1342)
+    tf.random.set_seed(62)
+
+
+.. parsed-literal::
+
+    2023-03-04 01:45:28.716911: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F AVX512_VNNI FMA
+    To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+    2023-03-04 01:45:28.833357: I tensorflow/core/util/util.cc:169] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+    2023-03-04 01:45:28.838425: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+    2023-03-04 01:45:28.838437: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+    2023-03-04 01:45:28.861571: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+    2023-03-04 01:45:29.401411: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
+    2023-03-04 01:45:29.401465: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
+    2023-03-04 01:45:29.401470: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+
+
+3.1 Importing Training and Validation Datasets
+----------------------------------------------
+
+In this section, we read the dataset from the CSV file located in this
+directory. 2800 data points were simulated from a rigorous IDAES NGFC
+flowsheet using a grid sampling method. For simplicity and to reduce
+training runtime, this example randomly selects 100 data points to use
+for training/validation. The data is separated using an 80/20 split into
+training and validation data using the IDAES
+``split_training_validation()`` method.
+
+.. code:: ipython3
+
+    # Import Auto-reformer training data
+    np.set_printoptions(precision=6, suppress=True)
+    
+    csv_data = pd.read_csv(r'reformer-data.csv') # 2800 data points
+    data = csv_data.sample(n = 100) # randomly sample points for training/validation
+    
+    input_data = data.iloc[:, :2]
+    output_data = data.iloc[:, 2:]
+    
+    # Define labels, and split training and validation data
+    input_labels = input_data.columns
+    output_labels = output_data.columns
+    
+    n_data = data[input_labels[0]].size
+    data_training, data_validation = split_training_validation(data, 0.8, seed=n_data)  # seed=100
+
+3.2 Training Surrogates with TensorFlow Keras
+---------------------------------------------
+
+TensorFlow Keras provides an interface to pass regression settings,
+build neural networks and train surrogate models. Keras enables the
+usage of two API formats: Sequential and Functional. While the
+Functional API offers more versatility including multiple input and
+output layers in a single neural network, the Sequential API is more
+stable and user-friendly. Further, the Sequnetial API integrates cleanly
+with existing IDAES surrogate tools and will be utilized in this
+example.
+
+In the code below, we build the neural network structure based on our
+training data structure and desired regression settings. Offline, neural
+network models were trained for the list of settings below and the
+options bolded and italicized were determined to have the minimum mean
+squared error for the dataset:
+
+-  Activation function: relu, sigmoid, **tanh**
+-  Optimizer: **Adam**, RMSprop, SGD
+-  Number of hidden layers: 1, **2**, 4
+-  Number of neurons per layer: 10, 20, **40**
+
+Typically, Sequential Keras models are built vertically; the dataset is
+scaled and normalized, and the network is defined for the input layer,
+hidden layers and output layer for the passed activation functions and
+network/layer sizes. Then, the model is compiled using the passed
+optimizer and trained using a desired number of epochs. Keras internally
+validates while training and updates the model weight (coefficient)
+values on each epoch.
+
+Finally, after training the model we save the results and model
+expressions to a folder which contains a serialized JSON file.
+Serializing the model in this fashion enables importing a previously
+trained set of surrogate models into external flowsheets. This feature
+will be used later.
+
+.. code:: ipython3
+
+    # capture long output (not required to use surrogate API)
+    from io import StringIO
+    import sys
+    stream = StringIO()
+    oldstdout = sys.stdout
+    sys.stdout = stream
+    
+    # selected settings for regression (best fit from options above)
+    activation, optimizer, n_hidden_layers, n_nodes_per_layer = 'tanh', 'Adam', 2, 40
+    loss, metrics = 'mse', ['mae', 'mse']
+    
+    # Create data objects for training using scalar normalization
+    n_inputs = len(input_labels)
+    n_outputs = len(output_labels)
+    x = input_data
+    y = output_data
+    
+    input_scaler = None
+    output_scaler = None
+    input_scaler = OffsetScaler.create_normalizing_scaler(x)
+    output_scaler = OffsetScaler.create_normalizing_scaler(y)
+    x = input_scaler.scale(x)
+    y = output_scaler.scale(y)
+    x = x.to_numpy()
+    y = y.to_numpy()
+    
+    # Create Keras Sequential object and build neural network
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Dense(units=n_nodes_per_layer, input_dim=n_inputs, activation=activation))
+    for i in range(1, n_hidden_layers):
+        model.add(tf.keras.layers.Dense(units=n_nodes_per_layer, activation=activation))
+    model.add(tf.keras.layers.Dense(units=n_outputs))
+    
+    # Train surrogate (calls optimizer on neural network and solves for weights)
+    model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
+    mcp_save = tf.keras.callbacks.ModelCheckpoint('.mdl_wts.hdf5', save_best_only=True, monitor='val_loss', mode='min')
+    history = model.fit(x=x, y=y, validation_split=0.2, verbose=1, epochs=1000, callbacks=[mcp_save])
+    
+    # save model to JSON and create callable surrogate object
+    xmin, xmax = [0.1, 0.8], [0.8, 1.2]
+    input_bounds = {input_labels[i]: (xmin[i], xmax[i])
+                    for i in range(len(input_labels))}
+    
+    keras_surrogate = KerasSurrogate(model, input_labels=list(input_labels), output_labels=list(output_labels),
+                                     input_bounds=input_bounds, input_scaler=input_scaler, output_scaler=output_scaler)
+    keras_surrogate.save_to_folder('keras_surrogate')
+    
+    # revert back to normal output capture
+    sys.stdout = oldstdout
+    
+    # display first 50 lines and last 50 lines of output
+    celloutput = stream.getvalue().split('\n')
+    for line in celloutput[:50]:
+        print(line)
+    print('.')
+    print('.')
+    print('.')
+    for line in celloutput[-50:]:
+        print(line)
+
+
+.. parsed-literal::
+
+    2023-03-04 01:45:31.667489: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: :/home/runner/.idaes/bin
+    2023-03-04 01:45:31.667513: W tensorflow/stream_executor/cuda/cuda_driver.cc:263] failed call to cuInit: UNKNOWN ERROR (303)
+    2023-03-04 01:45:31.667528: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (c046ea564732): /proc/driver/nvidia/version does not exist
+    2023-03-04 01:45:31.667743: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F AVX512_VNNI FMA
+    To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+
+
+.. parsed-literal::
+
+    INFO:tensorflow:Assets written to: keras_surrogate/assets
+    Epoch 1/1000
+    3/3 [==============================] - 0s 76ms/step - loss: 0.3703 - mae: 0.5194 - mse: 0.3703 - val_loss: 0.3230 - val_mae: 0.4945 - val_mse: 0.3230
+    Epoch 2/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.3078 - mae: 0.4684 - mse: 0.3078 - val_loss: 0.2686 - val_mae: 0.4450 - val_mse: 0.2686
+    Epoch 3/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.2556 - mae: 0.4217 - mse: 0.2556 - val_loss: 0.2235 - val_mae: 0.3991 - val_mse: 0.2235
+    Epoch 4/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.2136 - mae: 0.3798 - mse: 0.2136 - val_loss: 0.1862 - val_mae: 0.3568 - val_mse: 0.1862
+    Epoch 5/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.1792 - mae: 0.3424 - mse: 0.1792 - val_loss: 0.1557 - val_mae: 0.3193 - val_mse: 0.1557
+    Epoch 6/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.1512 - mae: 0.3100 - mse: 0.1512 - val_loss: 0.1303 - val_mae: 0.2857 - val_mse: 0.1303
+    Epoch 7/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.1286 - mae: 0.2829 - mse: 0.1286 - val_loss: 0.1099 - val_mae: 0.2583 - val_mse: 0.1099
+    Epoch 8/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.1108 - mae: 0.2615 - mse: 0.1108 - val_loss: 0.0935 - val_mae: 0.2381 - val_mse: 0.0935
+    Epoch 9/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0969 - mae: 0.2445 - mse: 0.0969 - val_loss: 0.0810 - val_mae: 0.2227 - val_mse: 0.0810
+    Epoch 10/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0870 - mae: 0.2324 - mse: 0.0870 - val_loss: 0.0717 - val_mae: 0.2123 - val_mse: 0.0717
+    Epoch 11/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0795 - mae: 0.2228 - mse: 0.0795 - val_loss: 0.0650 - val_mae: 0.2041 - val_mse: 0.0650
+    Epoch 12/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0745 - mae: 0.2165 - mse: 0.0745 - val_loss: 0.0599 - val_mae: 0.1972 - val_mse: 0.0599
+    Epoch 13/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0703 - mae: 0.2108 - mse: 0.0703 - val_loss: 0.0565 - val_mae: 0.1925 - val_mse: 0.0565
+    Epoch 14/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0670 - mae: 0.2056 - mse: 0.0670 - val_loss: 0.0534 - val_mae: 0.1879 - val_mse: 0.0534
+    Epoch 15/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0640 - mae: 0.2005 - mse: 0.0640 - val_loss: 0.0506 - val_mae: 0.1828 - val_mse: 0.0506
+    Epoch 16/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0611 - mae: 0.1949 - mse: 0.0611 - val_loss: 0.0477 - val_mae: 0.1767 - val_mse: 0.0477
+    Epoch 17/1000
+    3/3 [==============================] - 0s 15ms/step - loss: 0.0582 - mae: 0.1889 - mse: 0.0582 - val_loss: 0.0454 - val_mae: 0.1711 - val_mse: 0.0454
+    Epoch 18/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0557 - mae: 0.1833 - mse: 0.0557 - val_loss: 0.0436 - val_mae: 0.1659 - val_mse: 0.0436
+    Epoch 19/1000
+    3/3 [==============================] - 0s 15ms/step - loss: 0.0533 - mae: 0.1778 - mse: 0.0533 - val_loss: 0.0418 - val_mae: 0.1601 - val_mse: 0.0418
+    Epoch 20/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0514 - mae: 0.1727 - mse: 0.0514 - val_loss: 0.0403 - val_mae: 0.1546 - val_mse: 0.0403
+    Epoch 21/1000
+    3/3 [==============================] - 0s 15ms/step - loss: 0.0496 - mae: 0.1681 - mse: 0.0496 - val_loss: 0.0385 - val_mae: 0.1487 - val_mse: 0.0385
+    Epoch 22/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0479 - mae: 0.1630 - mse: 0.0479 - val_loss: 0.0370 - val_mae: 0.1437 - val_mse: 0.0370
+    Epoch 23/1000
+    3/3 [==============================] - 0s 15ms/step - loss: 0.0464 - mae: 0.1589 - mse: 0.0464 - val_loss: 0.0359 - val_mae: 0.1404 - val_mse: 0.0359
+    Epoch 24/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0449 - mae: 0.1550 - mse: 0.0449 - val_loss: 0.0347 - val_mae: 0.1372 - val_mse: 0.0347
+    Epoch 25/1000
+    3/3 [==============================] - 0s 15ms/step - loss: 0.0433 - mae: 0.1511 - mse: 0.0433 - val_loss: 0.0335 - val_mae: 0.1347 - val_mse: 0.0335
+    .
+    .
+    .
+    3/3 [==============================] - 0s 11ms/step - loss: 1.3688e-04 - mae: 0.0084 - mse: 1.3688e-04 - val_loss: 9.2093e-05 - val_mae: 0.0068 - val_mse: 9.2093e-05
+    Epoch 977/1000
+    3/3 [==============================] - 0s 15ms/step - loss: 1.3427e-04 - mae: 0.0085 - mse: 1.3427e-04 - val_loss: 8.4303e-05 - val_mae: 0.0067 - val_mse: 8.4303e-05
+    Epoch 978/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.3646e-04 - mae: 0.0087 - mse: 1.3646e-04 - val_loss: 9.1711e-05 - val_mae: 0.0071 - val_mse: 9.1711e-05
+    Epoch 979/1000
+    3/3 [==============================] - 0s 15ms/step - loss: 1.3732e-04 - mae: 0.0087 - mse: 1.3732e-04 - val_loss: 8.2200e-05 - val_mae: 0.0067 - val_mse: 8.2200e-05
+    Epoch 980/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2526e-04 - mae: 0.0082 - mse: 1.2526e-04 - val_loss: 1.0392e-04 - val_mae: 0.0074 - val_mse: 1.0392e-04
+    Epoch 981/1000
+    3/3 [==============================] - 0s 15ms/step - loss: 1.3412e-04 - mae: 0.0082 - mse: 1.3412e-04 - val_loss: 8.1916e-05 - val_mae: 0.0065 - val_mse: 8.1916e-05
+    Epoch 982/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 1.3123e-04 - mae: 0.0085 - mse: 1.3123e-04 - val_loss: 8.0986e-05 - val_mae: 0.0067 - val_mse: 8.0986e-05
+    Epoch 983/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2668e-04 - mae: 0.0084 - mse: 1.2668e-04 - val_loss: 8.8134e-05 - val_mae: 0.0069 - val_mse: 8.8134e-05
+    Epoch 984/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2770e-04 - mae: 0.0082 - mse: 1.2770e-04 - val_loss: 8.4017e-05 - val_mae: 0.0066 - val_mse: 8.4017e-05
+    Epoch 985/1000
+    3/3 [==============================] - 0s 15ms/step - loss: 1.2767e-04 - mae: 0.0081 - mse: 1.2767e-04 - val_loss: 7.7591e-05 - val_mae: 0.0064 - val_mse: 7.7591e-05
+    Epoch 986/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2811e-04 - mae: 0.0085 - mse: 1.2811e-04 - val_loss: 7.8276e-05 - val_mae: 0.0066 - val_mse: 7.8276e-05
+    Epoch 987/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2328e-04 - mae: 0.0082 - mse: 1.2328e-04 - val_loss: 9.2079e-05 - val_mae: 0.0071 - val_mse: 9.2079e-05
+    Epoch 988/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 1.2592e-04 - mae: 0.0081 - mse: 1.2592e-04 - val_loss: 7.5439e-05 - val_mae: 0.0064 - val_mse: 7.5439e-05
+    Epoch 989/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2697e-04 - mae: 0.0086 - mse: 1.2697e-04 - val_loss: 8.1590e-05 - val_mae: 0.0068 - val_mse: 8.1590e-05
+    Epoch 990/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2365e-04 - mae: 0.0082 - mse: 1.2365e-04 - val_loss: 8.8449e-05 - val_mae: 0.0067 - val_mse: 8.8449e-05
+    Epoch 991/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2486e-04 - mae: 0.0079 - mse: 1.2486e-04 - val_loss: 8.3745e-05 - val_mae: 0.0065 - val_mse: 8.3745e-05
+    Epoch 992/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2131e-04 - mae: 0.0082 - mse: 1.2131e-04 - val_loss: 7.8311e-05 - val_mae: 0.0066 - val_mse: 7.8311e-05
+    Epoch 993/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2277e-04 - mae: 0.0083 - mse: 1.2277e-04 - val_loss: 7.5934e-05 - val_mae: 0.0064 - val_mse: 7.5934e-05
+    Epoch 994/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.1942e-04 - mae: 0.0082 - mse: 1.1942e-04 - val_loss: 7.9994e-05 - val_mae: 0.0067 - val_mse: 7.9994e-05
+    Epoch 995/1000
+    3/3 [==============================] - 0s 12ms/step - loss: 1.1739e-04 - mae: 0.0079 - mse: 1.1739e-04 - val_loss: 8.5978e-05 - val_mae: 0.0066 - val_mse: 8.5978e-05
+    Epoch 996/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.1918e-04 - mae: 0.0078 - mse: 1.1918e-04 - val_loss: 7.7404e-05 - val_mae: 0.0062 - val_mse: 7.7404e-05
+    Epoch 997/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.1708e-04 - mae: 0.0080 - mse: 1.1708e-04 - val_loss: 7.7886e-05 - val_mae: 0.0064 - val_mse: 7.7886e-05
+    Epoch 998/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.1993e-04 - mae: 0.0079 - mse: 1.1993e-04 - val_loss: 7.7599e-05 - val_mae: 0.0065 - val_mse: 7.7599e-05
+    Epoch 999/1000
+    3/3 [==============================] - 0s 16ms/step - loss: 1.1611e-04 - mae: 0.0081 - mse: 1.1611e-04 - val_loss: 7.2370e-05 - val_mae: 0.0064 - val_mse: 7.2370e-05
+    Epoch 1000/1000
+    3/3 [==============================] - 0s 11ms/step - loss: 1.1746e-04 - mae: 0.0083 - mse: 1.1746e-04 - val_loss: 8.1322e-05 - val_mae: 0.0068 - val_mse: 8.1322e-05
+    
+
+
+3.3 Visualizing surrogates
+--------------------------
+
+Now that the surrogate models have been trained, the models can be
+visualized through scatter, parity and residual plots to confirm their
+validity in the chosen domain. The training data will be visualized
+first to confirm the surrogates are fit the data, and then the
+validation data will be visualized to confirm the surrogates accurately
+predict new output values.
+
+.. code:: ipython3
+
+    # visualize with IDAES surrogate plotting tools
+    surrogate_scatter2D(keras_surrogate, data_training, filename='keras_train_scatter2D.pdf')
+    surrogate_parity(keras_surrogate, data_training, filename='keras_train_parity.pdf')
+    surrogate_residual(keras_surrogate, data_training, filename='keras_train_residual.pdf')
+
+
+.. parsed-literal::
+
+    3/3 [==============================] - 0s 1ms/step
+
+
+
+.. image:: output_15_1.png
+
+
+
+.. image:: output_15_2.png
+
+
+
+.. image:: output_15_3.png
+
+
+
+.. image:: output_15_4.png
+
+
+
+.. image:: output_15_5.png
+
+
+
+.. image:: output_15_6.png
+
+
+
+.. image:: output_15_7.png
+
+
+
+.. image:: output_15_8.png
+
+
+
+.. image:: output_15_9.png
+
+
+
+.. image:: output_15_10.png
+
+
+
+.. image:: output_15_11.png
+
+
+
+.. image:: output_15_12.png
+
+
+
+.. image:: output_15_13.png
+
+
+
+.. image:: output_15_14.png
+
+
+
+.. image:: output_15_15.png
+
+
+
+.. image:: output_15_16.png
+
+
+
+.. image:: output_15_17.png
+
+
+
+.. image:: output_15_18.png
+
+
+
+.. image:: output_15_19.png
+
+
+
+.. image:: output_15_20.png
+
+
+
+.. image:: output_15_21.png
+
+
+
+.. image:: output_15_22.png
+
+
+
+.. image:: output_15_23.png
+
+
+
+.. image:: output_15_24.png
+
+
+
+.. image:: output_15_25.png
+
+
+
+.. image:: output_15_26.png
+
+
+.. parsed-literal::
+
+    3/3 [==============================] - 0s 1ms/step
+
+
+
+.. image:: output_15_28.png
+
+
+
+.. image:: output_15_29.png
+
+
+
+.. image:: output_15_30.png
+
+
+
+.. image:: output_15_31.png
+
+
+
+.. image:: output_15_32.png
+
+
+
+.. image:: output_15_33.png
+
+
+
+.. image:: output_15_34.png
+
+
+
+.. image:: output_15_35.png
+
+
+
+.. image:: output_15_36.png
+
+
+
+.. image:: output_15_37.png
+
+
+
+.. image:: output_15_38.png
+
+
+
+.. image:: output_15_39.png
+
+
+
+.. image:: output_15_40.png
+
+
+.. parsed-literal::
+
+    3/3 [==============================] - 0s 1ms/step
+
+
+
+.. image:: output_15_42.png
+
+
+
+.. image:: output_15_43.png
+
+
+
+.. image:: output_15_44.png
+
+
+
+.. image:: output_15_45.png
+
+
+
+.. image:: output_15_46.png
+
+
+
+.. image:: output_15_47.png
+
+
+
+.. image:: output_15_48.png
+
+
+
+.. image:: output_15_49.png
+
+
+
+.. image:: output_15_50.png
+
+
+
+.. image:: output_15_51.png
+
+
+
+.. image:: output_15_52.png
+
+
+
+.. image:: output_15_53.png
+
+
+
+.. image:: output_15_54.png
+
+
+
+.. image:: output_15_55.png
+
+
+
+.. image:: output_15_56.png
+
+
+
+.. image:: output_15_57.png
+
+
+
+.. image:: output_15_58.png
+
+
+
+.. image:: output_15_59.png
+
+
+
+.. image:: output_15_60.png
+
+
+
+.. image:: output_15_61.png
+
+
+
+.. image:: output_15_62.png
+
+
+
+.. image:: output_15_63.png
+
+
+
+.. image:: output_15_64.png
+
+
+
+.. image:: output_15_65.png
+
+
+
+.. image:: output_15_66.png
+
+
+
+.. image:: output_15_67.png
+
+
+3.4 Model Validation
+--------------------
+
+.. code:: ipython3
+
+    # visualize with IDAES surrogate plotting tools
+    surrogate_scatter2D(keras_surrogate, data_validation, filename='keras_val_scatter2D.pdf')
+    surrogate_parity(keras_surrogate, data_validation, filename='keras_val_parity.pdf')
+    surrogate_residual(keras_surrogate, data_validation, filename='keras_val_residual.pdf')
+
+
+.. parsed-literal::
+
+    1/1 [==============================] - 0s 19ms/step
+
+
+
+.. image:: output_17_1.png
+
+
+
+.. image:: output_17_2.png
+
+
+
+.. image:: output_17_3.png
+
+
+
+.. image:: output_17_4.png
+
+
+
+.. image:: output_17_5.png
+
+
+
+.. image:: output_17_6.png
+
+
+
+.. image:: output_17_7.png
+
+
+
+.. image:: output_17_8.png
+
+
+
+.. image:: output_17_9.png
+
+
+
+.. image:: output_17_10.png
+
+
+
+.. image:: output_17_11.png
+
+
+
+.. image:: output_17_12.png
+
+
+
+.. image:: output_17_13.png
+
+
+
+.. image:: output_17_14.png
+
+
+
+.. image:: output_17_15.png
+
+
+
+.. image:: output_17_16.png
+
+
+
+.. image:: output_17_17.png
+
+
+
+.. image:: output_17_18.png
+
+
+
+.. image:: output_17_19.png
+
+
+
+.. image:: output_17_20.png
+
+
+
+.. image:: output_17_21.png
+
+
+
+.. image:: output_17_22.png
+
+
+
+.. image:: output_17_23.png
+
+
+
+.. image:: output_17_24.png
+
+
+
+.. image:: output_17_25.png
+
+
+
+.. image:: output_17_26.png
+
+
+.. parsed-literal::
+
+    1/1 [==============================] - 0s 19ms/step
+
+
+
+.. image:: output_17_28.png
+
+
+
+.. image:: output_17_29.png
+
+
+
+.. image:: output_17_30.png
+
+
+
+.. image:: output_17_31.png
+
+
+
+.. image:: output_17_32.png
+
+
+
+.. image:: output_17_33.png
+
+
+
+.. image:: output_17_34.png
+
+
+
+.. image:: output_17_35.png
+
+
+
+.. image:: output_17_36.png
+
+
+
+.. image:: output_17_37.png
+
+
+
+.. image:: output_17_38.png
+
+
+
+.. image:: output_17_39.png
+
+
+
+.. image:: output_17_40.png
+
+
+.. parsed-literal::
+
+    1/1 [==============================] - 0s 19ms/step
+
+
+
+.. image:: output_17_42.png
+
+
+
+.. image:: output_17_43.png
+
+
+
+.. image:: output_17_44.png
+
+
+
+.. image:: output_17_45.png
+
+
+
+.. image:: output_17_46.png
+
+
+
+.. image:: output_17_47.png
+
+
+
+.. image:: output_17_48.png
+
+
+
+.. image:: output_17_49.png
+
+
+
+.. image:: output_17_50.png
+
+
+
+.. image:: output_17_51.png
+
+
+
+.. image:: output_17_52.png
+
+
+
+.. image:: output_17_53.png
+
+
+
+.. image:: output_17_54.png
+
+
+
+.. image:: output_17_55.png
+
+
+
+.. image:: output_17_56.png
+
+
+
+.. image:: output_17_57.png
+
+
+
+.. image:: output_17_58.png
+
+
+
+.. image:: output_17_59.png
+
+
+
+.. image:: output_17_60.png
+
+
+
+.. image:: output_17_61.png
+
+
+
+.. image:: output_17_62.png
+
+
+
+.. image:: output_17_63.png
+
+
+
+.. image:: output_17_64.png
+
+
+
+.. image:: output_17_65.png
+
+
+
+.. image:: output_17_66.png
+
+
+
+.. image:: output_17_67.png
+
+
+4. IDAES Flowsheet Integration
+==============================
+
+4.1 Build and Run IDAES Flowsheet
+---------------------------------
+
+Next, we will build an IDAES flowsheet and import the surrogate model
+object. A single Keras neural network model accounts for all input and
+output variables, and the JSON model serialized earlier may be imported
+into a single SurrogateBlock() component.
+
+.. code:: ipython3
+
+    # create the IDAES model and flowsheet
+    m = ConcreteModel()
+    m.fs = FlowsheetBlock(dynamic=False)
+    
+    # create flowsheet input variables
+    m.fs.bypass_frac = Var(initialize=0.80, bounds=[0.1, 0.8], doc='natural gas bypass fraction')
+    m.fs.ng_steam_ratio = Var(initialize=0.80, bounds=[0.8, 1.2], doc='natural gas to steam ratio')
+    
+    # create flowsheet output variables
+    m.fs.steam_flowrate = Var(initialize=0.2, doc="steam flowrate")
+    m.fs.reformer_duty = Var(initialize=10000, doc="reformer heat duty")
+    m.fs.AR = Var(initialize=0, doc="AR fraction")
+    m.fs.C2H6 = Var(initialize=0, doc="C2H6 fraction")
+    m.fs.C3H8 = Var(initialize=0, doc="C3H8 fraction")
+    m.fs.C4H10 = Var(initialize=0, doc="C4H10 fraction")
+    m.fs.CH4 = Var(initialize=0, doc="CH4 fraction")
+    m.fs.CO = Var(initialize=0, doc="CO fraction")
+    m.fs.CO2 = Var(initialize=0, doc="CO2 fraction")
+    m.fs.H2 = Var(initialize=0, doc="H2 fraction")
+    m.fs.H2O = Var(initialize=0, doc="H2O fraction")
+    m.fs.N2 = Var(initialize=0, doc="N2 fraction")
+    m.fs.O2 = Var(initialize=0, doc="O2 fraction")
+    
+    # create input and output variable object lists for flowsheet
+    inputs = [m.fs.bypass_frac, m.fs.ng_steam_ratio]
+    outputs = [m.fs.steam_flowrate, m.fs.reformer_duty, m.fs.AR, m.fs.C2H6, m.fs.C4H10,
+               m.fs.C3H8, m.fs.CH4, m.fs.CO, m.fs.CO2, m.fs.H2, m.fs.H2O, m.fs.N2, m.fs.O2]
+    
+    # create the Pyomo/IDAES block that corresponds to the surrogate
+    # Keras
+    keras_surrogate = KerasSurrogate.load_from_folder('keras_surrogate')
+    m.fs.surrogate = SurrogateBlock()
+    m.fs.surrogate.build_model(keras_surrogate,
+                               formulation=KerasSurrogate.Formulation.FULL_SPACE,
+                               input_vars=inputs, output_vars=outputs)
+    
+    # fix input values and solve flowsheet
+    m.fs.bypass_frac.fix(0.5)
+    m.fs.ng_steam_ratio.fix(1)
+    
+    solver = SolverFactory('ipopt')
+    results = solver.solve(m)
+
+Let’s print some model results:
+
+.. code:: ipython3
+
+    print("Steam flowrate = ", value(m.fs.steam_flowrate))
+    print("Reformer duty = ", value(m.fs.reformer_duty))
+    print("Mole Fraction Ar = ", value(m.fs.AR))
+    print("Mole Fraction C2H6 = ", value(m.fs.C2H6))
+    print("Mole Fraction C3H8 = ", value(m.fs.C3H8))
+    print("Mole Fraction C4H10 = ", value(m.fs.C4H10))
+    print("Mole Fraction CH4 = ", value(m.fs.CH4))
+    print("Mole Fraction CO = ", value(m.fs.CO))
+    print("Mole Fraction CO2 = ", value(m.fs.CO2))
+    print("Mole Fraction H2 = ", value(m.fs.H2))
+    print("Mole Fraction H2O = ", value(m.fs.H2O))
+    print("Mole Fraction N2 = ", value(m.fs.N2))
+    print("Mole Fraction O2 = ", value(m.fs.O2))
+
+
+.. parsed-literal::
+
+    Steam flowrate =  0.6077816215658618
+    Reformer duty =  20895.00080765254
+    Mole Fraction Ar =  0.0036859286868388247
+    Mole Fraction C2H6 =  0.004174498310450579
+    Mole Fraction C3H8 =  0.0005304603418148084
+    Mole Fraction C4H10 =  0.0009065644973371988
+    Mole Fraction CH4 =  0.12893526933666322
+    Mole Fraction CO =  0.09737578026912592
+    Mole Fraction CO2 =  0.04594305518105225
+    Mole Fraction H2 =  0.2947117395720051
+    Mole Fraction H2O =  0.12005265545024728
+    Mole Fraction N2 =  0.3067577119164617
+    Mole Fraction O2 =  2.4775619262471205e-20
+
+
+4.2 Optimizing the Autothermal Reformer
+---------------------------------------
+
+Extending this example, we will unfix the input variables and optimize
+hydrogen production. We will restrict nitrogen below 34 mol% of the
+product stream and leave all other variables unfixed.
+
+Above, variable values are called in reference to actual objects names;
+however, as shown below this may be done much more compactly by calling
+the list objects we created earlier.
+
+.. code:: ipython3
+
+    # unfix input values and add the objective/constraint to the model
+    m.fs.bypass_frac.unfix()
+    m.fs.ng_steam_ratio.unfix()
+    m.fs.obj = Objective(expr=m.fs.H2, sense=maximize)
+    m.fs.con = Constraint(expr=m.fs.N2 <= 0.34)
+    
+    # solve the model
+    tmr = TicTocTimer()
+    status = solver.solve(m, tee=True)
+    solve_time = tmr.toc('solve')
+    
+    # print and check results
+    assert abs(value(m.fs.H2)-0.33) <= 0.01
+    assert value(m.fs.N2 <= 0.4+1e-8)
+    print('Model status: ', status)
+    print('Solve time: ', solve_time)
+    for var in inputs:
+        print(var.name,': ', value(var))
+    for var in outputs:
+        print(var.name,': ', value(var))
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:     2569
+    Number of nonzeros in inequality constraint Jacobian.:        1
+    Number of nonzeros in Lagrangian Hessian.............:       80
+    
+    Total number of variables............................:      233
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:      194
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:      231
+    Total number of inequality constraints...............:        1
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        1
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0 -2.9471174e-01 1.82e-12 7.70e-04  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1 -2.9581536e-01 1.20e-04 8.37e-03  -1.0 1.91e+02    -  1.00e+00 1.00e+00f  1
+       2 -2.9633392e-01 3.93e-05 4.70e-03  -2.5 1.27e+02    -  1.00e+00 1.00e+00h  1
+       3 -3.0889147e-01 1.93e-02 1.12e-02  -3.8 3.11e+03    -  8.54e-01 1.00e+00f  1
+       4 -3.2218327e-01 2.63e-02 7.48e-03  -3.8 6.21e+03    -  1.00e+00 7.13e-01h  1
+       5 -3.2632547e-01 1.41e-02 4.84e-02  -3.8 3.83e+03    -  1.00e+00 5.68e-01h  1
+       6 -3.2962500e-01 1.80e-02 1.29e-01  -3.8 4.15e+03    -  7.03e-01 1.00e+00h  1
+       7 -3.2891796e-01 1.64e-03 1.88e-04  -3.8 9.52e+02    -  1.00e+00 1.00e+00h  1
+       8 -3.2891271e-01 2.73e-06 1.19e-06  -3.8 4.83e+01    -  1.00e+00 1.00e+00h  1
+       9 -3.3134549e-01 4.77e-03 1.44e-02  -5.7 3.35e+03    -  7.85e-01 7.19e-01h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10 -3.3265276e-01 3.97e-03 1.14e-02  -5.7 2.96e+03    -  9.82e-01 5.04e-01h  1
+      11 -3.3253962e-01 1.13e-05 1.91e-02  -5.7 8.04e+01    -  9.43e-01 1.00e+00h  1
+      12 -3.3255403e-01 2.51e-07 2.88e-07  -5.7 1.84e+01    -  1.00e+00 1.00e+00h  1
+      13 -3.3256308e-01 2.83e-08 5.83e-04  -8.6 6.96e+00    -  1.00e+00 9.64e-01h  1
+      14 -3.3256321e-01 7.97e-11 9.37e-03  -8.6 1.78e-01    -  5.45e-01 1.00e+00f  1
+      15 -3.3256321e-01 3.64e-12 2.51e-14  -8.6 1.77e-04    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 15
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:  -3.3256321363844199e-01   -3.3256321363844199e-01
+    Dual infeasibility......:   2.5091040356528538e-14    2.5091040356528538e-14
+    Constraint violation....:   1.2123371804825303e-14    3.6379788070917130e-12
+    Complementarity.........:   2.5392406748349272e-09    2.5392406748349272e-09
+    Overall NLP error.......:   2.5392406748349272e-09    2.5392406748349272e-09
+    
+    
+    Number of objective function evaluations             = 16
+    Number of objective gradient evaluations             = 16
+    Number of equality constraint evaluations            = 16
+    Number of inequality constraint evaluations          = 16
+    Number of equality constraint Jacobian evaluations   = 16
+    Number of inequality constraint Jacobian evaluations = 16
+    Number of Lagrangian Hessian evaluations             = 15
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.028
+    Total CPU secs in NLP function evaluations           =      0.001
+    
+    EXIT: Optimal Solution Found.
+    [+   0.07] solve
+    Model status:  
+    Problem: 
+    - Lower bound: -inf
+      Upper bound: inf
+      Number of objectives: 1
+      Number of constraints: 232
+      Number of variables: 233
+      Sense: unknown
+    Solver: 
+    - Status: ok
+      Message: Ipopt 3.13.2\x3a Optimal Solution Found
+      Termination condition: optimal
+      Id: 0
+      Error rc: 0
+      Time: 0.05062150955200195
+    Solution: 
+    - number of solutions: 0
+      number of solutions displayed: 0
+    
+    Solve time:  0.06980162858963013
+    fs.bypass_frac :  0.10000021929964276
+    fs.ng_steam_ratio :  1.1046793527270153
+    fs.steam_flowrate :  1.1959736366236289
+    fs.reformer_duty :  38028.68049958333
+    fs.AR :  0.004110458252297959
+    fs.C2H6 :  0.0004476179391748425
+    fs.C4H10 :  0.00011014445974097841
+    fs.C3H8 :  7.244927783507764e-05
+    fs.CH4 :  0.017681656232230725
+    fs.CO :  0.10597964343427003
+    fs.CO2 :  0.053167014890363254
+    fs.H2 :  0.332563213638442
+    fs.H2O :  0.14710264286811267
+    fs.N2 :  0.34000000245255463
+    fs.O2 :  3.3213200858047284e-20
+
+

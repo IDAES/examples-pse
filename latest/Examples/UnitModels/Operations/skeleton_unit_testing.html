@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IDAES Skeleton Unit Model &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">IDAES Skeleton Unit Model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/UnitModels/Operations/skeleton_unit_testing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="idaes-skeleton-unit-model">
+<h1>IDAES Skeleton Unit Model<a class="headerlink" href="#idaes-skeleton-unit-model" title="Permalink to this heading">¶</a></h1>
+<p>This notebook demonstrates usage of the IDAES Skeleton Unit Model, which
+provides a generic “bare bones” unit for user-defined models and custom
+variable and constraint sets. To allow maximum versatility, this unit
+may be defined as a surrogate model or a custom equation-oriented model.
+Users must add ports and variables that match connected models, and this
+is facilitated through a provided method to add port-variable sets.</p>
+<p>For users who wish to train surrogates with IDAES tools and insert
+obtained models into a flowsheet, see more detailed information on
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/explanations/modeling_extensions/surrogate/index.html">IDAES Surrogate
+Tools</a>.</p>
+</section>
+<section id="motivation">
+<h1>1. Motivation<a class="headerlink" href="#motivation" title="Permalink to this heading">¶</a></h1>
+<p>In many cases, a specific application requires a unique unit operation
+that does not exist in the IDAES repository. Custom user models may
+source from external scripts, import surrogate equations or use
+first-principles calculations. However, IDAES flowsheets adhere to a
+standardized modeling hierarchy and simple Pyomo models do not always
+follow these conventions. Additionally, simple flowsheet submodels often
+require integration with other IDAES unit models which requires
+consistency between corresponding port variables, stream properties and
+physical unit sets, as well as proper usage of <code class="docutils literal notranslate"><span class="pre">ControlVolume</span></code> blocks.</p>
+<p>The IDAES <code class="docutils literal notranslate"><span class="pre">SkeletonUnitModel</span></code> allows custom creation of user models
+blocks that do not require <code class="docutils literal notranslate"><span class="pre">ControlVolume</span></code> blocks, and enabling
+connection with standard IDAES unit models that do contain
+<code class="docutils literal notranslate"><span class="pre">ControlVolume</span></code> blocks. To motivate the usefulness and versatility of
+this tool, we will consider a simple pervaporation unit. The custom
+model does not require rigourous thermodynamic calculations contained in
+adjacent unit models, and using a Skeleton model allows definition of
+only required variables and constraints. The new block does require
+state variable connections for the inlet and outlet streams. We will
+demonstrate this scenario below to highlight the usage and benefits of
+the Skeleton model.</p>
+</section>
+<section id="example-pervaporation">
+<h1>2. Example - Pervaporation<a class="headerlink" href="#example-pervaporation" title="Permalink to this heading">¶</a></h1>
+<p>Pervaporation is a low-energy separation process, and is particularly
+advantageous over distillation for azeotropic solutions or aqueous
+mixtures of heavy alcohols. Ethylene glycol is more environmentally
+friendly than typical chloride- and bromide-based dessicants, and is a
+common choice for commericial recovery of water from flue gas via liquid
+spray columns. Due to ethylene glycol’s high boiling point,
+diffusion-based water recovery is economically favorable compared to
+distillation-based processes. The following example and flux correlation
+are taken from the literature source below:</p>
+<p>Jennifer Runhong Du, Amit Chakma, X. Feng, Dehydration of ethylene
+glycol by pervaporation using poly(N,N-dimethylaminoethyl
+methacrylate)/polysulfone composite membranes, Separation and
+Purification Technology, Volume 64, Issue 1, 2008, Pages 63-70, ISSN
+1383-5866, <a class="reference external" href="https://doi.org/10.1016/j.seppur.2008.08.004">https://doi.org/10.1016/j.seppur.2008.08.004</a>.</p>
+<p>The process is adapted from the literature, utilizing an inlet aqueous
+glycol feed circulated through a feed tank-membrane-feed tank recycle
+loop while permeate is continuously extracted by the membrane. To
+demonstrate the usefulness of the Skeleton model, we will model this
+system as a Mixer and custom Pervaporation unit per the diagram below
+and define the flux as an empirical custom mass balance term rather than
+requiring rigorous diffusion calculations. We will also circumvent the
+need for a vapor phase and VLE calculations by manually calculating the
+duty to condense and collect permeate vapor, and use correlations for
+steady-state fluxes to avoid a recycle requiring tear calculations.</p>
+<img alt="../../../_images/pervaporation_process.png" src="../../../_images/pervaporation_process.png" />
+<section id="pyomo-and-idaes-imports">
+<h2>2.1 Pyomo and IDAES Imports<a class="headerlink" href="#pyomo-and-idaes-imports" title="Permalink to this heading">¶</a></h2>
+<p>We will begin with relevant imports. We will need basic Pyomo and IDAES
+components:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="p">(</span><span class="n">check_optimal_termination</span><span class="p">,</span>
+                           <span class="n">ConcreteModel</span><span class="p">,</span>
+                           <span class="n">Constraint</span><span class="p">,</span>
+                           <span class="n">Expression</span><span class="p">,</span>
+                           <span class="n">Objective</span><span class="p">,</span>
+                           <span class="n">maximize</span><span class="p">,</span>
+                           <span class="n">Var</span><span class="p">,</span>
+                           <span class="n">Set</span><span class="p">,</span>
+                           <span class="n">TransformationFactory</span><span class="p">,</span>
+                           <span class="n">value</span><span class="p">,</span>
+                           <span class="n">exp</span><span class="p">,</span>
+                           <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pyomo.network</span> <span class="kn">import</span> <span class="n">Arc</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models</span> <span class="kn">import</span> <span class="n">Feed</span><span class="p">,</span> <span class="n">SkeletonUnitModel</span><span class="p">,</span> <span class="n">Mixer</span><span class="p">,</span> <span class="n">Product</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.initialization</span> <span class="kn">import</span> <span class="n">propagate_state</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">get_solver</span>
+<span class="kn">from</span> <span class="nn">pyomo.util.check_units</span> <span class="kn">import</span> <span class="n">assert_units_consistent</span>
+
+<span class="c1"># import thermophysical properties</span>
+<span class="kn">import</span> <span class="nn">eg_h2o_ideal</span> <span class="k">as</span> <span class="nn">thermo_props</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties.modular_properties</span> <span class="kn">import</span> <span class="n">GenericParameterBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.constants</span> <span class="kn">import</span> <span class="n">Constants</span>
+</pre></div>
+</div>
+</section>
+<section id="build-flowsheet">
+<h2>2.2 Build Flowsheet<a class="headerlink" href="#build-flowsheet" title="Permalink to this heading">¶</a></h2>
+<p>We will build a simple model manually defining state variables relations
+entering and exiting the pervaporation unit. As shown below, we may
+define our pre-separation mixer as usual:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># build the flowsheet</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span> <span class="o">=</span> <span class="n">GenericParameterBlock</span><span class="p">(</span><span class="o">**</span><span class="n">thermo_props</span><span class="o">.</span><span class="n">config_dict</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span> <span class="o">=</span> <span class="n">Feed</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span> <span class="o">=</span> <span class="n">Feed</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span> <span class="o">=</span> <span class="n">Mixer</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">,</span>
+                  <span class="n">inlet_list</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;water_feed&quot;</span><span class="p">,</span> <span class="s2">&quot;glycol_feed&quot;</span><span class="p">])</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span> <span class="o">=</span> <span class="n">Product</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span> <span class="o">=</span> <span class="n">Product</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">thermo_params</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="defining-skeleton-model-and-connections">
+<h2>2.2 Defining Skeleton Model and Connections<a class="headerlink" href="#defining-skeleton-model-and-connections" title="Permalink to this heading">¶</a></h2>
+<p>Now that our flowsheet exists, we can manually define variables, units,
+constraints and ports for our custom pervaporation unit model. By using
+a Skeleton model, we avoid rigorous mass and energy balances and phase
+equilibrium which impact model tractability. Instead, we define state
+variable relations as below - note that we include the fluxes as outlet
+flow terms. In this model, the variables specify an <code class="docutils literal notranslate"><span class="pre">FpcTP</span></code> system
+where molar flow of each component, temperature and pressure are
+selected as state variables:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># define Skeleton model for pervaporation unit</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span> <span class="o">=</span> <span class="n">SkeletonUnitModel</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span> <span class="o">=</span> <span class="n">Set</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;water&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">])</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span> <span class="o">=</span> <span class="n">Set</span><span class="p">(</span><span class="n">initialize</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Liq&quot;</span><span class="p">])</span>
+
+<span class="c1"># input vars for skeleton</span>
+<span class="c1"># m.fs.time is a pre-initialized Set belonging to the FlowsheetBlock; for dynamic=False, time=[0]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">flow_in</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">,</span>
+                                     <span class="n">initialize</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">temperature_in</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">initialize</span><span class="o">=</span><span class="mf">298.15</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">pressure_in</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">initialize</span><span class="o">=</span><span class="mf">101e3</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+
+<span class="c1"># output vars for skeleton</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">perm_flow</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">,</span>
+                                      <span class="n">initialize</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">ret_flow</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">,</span>
+                                      <span class="n">initialize</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">temperature_out</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">initialize</span><span class="o">=</span><span class="mf">298.15</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">pressure_out</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">initialize</span><span class="o">=</span><span class="mf">101e3</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">vacuum</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">initialize</span><span class="o">=</span><span class="mf">1.3e3</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">Pa</span><span class="p">)</span>
+
+<span class="c1"># dictionaries relating state properties to custom variables</span>
+<span class="n">inlet_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;flow_mol_phase_comp&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">flow_in</span><span class="p">,</span>
+              <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">temperature_in</span><span class="p">,</span>
+              <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">pressure_in</span><span class="p">}</span>
+<span class="n">retentate_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;flow_mol_phase_comp&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">ret_flow</span><span class="p">,</span>
+                  <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">temperature_out</span><span class="p">,</span>
+                  <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">pressure_out</span><span class="p">}</span>
+<span class="n">permeate_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;flow_mol_phase_comp&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">perm_flow</span><span class="p">,</span>
+                 <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">temperature_out</span><span class="p">,</span>
+                 <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">vacuum</span><span class="p">}</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">add_ports</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;inlet&quot;</span><span class="p">,</span> <span class="n">member_dict</span><span class="o">=</span><span class="n">inlet_dict</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">add_ports</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;retentate&quot;</span><span class="p">,</span> <span class="n">member_dict</span><span class="o">=</span><span class="n">retentate_dict</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">add_ports</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;permeate&quot;</span><span class="p">,</span> <span class="n">member_dict</span><span class="o">=</span><span class="n">permeate_dict</span><span class="p">)</span>
+
+<span class="c1"># internal vars for skeleton</span>
+<span class="n">energy_activation_dict</span> <span class="o">=</span> <span class="p">{(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">):</span> <span class="mf">51e3</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">):</span> <span class="mf">53e3</span><span class="p">}</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">energy_activation</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">,</span>
+                                    <span class="n">initialize</span><span class="o">=</span><span class="n">energy_activation_dict</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">energy_activation</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+
+<span class="n">permeance_dict</span> <span class="o">=</span> <span class="p">{(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">):</span> <span class="mi">5611320</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">):</span> <span class="mf">22358.88</span><span class="p">}</span>  <span class="c1"># calculated from literature data</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">permeance</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">,</span>
+                            <span class="n">initialize</span><span class="o">=</span><span class="n">permeance_dict</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">permeance</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">area</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">initialize</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">units</span> <span class="o">=</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">m</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+
+<span class="n">latent_heat_dict</span> <span class="o">=</span> <span class="p">{(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">):</span> <span class="mf">40.660e3</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">):</span> <span class="mf">56.9e3</span><span class="p">}</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">latent_heat_of_vaporization</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">,</span>
+                                              <span class="n">initialize</span><span class="o">=</span><span class="n">latent_heat_dict</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">latent_heat_of_vaporization</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">heat_duty</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">initialize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">J</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># we will calculate this later</span>
+</pre></div>
+</div>
+<p>Let’s define our surrogate equations for flux and permeance, and link
+them to the port variables. Users can use this structure to write custom
+relations between inlet and outlet streams; for example, here we define
+the outlet flow of the pervaporation unit as a sum of the inlet flow and
+calculated recovery fluxes. By defining model constraints in lieu of
+rigorous mass balances, we add the flux as a custom mass balance term
+via an empirical correlation and calculate only the condensation duty
+rather than implementing full energy balance calculations:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Surrogate and first principles model equations</span>
+
+<span class="c1"># flux equation (gas constant is defined as J/mol-K)</span>
+
+<span class="k">def</span> <span class="nf">rule_permeate_flux</span><span class="p">(</span><span class="n">pervap</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pervap</span><span class="o">.</span><span class="n">permeate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">pervap</span><span class="o">.</span><span class="n">area</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span><span class="n">pervap</span><span class="o">.</span><span class="n">permeance</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">*</span>
+                                                                             <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">pervap</span><span class="o">.</span><span class="n">energy_activation</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">/</span>
+                                                                                 <span class="p">(</span><span class="n">Constants</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span>
+                                                                                  <span class="n">pervap</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">t</span><span class="p">]))</span>
+                                                                            <span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">eq_permeate_flux</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">rule_permeate_flux</span><span class="p">)</span>
+
+<span class="c1"># permeate condensation equation</span>
+<span class="c1"># heat duty based on condensing all of permeate product vapor</span>
+<span class="c1"># avoids the need for a Heater or HeatExchanger unit model</span>
+
+<span class="k">def</span> <span class="nf">rule_duty</span><span class="p">(</span><span class="n">pervap</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pervap</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="nb">sum</span><span class="p">(</span><span class="n">pervap</span><span class="o">.</span><span class="n">latent_heat_of_vaporization</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">pervap</span><span class="o">.</span><span class="n">permeate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                                      <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">eq_duty</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">rule_duty</span><span class="p">)</span>
+
+<span class="c1"># flow equation adding total recovery as a custom mass balance term</span>
+<span class="k">def</span> <span class="nf">rule_retentate_flow</span><span class="p">(</span><span class="n">pervap</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pervap</span><span class="o">.</span><span class="n">retentate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span><span class="n">pervap</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-</span>
+                                                            <span class="n">pervap</span><span class="o">.</span><span class="n">permeate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">eq_retentate_flow</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">phase_list</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">rule_retentate_flow</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, let’s define the Arc connecting our two models (IDAES Mixer and
+custom Pervaporation) and build the flowsheet network:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">water_feed</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s02</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">glycol_feed</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s03</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">M101</span><span class="o">.</span><span class="n">outlet</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s04</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">permeate</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s05</span> <span class="o">=</span> <span class="n">Arc</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">retentate</span><span class="p">,</span> <span class="n">destination</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span><span class="o">.</span><span class="n">inlet</span><span class="p">)</span>
+<span class="n">TransformationFactory</span><span class="p">(</span><span class="s2">&quot;network.expand_arcs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let’s see how many degrees of freedom the flowsheet has:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">11</span>
+</pre></div>
+</div>
+</section>
+<section id="inlet-specifications">
+<h2>2.3 Inlet Specifications<a class="headerlink" href="#inlet-specifications" title="Permalink to this heading">¶</a></h2>
+<p>To obtain a square problem with zero degrees of freedom, we specify the
+inlet water flow, ethylene glycol flow, temperature and pressure for
+each feed stream, as well as the permeate stream pressure:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.34</span><span class="p">)</span>  <span class="c1"># mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">)</span>  <span class="c1"># mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">318.15</span><span class="p">)</span>  <span class="c1"># K</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">101.325e3</span><span class="p">)</span>  <span class="c1"># Pa</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">)</span>  <span class="c1"># mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.66</span><span class="p">)</span>  <span class="c1"># mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">318.15</span><span class="p">)</span>  <span class="c1"># K</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">101.325e3</span><span class="p">)</span>  <span class="c1"># Pa</span>
+</pre></div>
+</div>
+<p>Additionally, we need to pass rules defining the temperature and
+pressure outlets of the pervaporation unit:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add a constraint to calculate the outlet temperature.</span>
+<span class="c1"># Here, assume outlet temperature is the same as inlet temperature for illustration</span>
+<span class="c1"># in reality, temperature change from latent heat loss through membrane is negligible</span>
+
+<span class="k">def</span> <span class="nf">rule_temp_out</span><span class="p">(</span><span class="n">pervap</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pervap</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="n">pervap</span><span class="o">.</span><span class="n">retentate</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">temperature_out_calculation</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">rule_temp_out</span><span class="p">)</span>
+
+<span class="c1"># Add a constraint to calculate the retentate pressure</span>
+<span class="c1"># Here, assume the retentate pressure is the same as the inlet pressure for illustration</span>
+<span class="c1"># in reality, pressure change from mass loss through membrane is negligible</span>
+
+<span class="k">def</span> <span class="nf">rule_pres_out</span><span class="p">(</span><span class="n">pervap</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pervap</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="n">pervap</span><span class="o">.</span><span class="n">retentate</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">pressure_out_calculation</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">rule_pres_out</span><span class="p">)</span>
+
+<span class="c1"># fix permeate vacuum pressure</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1.3e3</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-initialization">
+<h2>2.4 Custom Initialization<a class="headerlink" href="#custom-initialization" title="Permalink to this heading">¶</a></h2>
+<p>In addition to allowing custom variable and constraint defintions, the
+Skeleton model enables implementation of a custom initialization scheme.
+Complex unit operations may present unique tractability issues, and
+users have precise control over piecewise unit model solving.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add this to the imports</span>
+<span class="kn">from</span> <span class="nn">pyomo.util.calc_var_value</span> <span class="kn">import</span> <span class="n">calculate_variable_from_constraint</span>
+
+<span class="k">def</span> <span class="nf">my_initialize</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># Callback for user provided initialization sequence</span>
+    <span class="c1"># Fix the inlet state</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">()</span>
+
+    <span class="c1"># Calculate the values of the remaining variables</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">:</span>
+
+        <span class="n">calculate_variable_from_constraint</span><span class="p">(</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">permeate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">],</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">eq_permeate_flux</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">])</span>
+
+        <span class="n">calculate_variable_from_constraint</span><span class="p">(</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">permeate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">],</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">eq_permeate_flux</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">])</span>
+
+        <span class="n">calculate_variable_from_constraint</span><span class="p">(</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="n">t</span><span class="p">],</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">eq_duty</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+
+        <span class="n">calculate_variable_from_constraint</span><span class="p">(</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">retentate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">],</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">eq_retentate_flow</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">])</span>
+
+        <span class="n">calculate_variable_from_constraint</span><span class="p">(</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">retentate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">],</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">eq_retentate_flow</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">])</span>
+
+        <span class="n">calculate_variable_from_constraint</span><span class="p">(</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">retentate</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">t</span><span class="p">],</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">temperature_out_calculation</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+
+        <span class="n">calculate_variable_from_constraint</span><span class="p">(</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">retentate</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="n">t</span><span class="p">],</span>
+            <span class="n">unit</span><span class="o">.</span><span class="n">pressure_out_calculation</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+
+    <span class="k">assert</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">tee</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+    <span class="n">unit</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Custom initialization routine complete: &#39;</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s01</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s02</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">initializer</span> <span class="o">=</span> <span class="n">my_initialize</span>
+<span class="n">my_initialize</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="p">)</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s03</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<span class="n">propagate_state</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">s04</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">2023-03-04 01:48:37 [INFO] idaes.init.fs.WATER.properties: Starting initialization
+2023-03-04 01:48:37 [INFO] idaes.init.fs.WATER.properties: Property initialization: optimal - Optimal Solution Found.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.WATER.properties: Property package initialization: optimal - Optimal Solution Found.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.WATER: Initialization Complete.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.GLYCOL.properties: Starting initialization
+2023-03-04 01:48:37 [INFO] idaes.init.fs.GLYCOL.properties: Property initialization: optimal - Optimal Solution Found.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.GLYCOL.properties: Property package initialization: optimal - Optimal Solution Found.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.GLYCOL: Initialization Complete.
+Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+max_iter=200
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       11
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Total number of variables............................:        7
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        0
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        7
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 1.13e-16 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.1275702593849246e-16    1.1275702593849246e-16
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.1275702593849246e-16    1.1275702593849246e-16
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 1
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 1
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+Custom initialization routine complete:  Ipopt 3.13.2x3a Optimal Solution Found
+2023-03-04 01:48:37 [INFO] idaes.init.fs.PERMEATE.properties: Starting initialization
+2023-03-04 01:48:37 [INFO] idaes.init.fs.PERMEATE.properties: Property initialization: optimal - Optimal Solution Found.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.PERMEATE.properties: Property package initialization: optimal - Optimal Solution Found.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.PERMEATE: Initialization Complete.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.RETENTATE.properties: Starting initialization
+2023-03-04 01:48:37 [INFO] idaes.init.fs.RETENTATE.properties: Property initialization: optimal - Optimal Solution Found.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.RETENTATE.properties: Property package initialization: optimal - Optimal Solution Found.
+2023-03-04 01:48:37 [INFO] idaes.init.fs.RETENTATE: Initialization Complete.
+Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+max_iter=200
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      113
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       74
+
+Total number of variables............................:       47
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:       33
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       47
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 7.37e+07 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 7.03e+05 2.30e+01  -1.0 1.01e+05    -  5.55e-01 9.90e-01h  1
+   2  0.0000000e+00 2.33e+05 1.02e+02  -1.0 1.00e+03    -  7.60e-01 6.58e-01h  1
+   3  0.0000000e+00 6.05e+03 5.91e+01  -1.0 1.56e+03    -  9.90e-01 9.90e-01h  1
+   4  0.0000000e+00 5.50e+01 7.15e+02  -1.0 1.97e+03    -  9.90e-01 1.00e+00h  1
+   5  0.0000000e+00 5.29e-05 2.18e+00  -1.0 1.90e+02    -  1.00e+00 1.00e+00h  1
+   6  0.0000000e+00 4.28e-10 5.17e-03  -3.8 2.59e-01    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 6
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   2.1421975304747320e-10    4.2843950609494641e-10
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   2.1421975304747320e-10    4.2843950609494641e-10
+
+
+Number of objective function evaluations             = 7
+Number of objective gradient evaluations             = 7
+Number of equality constraint evaluations            = 7
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 7
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 6
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.</pre>
+<p>Let’s check the results:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># print results</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">WATER</span>                                                            <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                                  <span class="n">Units</span>        <span class="n">Outlet</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">)</span>            <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.34000</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">)</span>  <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span> <span class="mf">1.0000e-06</span>
+    <span class="n">Temperature</span>                                       <span class="n">kelvin</span>     <span class="mf">318.15</span>
+    <span class="n">Pressure</span>                                          <span class="n">pascal</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+
+<span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span>                                                           <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                                  <span class="n">Units</span>        <span class="n">Outlet</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">)</span>            <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span> <span class="mf">1.0000e-06</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">)</span>  <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.66000</span>
+    <span class="n">Temperature</span>                                       <span class="n">kelvin</span>     <span class="mf">318.15</span>
+    <span class="n">Pressure</span>                                          <span class="n">pascal</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+
+<span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span>                                                         <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                                  <span class="n">Units</span>         <span class="n">Inlet</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">)</span>            <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.14259</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">)</span>  <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span> <span class="mf">0.00026675</span>
+    <span class="n">Temperature</span>                                       <span class="n">kelvin</span>     <span class="mf">318.15</span>
+    <span class="n">Pressure</span>                                          <span class="n">pascal</span>     <span class="mf">1300.0</span>
+<span class="o">====================================================================================</span>
+
+<span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span>                                                        <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                                  <span class="n">Units</span>         <span class="n">Inlet</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">)</span>            <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.19742</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">)</span>  <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.65973</span>
+    <span class="n">Temperature</span>                                       <span class="n">kelvin</span>     <span class="mf">318.15</span>
+    <span class="n">Pressure</span>                                          <span class="n">pascal</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># separation factor for results analysis</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">inlet_water_frac</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">]</span> <span class="o">/</span>
+                                         <span class="nb">sum</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                                             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">)</span>
+                                        <span class="p">))</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">permeate_water_frac</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">permeate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">]</span> <span class="o">/</span>
+                                            <span class="nb">sum</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">permeate</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                                                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">comp_list</span><span class="p">)</span>
+                                           <span class="p">))</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">separation_factor</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">permeate_water_frac</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">permeate_water_frac</span><span class="p">))</span> <span class="o">/</span>
+                                    <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">inlet_water_frac</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">inlet_water_frac</span><span class="p">)))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Inlet water mole fraction: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">inlet_water_frac</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Permeate water mole fraction: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">permeate_water_frac</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Separation factor: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">separation_factor</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Condensation duty: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2"> kW&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duty per mole water recovered: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">1000</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;water&#39;</span><span class="p">]</span><span class="o">*</span><span class="mi">3600</span><span class="p">))</span><span class="si">}</span><span class="s2"> kW-h / mol&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Inlet</span> <span class="n">water</span> <span class="n">mole</span> <span class="n">fraction</span><span class="p">:</span> <span class="mf">0.34000031999936</span>
+<span class="n">Permeate</span> <span class="n">water</span> <span class="n">mole</span> <span class="n">fraction</span><span class="p">:</span> <span class="mf">0.9981326967912869</span>
+<span class="n">Separation</span> <span class="n">factor</span><span class="p">:</span> <span class="mf">1037.61881493386</span>
+<span class="n">Condensation</span> <span class="n">duty</span><span class="p">:</span> <span class="mf">5.81271115195759</span> <span class="n">kW</span>
+<span class="n">Duty</span> <span class="n">per</span> <span class="n">mole</span> <span class="n">water</span> <span class="n">recovered</span><span class="p">:</span> <span class="mf">0.011324013423297915</span> <span class="n">kW</span><span class="o">-</span><span class="n">h</span> <span class="o">/</span> <span class="n">mol</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># check results</span>
+<span class="k">assert</span> <span class="n">check_optimal_termination</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="n">assert_units_consistent</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.1426</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0002667</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.1974</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.6597</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">separation_factor</span><span class="p">)</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">1038</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">5813</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="optimization">
+<h1>3. Optimization<a class="headerlink" href="#optimization" title="Permalink to this heading">¶</a></h1>
+<p>Suppose we wish to characterize the membrane behavior by calculating the
+maximum inlet water mole fraction allowing a separation factor of at
+least 100 (typical value for high-efficiency separation processes such
+as gas separation of CO2/N2). We need to fix total inlet flow to ensure
+physically-sound solutions. We can quickly modify and resolve the model,
+and check some key results:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># unfix inlet flows but fix total to prevent divergence during solve</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">total_flow</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">]</span> <span class="o">+</span>
+                             <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">]</span> <span class="o">==</span>
+                             <span class="mi">1</span><span class="o">*</span><span class="n">pyunits</span><span class="o">.</span><span class="n">mol</span><span class="o">/</span><span class="n">pyunits</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+
+<span class="c1"># set criteria for separation factor</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_min</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">separation_factor</span> <span class="o">&gt;=</span> <span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># set objective - defaults to minimization</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">inlet_water_frac</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">maximize</span><span class="p">)</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+max_iter=200
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      121
+Number of nonzeros in inequality constraint Jacobian.:        4
+Number of nonzeros in Lagrangian Hessian.............:       88
+
+Total number of variables............................:       49
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:       35
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       48
+Total number of inequality constraints...............:        1
+        inequality constraints with only lower bounds:        1
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0 -3.4000032e-01 7.27e+03 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1 -3.7368840e-01 7.00e+02 5.28e+01  -1.0 4.41e-02    -  9.90e-01 8.91e-01h  1
+   2 -5.0140067e-01 2.19e+02 1.12e+02  -1.0 2.27e-01    -  9.90e-01 6.56e-01h  1
+   3 -6.1937184e-01 8.96e+00 1.15e+04  -1.0 1.39e-01    -  9.91e-01 9.93e-01h  1
+   4 -6.1863718e-01 1.51e-02 8.34e+01  -1.0 1.28e-03    -  1.00e+00 9.99e-01h  1
+   5 -6.1150206e-01 2.30e-04 7.88e+02  -1.0 8.32e-03    -  1.00e+00 1.00e+00f  1
+   6 -6.1019582e-01 1.79e-06 1.61e+01  -1.0 1.52e-03    -  1.00e+00 1.00e+00h  1
+   7 -7.3642276e-01 1.05e-02 2.29e+04  -2.5 1.47e-01    -  7.70e-01 1.00e+00f  1
+   8 -8.1765712e-01 2.02e-02 9.69e+02  -2.5 1.47e-01    -  1.00e+00 6.43e-01f  1
+   9 -8.3576869e-01 3.85e-03 4.60e+01  -2.5 2.11e-02    -  1.00e+00 1.00e+00f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10 -8.3954012e-01 1.72e-04 1.05e+00  -2.5 4.40e-03    -  1.00e+00 1.00e+00h  1
+  11 -8.3930724e-01 8.78e-08 2.93e-03  -2.5 2.72e-04    -  1.00e+00 1.00e+00h  1
+  12 -8.4239161e-01 6.01e-05 9.69e+01  -3.8 3.73e-03    -  1.00e+00 9.63e-01f  1
+  13 -8.4225198e-01 7.26e-08 1.37e-02  -3.8 1.63e-04    -  1.00e+00 1.00e+00f  1
+  14 -8.4225232e-01 5.82e-11 3.86e-08  -3.8 3.92e-07    -  1.00e+00 1.00e+00h  1
+  15 -8.4240230e-01 1.48e-07 2.22e-02  -5.7 1.75e-04    -  1.00e+00 1.00e+00f  1
+  16 -8.4240161e-01 5.82e-11 1.66e-08  -5.7 8.12e-07    -  1.00e+00 1.00e+00h  1
+  17 -8.4240336e-01 1.16e-10 3.07e-06  -7.0 2.05e-06    -  1.00e+00 1.00e+00f  1
+  18 -8.4240336e-01 5.82e-11 4.20e-11  -7.0 5.41e-07    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 18
+
+                                   (scaled)                 (unscaled)
+Objective...............:  -8.4240336290561868e-01   -8.4240336290561868e-01
+Dual infeasibility......:   4.1950443119276315e-11    4.1950443119276315e-11
+Constraint violation....:   1.2786210408238111e-14    5.8207660913467407e-11
+Complementarity.........:   9.0909090909094912e-08    9.0909090909094912e-08
+Overall NLP error.......:   9.0909090909094912e-08    9.0909090909094912e-08
+
+
+Number of objective function evaluations             = 19
+Number of objective gradient evaluations             = 19
+Number of equality constraint evaluations            = 19
+Number of inequality constraint evaluations          = 19
+Number of equality constraint Jacobian evaluations   = 19
+Number of inequality constraint Jacobian evaluations = 19
+Number of Lagrangian Hessian evaluations             = 18
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.004
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># print results</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">WATER</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">WATER</span>                                                            <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                                  <span class="n">Units</span>        <span class="n">Outlet</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">)</span>            <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.84240</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">)</span>  <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span> <span class="mf">1.0000e-06</span>
+    <span class="n">Temperature</span>                                       <span class="n">kelvin</span>     <span class="mf">318.15</span>
+    <span class="n">Pressure</span>                                          <span class="n">pascal</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+
+<span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">GLYCOL</span>                                                           <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                                  <span class="n">Units</span>        <span class="n">Outlet</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">)</span>            <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span> <span class="mf">1.0000e-06</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">)</span>  <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.15760</span>
+    <span class="n">Temperature</span>                                       <span class="n">kelvin</span>     <span class="mf">318.15</span>
+    <span class="n">Pressure</span>                                          <span class="n">pascal</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+
+<span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span>                                                         <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                                  <span class="n">Units</span>         <span class="n">Inlet</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">)</span>            <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.14259</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">)</span>  <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span> <span class="mf">0.00026675</span>
+    <span class="n">Temperature</span>                                       <span class="n">kelvin</span>     <span class="mf">318.15</span>
+    <span class="n">Pressure</span>                                          <span class="n">pascal</span>     <span class="mf">1300.0</span>
+<span class="o">====================================================================================</span>
+
+<span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span>                                                        <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                                  <span class="n">Units</span>         <span class="n">Inlet</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;water&#39;</span><span class="p">)</span>            <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.69982</span>
+    <span class="n">Molar</span> <span class="n">Flowrate</span> <span class="p">(</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span> <span class="s1">&#39;ethylene_glycol&#39;</span><span class="p">)</span>  <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.15733</span>
+    <span class="n">Temperature</span>                                       <span class="n">kelvin</span>     <span class="mf">318.15</span>
+    <span class="n">Pressure</span>                                          <span class="n">pascal</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Inlet water mole fraction: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">inlet_water_frac</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Permeate water mole fraction: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">permeate_water_frac</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Separation factor: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">separation_factor</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Condensation duty: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2"> kW&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duty per mole water recovered: </span><span class="si">{</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">1000</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;water&#39;</span><span class="p">]</span><span class="o">*</span><span class="mi">3600</span><span class="p">))</span><span class="si">}</span><span class="s2"> kW-h / mol&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Inlet</span> <span class="n">water</span> <span class="n">mole</span> <span class="n">fraction</span><span class="p">:</span> <span class="mf">0.8424033629056187</span>
+<span class="n">Permeate</span> <span class="n">water</span> <span class="n">mole</span> <span class="n">fraction</span><span class="p">:</span> <span class="mf">0.9981326967914326</span>
+<span class="n">Separation</span> <span class="n">factor</span><span class="p">:</span> <span class="mf">100.00006747653647</span>
+<span class="n">Condensation</span> <span class="n">duty</span><span class="p">:</span> <span class="mf">5.812711140380676</span> <span class="n">kW</span>
+<span class="n">Duty</span> <span class="n">per</span> <span class="n">mole</span> <span class="n">water</span> <span class="n">recovered</span><span class="p">:</span> <span class="mf">0.011324013423295606</span> <span class="n">kW</span><span class="o">-</span><span class="n">h</span> <span class="o">/</span> <span class="n">mol</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># check results</span>
+<span class="k">assert</span> <span class="n">check_optimal_termination</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="n">assert_units_consistent</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.1426</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">PERMEATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0002667</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.6998</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">RETENTATE</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol_phase_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">,</span> <span class="s2">&quot;ethylene_glycol&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.1573</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">separation_factor</span><span class="p">)</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pervap</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mi">5813</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="summary">
+<h1>4. Summary<a class="headerlink" href="#summary" title="Permalink to this heading">¶</a></h1>
+<p>The IDAES Skeleton Unit Model is a powerful tool for implementing
+relatively simple first-princples, surrogate-based or empirical unit
+operations. More crucially, users can add their own custom models and
+integrate them into a larger IDAES flowsheet without adding control
+volumes or rigorous flow balance and equilibrium calculations when not
+required. The pervaporation example displays a case where all model
+equations are empirical correlations or simple manual calculations, with
+a small number of state variable and port connections, and the Skeleton
+model avoids complex calculations that impact model tractability. The
+example also demonstrates adding a custom initialization scheme to
+handle internally model degrees of freedom, a feature providing greater
+user control than with most IDAES unit models.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

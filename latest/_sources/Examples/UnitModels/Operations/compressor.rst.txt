@@ -1,0 +1,471 @@
+Tutorial: Compressor Unit Model with Span-Wagner Property Package for supercritical CO2
+=======================================================================================
+
+.. image:: compressor_2.svg
+
+Learning Outcomes
+-----------------
+
+-  Demonstrate use of the compressor unit model in IDAES
+-  Demonstarte use of the Span Wagner EOS for supercritical CO2 cycles
+-  Demonstrate different simulation options available for the compressor
+   unit model
+
+In this tutorial, we will simulate the main compressor for an indirect
+supercritical CO2 cycle using the Span-Wagner EOS as the property
+package. The input specifications for this tutorial are from the NETL
+report on indirect SCO2 cycles available
+`here <https://www.osti.gov/biblio/1490272>`__. In this example, we will
+be compressing supercritical CO2 from 9.1 MPa to 34.5 MPa.
+
+It is assumed that the compressor operates at steady state.
+
+The inlet specifications are as follows:
+
+-  Flow Rate = 91067 mol/s
+-  Pressure = 9.1107 MPa
+-  Temperature = 308.15 K
+
+We will simulate 2 different cases, depending on the compressor
+specifications fixed by the user:
+
+**Case 1**: In this case, we will fix the isentropic efficiency and the
+pressure change across the compressor. \* Pressure Change = 25.51 MPa \*
+Isentropic Efficiency = 0.85
+
+**Case 2**: In this case, we will fix the isentropic efficiency and the
+pressure ratio instead of the pressure change across the compressor. \*
+Pressure Ratio = 3.8 \* Isentropic Efficiency = 0.85
+
+IDAES documentation:https://idaes-pse.readthedocs.io/en/stable/
+
+Setting up the problem in IDAES
+-------------------------------
+
+In the following cell, we will be importing the necessary components
+from Pyomo and IDAES.
+
+.. code:: ipython3
+
+    # Import objects from pyomo package 
+    from pyomo.environ import ConcreteModel, SolverFactory, value, units
+    
+    # Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model
+    from idaes.core import FlowsheetBlock
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+    
+    # Create the ConcreteModel and the FlowsheetBlock, and attach the flowsheet block to it.
+    m = ConcreteModel()
+    
+    m.fs = FlowsheetBlock(dynamic=False) # dynamic or ss flowsheet needs to be specified here
+    
+    
+    # Import the SWCO2 property package to create a properties block for the flowsheet
+    from idaes.models.properties.swco2 import SWCO2ParameterBlock, StateVars, htpx
+    
+    # Add properties parameter block to the flowsheet with specifications
+    m.fs.properties = SWCO2ParameterBlock()
+
+Case 1: Fix pressure change and isentropic efficiency
+-----------------------------------------------------
+
+Add Compressor Unit Model
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Import compressor unit model from the model library
+    from idaes.models.unit_models.pressure_changer import PressureChanger,ThermodynamicAssumption
+    
+    # Create an instance of the compressor unit, attaching it to the flowsheet
+    # Specify that the property package to be used with the compressor is the one we created earlier.
+    m.fs.compr_case_1 = PressureChanger(
+        dynamic=False,
+        property_package=m.fs.properties,
+        compressor=True,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic)
+    
+    # Import the degrees_of_freedom function from the idaes.core.util.model_statistics package
+    # DOF = Number of Model Variables - Number of Model Constraints
+    from idaes.core.util.model_statistics import degrees_of_freedom
+    
+    # Call the degrees_of_freedom function, get intitial DOF
+    DOF_initial = degrees_of_freedom(m)
+    print("The initial DOF is {0}".format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial DOF is 5
+
+
+Fix Inlet Stream Conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Fix the stream inlet conditions
+    m.fs.compr_case_1.inlet.flow_mol[0].fix(91067) # mol/s
+    
+    # Use htpx method to obtain the molar enthalpy of inlet stream at the given temperature and pressure conditions 
+    m.fs.compr_case_1.inlet.enth_mol[0].fix(value(htpx(T=308.15*units.K, P=9.1107e+06*units.Pa))) # T in K, P in Pa
+    m.fs.compr_case_1.inlet.pressure[0].fix(9.1107e+06)
+
+Fix Pressure Change and Isentropic Efficiency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Fix compressor conditions
+    m.fs.compr_case_1.deltaP.fix(2.5510e+07)
+    m.fs.compr_case_1.efficiency_isentropic.fix(0.85)
+    
+    # Call the degrees_of_freedom function, get final DOF
+    DOF_final = degrees_of_freedom(m)
+    print("The final DOF is {0}".format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final DOF is 0
+
+
+Initialization
+~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Initialize the flowsheet, and set the output at INFO level
+    m.fs.compr_case_1.initialize(outlvl=idaeslog.INFO)
+
+
+.. parsed-literal::
+
+    2023-03-04 01:47:38 [INFO] idaes.init.fs.compr_case_1: Initialization Complete: optimal - Optimal Solution Found
+
+
+Solve Model
+~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Solve the simulation using ipopt
+    # Note: If the degrees of freedom = 0, we have a square problem
+    opt = SolverFactory('ipopt')
+    solve_status = opt.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:       18
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:        8
+    
+    Total number of variables............................:        9
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        4
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        9
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 3.12e-11 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    
+    Number of Iterations....: 0
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   3.1150193535722792e-11    3.1150193535722792e-11
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   3.1150193535722792e-11    3.1150193535722792e-11
+    
+    
+    Number of objective function evaluations             = 1
+    Number of objective gradient evaluations             = 1
+    Number of equality constraint evaluations            = 1
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 1
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 0
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+    
+
+View Results
+~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Display Outlet Pressure
+    m.fs.compr_case_1.outlet.pressure.display()
+
+
+.. parsed-literal::
+
+    _pressure_outlet_ref : Size=1, Index=fs._time, ReferenceTo=fs.compr_case_1.control_volume.properties_out[...].component('pressure')
+        Key : Lower                  : Value      : Upper       : Fixed : Stale : Domain
+        0.0 : 1.0000000000000002e-06 : 34620700.0 : 500000000.0 : False : False : PositiveReals
+
+
+.. code:: ipython3
+
+    # Display a readable report
+    m.fs.compr_case_1.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.compr_case_1                                                     Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key                   : Value      : Units         : Fixed : Bounds
+        Isentropic Efficiency :    0.85000 : dimensionless :  True : (None, None)
+              Mechanical Work : 1.5934e+08 :          watt : False : (None, None)
+              Pressure Change : 2.5510e+07 :        pascal :  True : (None, None)
+               Pressure Ratio :     3.8000 : dimensionless : False : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                             Units           Inlet     Outlet  
+        Molar Flow          mole / second     91067.     91067.
+        Mass Flow       kilogram / second     4007.8     4007.8
+        T                          kelvin     308.15     348.81
+        P                          pascal 9.1107e+06 3.4621e+07
+        Vapor Fraction      dimensionless     0.0000     0.0000
+        Molar Enthalpy       joule / mole    -9215.6    -7465.9
+    ====================================================================================
+
+
+Case 2: Fix pressure ratio and isentropic efficiency
+----------------------------------------------------
+
+Add Compressor Unit
+~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Create an instance of another compressor unit, attaching it to the flowsheet
+    # Specify that the property package to be used with the turbine is the one we created earlier.
+    m.fs.compr_case_2 = PressureChanger(
+        dynamic=False,
+        property_package=m.fs.properties,
+        compressor=True,
+        thermodynamic_assumption=ThermodynamicAssumption.isentropic)
+    
+    # Call the degrees_of_freedom function, get intitial DOF
+    DOF_initial = degrees_of_freedom(m.fs.compr_case_2)
+    print("The initial DOF is {0}".format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial DOF is 5
+
+
+Fix Inlet Stream Conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Fix the stream inlet conditions
+    m.fs.compr_case_2.inlet.flow_mol[0].fix(91067) # converting to mol/s as unit basis is mol/s
+    
+    # Use htpx method to obtain the molar enthalpy of inlet stream at the given temperature and pressure conditions 
+    m.fs.compr_case_2.inlet.enth_mol[0].fix(value(htpx(T=308.15*units.K, P=9.1107e+06*units.Pa)))
+    m.fs.compr_case_2.inlet.pressure[0].fix(9.1107e+06)
+
+Fix Compressor Pressure Ratio and Isentropic Efficiency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Fix compressor pressure ratio
+    m.fs.compr_case_2.ratioP.fix(3.8)
+    
+    # Fix compressor efficiency
+    m.fs.compr_case_2.efficiency_isentropic.fix(0.85)
+    
+    # Call the degrees_of_freedom function, get final DOF
+    DOF_final = degrees_of_freedom(m.fs.compr_case_2)
+    print("The final DOF is {0}".format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final DOF is 0
+
+
+Initialization
+~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Initialize the flowsheet, and set the output at INFO level
+    m.fs.compr_case_2.initialize(outlvl=idaeslog.INFO)
+
+
+.. parsed-literal::
+
+    2023-03-04 01:47:38 [INFO] idaes.init.fs.compr_case_2: Initialization Complete: optimal - Optimal Solution Found
+
+
+Solve Model
+~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Solve the simulation using ipopt
+    # Note: If the degrees of freedom = 0, we have a square problem
+    opt = SolverFactory('ipopt')
+    solve_status = opt.solve(m.fs.compr_case_2, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:       18
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:        8
+    
+    Total number of variables............................:        9
+                         variables with only lower bounds:        0
+                    variables with lower and upper bounds:        4
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:        9
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 1.19e-07 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+    
+    Number of Iterations....: 0
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   1.3090284027230638e-10    1.1920928955078125e-07
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   1.3090284027230638e-10    1.1920928955078125e-07
+    
+    
+    Number of objective function evaluations             = 1
+    Number of objective gradient evaluations             = 1
+    Number of equality constraint evaluations            = 1
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 1
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 0
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+    
+
+View Results
+~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    # Display compressor pressure increase
+    m.fs.compr_case_2.outlet.pressure[0].display()
+
+
+.. parsed-literal::
+
+    pressure : Pressure
+        Size=1, Index=None, Units=Pa
+        Key  : Lower                  : Value      : Upper       : Fixed : Stale : Domain
+        None : 1.0000000000000002e-06 : 34620660.0 : 500000000.0 : False : False : PositiveReals
+
+
+.. code:: ipython3
+
+    # Display a readable report
+    m.fs.compr_case_2.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.compr_case_2                                                     Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key                   : Value      : Units         : Fixed : Bounds
+        Isentropic Efficiency :    0.85000 : dimensionless :  True : (None, None)
+              Mechanical Work : 1.5934e+08 :          watt : False : (None, None)
+              Pressure Change : 2.5510e+07 :        pascal : False : (None, None)
+               Pressure Ratio :     3.8000 : dimensionless :  True : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                             Units           Inlet     Outlet  
+        Molar Flow          mole / second     91067.     91067.
+        Mass Flow       kilogram / second     4007.8     4007.8
+        T                          kelvin     308.15     348.81
+        P                          pascal 9.1107e+06 3.4621e+07
+        Vapor Fraction      dimensionless     0.0000     0.0000
+        Molar Enthalpy       joule / mole    -9215.6    -7465.9
+    ====================================================================================
+

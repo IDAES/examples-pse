@@ -1,0 +1,456 @@
+Tutorial: Feed Flash Unit Model with Modular Property Package
+=============================================================
+
+.. image:: feed.svg
+
+Learning Outcomes
+-----------------
+
+-  Demonstrate use of the Feed Flash unit model in IDAES
+-  Demonstrate different options available
+
+Problem Statement
+-----------------
+
+In this tutorial, we will be feeding vapor-liquid streams into the feed
+flash unit model using two different sets of state variables. Like the
+traditional feed block, the feed flash unit model has no inlets and only
+one outlet, so the stream information is fed to the model through a feed
+port rather than an inlet. The feed conditions are as follows:
+
+**Case 1**
+
+Flow Rate = 100 mol/s
+
+Mole Fraction (Benzene) = 0.6
+
+Mole Fraction (Toluene) = 0.4
+
+Temperature = 298 K
+
+Pressure = 101325 Pa
+
+**Case 2**
+
+Flow Rate = 100 mol/s
+
+Enthalpy = 24000 J/mol
+
+Pressure = 101325 Pa
+
+Like the feed block, feed flash blocks are used to represent sources of
+material in the flowsheet. However, this unit model also supports phase
+equilibrium, so it should be used when the feed stream may be in a
+multi-phase state and the chosen property package has a state definition
+that includes phase separations. Phase equilibrium is determined by
+assuming isobaric and isothermal flash operation. More information on
+the feed flash model can be found here:
+https://idaes-pse.readthedocs.io/en/stable/reference_guides/model_libraries/generic/unit_models/feed_flash.html
+
+For more details, please refer to the IDAES documentation:
+https://idaes-pse.readthedocs.io/en/stable
+
+Importing necessary tools
+-------------------------
+
+In the following cell, we will be importing the necessary components
+from Pyomo and IDAES.
+
+.. code:: ipython3
+
+    # Import objects from pyomo package 
+    from pyomo.environ import ConcreteModel, value
+    
+    # Import the solver
+    from idaes.core.solvers import get_solver
+    
+    # Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model
+    from idaes.core import FlowsheetBlock
+    
+    # Import the feed unit model and the option to set the flash type
+    from idaes.models.unit_models.feed_flash import FeedFlash, FlashType
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+    
+    # Import the modular property package to create a property block for the case 1 flowsheet
+    from idaes.models.properties.modular_properties.base.generic_property import GenericParameterBlock
+    
+    # Import the BT_Ideal property package to create a configuration file for the GenericParameterBlock
+    from idaes.models.properties.modular_properties.examples.BT_ideal import configuration
+    
+    # Import the IAPWS property package to create a property block for the case 2 flowsheet
+    from idaes.models.properties import iapws95
+    
+    # Import the degrees_of_freedom function from the idaes.core.util.model_statistics package
+    # DOF = Number of Model Variables - Number of Model Constraints
+    from idaes.core.util.model_statistics import degrees_of_freedom
+
+Setting up the flowsheet
+------------------------
+
+In the following cell, we will create the ``ConcreteModel`` foundation,
+attach the steady state flowsheet, and declare the property parameter
+block that will used for each of the cases.
+
+More information on this general workflow can be found here:
+https://idaes-pse.readthedocs.io/en/stable/how_to_guides/workflow/general.html
+
+.. code:: ipython3
+
+    m = ConcreteModel()
+    
+    m.fs = FlowsheetBlock(dynamic=False) # dynamic or ss flowsheet needs to be specified here
+    
+    m.fs.properties_1 = GenericParameterBlock(**configuration) # Case 1
+    
+    m.fs.properties_2 = iapws95.Iapws95ParameterBlock(phase_presentation=iapws95.PhaseType.LG) # Case 2 - set phases to liquid & gas
+
+Case 1:
+-------
+
+In the following cell, we will be creating the feed flash unit model,
+assigning a property package to it, and determining the initial degrees
+of freedom associated with the feed unit model.
+
+.. code:: ipython3
+
+    m.fs.feed_1 = FeedFlash(property_package=m.fs.properties_1)
+    
+    DOF_initial = degrees_of_freedom(m)
+    print('The initial degrees of freedom are: {0}'.format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial degrees of freedom are: 5
+
+
+Fixing input specifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, we will be specifying the conditions for the feed
+flash block in case 1 using a feed port and re-evaluating the degrees of
+freedom to ensure the problem is square (i.e. DOF=0). While most other
+unit models simply use the inlet port to fix the unit model’s operating
+conditions, the feed flash unit model cannot because there is no inlet
+stream to the feed block.
+
+.. code:: ipython3
+
+    m.fs.feed_1.flow_mol.fix(100) # converting to mol/s as unit basis is mol/s
+    m.fs.feed_1.mole_frac_comp[0, "benzene"].fix(0.6)
+    m.fs.feed_1.mole_frac_comp[0, "toluene"].fix(0.4)
+    m.fs.feed_1.pressure.fix(101325) # Pa
+    m.fs.feed_1.temperature.fix(298) # K
+    
+    DOF_final = degrees_of_freedom(m)
+    print('The final degrees of freedom is: {0}'.format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final degrees of freedom is: 0
+
+
+Flowsheet Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.
+
+More information on these levels can be found in the IDAES
+documentation:
+https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html
+
+.. code:: ipython3
+
+    m.fs.feed_1.initialize(outlvl=idaeslog.WARNING)
+
+Obtaining Simulation Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, the flowsheet will be solved using the IDAES
+``get_solver`` tool. Setting ``tee=True`` will display the solver
+output.
+
+.. code:: ipython3
+
+    solver = get_solver()
+    result = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    max_iter=200
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:      122
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:       55
+    
+    Total number of variables............................:       37
+                         variables with only lower bounds:       12
+                    variables with lower and upper bounds:       21
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:       37
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 9.90e-01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 9.89e-03 3.42e-01  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+       2  0.0000000e+00 9.07e-05 8.22e-01  -1.0 9.99e-05    -  9.90e-01 9.91e-01h  1
+       3  0.0000000e+00 7.28e-11 8.89e+02  -1.0 9.16e-07    -  9.91e-01 1.00e+00h  1
+    
+    Number of Iterations....: 3
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   3.8511416278197430e-12    7.2759576141834259e-11
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   3.8511416278197430e-12    7.2759576141834259e-11
+    
+    
+    Number of objective function evaluations             = 4
+    Number of objective gradient evaluations             = 4
+    Number of equality constraint evaluations            = 4
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 4
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 3
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+
+
+View Results
+~~~~~~~~~~~~
+
+As expected, the output conditions shown in the report below match the
+feed conditions that were set earlier.
+
+.. code:: ipython3
+
+    m.fs.feed_1.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.feed_1                                                           Time: 0.0
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                        Units        Outlet  
+        Total Molar Flowrate         mole / second     100.00
+        Total Mole Fraction benzene  dimensionless    0.60000
+        Total Mole Fraction toluene  dimensionless    0.40000
+        Temperature                         kelvin     298.00
+        Pressure                            pascal 1.0132e+05
+    ====================================================================================
+
+
+Case 2:
+-------
+
+In the following cell, we will be creating the feed flash unit model,
+assigning a property package to it, and determining the initial degrees
+of freedom associated with the feed unit model. The ``FlashType`` can
+either be isothermal or isenthalpic.
+
+.. code:: ipython3
+
+    m.fs.feed_2 = FeedFlash(property_package=m.fs.properties_2, flash_type=FlashType.isenthalpic)
+    
+    DOF_initial = degrees_of_freedom(m)
+    print('The initial degrees of freedom are: {0}'.format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial degrees of freedom are: 3
+
+
+Fixing input specifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, we will be specifying the conditions for the feed
+flash block in case 2 using a feed port and re-evaluating the degrees of
+freedom to ensure the problem is square (i.e. DOF=0).
+
+.. code:: ipython3
+
+    m.fs.feed_2.flow_mol.fix(100) # converting to mol/s as unit basis is mol/s
+    m.fs.feed_2.enth_mol.fix(24000) # J/mol
+    m.fs.feed_2.pressure.fix(101325) # Pa
+    
+    DOF_final = degrees_of_freedom(m)
+    print('The final degrees of freedom is: {0}'.format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final degrees of freedom is: 0
+
+
+Flowsheet Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.
+
+More information on these levels can be found in the IDAES
+documentation:
+https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html
+
+.. code:: ipython3
+
+    m.fs.feed_2.initialize(outlvl=idaeslog.WARNING)
+
+Obtaining Simulation Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, the flowsheet will be solved using the IDAES
+``get_solver`` tool. Setting ``tee=True`` will display the solver
+output.
+
+.. code:: ipython3
+
+    solver = get_solver()
+    result = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    max_iter=200
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:      129
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:       61
+    
+    Total number of variables............................:       40
+                         variables with only lower bounds:       12
+                    variables with lower and upper bounds:       23
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:       40
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 9.90e-01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 9.89e-03 3.42e-01  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+       2  0.0000000e+00 9.07e-05 8.33e-01  -1.0 9.99e-05    -  9.90e-01 9.91e-01h  1
+       3  0.0000000e+00 7.28e-11 9.99e+02  -1.0 9.16e-07    -  9.90e-01 1.00e+00h  1
+    
+    Number of Iterations....: 3
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   1.6234260546719244e-12    7.2759576141834259e-11
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   1.6234260546719244e-12    7.2759576141834259e-11
+    
+    
+    Number of objective function evaluations             = 4
+    Number of objective gradient evaluations             = 4
+    Number of equality constraint evaluations            = 4
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 4
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 3
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.006
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+
+
+View Results
+~~~~~~~~~~~~
+
+The report below shows the results of this simulation.
+
+.. code:: ipython3
+
+    m.fs.feed_2.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.feed_2                                                           Time: 0.0
+    ------------------------------------------------------------------------------------
+        Stream Table
+                             Units          Outlet  
+        Molar Flow          mole / second     100.00
+        Mass Flow       kilogram / second     1.8015
+        T                          kelvin     373.12
+        P                          pascal 1.0132e+05
+        Vapor Fraction      dimensionless    0.40468
+        Molar Enthalpy       joule / mole     24000.
+    ====================================================================================
+
+

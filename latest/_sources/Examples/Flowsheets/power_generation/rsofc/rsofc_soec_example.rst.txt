@@ -1,0 +1,2072 @@
+Design flowsheet for the SOEC mode of a reversible Solid Oxide Cell
+===================================================================
+
+Process Flow Diagram
+~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    from IPython.core.display import SVG
+    SVG(filename='rsofc_soec_mode_PFD.svg')
+
+
+
+
+.. image:: output_2_0.svg
+
+
+
+1. Introduction
+---------------
+
+The figure above shows the process flow diagram of the rSOC (reversible
+solid oxide cell) plant in SOEC (solid oxide electrolysis cell) mode.
+The plant consists of five major sections: the ASU (air separation
+unit), the SOEC power island, the CPU (CO2 purification unit), the HRSG
+(heat recovery steam generator) and steam cycle.
+
+In the SOEC mode, the rSOC operates by using steam as fuel to produce
+Hydrogen on its fuel side (cathode side), while air is used as sweep gas
+to remove diffused oxygen from its air side (anode side). To provide air
+to the air side of the rSOC, ambient air is compressed in an air blower
+and preheated via two preheaters to reach the required temperature to
+sweep through the air side. The oxygen rich air stream which exits the
+air side of the rSOC is used to preheat the fresh air feed in the first
+air preheater, subsequently it is split in a splitter and used to
+preheat oxygen from the ASU in the oxygen preheater and natural gas feed
+in the natural gas preheater. Finally, the oxygen rich air streams from
+both the oxygen and natural gas preheaters are sent to the HRSG where
+they are further cooled before release to the atmosphere.
+
+This flowsheet example provides an off-design model for the rSOC in SOEC
+mode for hydrogen production up to **5 kg/s** with 98% CO2 capture.
+
+2. Import Required Modules
+--------------------------
+
+-  **pyomo environment**. The pyomo environment
+-  **rsofc_soec_flowsheet**. Contains functions for the work flow of
+   building and solving the flowsheet. See the rsofc_soec_flowsheet.py
+   file for more details.
+-  **rsofc_costing**. Contains costing methods for the soec and sofc
+   operating modes of the reversible sofc. See the rsofc_costing.py file
+   for more details.
+
+.. code:: ipython3
+
+    import pyomo.environ as pyo
+    import rsofc_soec_flowsheet as rsoec
+    import rsofc_costing as rsofc_cost
+
+3. Build and initialize the flowsheet
+-------------------------------------
+
+-  A pyomo concrete model is built
+-  The **get_model** function in the **rsofc_soec_flowsheet.py** file
+   takes the concrete model as an argument then sets up a flowsheet
+   called **m.soec_fs**, and all the required unit models to it.
+   Finally, the completed flowsheet is initialized. The concrete model
+   and solver options are then returned.
+
+.. code:: ipython3
+
+    m = pyo.ConcreteModel()
+    m, solver = rsoec.get_model(m)
+
+4. Base case optimization example
+---------------------------------
+
+An example of optimizing the variable operating costs of the model at
+its base case production of 5 kg/s using the **base_case_optimization**
+function is shown below. The model also has functions to run a base case
+simulation (**base_case_simulation**) and optimize the variable
+operating cost of the process over the production range of 1 to 5 kg/s
+(**optimize_model**)
+
+.. code:: ipython3
+
+    rsoec.tags_inputs_opt_vars(m.soec_fs)  # this function adds tags for the optimization variables
+    rsofc_cost.get_rsofc_soec_variable_OM_costing(m.soec_fs)
+    rsoec.base_case_optimization(m, solver)
+
+
+.. parsed-literal::
+
+    1000.0*(g/kg)*(0.002*soec_fs.hydrogen_product_rate[0.0]*kg/mol)
+    h2_product_rate_mass : Size=1
+        Key : Value
+        0.0 : 10.140202103656495
+    Hydrogen product rate 2.500 kmol/s.
+    WARNING: model contains export suffix 'soec_fs.CPU.scaling_factor' that
+        contains 3 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.flash.split.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.flash.control_volume.properties_out[0.0].scaling_factor' that
+        contains 107 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.flash.control_volume.properties_in[0.0].scaling_factor' that
+        contains 106 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.flash.control_volume.scaling_factor' that contains 2 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.CPU_translator.properties_out[0.0].scaling_factor' that contains
+        100 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.CPU_translator.properties_in[0.0].scaling_factor' that contains 5
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.condenser.control_volume.properties_out[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.condenser.control_volume.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.HRSG_1.control_volume.properties_out[0.0].scaling_factor' that
+        contains 13 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.HRSG_1.control_volume.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.HRSG_3.control_volume.properties_out[0.0].scaling_factor' that
+        contains 13 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.HRSG_3.control_volume.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.HRSG_2.control_volume.properties_out[0.0].scaling_factor' that
+        contains 13 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.HRSG_2.control_volume.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp04.properties_isentropic[0.0].scaling_factor' that contains
+        20 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp04.control_volume.properties_out[0.0].scaling_factor' that
+        contains 19 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp04.control_volume.properties_in[0.0].scaling_factor' that
+        contains 20 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.hcmp04.scaling_factor' that
+        contains 1 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp_ic04.control_volume.properties_out[0.0].scaling_factor' that
+        contains 19 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp_ic04.control_volume.properties_in[0.0].scaling_factor' that
+        contains 18 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp03.properties_isentropic[0.0].scaling_factor' that contains
+        20 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp03.control_volume.properties_out[0.0].scaling_factor' that
+        contains 18 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp03.control_volume.properties_in[0.0].scaling_factor' that
+        contains 20 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.hcmp03.scaling_factor' that
+        contains 2 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp_ic03.control_volume.properties_out[0.0].scaling_factor' that
+        contains 19 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp_ic03.control_volume.properties_in[0.0].scaling_factor' that
+        contains 18 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp02.properties_isentropic[0.0].scaling_factor' that contains
+        20 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp02.control_volume.properties_out[0.0].scaling_factor' that
+        contains 18 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp02.control_volume.properties_in[0.0].scaling_factor' that
+        contains 20 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.hcmp02.scaling_factor' that
+        contains 2 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp_ic02.control_volume.properties_out[0.0].scaling_factor' that
+        contains 19 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp_ic02.control_volume.properties_in[0.0].scaling_factor' that
+        contains 18 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp01.properties_isentropic[0.0].scaling_factor' that contains
+        20 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp01.control_volume.properties_out[0.0].scaling_factor' that
+        contains 18 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp01.control_volume.properties_in[0.0].scaling_factor' that
+        contains 20 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.hcmp01.scaling_factor' that
+        contains 2 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp_ic01.control_volume.properties_out[0.0].scaling_factor' that
+        contains 19 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.hcmp_ic01.control_volume.properties_in[0.0].scaling_factor' that
+        contains 18 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.fuel_recycle_heater.control_vol
+        ume.properties_out[0.0].scaling_factor' that contains 6 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.fuel_recycle_heater.control_volume.properties_in[0.0].scaling_fac
+        tor' that contains 6 component keys that are not exported as part of the
+        NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.mxa1.mixed_state[0.0].scaling_factor' that contains 12 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.mxa1.recycle_state[0.0].scaling_factor' that contains 20
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.mxa1.air_state[0.0].scaling_factor' that contains 12 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.mxf1.mixed_state[0.0].scaling_factor' that contains 6 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.mxf1.recycle_state[0.0].scaling_factor' that contains 6 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.mxf1.water_state[0.0].scaling_factor' that contains 6 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.splta1.recycle_state[0.0].scaling_factor' that contains 5
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.splta1.out_state[0.0].scaling_factor' that contains 5 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.splta1.mixed_state[0.0].scaling_factor' that contains 5 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.splta1.scaling_factor' that
+        contains 1 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.spltf1.recycle_state[0.0].scaling_factor' that contains 2
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.spltf1.out_state[0.0].scaling_factor' that contains 2 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.spltf1.mixed_state[0.0].scaling_factor' that contains 2 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.oxygen_properties_out[0.0].scaling_factor' that
+        contains 10 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.oxygen_properties_in[0.0].scaling_factor' that
+        contains 10 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.fuel_properties_out[0.0].scaling_factor' that contains
+        4 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.fuel_properties_in[0.0].scaling_factor' that contains
+        4 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.solid_oxide_cell.electrolyte.scaling_factor' that
+        contains 200 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.soec_stack.solid_oxide_cell.oxy
+        gen_triple_phase_boundary.scaling_factor' that contains 145 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.soec_stack.solid_oxide_cell.fue
+        l_triple_phase_boundary.scaling_factor' that contains 116 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.solid_oxide_cell.oxygen_electrode.scaling_factor' that
+        contains 908 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.solid_oxide_cell.fuel_electrode.scaling_factor' that
+        contains 509 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.solid_oxide_cell.oxygen_channel.scaling_factor' that
+        contains 235 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.solid_oxide_cell.fuel_channel.scaling_factor' that
+        contains 160 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.soec_stack.solid_oxide_cell.scaling_factor' that contains 55
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.soec_stack.scaling_factor' that
+        contains 2 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.bhx1.cold_side.properties_out[0.0].scaling_factor' that contains
+        85 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.bhx1.cold_side.properties_in[0.0].scaling_factor' that contains
+        85 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.bhx1.hot_side.properties_out[0.0].scaling_factor' that contains 6
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.bhx1.hot_side.properties_in[0.0].scaling_factor' that contains 6
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.bhx1.scaling_factor' that
+        contains 5 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.aux_boiler_feed_pump.control_vo
+        lume.properties_out[0.0].scaling_factor' that contains 86 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.aux_boiler_feed_pump.control_vo
+        lume.properties_in[0.0].scaling_factor' that contains 87 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.aux_boiler_feed_pump.scaling_factor' that contains 5 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.main_steam_split.o_side_state[0.0].scaling_factor' that contains
+        85 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.main_steam_split.h_side_state[0.0].scaling_factor' that contains
+        85 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.main_steam_split.mixed_state[0.0].scaling_factor' that contains
+        85 component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.main_steam_split.scaling_factor' that contains 3 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.bhx2.control_volume.properties_out[0.0].scaling_factor' that
+        contains 85 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.bhx2.control_volume.properties_in[0.0].scaling_factor' that
+        contains 85 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.post_oxycombustor_translator.properties_out[0.0].scaling_factor'
+        that contains 5 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.post_oxycombustor_translator.properties_in[0.0].scaling_factor'
+        that contains 9 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.cmb.control_volume.reactions[0.0].scaling_factor' that contains 4
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.cmb.control_volume.properties_out[0.0].scaling_factor' that
+        contains 20 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.cmb.control_volume.properties_in[0.0].scaling_factor' that
+        contains 20 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.cmb.control_volume.scaling_factor' that contains 1 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.cmb_mix.mixed_state[0.0].scaling_factor' that contains 20
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.cmb_mix.air_state[0.0].scaling_factor' that contains 20 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.cmb_mix.ng_state[0.0].scaling_factor' that contains 20 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.pre_oxycombustor_translator.properties_out[0.0].scaling_factor'
+        that contains 13 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.pre_oxycombustor_translator.properties_in[0.0].scaling_factor'
+        that contains 5 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_preheater_2.cold_side.properties_out[0.0].scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_preheater_2.cold_side.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_preheater_2.hot_side.properties_out[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_preheater_2.hot_side.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.air_preheater_2.scaling_factor'
+        that contains 2 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_preheater_1.cold_side.properties_out[0.0].scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_preheater_1.cold_side.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_preheater_1.hot_side.properties_out[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_preheater_1.hot_side.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.air_preheater_1.scaling_factor'
+        that contains 2 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_blower.properties_isentropic[0.0].scaling_factor' that
+        contains 19 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_blower.control_volume.properties_out[0.0].scaling_factor'
+        that contains 13 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_blower.control_volume.properties_in[0.0].scaling_factor' that
+        contains 26 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.air_blower.scaling_factor' that
+        contains 1 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.preheat_split.ng_state[0.0].scaling_factor' that contains 5
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.preheat_split.oxygen_state[0.0].scaling_factor' that contains 5
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.preheat_split.mixed_state[0.0].scaling_factor' that contains 5
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.ng_preheater.cold_side.properties_out[0.0].scaling_factor' that
+        contains 20 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.ng_preheater.cold_side.properties_in[0.0].scaling_factor' that
+        contains 33 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.ng_preheater.hot_side.properties_out[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.ng_preheater.hot_side.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.ng_preheater.scaling_factor'
+        that contains 2 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.oxygen_preheater.cold_side.properties_out[0.0].scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.oxygen_preheater.cold_side.properties_in[0.0].scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.oxygen_preheater.hot_side.properties_out[0.0].scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.oxygen_preheater.hot_side.properties_in[0.0].scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.oxygen_preheater.scaling_factor' that contains 2 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.ASU.O2_outlet_state[0.0].scaling_factor' that contains 5
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.ASU.N2_outlet_state[0.0].scaling_factor' that contains 5
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.ASU.mixed_state[0.0].scaling_factor' that contains 5 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.ASU.scaling_factor' that
+        contains 5 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.intercooler_s2.control_volume.properties_out[0.0].scaling_factor'
+        that contains 13 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.intercooler_s2.control_volume.properties_in[0.0].scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.intercooler_s2.control_volume.scaling_factor' that contains 1
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_compressor_s2.properties_isentropic[0.0].scaling_factor' that
+        contains 19 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_compressor_s2.control_volume.properties_out[0.0].scaling_fact
+        or' that contains 13 component keys that are not exported as part of the
+        NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_compressor_s2.control_volume.properties_in[0.0].scaling_facto
+        r' that contains 19 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_compressor_s2.scaling_factor' that contains 1 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.intercooler_s1.control_volume.properties_out[0.0].scaling_factor'
+        that contains 13 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.intercooler_s1.control_volume.properties_in[0.0].scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.intercooler_s1.control_volume.scaling_factor' that contains 1
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_compressor_s1.properties_isentropic[0.0].scaling_factor' that
+        contains 19 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_compressor_s1.control_volume.properties_out[0.0].scaling_fact
+        or' that contains 13 component keys that are not exported as part of the
+        NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_compressor_s1.control_volume.properties_in[0.0].scaling_facto
+        r' that contains 26 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.air_compressor_s1.scaling_factor' that contains 1 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.CO2_H2O_VLE.N2.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.CO2_H2O_VLE.CO2.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.CO2_H2O_VLE.H2O.scaling_factor'
+        that contains 15 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.CO2_H2O_VLE.O2.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.CO2_H2O_VLE.Ar.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.CO2_H2O_VLE.scaling_factor'
+        that contains 25 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.h2_compress_prop.H2.scaling_factor' that contains 12 component
+        keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.h2_compress_prop.scaling_factor' that contains 1 component keys
+        that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.air_prop.N2.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.air_prop.CO2.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.air_prop.H2O.scaling_factor'
+        that contains 15 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.air_prop.O2.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.air_prop.Ar.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.o2_prop.H2O.scaling_factor'
+        that contains 15 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.o2_prop.O2.scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.h2_prop.H2O.scaling_factor'
+        that contains 15 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.h2_prop.H2.scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.fg_combust.reaction_ch4_cmb.scaling_factor' that contains 12
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.fg_combust.reaction_c4h10_cmb.scaling_factor' that contains 12
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.fg_combust.reaction_c3h8_cmb.scaling_factor' that contains 12
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix
+        'soec_fs.fg_combust.reaction_c2h6_cmb.scaling_factor' that contains 12
+        component keys that are not exported as part of the NL file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.fg_prop.N2.scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.fg_prop.CO2.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.fg_prop.C3H8.scaling_factor'
+        that contains 9 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.fg_prop.CH4.scaling_factor'
+        that contains 12 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.fg_prop.C4H10.scaling_factor'
+        that contains 10 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.fg_prop.C2H6.scaling_factor'
+        that contains 9 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.fg_prop.H2O.scaling_factor'
+        that contains 15 component keys that are not exported as part of the NL
+        file.  Skipping.
+    WARNING: model contains export suffix 'soec_fs.fg_prop.O2.scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.fg_prop.Ar.scaling_factor' that
+        contains 12 component keys that are not exported as part of the NL file.
+        Skipping.
+    WARNING: model contains export suffix 'soec_fs.scaling_factor' that contains 9
+        component keys that are not exported as part of the NL file.  Skipping.
+    Ipopt 3.13.2: nlp_scaling_method=user-scaling
+    tol=0.0001
+    max_iter=500
+    bound_push=1e-05
+    linear_solver=ma57
+    ma27_pivtol=0.001
+    ma57_pivtol=1e-05
+    ma57_pivtolmax=0.1
+    option_file_name=/tmp/tmpg9tqkau7_ipopt.opt
+    
+    Using option file "/tmp/tmpg9tqkau7_ipopt.opt".
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma57.
+    
+    Number of nonzeros in equality constraint Jacobian...:    11670
+    Number of nonzeros in inequality constraint Jacobian.:       24
+    Number of nonzeros in Lagrangian Hessian.............:     8580
+    
+    Reallocating memory for MA57: lfact (241422)
+    Reallocating memory for MA57: lfact (257768)
+    Total number of variables............................:     2697
+                         variables with only lower bounds:      484
+                    variables with lower and upper bounds:     1460
+                         variables with only upper bounds:       34
+    Total number of equality constraints.................:     2685
+    Total number of inequality constraints...............:       11
+            inequality constraints with only lower bounds:        4
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        7
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  8.1999537e+03 3.93e+03 2.00e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  8.1113426e+03 3.48e+03 2.41e+02  -1.0 1.77e+04    -  8.77e-05 2.15e-02f  1
+       2  6.4310369e+03 2.81e+06 2.25e+04  -1.0 2.23e+04    -  9.58e-03 4.20e-01f  1
+       3  6.2536117e+03 2.60e+06 2.07e+04  -1.0 1.30e+04    -  2.40e-01 7.61e-02h  1
+       4  6.2328388e+03 2.57e+06 2.05e+04  -1.0 1.81e+03  -2.0 2.66e-02 1.06e-02h  1
+       5  6.2324575e+03 2.57e+06 2.05e+04  -1.0 1.80e+03  -1.6 1.14e-02 1.96e-04h  1
+       6  6.2118582e+03 2.55e+06 2.02e+04  -1.0 2.50e+03  -2.1 4.20e-04 1.05e-02h  1
+       7  6.2101747e+03 2.54e+06 2.02e+04  -1.0 1.91e+04    -  7.05e-04 7.45e-04h  1
+       8  6.1898055e+03 2.52e+06 2.00e+04  -1.0 2.47e+03  -1.6 1.55e-01 1.06e-02h  1
+       9  6.1571162e+03 2.48e+06 1.97e+04  -1.0 2.44e+03  -2.1 1.31e-02 1.72e-02h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10  6.1343344e+03 2.45e+06 1.95e+04  -1.0 1.81e+04    -  1.68e-02 1.06e-02h  1
+      11  6.1336700e+03 2.45e+06 1.95e+04  -1.0 2.37e+03  -2.6 1.04e-01 3.57e-04h  1
+      12  5.9212579e+03 2.29e+06 1.72e+04  -1.0 2.34e+04    -  1.19e-03 1.03e-01h  1
+      13  5.8826902e+03 2.25e+06 1.68e+04  -1.0 1.76e+04    -  5.71e-02 2.16e-02h  1
+      14  5.8659296e+03 2.23e+06 1.69e+04  -1.0 1.05e+04    -  4.22e-01 9.40e-03h  1
+      15  5.8511810e+03 2.21e+06 1.68e+04  -1.0 4.94e+03  -3.1 6.51e-03 8.38e-03h  1
+      16  5.8498324e+03 2.21e+06 1.67e+04  -1.0 2.30e+03  -1.7 8.22e-04 7.92e-04h  1
+      17  5.8481233e+03 2.21e+06 1.70e+04  -1.0 1.53e+04  -2.2 2.22e-02 1.02e-03h  1
+      18  5.8282221e+03 2.18e+06 1.67e+04  -1.0 3.13e+03  -2.7 2.20e-03 1.15e-02h  1
+      19  5.8259189e+03 2.18e+06 1.67e+04  -1.0 1.47e+04    -  1.10e-02 1.29e-03h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      20  5.8245574e+03 2.18e+06 1.67e+04  -1.0 5.52e+03  -3.2 3.83e-04 8.12e-04h  1
+      21  5.6994836e+03 2.01e+06 1.47e+04  -1.0 1.20e+04    -  8.36e-05 7.66e-02f  1
+      22  4.6675059e+03 9.81e+05 1.10e+05  -1.0 1.78e+03  -3.6 8.03e-02 6.91e-01h  1
+      23  4.5770798e+03 7.78e+05 8.54e+04  -1.0 5.01e+02  -1.4 1.60e-02 2.01e-01h  1
+      24  4.5424369e+03 7.03e+05 7.71e+04  -1.0 3.99e+02  -1.9 5.41e-02 9.46e-02h  1
+      25  4.5171178e+03 6.49e+05 7.10e+04  -1.0 3.61e+02  -1.5 1.30e-01 7.69e-02h  1
+      26  4.4629402e+03 5.34e+05 5.78e+04  -1.0 3.33e+02  -1.9 2.33e-01 1.79e-01h  1
+      27  4.4624036e+03 5.33e+05 5.77e+04  -1.0 2.73e+02  -1.5 3.38e-01 2.16e-03h  1
+      28  4.4604382e+03 5.28e+05 7.57e+04  -1.0 8.68e+02  -2.0 4.19e-02 8.44e-03h  1
+      29  4.3067310e+03 4.63e+05 7.26e+06  -1.0 3.99e+02  -1.6 1.79e-01 6.36e-01h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      30  4.2898119e+03 3.93e+05 6.14e+06  -1.0 5.83e+02  -2.0 2.22e-02 1.63e-01h  1
+      31  4.2910531e+03 3.89e+05 6.09e+06  -1.0 4.27e+03  -2.5 5.80e-02 8.23e-03h  1
+      32  4.2908472e+03 3.88e+05 6.08e+06  -1.0 5.79e+02  -2.1 1.92e-01 2.18e-03h  1
+      33  4.2776798e+03 3.42e+05 5.31e+06  -1.0 6.93e+02  -2.6 2.71e-02 1.33e-01h  1
+      34  4.2775219e+03 3.41e+05 5.30e+06  -1.0 5.70e+02  -2.1 3.09e-02 1.76e-03h  1
+      35  4.2697918e+03 3.11e+05 4.84e+06  -1.0 6.74e+02  -2.6 5.93e-04 8.85e-02h  1
+      36  4.2697210e+03 3.11e+05 4.84e+06  -1.0 5.62e+02  -2.2 2.22e-01 9.63e-04h  1
+      37  4.2686687e+03 3.05e+05 4.75e+06  -1.0 6.13e+02  -2.7 3.77e-01 1.94e-02h  1
+      38  4.2132847e+03 6.59e+04 6.32e+06  -1.0 5.30e+02  -2.2 2.79e-01 9.90e-01h  1
+      39  4.2127190e+03 1.27e+04 6.27e+06  -1.0 2.94e+01  -1.8 2.04e-01 9.92e-01h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      40  4.2127278e+03 3.15e+03 1.26e+05  -1.0 1.61e+01  -1.4 9.83e-01 1.00e+00h  1
+      41  4.2125569e+03 3.69e+03 2.83e+06  -1.0 1.90e+01  -1.9 6.24e-01 1.00e+00h  1
+      42  4.2125850e+03 9.66e+01 7.06e+05  -1.0 6.70e+00  -1.4 7.51e-01 1.00e+00h  1
+      43  4.2124554e+03 3.05e+02 6.95e+03  -1.0 2.99e+00  -1.9 9.90e-01 1.00e+00h  1
+      44  4.2120339e+03 4.87e+01 6.46e+02  -1.0 6.28e+00  -2.4 9.07e-01 1.00e+00h  1
+      45  4.2110451e+03 9.19e+03 1.71e+02  -1.0 2.03e+01  -2.9 7.39e-01 1.00e+00h  1
+      46  4.2105291e+03 8.08e+03 7.14e+00  -1.0 8.57e+00  -2.4 1.00e+00 1.00e+00h  1
+      47  4.2103235e+03 3.69e+03 5.38e+00  -1.0 1.91e+01  -2.0 1.00e+00 1.00e+00h  1
+      48  4.2100222e+03 4.27e+04 4.51e+01  -1.0 2.80e+01  -2.5 6.51e-01 1.00e+00h  1
+      49  4.2082201e+03 1.15e+04 6.66e+01  -1.0 3.78e+01  -3.0 1.00e+00 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      50  4.2039517e+03 5.60e+03 3.98e+01  -1.0 5.78e+01  -3.4 1.00e+00 1.00e+00h  1
+      51  4.1905315e+03 2.15e+04 8.11e+01  -1.0 1.86e+02  -3.9 1.00e+00 1.00e+00h  1
+      52  4.1519379e+03 1.44e+05 1.19e+02  -1.0 5.26e+02  -4.4 4.51e-01 1.00e+00h  1
+      53  4.1073931e+03 2.45e+05 2.33e+02  -1.0 1.50e+03  -4.9 5.22e-01 4.05e-01h  1
+      54  4.1043884e+03 2.39e+05 2.40e+02  -1.0 2.18e+03  -5.4 3.30e-01 2.08e-02h  1
+      55  4.0888885e+03 1.59e+05 3.14e+02  -1.0 8.10e+02  -4.9 1.00e+00 2.94e-01h  1
+      56  4.0864892e+03 1.53e+05 3.24e+02  -1.0 5.40e+03    -  1.85e-01 3.95e-02h  1
+      57  4.0842419e+03 1.03e+05 8.25e+02  -1.0 8.44e+03    -  1.80e-01 3.36e-01h  1
+      58  4.0828922e+03 7.76e+04 2.93e+02  -1.0 3.03e+02  -5.4 7.56e-02 2.53e-01h  1
+      59  4.0508749e+03 3.47e+05 3.26e+04  -1.0 3.97e+03  -5.9 1.70e-01 8.91e-01h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      60  4.0401117e+03 3.97e+05 4.51e+04  -1.0 9.00e+03  -6.4 1.55e-01 1.16e-01h  1
+      61  4.0430309e+03 2.02e+05 2.31e+04  -1.0 7.37e+02  -5.9 1.00e+00 5.04e-01h  1
+      62  4.0457742e+03 2.63e+03 1.84e+02  -1.0 4.03e+02  -5.5 9.49e-01 1.00e+00h  1
+      63  4.0456512e+03 6.67e+03 9.03e+01  -1.0 1.06e+02  -5.1 1.00e+00 1.00e+00h  1
+      64  4.0455950e+03 9.41e+03 1.02e+00  -1.0 6.72e+01  -4.7 1.00e+00 1.00e+00h  1
+      65  4.0455749e+03 7.09e+03 4.97e-01  -1.0 3.55e+01  -4.2 1.00e+00 1.00e+00h  1
+      66  4.0455579e+03 1.54e+05 6.34e+00  -1.0 7.85e+02  -4.7 4.67e-01 2.17e-01h  2
+      67  4.0455566e+03 1.78e+05 7.29e+00  -1.0 4.67e+01  -3.4 1.00e+00 2.50e-01h  3
+      68  4.0455639e+03 1.23e+05 1.02e+02  -1.0 2.43e+01  -3.0 4.41e-01 1.00e+00H  1
+      69  4.0440719e+03 9.12e+04 1.86e+03  -1.0 8.32e+03    -  2.78e-01 3.27e-01h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      70  4.0437722e+03 6.17e+04 1.55e+03  -1.0 4.10e+03    -  1.00e+00 4.18e-01h  1
+      71  4.0438941e+03 1.71e+04 5.18e+01  -1.0 3.98e+02    -  1.00e+00 1.00e+00h  1
+      72  4.0438216e+03 2.28e+03 3.41e-01  -1.0 3.13e+02    -  1.00e+00 1.00e+00h  1
+      73  4.0438171e+03 4.46e+00 5.68e-04  -1.0 2.37e+01    -  1.00e+00 1.00e+00h  1
+      74  4.0438171e+03 1.91e-06 1.00e-06  -1.0 3.93e-02    -  1.00e+00 1.00e+00h  1
+      75  4.0429509e+03 5.09e+02 2.21e+06  -5.0 3.74e+02    -  5.96e-01 8.16e-01f  1
+      76  4.0426123e+03 2.80e+02 8.77e+05  -5.0 1.41e+02    -  5.34e-01 4.50e-01h  1
+      77  4.0425250e+03 7.45e+00 1.00e+05  -5.0 6.44e+01    -  9.37e-01 9.82e-01h  1
+      78  4.0425223e+03 1.13e+01 3.24e-01  -5.0 1.33e+00  -3.4 1.00e+00 1.00e+00h  1
+      79  4.0425210e+03 3.95e+00 1.39e+01  -5.0 1.38e+00  -3.9 1.00e+00 6.73e-01h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      80  4.0425205e+03 2.65e+00 9.17e+00  -5.0 3.13e+00  -4.4 1.00e+00 3.32e-01h  1
+      81  4.0425201e+03 5.16e-01 1.52e-01  -5.0 2.50e+00  -4.9 1.00e+00 1.00e+00h  1
+      82  4.0425178e+03 6.24e+00 3.81e-01  -5.0 1.43e+02  -5.3 1.63e-01 5.68e-02h  1
+    Reallocating memory for MA57: lfact (272798)
+      83  4.0425177e+03 3.78e-01 5.07e-01  -5.0 2.11e+00  -5.8 1.00e+00 1.00e+00h  1
+      84  4.0425165e+03 4.73e-01 1.74e+01  -5.0 3.12e+00  -6.3 1.00e+00 9.19e-01h  1
+      85  4.0425165e+03 7.01e-04 1.22e+00  -5.0 5.00e-01  -5.0 1.00e+00 1.00e+00h  1
+      86  4.0425164e+03 1.90e+01 2.01e-01  -5.0 3.50e-01    -  1.00e+00 1.00e+00h  1
+      87  4.0425164e+03 2.09e-04 5.91e+00  -5.0 1.51e+00    -  1.00e+00 1.00e+00h  1
+      88  4.0425164e+03 2.46e-05 8.39e-01  -5.0 6.30e-01    -  1.00e+00 1.00e+00h  1
+      89  4.0425164e+03 9.54e-07 2.70e-03  -5.0 2.35e-02    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 89
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   4.0425164298814111e+03    4.0425164298814111e+03
+    Dual infeasibility......:   2.7004593717521175e-03    9.0922938869217838e-06
+    Constraint violation....:   9.5367431640625000e-07    9.5367431640625000e-07
+    Complementarity.........:   9.0909091104156787e-06    9.0909091104156787e-06
+    Overall NLP error.......:   9.0909091104156787e-06    9.0922938869217838e-06
+    
+    
+    Number of objective function evaluations             = 97
+    Number of objective gradient evaluations             = 90
+    Number of equality constraint evaluations            = 97
+    Number of inequality constraint evaluations          = 97
+    Number of equality constraint Jacobian evaluations   = 90
+    Number of inequality constraint Jacobian evaluations = 90
+    Number of Lagrangian Hessian evaluations             = 89
+    Total CPU secs in IPOPT (w/o function evaluations)   =      8.562
+    Total CPU secs in NLP function evaluations           =      0.817
+    
+    EXIT: Optimal Solution Found.
+
+
+5. Results
+----------
+
+a. Input and optimization variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    rsoec.display_input_tags(m.soec_fs)
+
+
+.. parsed-literal::
+
+    
+    soec_outlet_o2_frac
+        O2 side outlet O2 mole fraction
+        display units: None
+        native units: dimensionless
+        value 0.350, fixed: False
+    
+    air_blower_flow
+        Air blower flow (provides air to soec air side)
+        display units: None
+        native units: mol/s
+        value 5697.756 mol/s, fixed: False
+    
+    combustor_temperature
+        Combustor temperature
+        display units: K
+        native units: K
+        value 1259.143 K, fixed: False
+    
+    preheat_fg_split_to_oxygen
+        Split frac. of soec air to air preheater, rest goes to NG heater
+        display units: None
+        native units: dimensionless
+        value 0.528, fixed: False
+    
+    soec_h2_split_to_product
+        Split frac. of soec h2 to product, rest goes to recycle
+        display units: None
+        native units: dimensionless
+        value 0.500, fixed: False
+    
+    oxygen_preheater_delta_T_in
+        Air preheater inlet approach temperature
+        display units: K
+        native units: K
+        value 10.000 K, fixed: False
+    
+    ng_preheater_delta_T_in
+        NG preheater inlet approach temperature
+        display units: K
+        native units: K
+        value 10.001 K, fixed: False
+    
+    air_preheater_1_delta_T_in
+        air_preheater_1 inlet approach temperature
+        display units: K
+        native units: K
+        value 10.000 K, fixed: False
+    
+    air_preheater_2_delta_T_in
+        air_preheater_2 inlet approach temperature
+        display units: K
+        native units: K
+        value 235.993 K, fixed: False
+    
+    soc_cell_potential
+        soc cell potential
+        display units: V
+        native units: V
+        value 1.2510 V, fixed: False
+    
+    condenser_outlet_temperature
+        Condenser outlet temperature (controls CO2 product purity from CPU)
+        display units: K
+        native units: K
+        value 310.879 K, fixed: False
+    
+    hydrogen_product_rate
+        Rate of hydrogen production
+        display units: kmol/s
+        native units: mol/s
+        value 2.500 kmol/s, fixed: True
+    
+    n_cells
+        Number of SOEC cells
+        display units: None
+        native units: dimensionless
+        value 3,220,000, fixed: True
+    
+    feed_water_flow
+        Feed water flow (provides steam to soec fuel side)
+        display units: None
+        native units: mol/s
+        value 3125.313 mol/s, fixed: False
+    
+    sweep_air_flow
+        Air flow to soec air side
+        display units: None
+        native units: mol/s
+        value 2380.214 mol/s, fixed: False
+    
+
+
+b. Stream tables
+~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    stream_table = rsoec.stream_tables(m.soec_fs)
+    stream_table=stream_table.fillna("")  # replace NaN with blank
+    display(stream_table)
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>flow_mass, kg/s</th>
+          <th>flow_mol, mol/s</th>
+          <th>flow_vol, m**3/s</th>
+          <th>temperature, K</th>
+          <th>pressure, Pa</th>
+          <th>vapor_frac</th>
+          <th>mole_frac_Ar</th>
+          <th>mole_frac_CO</th>
+          <th>mole_frac_CO2</th>
+          <th>mole_frac_H2</th>
+          <th>mole_frac_H2O</th>
+          <th>mole_frac_N2</th>
+          <th>mole_frac_O2</th>
+          <th>mole_frac_CH4</th>
+          <th>mole_frac_C2H6</th>
+          <th>mole_frac_C3H8</th>
+          <th>mole_frac_C4H10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>CPU_translator_in</th>
+          <td>19.357068</td>
+          <td>716.204181</td>
+          <td>17.800365</td>
+          <td>310.878872</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>IC_1_OUT</th>
+          <td>68.682089</td>
+          <td>2380.214333</td>
+          <td>56.988820</td>
+          <td>310.930000</td>
+          <td>1.079750e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>STAGE_1_OUT</th>
+          <td>68.682089</td>
+          <td>2380.214333</td>
+          <td>52.848180</td>
+          <td>297.543684</td>
+          <td>1.114220e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>STAGE_2_OUT</th>
+          <td>68.682089</td>
+          <td>2380.214333</td>
+          <td>50.226824</td>
+          <td>331.676372</td>
+          <td>1.306860e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>a00</th>
+          <td>164.411163</td>
+          <td>5697.756329</td>
+          <td>134.722480</td>
+          <td>288.150000</td>
+          <td>1.013250e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>a01</th>
+          <td>164.411163</td>
+          <td>5697.756329</td>
+          <td>127.764150</td>
+          <td>296.663174</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>a02</th>
+          <td>164.411163</td>
+          <td>5697.756329</td>
+          <td>419.616358</td>
+          <td>974.332162</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>a03</th>
+          <td>164.411163</td>
+          <td>5697.756329</td>
+          <td>440.640762</td>
+          <td>1023.149973</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>ba00</th>
+          <td>68.682089</td>
+          <td>2380.214333</td>
+          <td>56.279763</td>
+          <td>288.150000</td>
+          <td>1.013250e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>ba01</th>
+          <td>68.682089</td>
+          <td>2380.214333</td>
+          <td>48.360706</td>
+          <td>310.930000</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>ba02</th>
+          <td>15.392573</td>
+          <td>480.796393</td>
+          <td>9.768722</td>
+          <td>310.930000</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.003065</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.001914</td>
+          <td>0.995021</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>ba03</th>
+          <td>15.392573</td>
+          <td>480.796393</td>
+          <td>13.562943</td>
+          <td>431.696780</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.003065</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.001914</td>
+          <td>0.995021</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+        </tr>
+        <tr>
+          <th>bng00</th>
+          <td>3.944779</td>
+          <td>228.773361</td>
+          <td>6.035597</td>
+          <td>330.000000</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.01</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.016</td>
+          <td>0.0</td>
+          <td>0.931</td>
+          <td>0.032</td>
+          <td>0.007</td>
+          <td>0.004</td>
+        </tr>
+        <tr>
+          <th>bng01</th>
+          <td>3.944779</td>
+          <td>228.773361</td>
+          <td>7.895596</td>
+          <td>431.696589</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.01</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.016</td>
+          <td>0.0</td>
+          <td>0.931</td>
+          <td>0.032</td>
+          <td>0.007</td>
+          <td>0.004</td>
+        </tr>
+        <tr>
+          <th>bng02</th>
+          <td>19.337352</td>
+          <td>709.569754</td>
+          <td>24.489204</td>
+          <td>431.696700</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002077</td>
+          <td></td>
+          <td>0.003224</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.006455</td>
+          <td>0.674215</td>
+          <td>0.300165</td>
+          <td>0.010317</td>
+          <td>0.002257</td>
+          <td>0.00129</td>
+        </tr>
+        <tr>
+          <th>cmb_mix_in</th>
+          <td>15.392573</td>
+          <td>480.796393</td>
+          <td>13.562943</td>
+          <td>431.696780</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.003065</td>
+          <td></td>
+          <td>0.0</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.001914</td>
+          <td>0.995021</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>cmb_out</th>
+          <td>19.357068</td>
+          <td>716.204181</td>
+          <td>72.096264</td>
+          <td>1259.143021</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+        </tr>
+        <tr>
+          <th>fg01</th>
+          <td>19.357068</td>
+          <td>716.204181</td>
+          <td>72.096264</td>
+          <td>1259.143021</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>fg02</th>
+          <td>19.357068</td>
+          <td>716.204181</td>
+          <td>56.361101</td>
+          <td>984.332369</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>fg03</th>
+          <td>19.357068</td>
+          <td>716.204181</td>
+          <td>23.189571</td>
+          <td>405.000000</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>fg04</th>
+          <td>19.356958</td>
+          <td>716.204181</td>
+          <td>0.024734</td>
+          <td>310.878872</td>
+          <td>1.040000e+05</td>
+          <td></td>
+          <td>0.002058</td>
+          <td></td>
+          <td>0.332841</td>
+          <td></td>
+          <td>0.640766</td>
+          <td>0.006396</td>
+          <td>0.01794</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h01</th>
+          <td>32.598035</td>
+          <td>6249.891405</td>
+          <td>465.944411</td>
+          <td>986.325214</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.8</td>
+          <td>0.2</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h02</th>
+          <td>16.299301</td>
+          <td>3125.000067</td>
+          <td>232.976258</td>
+          <td>986.325214</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.8</td>
+          <td>0.2</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h03</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>56.470505</td>
+          <td>298.750613</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h04</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>56.356957</td>
+          <td>298.150000</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h05</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>28.066486</td>
+          <td>419.667048</td>
+          <td>3.110800e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h06</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>20.273843</td>
+          <td>303.150000</td>
+          <td>3.110800e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h07</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>10.106486</td>
+          <td>426.676604</td>
+          <td>8.797342e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h08</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>7.180621</td>
+          <td>303.150000</td>
+          <td>8.797342e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h09</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>3.591657</td>
+          <td>426.831805</td>
+          <td>2.487888e+06</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>h10</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>2.551483</td>
+          <td>303.150000</td>
+          <td>2.487888e+06</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>hr01</th>
+          <td>16.298734</td>
+          <td>3124.891338</td>
+          <td>232.968152</td>
+          <td>986.325214</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.8</td>
+          <td>0.2</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>hr02</th>
+          <td>16.298734</td>
+          <td>3124.891338</td>
+          <td>241.666091</td>
+          <td>1023.149972</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.8</td>
+          <td>0.2</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o01</th>
+          <td>204.408692</td>
+          <td>6947.757329</td>
+          <td>516.925359</td>
+          <td>984.332212</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o02</th>
+          <td>204.388251</td>
+          <td>6947.062553</td>
+          <td>516.873667</td>
+          <td>984.332212</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o03</th>
+          <td>204.388251</td>
+          <td>6947.062553</td>
+          <td>231.935600</td>
+          <td>441.697260</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o04</th>
+          <td>96.416758</td>
+          <td>3277.161207</td>
+          <td>109.411762</td>
+          <td>441.697260</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o05</th>
+          <td>107.971493</td>
+          <td>3669.901346</td>
+          <td>122.523839</td>
+          <td>441.697260</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o06</th>
+          <td>107.971493</td>
+          <td>3669.901346</td>
+          <td>118.449368</td>
+          <td>427.008832</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>o07</th>
+          <td>96.416758</td>
+          <td>3277.161207</td>
+          <td>106.967667</td>
+          <td>431.830407</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>out01</th>
+          <td>53.289516</td>
+          <td>1899.417940</td>
+          <td>38.591983</td>
+          <td>310.930000</td>
+          <td>1.272390e+05</td>
+          <td></td>
+          <td>0.010753</td>
+          <td></td>
+          <td>0.000376</td>
+          <td></td>
+          <td>0.012406</td>
+          <td>0.968434</td>
+          <td>0.008031</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>out02</th>
+          <td>107.971493</td>
+          <td>3669.901346</td>
+          <td>112.344266</td>
+          <td>405.000000</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>out03</th>
+          <td>96.416758</td>
+          <td>3277.161207</td>
+          <td>100.321572</td>
+          <td>405.000000</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.007545</td>
+          <td></td>
+          <td>0.000246</td>
+          <td></td>
+          <td>0.008119</td>
+          <td>0.63409</td>
+          <td>0.35</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>out08</th>
+          <td>5.039750</td>
+          <td>2500.000000</td>
+          <td>1.360748</td>
+          <td>416.005824</td>
+          <td>6.479000e+06</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s00</th>
+          <td>56.303382</td>
+          <td>3125.312599</td>
+          <td>0.056359</td>
+          <td>288.750000</td>
+          <td>1.013250e+05</td>
+          <td>0.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s01</th>
+          <td>56.303382</td>
+          <td>3125.312599</td>
+          <td>0.056359</td>
+          <td>288.750613</td>
+          <td>1.100000e+05</td>
+          <td>0.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s02</th>
+          <td>56.303382</td>
+          <td>3125.312599</td>
+          <td>31.751615</td>
+          <td>375.442168</td>
+          <td>1.100000e+05</td>
+          <td>0.363528</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s03</th>
+          <td>56.303382</td>
+          <td>3125.312599</td>
+          <td>241.635386</td>
+          <td>1023.149972</td>
+          <td>1.100000e+05</td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s04</th>
+          <td>56.297751</td>
+          <td>3125.000067</td>
+          <td>241.674499</td>
+          <td>1023.149972</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.0</td>
+          <td>1.0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s05</th>
+          <td>72.596485</td>
+          <td>6249.891405</td>
+          <td>483.340590</td>
+          <td>1023.149972</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>0.399993</td>
+          <td>0.600007</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>s06</th>
+          <td>164.411192</td>
+          <td>5697.757329</td>
+          <td>440.640839</td>
+          <td>1023.149973</td>
+          <td>1.100000e+05</td>
+          <td></td>
+          <td>0.0092</td>
+          <td></td>
+          <td>0.0003</td>
+          <td></td>
+          <td>0.0099</td>
+          <td>0.7732</td>
+          <td>0.2074</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+c. Print results table
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    result_variables = rsoec.initialize_results(m.soec_fs)
+    results_table = rsoec.results_table_dataframe(result_variables)
+    print('========================== Overall Results ========================')
+    print()
+    print(results_table)
+
+
+.. parsed-literal::
+
+    ========================== Overall Results ========================
+    
+                                Variable    Value         Units
+      soec_fs.hydrogen_product_rate[0.0]  2500.00         mol/s
+        soec_fs.h2_compressor_power[0.0]    35.13            MW
+              soec_fs.soec_power_DC[0.0]   603.51            MW
+              soec_fs.soec_power_AC[0.0]   622.17            MW
+             soec_fs.HRSG_heat_duty[0.0]    22.00            MW
+          soec_fs.ASU_HP_steam_heat[0.0]     2.59            MW
+           soec_fs.steam_cycle_heat[0.0]    19.41            MW
+          soec_fs.steam_cycle_power[0.0]     7.39            MW
+           soec_fs.steam_cycle_loss[0.0]    12.01            MW
+        soec_fs.feedwater_pump_work[0.0]     0.14            MW
+       soec_fs.condensate_pump_work[0.0]     0.00            MW
+    soec_fs.steam_turbine_auxiliary[0.0]     0.01            MW
+              soec_fs.misc_BOP_load[0.0]     0.08            MW
+         soec_fs.cooling_water_duty[0.0]    56.34            MW
+     soec_fs.cooling_water_flowrate[0.0]   823.85          lb/s
+      soec_fs.circulating_pump_work[0.0]     0.12            MW
+         soec_fs.cooling_tower_load[0.0]     0.06            MW
+             soec_fs.auxiliary_load[0.0]    45.24            MW
+         soec_fs.transformer_losses[0.0]     0.16            MW
+                  soec_fs.net_power[0.0]   660.18            MW
+             soec_fs.HHV_efficiency[0.0]     6.58 dimensionless
+               soec_fs.CO2_captured[0.0] 37012.92          kg/h
+              soec_fs.CO2_emissions[0.0]  -755.27          kg/h
+     soec_fs.CO2_capture_efficiency[0.0]     0.98 dimensionless
+
+

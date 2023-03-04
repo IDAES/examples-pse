@@ -1,0 +1,688 @@
+Tutorial: Separator Unit Model with Modular Property Package
+============================================================
+
+.. image:: splitter.svg
+
+Learning Outcomes
+-----------------
+
+-  Demonstrate use of the separator unit model in IDAES
+-  Demonstrate different separation options available
+
+Problem Statement
+-----------------
+
+In this example, we will be separating a feed stream of liquid H2O and
+CO2 vapor. The inlet conditions are as follows:
+
+**Inlet:**
+
+Flow Rate = 100 mol/s
+
+Mole Fraction (H2O) = 0.9
+
+Mole Fraction (CO2) = 0.1
+
+Temperature = 298 K
+
+Pressure = 101325 Pa
+
+We will look at three cases in this tutorial:
+
+Case 1: Separate on a total flow split basis
+
+Case 2: Separate on a phase flow split basis
+
+Case 3: Separate on a component flow split basis
+
+For more details, please refer to the IDAES documentation:
+https://idaes-pse.readthedocs.io/en/stable
+
+Importing necessary tools
+-------------------------
+
+In the following cell, we will be importing the necessary components
+from Pyomo and IDAES.
+
+.. code:: ipython3
+
+    # Import objects from pyomo package 
+    from pyomo.environ import ConcreteModel, value
+    
+    # Import the solver
+    from idaes.core.solvers import get_solver
+    
+    # Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model
+    from idaes.core import FlowsheetBlock
+    
+    # Import the option to set the type of material balance 
+    from idaes.core import MaterialBalanceType
+    
+    # Import the separator unit model
+    from idaes.models.unit_models import Separator
+    
+    # Import the option to set the basis for splitting
+    from idaes.models.unit_models.separator import SplittingType
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+    
+    # Import the modular property package to create a property block for the flowsheet
+    from idaes.models.properties.modular_properties.base.generic_property import GenericParameterBlock
+    
+    # Import the BT_Ideal property package to create a configuration file for the GenericParameterBlock
+    from idaes.models.properties.modular_properties.examples.CO2_H2O_Ideal_VLE import configuration
+    
+    # Import the degrees_of_freedom function from the idaes.core.util.model_statistics package
+    # DOF = Number of Model Variables - Number of Model Constraints
+    from idaes.core.util.model_statistics import degrees_of_freedom
+
+Setting up the flowsheet
+------------------------
+
+In the following cell, we will create the ``ConcreteModel`` foundation,
+attach the steady state flowsheet, and declare the property parameter
+block that will used.
+
+More information on this general workflow can be found here:
+https://idaes-pse.readthedocs.io/en/stable/how_to_guides/workflow/general.html
+
+.. code:: ipython3
+
+    m = ConcreteModel()
+    
+    m.fs = FlowsheetBlock(dynamic=False) # dynamic or ss flowsheet needs to be specified here
+    
+    m.fs.properties = GenericParameterBlock(**configuration)
+
+Case 1:
+-------
+
+In the following cell, we will be creating the separator unit model that
+splits on a *total flow basis* and determining the initial degrees of
+freedom associated with this separator unit model.
+
+.. code:: ipython3
+
+    m.fs.sep_1 = Separator(
+        property_package=m.fs.properties,
+        split_basis=SplittingType.totalFlow,
+        outlet_list=["a1", "b1", "c1"],  # creates three outlet streams
+        ideal_separation=False,
+        has_phase_equilibrium=False,
+    )
+    
+    DOF_initial = degrees_of_freedom(m)
+    print('The initial degrees of freedom are: {0}'.format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial degrees of freedom are: 7
+
+
+Fixing input specifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, we will be specifying the inlet conditions for
+the separator block and re-evaluating the degrees of freedom to ensure
+the problem is square (i.e. DOF=0).
+
+.. code:: ipython3
+
+    m.fs.sep_1.inlet.flow_mol.fix(10) # converting to mol/s as unit basis is mol/s
+    m.fs.sep_1.inlet.mole_frac_comp[0, "H2O"].fix(0.9)
+    m.fs.sep_1.inlet.mole_frac_comp[0, "CO2"].fix(0.1)
+    m.fs.sep_1.inlet.pressure.fix(101325) # Pa
+    m.fs.sep_1.inlet.temperature.fix(353) # K
+    
+    m.fs.sep_1.split_fraction[0, "a1"].fix(0.2)
+    m.fs.sep_1.split_fraction[0, "b1"].fix(0.5)
+    # Directly setting the split fraction of c1 will cause the DOF check to fail
+    
+    DOF_final = degrees_of_freedom(m)
+    print('The final degrees of freedom is: {0}'.format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final degrees of freedom is: 0
+
+
+Flowsheet Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.
+
+More information on these levels can be found in the IDAES
+documentation:
+https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html
+
+.. code:: ipython3
+
+    m.fs.sep_1.initialize(outlvl=idaeslog.WARNING)
+
+Obtaining Simulation Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, the flowsheet will be solved using the IDAES
+``get_solver`` tool. Setting ``tee=True`` will display the solver
+output.
+
+.. code:: ipython3
+
+    solver = get_solver()
+    result = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    max_iter=200
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:      186
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:       83
+    
+    Total number of variables............................:       60
+                         variables with only lower bounds:       16
+                    variables with lower and upper bounds:       39
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:       60
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 4.25e+02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 4.25e+00 4.84e-02  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+       2  0.0000000e+00 4.20e-02 9.79e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+       3  0.0000000e+00 1.16e-10 9.90e+02  -1.0 9.90e-07    -  9.90e-01 1.00e+00h  1
+    
+    Number of Iterations....: 3
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   1.1489298971323445e-13    1.1641532182693481e-10
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   1.1489298971323445e-13    1.1641532182693481e-10
+    
+    
+    Number of objective function evaluations             = 4
+    Number of objective gradient evaluations             = 4
+    Number of equality constraint evaluations            = 4
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 4
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 3
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+
+
+View Results
+~~~~~~~~~~~~
+
+As expected, the report below shows that the three outlet streams share
+the same composition as the inlet stream with the only difference being
+their molar flowrate, which was determined by their respective split
+fractions.
+
+.. code:: ipython3
+
+    m.fs.sep_1.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.sep_1                                                            Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key                      : Value   : Units         : Fixed : Bounds
+        Split Fraction [('a1',)] : 0.20000 : dimensionless :  True : (None, None)
+        Split Fraction [('b1',)] : 0.50000 : dimensionless :  True : (None, None)
+        Split Fraction [('c1',)] : 0.30000 : dimensionless : False : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                    Units         Inlet       a1         b1         c1    
+        Total Molar Flowrate     mole / second     10.000     2.0000     5.0000     3.0000
+        Total Mole Fraction H2O  dimensionless    0.90000    0.90000    0.90000    0.90000
+        Total Mole Fraction CO2  dimensionless    0.10000    0.10000    0.10000    0.10000
+        Temperature                     kelvin     353.00     353.00     353.00     353.00
+        Pressure                        pascal 1.0132e+05 1.0132e+05 1.0132e+05 1.0132e+05
+    ====================================================================================
+
+
+Case 2:
+-------
+
+In the following cell, we will be creating the separator unit model that
+splits on a *phase flow basis* and determining the initial degrees of
+freedom associated with this separator unit model.
+
+.. code:: ipython3
+
+    m.fs.sep_2 = Separator(
+        property_package=m.fs.properties,
+        split_basis=SplittingType.phaseFlow,
+        outlet_list=["a2", "b2"],
+        ideal_separation=False,
+        has_phase_equilibrium=False,
+    )
+    
+    DOF_initial = degrees_of_freedom(m)
+    print('The initial degrees of freedom are: {0}'.format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial degrees of freedom are: 7
+
+
+Fixing input specifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, we will be specifying the inlet conditions for
+the separator block and re-evaluating the degrees of freedom to ensure
+the problem is square (i.e. DOF=0).
+
+.. code:: ipython3
+
+    m.fs.sep_2.inlet.flow_mol.fix(10) # converting to mol/s as unit basis is mol/s
+    m.fs.sep_2.inlet.mole_frac_comp[0, "H2O"].fix(0.9)
+    m.fs.sep_2.inlet.mole_frac_comp[0, "CO2"].fix(0.1)
+    m.fs.sep_2.inlet.pressure.fix(101325) # Pa
+    m.fs.sep_2.inlet.temperature.fix(353) # K
+    
+    m.fs.sep_2.split_fraction[0, "a2", "Vap"].fix(0.8)
+    m.fs.sep_2.split_fraction[0, "b2", "Liq"].fix(0.8)
+    
+    DOF_final = degrees_of_freedom(m)
+    print('The final degrees of freedom is: {0}'.format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final degrees of freedom is: 0
+
+
+Flowsheet Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.
+
+More information on these levels can be found in the IDAES
+documentation:
+https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html
+
+.. code:: ipython3
+
+    m.fs.sep_2.initialize(outlvl=idaeslog.WARNING)
+
+Obtaining Simulation Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, the flowsheet will be solved using the IDAES
+``get_solver`` tool. Setting ``tee=True`` will display the solver
+output.
+
+.. code:: ipython3
+
+    solver = get_solver()
+    result = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    max_iter=200
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:      321
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:      144
+    
+    Total number of variables............................:      105
+                         variables with only lower bounds:       28
+                    variables with lower and upper bounds:       67
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:      105
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 4.25e+02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 4.25e+00 4.84e-02  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+       2  0.0000000e+00 4.20e-02 9.79e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+       3  0.0000000e+00 1.38e-10 9.90e+02  -1.0 9.90e-07    -  9.90e-01 1.00e+00h  1
+    
+    Number of Iterations....: 3
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   1.3643542528446593e-13    1.3824319466948509e-10
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   1.3643542528446593e-13    1.3824319466948509e-10
+    
+    
+    Number of objective function evaluations             = 4
+    Number of objective gradient evaluations             = 4
+    Number of equality constraint evaluations            = 4
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 4
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 3
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+
+
+View Results
+~~~~~~~~~~~~
+
+As expected, the report below shows that the outlet *a2* contains 80% of
+the gaseous CO2 and outlet *b2* contains 80% of the liquid H2O.
+
+.. code:: ipython3
+
+    m.fs.sep_2.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.sep_2                                                            Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key                            : Value   : Units         : Fixed : Bounds
+        Split Fraction [('a2', 'Liq')] : 0.20000 : dimensionless : False : (None, None)
+        Split Fraction [('a2', 'Vap')] : 0.80000 : dimensionless :  True : (None, None)
+        Split Fraction [('b2', 'Liq')] : 0.80000 : dimensionless :  True : (None, None)
+        Split Fraction [('b2', 'Vap')] : 0.20000 : dimensionless : False : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                    Units         Inlet       a2         b2    
+        Total Molar Flowrate     mole / second     10.000     3.1220     6.8780
+        Total Mole Fraction H2O  dimensionless    0.90000    0.74375    0.97092
+        Total Mole Fraction CO2  dimensionless    0.10000    0.25625   0.029078
+        Temperature                     kelvin     353.00     353.00     353.00
+        Pressure                        pascal 1.0132e+05 1.0132e+05 1.0132e+05
+    ====================================================================================
+
+
+Case 3:
+-------
+
+In the following cell, we will be creating the separator unit model that
+splits on a *component flow basis* and determining the initial degrees
+of freedom associated with this separator unit model.
+
+.. code:: ipython3
+
+    m.fs.sep_3 = Separator(
+        property_package=m.fs.properties,
+        split_basis=SplittingType.componentFlow,
+        outlet_list=["a3", "b3", "c3", "d3"],
+        ideal_separation=False,
+        has_phase_equilibrium=False,
+    )
+    
+    DOF_initial = degrees_of_freedom(m)
+    print('The initial degrees of freedom are: {0}'.format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial degrees of freedom are: 11
+
+
+Fixing input specifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, we will be specifying the inlet conditions for
+the separator block and re-evaluating the degrees of freedom to ensure
+the problem is square (i.e. DOF=0).
+
+.. code:: ipython3
+
+    m.fs.sep_3.inlet.flow_mol.fix(10) # converting to mol/s as unit basis is mol/s
+    m.fs.sep_3.inlet.mole_frac_comp[0, "H2O"].fix(0.9)
+    m.fs.sep_3.inlet.mole_frac_comp[0, "CO2"].fix(0.1)
+    m.fs.sep_3.inlet.pressure.fix(101325) # Pa
+    m.fs.sep_3.inlet.temperature.fix(353) # K
+    
+    m.fs.sep_3.split_fraction[0, "a3", "H2O"].fix(0.25)
+    m.fs.sep_3.split_fraction[0, "b3", "H2O"].fix(0.5)
+    m.fs.sep_3.split_fraction[0, "c3", "H2O"].fix(0.1)
+    
+    m.fs.sep_3.split_fraction[0, "a3", "CO2"].fix(0.1)
+    m.fs.sep_3.split_fraction[0, "b3", "CO2"].fix(0.2)
+    m.fs.sep_3.split_fraction[0, "c3", "CO2"].fix(0.3)
+    
+    DOF_final = degrees_of_freedom(m)
+    print('The final degrees of freedom is: {0}'.format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final degrees of freedom is: 0
+
+
+Flowsheet Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.
+
+More information on these levels can be found in the IDAES
+documentation:
+https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html
+
+.. code:: ipython3
+
+    m.fs.sep_3.initialize(outlvl=idaeslog.WARNING)
+
+Obtaining Simulation Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, the flowsheet will be solved using the IDAES
+``get_solver`` tool. Setting ``tee=True`` will display the solver
+output.
+
+.. code:: ipython3
+
+    solver = get_solver()
+    result = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    max_iter=200
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:      561
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:      250
+    
+    Total number of variables............................:      182
+                         variables with only lower bounds:       48
+                    variables with lower and upper bounds:      117
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:      182
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 4.25e+02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 4.25e+00 8.00e-02  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+       2  0.0000000e+00 4.20e-02 9.79e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+       3  0.0000000e+00 8.73e-11 9.90e+02  -1.0 9.90e-07    -  9.90e-01 1.00e+00h  1
+    
+    Number of Iterations....: 3
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   9.5744158094362128e-14    8.7311491370201111e-11
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   9.5744158094362128e-14    8.7311491370201111e-11
+    
+    
+    Number of objective function evaluations             = 4
+    Number of objective gradient evaluations             = 4
+    Number of equality constraint evaluations            = 4
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 4
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 3
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+
+
+View Results
+~~~~~~~~~~~~
+
+As expected, the report below shows that the component mole fractions in
+each of the outlet streams are equivalent to their respective split
+fractions as specified in the input specifications.
+
+.. code:: ipython3
+
+    m.fs.sep_3.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.sep_3                                                            Time: 0.0
+    ------------------------------------------------------------------------------------
+        Unit Performance
+    
+        Variables: 
+    
+        Key                            : Value   : Units         : Fixed : Bounds
+        Split Fraction [('a3', 'CO2')] : 0.10000 : dimensionless :  True : (None, None)
+        Split Fraction [('a3', 'H2O')] : 0.25000 : dimensionless :  True : (None, None)
+        Split Fraction [('b3', 'CO2')] : 0.20000 : dimensionless :  True : (None, None)
+        Split Fraction [('b3', 'H2O')] : 0.50000 : dimensionless :  True : (None, None)
+        Split Fraction [('c3', 'CO2')] : 0.30000 : dimensionless :  True : (None, None)
+        Split Fraction [('c3', 'H2O')] : 0.10000 : dimensionless :  True : (None, None)
+        Split Fraction [('d3', 'CO2')] : 0.40000 : dimensionless : False : (None, None)
+        Split Fraction [('d3', 'H2O')] : 0.15000 : dimensionless : False : (None, None)
+    
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                    Units         Inlet       a3         b3         c3         d3    
+        Total Molar Flowrate     mole / second     10.000     2.3500     4.7000     1.2000     1.7500
+        Total Mole Fraction H2O  dimensionless    0.90000    0.95745    0.95745    0.75000    0.77143
+        Total Mole Fraction CO2  dimensionless    0.10000   0.042553   0.042553    0.25000    0.22857
+        Temperature                     kelvin     353.00     353.00     353.00     353.00     353.00
+        Pressure                        pascal 1.0132e+05 1.0132e+05 1.0132e+05 1.0132e+05 1.0132e+05
+    ====================================================================================
+
+

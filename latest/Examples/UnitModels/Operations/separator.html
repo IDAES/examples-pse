@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial: Separator Unit Model with Modular Property Package &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Tutorial: Separator Unit Model with Modular Property Package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/UnitModels/Operations/separator.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorial-separator-unit-model-with-modular-property-package">
+<h1>Tutorial: Separator Unit Model with Modular Property Package<a class="headerlink" href="#tutorial-separator-unit-model-with-modular-property-package" title="Permalink to this heading">¶</a></h1>
+<img alt="../../../_images/splitter.svg" src="../../../_images/splitter.svg" /><section id="learning-outcomes">
+<h2>Learning Outcomes<a class="headerlink" href="#learning-outcomes" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Demonstrate use of the separator unit model in IDAES</p></li>
+<li><p>Demonstrate different separation options available</p></li>
+</ul>
+</section>
+<section id="problem-statement">
+<h2>Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this heading">¶</a></h2>
+<p>In this example, we will be separating a feed stream of liquid H2O and
+CO2 vapor. The inlet conditions are as follows:</p>
+<p><strong>Inlet:</strong></p>
+<p>Flow Rate = 100 mol/s</p>
+<p>Mole Fraction (H2O) = 0.9</p>
+<p>Mole Fraction (CO2) = 0.1</p>
+<p>Temperature = 298 K</p>
+<p>Pressure = 101325 Pa</p>
+<p>We will look at three cases in this tutorial:</p>
+<p>Case 1: Separate on a total flow split basis</p>
+<p>Case 2: Separate on a phase flow split basis</p>
+<p>Case 3: Separate on a component flow split basis</p>
+<p>For more details, please refer to the IDAES documentation:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable">https://idaes-pse.readthedocs.io/en/stable</a></p>
+</section>
+<section id="importing-necessary-tools">
+<h2>Importing necessary tools<a class="headerlink" href="#importing-necessary-tools" title="Permalink to this heading">¶</a></h2>
+<p>In the following cell, we will be importing the necessary components
+from Pyomo and IDAES.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import objects from pyomo package</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">value</span>
+
+<span class="c1"># Import the solver</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">get_solver</span>
+
+<span class="c1"># Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+
+<span class="c1"># Import the option to set the type of material balance</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">MaterialBalanceType</span>
+
+<span class="c1"># Import the separator unit model</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models</span> <span class="kn">import</span> <span class="n">Separator</span>
+
+<span class="c1"># Import the option to set the basis for splitting</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models.separator</span> <span class="kn">import</span> <span class="n">SplittingType</span>
+
+<span class="c1"># Import idaes logger to set output levels</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+
+<span class="c1"># Import the modular property package to create a property block for the flowsheet</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties.modular_properties.base.generic_property</span> <span class="kn">import</span> <span class="n">GenericParameterBlock</span>
+
+<span class="c1"># Import the BT_Ideal property package to create a configuration file for the GenericParameterBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties.modular_properties.examples.CO2_H2O_Ideal_VLE</span> <span class="kn">import</span> <span class="n">configuration</span>
+
+<span class="c1"># Import the degrees_of_freedom function from the idaes.core.util.model_statistics package</span>
+<span class="c1"># DOF = Number of Model Variables - Number of Model Constraints</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+</pre></div>
+</div>
+</section>
+<section id="setting-up-the-flowsheet">
+<h2>Setting up the flowsheet<a class="headerlink" href="#setting-up-the-flowsheet" title="Permalink to this heading">¶</a></h2>
+<p>In the following cell, we will create the <code class="docutils literal notranslate"><span class="pre">ConcreteModel</span></code> foundation,
+attach the steady state flowsheet, and declare the property parameter
+block that will used.</p>
+<p>More information on this general workflow can be found here:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/how_to_guides/workflow/general.html">https://idaes-pse.readthedocs.io/en/stable/how_to_guides/workflow/general.html</a></p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="c1"># dynamic or ss flowsheet needs to be specified here</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">GenericParameterBlock</span><span class="p">(</span><span class="o">**</span><span class="n">configuration</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="case-1">
+<h2>Case 1:<a class="headerlink" href="#case-1" title="Permalink to this heading">¶</a></h2>
+<p>In the following cell, we will be creating the separator unit model that
+splits on a <em>total flow basis</em> and determining the initial degrees of
+freedom associated with this separator unit model.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span> <span class="o">=</span> <span class="n">Separator</span><span class="p">(</span>
+    <span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span>
+    <span class="n">split_basis</span><span class="o">=</span><span class="n">SplittingType</span><span class="o">.</span><span class="n">totalFlow</span><span class="p">,</span>
+    <span class="n">outlet_list</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;a1&quot;</span><span class="p">,</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span> <span class="s2">&quot;c1&quot;</span><span class="p">],</span>  <span class="c1"># creates three outlet streams</span>
+    <span class="n">ideal_separation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">has_phase_equilibrium</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">DOF_initial</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The initial degrees of freedom are: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_initial</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">initial</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="n">are</span><span class="p">:</span> <span class="mi">7</span>
+</pre></div>
+</div>
+<section id="fixing-input-specifications">
+<h3>Fixing input specifications<a class="headerlink" href="#fixing-input-specifications" title="Permalink to this heading">¶</a></h3>
+<p>In the following cell, we will be specifying the inlet conditions for
+the separator block and re-evaluating the degrees of freedom to ensure
+the problem is square (i.e. DOF=0).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># converting to mol/s as unit basis is mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;CO2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span> <span class="c1"># Pa</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">353</span><span class="p">)</span> <span class="c1"># K</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;a1&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;b1&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="c1"># Directly setting the split fraction of c1 will cause the DOF check to fail</span>
+
+<span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The final degrees of freedom is: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_final</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="ow">is</span><span class="p">:</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="flowsheet-initialization">
+<h3>Flowsheet Initialization<a class="headerlink" href="#flowsheet-initialization" title="Permalink to this heading">¶</a></h3>
+<p>IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.</p>
+<p>More information on these levels can be found in the IDAES
+documentation:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html">https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html</a></p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="obtaining-simulation-results">
+<h3>Obtaining Simulation Results<a class="headerlink" href="#obtaining-simulation-results" title="Permalink to this heading">¶</a></h3>
+<p>In the following cell, the flowsheet will be solved using the IDAES
+<code class="docutils literal notranslate"><span class="pre">get_solver</span></code> tool. Setting <code class="docutils literal notranslate"><span class="pre">tee=True</span></code> will display the solver
+output.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">()</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+max_iter=200
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      186
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       83
+
+Total number of variables............................:       60
+                     variables with only lower bounds:       16
+                variables with lower and upper bounds:       39
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       60
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 4.25e+02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 4.25e+00 4.84e-02  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+   2  0.0000000e+00 4.20e-02 9.79e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+   3  0.0000000e+00 1.16e-10 9.90e+02  -1.0 9.90e-07    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.1489298971323445e-13    1.1641532182693481e-10
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.1489298971323445e-13    1.1641532182693481e-10
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.</pre>
+</section>
+<section id="view-results">
+<h3>View Results<a class="headerlink" href="#view-results" title="Permalink to this heading">¶</a></h3>
+<p>As expected, the report below shows that the three outlet streams share
+the same composition as the inlet stream with the only difference being
+their molar flowrate, which was determined by their respective split
+fractions.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">sep_1</span>                                                            <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>                      <span class="p">:</span> <span class="n">Value</span>   <span class="p">:</span> <span class="n">Units</span>         <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;a1&#39;</span><span class="p">,)]</span> <span class="p">:</span> <span class="mf">0.20000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;b1&#39;</span><span class="p">,)]</span> <span class="p">:</span> <span class="mf">0.50000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;c1&#39;</span><span class="p">,)]</span> <span class="p">:</span> <span class="mf">0.30000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                <span class="n">Units</span>         <span class="n">Inlet</span>       <span class="n">a1</span>         <span class="n">b1</span>         <span class="n">c1</span>
+    <span class="n">Total</span> <span class="n">Molar</span> <span class="n">Flowrate</span>     <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>     <span class="mf">10.000</span>     <span class="mf">2.0000</span>     <span class="mf">5.0000</span>     <span class="mf">3.0000</span>
+    <span class="n">Total</span> <span class="n">Mole</span> <span class="n">Fraction</span> <span class="n">H2O</span>  <span class="n">dimensionless</span>    <span class="mf">0.90000</span>    <span class="mf">0.90000</span>    <span class="mf">0.90000</span>    <span class="mf">0.90000</span>
+    <span class="n">Total</span> <span class="n">Mole</span> <span class="n">Fraction</span> <span class="n">CO2</span>  <span class="n">dimensionless</span>    <span class="mf">0.10000</span>    <span class="mf">0.10000</span>    <span class="mf">0.10000</span>    <span class="mf">0.10000</span>
+    <span class="n">Temperature</span>                     <span class="n">kelvin</span>     <span class="mf">353.00</span>     <span class="mf">353.00</span>     <span class="mf">353.00</span>     <span class="mf">353.00</span>
+    <span class="n">Pressure</span>                        <span class="n">pascal</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="case-2">
+<h2>Case 2:<a class="headerlink" href="#case-2" title="Permalink to this heading">¶</a></h2>
+<p>In the following cell, we will be creating the separator unit model that
+splits on a <em>phase flow basis</em> and determining the initial degrees of
+freedom associated with this separator unit model.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span> <span class="o">=</span> <span class="n">Separator</span><span class="p">(</span>
+    <span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span>
+    <span class="n">split_basis</span><span class="o">=</span><span class="n">SplittingType</span><span class="o">.</span><span class="n">phaseFlow</span><span class="p">,</span>
+    <span class="n">outlet_list</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;a2&quot;</span><span class="p">,</span> <span class="s2">&quot;b2&quot;</span><span class="p">],</span>
+    <span class="n">ideal_separation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">has_phase_equilibrium</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">DOF_initial</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The initial degrees of freedom are: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_initial</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">initial</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="n">are</span><span class="p">:</span> <span class="mi">7</span>
+</pre></div>
+</div>
+<section id="id1">
+<h3>Fixing input specifications<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
+<p>In the following cell, we will be specifying the inlet conditions for
+the separator block and re-evaluating the degrees of freedom to ensure
+the problem is square (i.e. DOF=0).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># converting to mol/s as unit basis is mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;CO2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span> <span class="c1"># Pa</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">353</span><span class="p">)</span> <span class="c1"># K</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;a2&quot;</span><span class="p">,</span> <span class="s2">&quot;Vap&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;b2&quot;</span><span class="p">,</span> <span class="s2">&quot;Liq&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The final degrees of freedom is: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_final</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="ow">is</span><span class="p">:</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h3>Flowsheet Initialization<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
+<p>IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.</p>
+<p>More information on these levels can be found in the IDAES
+documentation:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html">https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html</a></p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>Obtaining Simulation Results<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h3>
+<p>In the following cell, the flowsheet will be solved using the IDAES
+<code class="docutils literal notranslate"><span class="pre">get_solver</span></code> tool. Setting <code class="docutils literal notranslate"><span class="pre">tee=True</span></code> will display the solver
+output.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">()</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+max_iter=200
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      321
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      144
+
+Total number of variables............................:      105
+                     variables with only lower bounds:       28
+                variables with lower and upper bounds:       67
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:      105
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 4.25e+02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 4.25e+00 4.84e-02  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+   2  0.0000000e+00 4.20e-02 9.79e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+   3  0.0000000e+00 1.38e-10 9.90e+02  -1.0 9.90e-07    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.3643542528446593e-13    1.3824319466948509e-10
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.3643542528446593e-13    1.3824319466948509e-10
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.</pre>
+</section>
+<section id="id4">
+<h3>View Results<a class="headerlink" href="#id4" title="Permalink to this heading">¶</a></h3>
+<p>As expected, the report below shows that the outlet <em>a2</em> contains 80% of
+the gaseous CO2 and outlet <em>b2</em> contains 80% of the liquid H2O.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">sep_2</span>                                                            <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>                            <span class="p">:</span> <span class="n">Value</span>   <span class="p">:</span> <span class="n">Units</span>         <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;a2&#39;</span><span class="p">,</span> <span class="s1">&#39;Liq&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.20000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;a2&#39;</span><span class="p">,</span> <span class="s1">&#39;Vap&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.80000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;b2&#39;</span><span class="p">,</span> <span class="s1">&#39;Liq&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.80000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;b2&#39;</span><span class="p">,</span> <span class="s1">&#39;Vap&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.20000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                <span class="n">Units</span>         <span class="n">Inlet</span>       <span class="n">a2</span>         <span class="n">b2</span>
+    <span class="n">Total</span> <span class="n">Molar</span> <span class="n">Flowrate</span>     <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>     <span class="mf">10.000</span>     <span class="mf">3.1220</span>     <span class="mf">6.8780</span>
+    <span class="n">Total</span> <span class="n">Mole</span> <span class="n">Fraction</span> <span class="n">H2O</span>  <span class="n">dimensionless</span>    <span class="mf">0.90000</span>    <span class="mf">0.74375</span>    <span class="mf">0.97092</span>
+    <span class="n">Total</span> <span class="n">Mole</span> <span class="n">Fraction</span> <span class="n">CO2</span>  <span class="n">dimensionless</span>    <span class="mf">0.10000</span>    <span class="mf">0.25625</span>   <span class="mf">0.029078</span>
+    <span class="n">Temperature</span>                     <span class="n">kelvin</span>     <span class="mf">353.00</span>     <span class="mf">353.00</span>     <span class="mf">353.00</span>
+    <span class="n">Pressure</span>                        <span class="n">pascal</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="case-3">
+<h2>Case 3:<a class="headerlink" href="#case-3" title="Permalink to this heading">¶</a></h2>
+<p>In the following cell, we will be creating the separator unit model that
+splits on a <em>component flow basis</em> and determining the initial degrees
+of freedom associated with this separator unit model.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span> <span class="o">=</span> <span class="n">Separator</span><span class="p">(</span>
+    <span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span>
+    <span class="n">split_basis</span><span class="o">=</span><span class="n">SplittingType</span><span class="o">.</span><span class="n">componentFlow</span><span class="p">,</span>
+    <span class="n">outlet_list</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;a3&quot;</span><span class="p">,</span> <span class="s2">&quot;b3&quot;</span><span class="p">,</span> <span class="s2">&quot;c3&quot;</span><span class="p">,</span> <span class="s2">&quot;d3&quot;</span><span class="p">],</span>
+    <span class="n">ideal_separation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">has_phase_equilibrium</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">DOF_initial</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The initial degrees of freedom are: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_initial</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">initial</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="n">are</span><span class="p">:</span> <span class="mi">11</span>
+</pre></div>
+</div>
+<section id="id5">
+<h3>Fixing input specifications<a class="headerlink" href="#id5" title="Permalink to this heading">¶</a></h3>
+<p>In the following cell, we will be specifying the inlet conditions for
+the separator block and re-evaluating the degrees of freedom to ensure
+the problem is square (i.e. DOF=0).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># converting to mol/s as unit basis is mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;CO2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span> <span class="c1"># Pa</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">353</span><span class="p">)</span> <span class="c1"># K</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;a3&quot;</span><span class="p">,</span> <span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;b3&quot;</span><span class="p">,</span> <span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;c3&quot;</span><span class="p">,</span> <span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;a3&quot;</span><span class="p">,</span> <span class="s2">&quot;CO2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;b3&quot;</span><span class="p">,</span> <span class="s2">&quot;CO2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;c3&quot;</span><span class="p">,</span> <span class="s2">&quot;CO2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The final degrees of freedom is: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_final</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="ow">is</span><span class="p">:</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h3>Flowsheet Initialization<a class="headerlink" href="#id6" title="Permalink to this heading">¶</a></h3>
+<p>IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.</p>
+<p>More information on these levels can be found in the IDAES
+documentation:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html">https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html</a></p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h3>Obtaining Simulation Results<a class="headerlink" href="#id7" title="Permalink to this heading">¶</a></h3>
+<p>In the following cell, the flowsheet will be solved using the IDAES
+<code class="docutils literal notranslate"><span class="pre">get_solver</span></code> tool. Setting <code class="docutils literal notranslate"><span class="pre">tee=True</span></code> will display the solver
+output.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">solver</span> <span class="o">=</span> <span class="n">get_solver</span><span class="p">()</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2: nlp_scaling_method=gradient-based
+tol=1e-06
+max_iter=200
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:      561
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:      250
+
+Total number of variables............................:      182
+                     variables with only lower bounds:       48
+                variables with lower and upper bounds:      117
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:      182
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 4.25e+02 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 4.25e+00 8.00e-02  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+   2  0.0000000e+00 4.20e-02 9.79e-02  -1.0 1.00e-04    -  9.90e-01 9.90e-01h  1
+   3  0.0000000e+00 8.73e-11 9.90e+02  -1.0 9.90e-07    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   9.5744158094362128e-14    8.7311491370201111e-11
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   9.5744158094362128e-14    8.7311491370201111e-11
+
+
+Number of objective function evaluations             = 4
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 4
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.001
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.</pre>
+</section>
+<section id="id8">
+<h3>View Results<a class="headerlink" href="#id8" title="Permalink to this heading">¶</a></h3>
+<p>As expected, the report below shows that the component mole fractions in
+each of the outlet streams are equivalent to their respective split
+fractions as specified in the input specifications.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">sep_3</span>                                                            <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>                            <span class="p">:</span> <span class="n">Value</span>   <span class="p">:</span> <span class="n">Units</span>         <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;a3&#39;</span><span class="p">,</span> <span class="s1">&#39;CO2&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.10000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;a3&#39;</span><span class="p">,</span> <span class="s1">&#39;H2O&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.25000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;b3&#39;</span><span class="p">,</span> <span class="s1">&#39;CO2&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.20000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;b3&#39;</span><span class="p">,</span> <span class="s1">&#39;H2O&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.50000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;c3&#39;</span><span class="p">,</span> <span class="s1">&#39;CO2&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.30000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;c3&#39;</span><span class="p">,</span> <span class="s1">&#39;H2O&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.10000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;d3&#39;</span><span class="p">,</span> <span class="s1">&#39;CO2&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.40000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Split</span> <span class="n">Fraction</span> <span class="p">[(</span><span class="s1">&#39;d3&#39;</span><span class="p">,</span> <span class="s1">&#39;H2O&#39;</span><span class="p">)]</span> <span class="p">:</span> <span class="mf">0.15000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                                <span class="n">Units</span>         <span class="n">Inlet</span>       <span class="n">a3</span>         <span class="n">b3</span>         <span class="n">c3</span>         <span class="n">d3</span>
+    <span class="n">Total</span> <span class="n">Molar</span> <span class="n">Flowrate</span>     <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>     <span class="mf">10.000</span>     <span class="mf">2.3500</span>     <span class="mf">4.7000</span>     <span class="mf">1.2000</span>     <span class="mf">1.7500</span>
+    <span class="n">Total</span> <span class="n">Mole</span> <span class="n">Fraction</span> <span class="n">H2O</span>  <span class="n">dimensionless</span>    <span class="mf">0.90000</span>    <span class="mf">0.95745</span>    <span class="mf">0.95745</span>    <span class="mf">0.75000</span>    <span class="mf">0.77143</span>
+    <span class="n">Total</span> <span class="n">Mole</span> <span class="n">Fraction</span> <span class="n">CO2</span>  <span class="n">dimensionless</span>    <span class="mf">0.10000</span>   <span class="mf">0.042553</span>   <span class="mf">0.042553</span>    <span class="mf">0.25000</span>    <span class="mf">0.22857</span>
+    <span class="n">Temperature</span>                     <span class="n">kelvin</span>     <span class="mf">353.00</span>     <span class="mf">353.00</span>     <span class="mf">353.00</span>     <span class="mf">353.00</span>     <span class="mf">353.00</span>
+    <span class="n">Pressure</span>                        <span class="n">pascal</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

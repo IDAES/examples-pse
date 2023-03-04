@@ -1,0 +1,521 @@
+Using Parameter Estimation with Modular Property Packages
+=========================================================
+
+1. Introduction
+---------------
+
+This Jupyter Notebook estimates binary interaction parameters for a
+CO\ :math:`_2`-Ionic liquid property package. A property package has
+been created for CO\ :math:`_2`-[bmim][PF6]. We will utilize Pyomo’s
+``parmest`` tool in conjuction with IDAES models for parameter
+estimation. We demonstrate these tools by estimating the parameters
+associated with the Peng-Robinson property model for a benzene-toluene
+mixture. The Peng-Robinson EOS the binary interaction parameter
+(kappa_ij). When estimating parameters associated with the property
+package, IDAES provides the flexibility of doing the parameter
+estimation by just using the state block or by using a unit model with a
+specified property package. This module will demonstrate parameter
+estimation by using the flash unit model with a Modular Property
+Package.
+
+1.1 Tutorial objectives
+~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Utilize the Modular Property Package framework, which provides a
+   flexible platform for users to build property packages by calling
+   upon libraries of modular sub-models to build up complex property
+   calculations with the least effort possible.
+-  Set up a method to return an initialized model
+-  Set up the parameter estimation problem using ``parmest``
+
+2. Problem Statement
+--------------------
+
+2.1 Importing Pyomo and IDAES model and flowsheet components.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the next cell, we will be importing the necessary components from
+Pyomo and IDAES.
+
+.. code:: ipython3
+
+    # Import objects from pyomo package
+    from pyomo.environ import (ConcreteModel,
+                               SolverFactory,
+                               units as pyunits)
+    
+    # Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model
+    from idaes.core import FlowsheetBlock
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+    
+    # Import Flash unit model from idaes.models.unit_models
+    from idaes.models.unit_models import Flash
+
+2.2 Import parmest
+~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    import pyomo.contrib.parmest.parmest as parmest
+
+2.3 Import the Modular Property framework
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    from idaes.models.properties.modular_properties.examples.CO2_bmimPF6_PR import configuration
+    
+    from idaes.models.properties.modular_properties import GenericParameterBlock
+
+2.4 Import data
+~~~~~~~~~~~~~~~
+
+In the next cell, we will be importing ``pandas`` and the ``.csv`` file
+with preassure and composition data. For this example, we load data from
+the csv file CO2_IL_298.csv. The dataset consists of ninteen data points
+which provide the mole fraction of [bmim][PF6] and carbon dioxide and
+the pressure at three different temperatures.
+
+.. code:: ipython3
+
+    import pandas as pd
+    
+    # Load data from csv
+    data = pd.read_csv('CO2_IL_298.csv')
+
+3.0 Setting up an initialized model
+-----------------------------------
+
+We need to provide a method that returns an initialized model to the
+``parmest`` tool in Pyomo.
+
+How we build the model will depend on the data we provided in the data
+dataframe from pir .csv file.
+
+In this case we have data on the liquid mixture, the temperature and the
+pressure. We will fix the temperature, mole franction in the liquid
+phase, and the mole fraction of the inlet.
+
+.. code:: ipython3
+
+    def PR_model(data):
+        
+        m = ConcreteModel()
+    
+        m.fs = FlowsheetBlock(dynamic=False)
+    
+        m.fs.properties = GenericParameterBlock(**configuration)
+    
+        m.fs.state_block = m.fs.properties.build_state_block([1], defined_state=True)
+    
+        m.fs.state_block[1].flow_mol.fix(1)
+        x = float(data["x_carbon_dioxide"])+0.5
+        m.fs.state_block[1].temperature.fix(float(data["temperature"]))
+        m.fs.state_block[1].pressure.fix(float(data["pressure"]))
+        m.fs.state_block[1].mole_frac_comp["bmimPF6"].fix(1-x)
+        m.fs.state_block[1].mole_frac_comp["carbon_dioxide"].fix(x)
+        
+        # parameter - kappa_ij (set at 0.3, 0 if i=j)
+        m.fs.properties.PR_kappa['bmimPF6', 'bmimPF6'].fix(0)
+        m.fs.properties.PR_kappa['bmimPF6', 'carbon_dioxide'].fix(-0.047)
+        m.fs.properties.PR_kappa['carbon_dioxide', 'carbon_dioxide'].fix(0)
+        m.fs.properties.PR_kappa['carbon_dioxide', 'bmimPF6'].fix(0.002)
+    
+        # Initialize the flash unit
+        m.fs.state_block.initialize(outlvl=idaeslog.INFO)
+    
+        # Fix the state variables on the state block
+        m.fs.state_block[1].pressure.unfix()
+        m.fs.state_block[1].temperature.fix(float(data["temperature"]))
+        m.fs.state_block[1].mole_frac_phase_comp['Liq', 'bmimPF6'].fix(float(data["x_bmimPF6"]))
+        m.fs.state_block[1].mole_frac_phase_comp['Liq', 'carbon_dioxide'].fix(float(data["x_carbon_dioxide"]))
+        m.fs.state_block[1].mole_frac_comp['bmimPF6'].fix(float(data["x_bmimPF6"]))
+        m.fs.state_block[1].mole_frac_comp['carbon_dioxide'].unfix()
+        # Set bounds on variables to be estimated
+        m.fs.properties.PR_kappa['bmimPF6', 'carbon_dioxide'].setlb(-5)
+        m.fs.properties.PR_kappa['bmimPF6', 'carbon_dioxide'].setub(5)
+    
+        m.fs.properties.PR_kappa['carbon_dioxide', 'bmimPF6'].setlb(-5)
+        m.fs.properties.PR_kappa['carbon_dioxide', 'bmimPF6'].setub(5)
+    
+        # Return initialized flash model
+        return m
+
+3.1 Solving square problem
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: ipython3
+
+    from idaes.core.util.model_statistics import degrees_of_freedom
+    import pytest
+    
+    test_data = {"temperature": 298, "pressure": 812323, "x_bmimPF6":0.86, "x_carbon_dioxide":0.14}
+    
+    m = PR_model(test_data)
+    
+    # Check that degrees of freedom is 0
+    assert degrees_of_freedom(m) == 0
+
+
+.. parsed-literal::
+
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `1.3789905650578088e-06` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+
+
+4.0 Parameter estimation using parmest
+--------------------------------------
+
+4.1 List of variable names to be estimated
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a list of vars to estimate
+
+.. code:: ipython3
+
+    variable_name = ["fs.properties.PR_kappa['bmimPF6', 'carbon_dioxide']",
+                     "fs.properties.PR_kappa['carbon_dioxide', 'bmimPF6']"]
+
+4.2 Create method to return an expression that computes the sum of squared error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We need to provide a method to return an expression to compute the sum
+of squared errors that will be used as the objective in solving the
+parameter estimation problem. For this problem, the error will be
+computed for the pressure.
+
+.. code:: ipython3
+
+    def SSE(m, data):   
+        expr = ((float(data["pressure"]) - m.fs.state_block[1].pressure)**2)
+        return expr*1e-7
+
+4.3 Run the parameter estimation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We are now ready to set up the parameter estimation problem. We will
+create a parameter estimation object called pest. As shown below, we
+pass the method that returns an initialized model, data, variable_name,
+and the SSE expression to the Estimator method. tee=True will print the
+solver output after solving the parameter estimation problem.
+
+.. code:: ipython3
+
+    pest = parmest.Estimator(PR_model, data, variable_name, SSE, tee=True)
+    
+    obj_value, parameters = pest.theta_est()
+
+
+.. parsed-literal::
+
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `4.301303339264284e-06` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:06 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `4.814447495739171e-09` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `6.357548229111755e-06` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `6.169320987299437e-07` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:07 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `7.629131479751715e-08` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `1.3059472085065408e-08` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `4.761445527533956e-06` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `7.219204097329158e-09` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:08 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `1.03769179356835e-05` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `1.269889598521249e-06` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `2.021447098567687e-07` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `4.096574706592338e-08` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:09 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `6.21086636630859e-06` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `1.1919675619879674e-08` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `1.0197309662820167e-10` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:10 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `2.385494860297472e-06` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `4.578395178499122e-07` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Starting initialization
+    WARNING (W1002): Setting Var
+        'fs.state_block[1].log_mole_frac_tbub[Vap,Liq,carbon_dioxide]' to a
+        numeric value `1.0835202436687703e-07` outside the bounds (None, 0).
+        See also https://pyomo.readthedocs.io/en/stable/errors.html#w1002
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Dew and bubble point initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Equilibrium temperature initialization completed.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: State variable initialization completed.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Phase equilibrium initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Property initialization: optimal - Optimal Solution Found.
+    2023-03-04 01:30:11 [INFO] idaes.init.fs.state_block: Property package initialization: optimal - Optimal Solution Found.
+    Ipopt 3.13.2: 
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:      842
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:      720
+    
+    Total number of variables............................:      360
+                         variables with only lower bounds:       72
+                    variables with lower and upper bounds:      234
+                         variables with only upper bounds:       18
+    Total number of equality constraints.................:      358
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 5.00e-01 1.11e-13  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  1.1422488e+01 2.60e-01 2.37e+03  -1.0 3.35e+04    -  3.39e-01 6.89e-01h  1
+       2  2.8748813e+01 1.27e-01 1.10e+03  -1.0 1.36e+04    -  8.22e-02 9.88e-01h  1
+       3  2.9813930e+01 1.87e-01 5.94e+02  -1.0 5.01e+02    -  8.73e-01 9.90e-01h  1
+       4  2.9709737e+01 4.27e-02 1.57e+03  -1.0 5.49e+02    -  9.85e-01 9.90e-01h  1
+       5  2.9285216e+01 8.02e-03 9.53e+04  -1.0 2.77e+03    -  9.87e-01 1.00e+00h  1
+       6  2.9283589e+01 1.44e-04 9.56e+04  -1.0 3.48e+02    -  9.90e-01 1.00e+00h  1
+       7  2.9283603e+01 7.59e-08 9.12e+02  -1.0 5.97e-01    -  9.90e-01 1.00e+00h  1
+       8  2.9282891e+01 3.35e-07 1.47e+04  -2.5 1.24e+02    -  9.98e-01 1.00e+00f  1
+       9  2.9282892e+01 3.64e-12 4.97e-08  -2.5 2.39e-01    -  1.00e+00 1.00e+00h  1
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+      10  2.9282891e+01 2.86e-10 3.05e+00  -8.6 3.61e+00    -  1.00e+00 1.00e+00h  1
+      11  2.9282891e+01 1.96e-12 4.70e-12  -8.6 2.03e-04    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 11
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   2.9282891309655959e+01    2.9282891309655959e+01
+    Dual infeasibility......:   4.6969668913706169e-12    4.6969668913706169e-12
+    Constraint violation....:   1.9579813549710179e-12    1.9579813549710179e-12
+    Complementarity.........:   2.5059037694124783e-09    2.5059037694124783e-09
+    Overall NLP error.......:   2.5059037694124783e-09    2.5059037694124783e-09
+    
+    
+    Number of objective function evaluations             = 12
+    Number of objective gradient evaluations             = 12
+    Number of equality constraint evaluations            = 12
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 12
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 11
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.015
+    Total CPU secs in NLP function evaluations           =      0.060
+    
+    EXIT: Optimal Solution Found.
+    
+
+5.0 Display results
+-------------------
+
+Let us display the results by running the next cell.
+
+.. code:: ipython3
+
+    print("The SSE at the optimal solution is %0.6f" % obj_value)
+    print()
+    print("The values for the parameters are as follows:")
+    for k,v in parameters.items():
+        print(k, "=", v)
+
+
+.. parsed-literal::
+
+    The SSE at the optimal solution is 29.282891
+    
+    The values for the parameters are as follows:
+    fs.properties.PR_kappa[bmimPF6,carbon_dioxide] = -0.4071428400298664
+    fs.properties.PR_kappa[carbon_dioxide,bmimPF6] = 0.020593684002511537
+
+
+Now we can use this parameters and include them in the configuration
+dictionary. We can also use
+``m.fs.properties = GenericParameterBlock(**configuration)`` to solve
+unit models.
+

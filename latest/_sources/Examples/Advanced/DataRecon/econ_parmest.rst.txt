@@ -1,0 +1,463 @@
+Data Parameter Estimation for a Single Unit - Economizer
+========================================================
+
+This notebook demonstrates parameter estimation continuing from the data
+reconciliation results in ``econ_recon.ipynb`` or
+``boiler_recon.ipynb``.
+
+1. Read Data
+------------
+
+The data used here is produced by the data reconciliation step. The data
+tags are mostly systematically generated from stream names to minimize
+effort in mapping data to the model. The same model is used for
+parameter reconciliation and data reconciliation, so the stream names
+are consistent and any data mapping can be reused. The bin information
+columns where included in the data reconciliation output, so there is no
+need to bin the data again here.
+
+.. code:: ipython3
+
+    import pandas as pd
+    import idaes.core.dmf.model_data as da
+    from idaes.logger import getLogger
+    import logging
+    getLogger('idaes.core').setLevel(logging.ERROR)
+
+Either economizer only or full boiler data reconciliation results can be
+used here. You can select below.
+
+.. code:: ipython3
+
+    recon_data = "econ_recon.csv"
+    
+    #Uncomment the next line to use boiler recon data.
+    #recon_data = "boiler_recon.csv"
+
+.. code:: ipython3
+
+    # Since the data is already tagged to match the model and in the correct units, we directly read the data
+    # into a Pandas data frame, and there is no need to use the data processing functions that were used in the
+    # data reconciliation notebook (although they could be used here). 
+    df = pd.read_csv(recon_data)
+    
+    # Calculate the standard deviations of the binned data 
+    bin_stdev = da.bin_stdev(df, bin_no="bin_no")
+
+
+.. parsed-literal::
+
+    /home/runner/.conda/envs/idaes-env/lib/python3.8/site-packages/idaes/core/dmf/model_data.py:475: FutureWarning: Dropping of nuisance columns in DataFrame reductions (with 'numeric_only=None') is deprecated; in a future version this will raise TypeError.  Select only valid columns before calling the reduction.
+      res[i] = df2.std(axis=0)
+
+
+Create a function to set the model data. In this case, we take the data
+reconciliation results for model input to be correct and set those in
+the model. Another approach would be to also estimate model inputs given
+that there is some uncertainty in their measurements.
+
+.. code:: ipython3
+
+    # The 'set_data' function below takes data from the DataFrame and updates the model data parameters.
+    def set_data(m, df, data_tags, index=None):
+        if index is None:
+            index = df.index[0]
+        dft = df.transpose()[index]
+        m.bin_no = dft["bin_no"]
+        m.data.store_values(dft[data_tags])
+        m.data_stdev.store_values(bin_stdev[m.bin_no][data_tags])
+        # Set the inlet streams from the data.
+        input_tags = [
+            "BFW_h",
+            "BFW_P",
+            "BFW_F",
+            "FG_2_ECON_T",
+            "FG_2_ECON_P",
+            "FG_2_ECON_F[O2]",
+            "FG_2_ECON_F[NO]",
+            "FG_2_ECON_F[N2]",
+            "FG_2_ECON_F[SO2]",
+            "FG_2_ECON_F[CO2]",
+            "FG_2_ECON_F[H2O]",
+        ]
+        for t in input_tags:
+            m.data_tags[t].expression.value = dft[t]
+
+2. Create Model Generator Function
+----------------------------------
+
+We use the Parmest tool from Pyomo to do the parameter estimation here,
+which requires a function to generate a model for each case. The cases
+are put together by Parmest to set up a parameter estimation problem.
+
+.. code:: ipython3
+
+    # Import models
+    import os
+    import pyomo.environ as pyo
+    from idaes.core.util import model_serializer as ms
+    from idaes.core import FlowsheetBlock
+    from idaes.models_extra.power_generation.properties.flue_gas_ideal import FlueGasParameterBlock
+    from idaes.models_extra.power_generation.unit_models.boiler_heat_exchanger import (
+        BoilerHeatExchanger, 
+        TubeArrangement, 
+        HeatExchangerFlowPattern
+    )
+    from idaes.models.properties import iapws95
+    import idaes.core.util.tables as ta
+    from idaes.core.util.tags import ModelTagGroup
+
+.. code:: ipython3
+
+    # Add a function to get an instance of the economizer model.
+    
+    solver = pyo.SolverFactory('ipopt')
+    def get_model(data):
+        m = pyo.ConcreteModel()
+        m.fs = FlowsheetBlock(dynamic=False, time_units=pyo.units.s)
+        m.fs.prop_water = iapws95.Iapws95ParameterBlock()
+        m.fs.prop_fluegas = FlueGasParameterBlock()
+    
+        m.fs.econ = BoilerHeatExchanger(
+            cold_side={"property_package": m.fs.prop_water,
+                       "has_pressure_change": True},
+            hot_side={"property_package": m.fs.prop_fluegas,
+                      "has_pressure_change": True},
+            has_holdup=False,
+            flow_pattern=HeatExchangerFlowPattern.countercurrent,
+            tube_arrangement=TubeArrangement.inLine,
+            cold_side_water_phase="Liq",
+            has_radiation=False
+        )
+        # Set inputs and initialize.  Since the initialization is repeated each time a
+        # model is created, we'll save the results and reload them.
+        if os.path.isfile("econ_init.json.gz"):
+            ms.from_json(m, fname="econ_init.json.gz")
+        else:
+            h = pyo.value(iapws95.htpx(563.706*pyo.units.K, 2.5449e7*pyo.units.Pa))
+            m.fs.econ.cold_side_inlet.flow_mol[0].fix(24678.26) # mol/s
+            m.fs.econ.cold_side_inlet.enth_mol[0].fix(h) #J/mol         
+            m.fs.econ.cold_side_inlet.pressure[0].fix(2.5449e7) # Pa
+    
+            # Set the flue gas flow and composition
+            fg_rate = 28.3876e3  # mol/s equivalent of ~1930.08 klb/hr
+            fg_comp = { # mol fraction of flue gas components
+                "H2O":8.69/100,
+                "CO2":14.49/100,
+                "O2":2.47/100,
+                "NO":0.0006,
+                "SO2":0.002,
+            }
+            # The rest is N2
+            fg_comp["N2"] = 1 - sum(fg_comp[i] for i in fg_comp)
+    
+            # Set economizer inlets
+            for c in fg_comp:
+                m.fs.econ.hot_side.properties_in[0].flow_mol_comp[c].fix(fg_rate*fg_comp[c])    
+            m.fs.econ.hot_side_inlet.temperature[0].fix(682.335)  # K
+            m.fs.econ.hot_side_inlet.pressure[0].fix(100145)  # Pa
+    
+            # Set economizer design variables and parameters
+            ITM = 0.0254  # inch to meter conversion
+            # Based on NETL Baseline Report Rev4
+            m.fs.econ.tube_thickness.fix(0.188*ITM)  # tube thickness
+            m.fs.econ.tube_di.fix((2.0 - 2.0 * 0.188)*ITM) # calc inner diameter
+            m.fs.econ.pitch_x.fix(3.5*ITM)
+            m.fs.econ.pitch_y.fix(5.03*ITM)
+            m.fs.econ.tube_length.fix(53.41*12*ITM)  # use tube length (53.41 ft)
+            m.fs.econ.tube_nrow.fix(36*2.5) # use to match baseline performance
+            m.fs.econ.tube_ncol.fix(130) # 130 from thermoflow
+            m.fs.econ.nrow_inlet.fix(2)
+            m.fs.econ.delta_elevation.fix(50)
+            m.fs.econ.tube_r_fouling = 0.000176
+            m.fs.econ.shell_r_fouling = 0.00088
+            m.fs.econ.fcorrection_htc.fix(1.5)
+            m.fs.econ.fcorrection_dp_tube.fix(1.0)
+            m.fs.econ.fcorrection_dp_shell.fix(1.0)
+            m.fs.econ.initialize(
+                state_args_1={
+                    "flow_mol": m.fs.econ.cold_side_inlet.flow_mol[0].value,
+                    "pressure": m.fs.econ.cold_side_inlet.pressure[0].value,
+                    "enth_mol": m.fs.econ.cold_side_inlet.enth_mol[0].value,
+                },
+                state_args_2={
+                    "flow_component":{
+                        "H2O": m.fs.econ.hot_side_inlet.flow_mol_comp[0, "H2O"].value,
+                        "CO2": m.fs.econ.hot_side_inlet.flow_mol_comp[0, "CO2"].value,
+                        "N2": m.fs.econ.hot_side_inlet.flow_mol_comp[0, "N2"].value,
+                        "O2": m.fs.econ.hot_side_inlet.flow_mol_comp[0, "O2"].value,
+                        "NO": m.fs.econ.hot_side_inlet.flow_mol_comp[0, "NO"].value,
+                        "SO2": m.fs.econ.hot_side_inlet.flow_mol_comp[0, "SO2"].value,
+                    },
+                    "temperature": m.fs.econ.hot_side_inlet.temperature[0].value,
+                    "pressure": m.fs.econ.hot_side_inlet.pressure[0].value,
+                }
+            )
+            ms.to_json(m, fname="econ_init.json.gz")
+        
+        # Add tags and data parameters
+        stream_dict = ta.arcs_to_stream_dict(
+            m, 
+            additional={
+                "BFW": m.fs.econ.cold_side_inlet,
+                "ECON_OUT": m.fs.econ.cold_side_outlet,
+                "FG_2_ECON": m.fs.econ.hot_side_inlet,
+                "FG_2_AIRPH": m.fs.econ.hot_side_outlet,
+            },
+            sort=True,
+        )
+        state_dict = ta.stream_states_dict(stream_dict, time_point=0)
+        m.data_tags = ModelTagGroup()
+    
+        prop_dict = {
+            "flow_mass": "_Fm",
+            "flow_mol": "_F",
+            "enth_mol": "_h",
+            "temperature": "_T",
+            "pressure": "_P",
+        }
+        comp_list = ["O2", "NO", "N2", "SO2", "CO2", "H2O"]
+    
+        for state, block in state_dict.items():
+            for prop, suffix in prop_dict.items():
+                comp = getattr(block, prop)
+                m.data_tags.add(expr=comp, name=state+suffix, format_string="{:.3f}")
+            # Add tags for molar flow rates of each component
+            for j in comp_list:
+                # Not all components appear in all streams
+                try:
+                    comp = block.flow_mol_comp[j]
+                    m.data_tags.add(expr=comp, name=f"{state}_F[{j}]", format_string="{:.3f}")
+                except KeyError:
+                    pass
+    
+        m.data_tags.add(expr=m.fs.econ.heat_duty[0], name="ECON_Q", format_string="{:.3f}")
+        
+        m.data = pyo.Param(m.data_tags, mutable=True, doc="Process data for a specific point in time.")
+        m.data_stdev = pyo.Param(m.data_tags, mutable=True, doc="Process data standard deviation.")
+        @m.Expression(m.data_tags)
+        def err(m, i):
+            return (m.data[i] - m.data_tags[i].expression)/m.data_stdev[i]    
+    
+        # Set the data
+        set_data(m, data, data_tags=pd.Series(m.data_tags.keys()))
+        solver.solve(m)
+    
+        return m
+
+.. code:: ipython3
+
+    # Try the get model function
+    solver = pyo.SolverFactory('ipopt')
+    print(df.index)
+    m = get_model(df)
+    
+    # Solve the model at the first data point
+    res = solver.solve(m)
+
+
+.. parsed-literal::
+
+    RangeIndex(start=0, stop=250, step=1)
+
+
+.. code:: ipython3
+
+    # Show the model result at the first data point
+    from idaes.core.util.tags import svg_tag  # utility to place numbers/text in an SVG
+    from IPython.display import SVG, display
+    
+    with open("econ.svg", "r") as f:
+        s = svg_tag(svg=f, tag_group=m.data_tags, outfile="econ_init.svg")
+    display(SVG(s))
+
+
+
+.. image:: output_12_0.svg
+
+
+3. Set Up Parameter Estimation
+------------------------------
+
+Here we use the Parmest tool to solve the parameter estimation problem.
+The theta_names list is a list of parameters to estimate. The theta
+names strings are the location of the parameters in the model. A
+function ``sse()`` is also defined that creates the objective function
+for each model instance. The objective from the individual cases is
+summed to produce the overall parameter estimation objective.
+
+.. code:: ipython3
+
+    # List of parameters to estimate
+    theta_names = [
+        "fs.econ.fcorrection_htc",
+        "fs.econ.fcorrection_dp_tube",
+        "fs.econ.fcorrection_dp_shell",
+    ]
+    
+    # Tags to include in the objective
+    objective_tags = {
+        "ECON_OUT_P", 
+        "ECON_OUT_T", 
+        "FG_2_AIRPH_T", 
+        "FG_2_AIRPH_P",
+    }
+    
+    # Return expressions for the objective
+    def sse(model, data):
+        return sum((model.err[i])**2 for i in objective_tags)
+
+Run Parmest and record the results. Here we group the data by bin. Each
+parameter in theta_names will be estimated based on all the points in a
+bin. This will allow us to examine whether the parameters have a
+dependence on load.
+
+.. code:: ipython3
+
+    import pyomo.contrib.parmest.parmest as parmest
+    import numpy as np
+    
+    parmest_results={}
+    # run parmest tool for each power bin
+    for i, group in df.groupby("bin_no"):
+        pest = parmest.Estimator(get_model, group, theta_names, sse)
+        obj, theta = pest.theta_est()
+        print(f"Bin number: {i},  objective: {obj}")
+        print(theta)
+        parmest_results[i] = {'obj':obj, 'theta': theta}
+
+
+.. parsed-literal::
+
+    Bin number: 0.0,  objective: 56.88787898021291
+    fs.econ.fcorrection_htc         1.532104
+    fs.econ.fcorrection_dp_tube     1.013116
+    fs.econ.fcorrection_dp_shell    0.041279
+    dtype: float64
+    Bin number: 1.0,  objective: 21.5175285450675
+    fs.econ.fcorrection_htc         1.620108
+    fs.econ.fcorrection_dp_tube     1.023475
+    fs.econ.fcorrection_dp_shell    5.095174
+    dtype: float64
+    Bin number: 2.0,  objective: 19.55193297281616
+    fs.econ.fcorrection_htc         1.403364
+    fs.econ.fcorrection_dp_tube     1.007417
+    fs.econ.fcorrection_dp_shell    4.023197
+    dtype: float64
+    Bin number: 3.0,  objective: 31.341519211230683
+    fs.econ.fcorrection_htc         1.488449
+    fs.econ.fcorrection_dp_tube     1.024826
+    fs.econ.fcorrection_dp_shell   -1.136839
+    dtype: float64
+    Bin number: 4.0,  objective: 35.22657753921361
+    fs.econ.fcorrection_htc         1.523593
+    fs.econ.fcorrection_dp_tube     1.008824
+    fs.econ.fcorrection_dp_shell    2.957272
+    dtype: float64
+    Bin number: 5.0,  objective: 30.922514712010702
+    fs.econ.fcorrection_htc         1.453714
+    fs.econ.fcorrection_dp_tube     0.990926
+    fs.econ.fcorrection_dp_shell    1.437973
+    dtype: float64
+    Bin number: 6.0,  objective: 25.178879688881135
+    fs.econ.fcorrection_htc         1.607288
+    fs.econ.fcorrection_dp_tube     0.970936
+    fs.econ.fcorrection_dp_shell    1.678398
+    dtype: float64
+    Bin number: 7.0,  objective: 37.128481066239424
+    fs.econ.fcorrection_htc         1.406821
+    fs.econ.fcorrection_dp_tube     0.985352
+    fs.econ.fcorrection_dp_shell    1.630442
+    dtype: float64
+    Bin number: 8.0,  objective: 30.15994939625865
+    fs.econ.fcorrection_htc         1.423817
+    fs.econ.fcorrection_dp_tube     0.995257
+    fs.econ.fcorrection_dp_shell    1.439381
+    dtype: float64
+    Bin number: 9.0,  objective: 19.21014008235654
+    fs.econ.fcorrection_htc         1.416077
+    fs.econ.fcorrection_dp_tube     1.020699
+    fs.econ.fcorrection_dp_shell   -4.030140
+    dtype: float64
+    Bin number: 10.0,  objective: 18.511971637075238
+    fs.econ.fcorrection_htc         1.456900
+    fs.econ.fcorrection_dp_tube     0.976124
+    fs.econ.fcorrection_dp_shell    5.150877
+    dtype: float64
+    Bin number: 11.0,  objective: 14.444938559454604
+    fs.econ.fcorrection_htc         1.530069
+    fs.econ.fcorrection_dp_tube     0.975966
+    fs.econ.fcorrection_dp_shell    0.186283
+    dtype: float64
+    Bin number: 12.0,  objective: 30.459057130872324
+    fs.econ.fcorrection_htc         1.558721
+    fs.econ.fcorrection_dp_tube     0.987269
+    fs.econ.fcorrection_dp_shell    1.126607
+    dtype: float64
+    Bin number: 13.0,  objective: 29.77552090067474
+    fs.econ.fcorrection_htc         1.417847
+    fs.econ.fcorrection_dp_tube     1.003869
+    fs.econ.fcorrection_dp_shell    0.022246
+    dtype: float64
+    Bin number: 14.0,  objective: 15.123952519399493
+    fs.econ.fcorrection_htc         1.503236
+    fs.econ.fcorrection_dp_tube     0.990504
+    fs.econ.fcorrection_dp_shell    3.266237
+    dtype: float64
+    Bin number: 15.0,  objective: 24.573988522418006
+    fs.econ.fcorrection_htc         1.532600
+    fs.econ.fcorrection_dp_tube     0.975000
+    fs.econ.fcorrection_dp_shell   -1.351039
+    dtype: float64
+    Bin number: 16.0,  objective: 38.82304204800615
+    fs.econ.fcorrection_htc         1.439329
+    fs.econ.fcorrection_dp_tube     0.993712
+    fs.econ.fcorrection_dp_shell    1.731306
+    dtype: float64
+    Bin number: 17.0,  objective: 44.03107214882899
+    fs.econ.fcorrection_htc         1.482328
+    fs.econ.fcorrection_dp_tube     0.979370
+    fs.econ.fcorrection_dp_shell   -0.289788
+    dtype: float64
+    Bin number: 18.0,  objective: 17.725898359651946
+    fs.econ.fcorrection_htc         1.521001
+    fs.econ.fcorrection_dp_tube     1.032675
+    fs.econ.fcorrection_dp_shell    3.487472
+    dtype: float64
+    Bin number: 19.0,  objective: 36.148849640454415
+    fs.econ.fcorrection_htc         1.394337
+    fs.econ.fcorrection_dp_tube     0.988983
+    fs.econ.fcorrection_dp_shell    1.909361
+    dtype: float64
+    Bin number: 20.0,  objective: 18.598319352193357
+    fs.econ.fcorrection_htc         1.533059
+    fs.econ.fcorrection_dp_tube     1.021520
+    fs.econ.fcorrection_dp_shell   -1.701380
+    dtype: float64
+    Bin number: 21.0,  objective: 21.875317584297093
+    fs.econ.fcorrection_htc         1.448586
+    fs.econ.fcorrection_dp_tube     0.968747
+    fs.econ.fcorrection_dp_shell   -3.492656
+    dtype: float64
+    Bin number: 22.0,  objective: 17.525063141968563
+    fs.econ.fcorrection_htc         1.488911
+    fs.econ.fcorrection_dp_tube     0.992928
+    fs.econ.fcorrection_dp_shell    0.734506
+    dtype: float64
+    Bin number: 23.0,  objective: 46.65107742687482
+    fs.econ.fcorrection_htc         1.505589
+    fs.econ.fcorrection_dp_tube     0.979993
+    fs.econ.fcorrection_dp_shell   -1.566051
+    dtype: float64
+    Bin number: 24.0,  objective: 214.69292769842443
+    fs.econ.fcorrection_htc         1.435322
+    fs.econ.fcorrection_dp_tube     1.022724
+    fs.econ.fcorrection_dp_shell    0.201852
+    dtype: float64
+    Bin number: 25.0,  objective: 58.698744443973155
+    fs.econ.fcorrection_htc         1.392669
+    fs.econ.fcorrection_dp_tube     0.952199
+    fs.econ.fcorrection_dp_shell    2.976371
+    dtype: float64
+
+
