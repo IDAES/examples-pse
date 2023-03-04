@@ -160,9 +160,9 @@ In the workspace directory, there are two files and a sub-directory:
 
 .. parsed-literal::
 
-    2023-03-04 00:52:37,304 [WARNING] idaes.core.dmf.dmfbase: Unable to open global DMF configuration file for reading: File not found: /home/runner/.dmf. Using default configuration values.
-    2023-03-04 00:52:37,305 [INFO] idaes.core.dmf.workspace: Create new configuration at '/tmp/tmp1xrzpy65/my_workspace/config.yaml'
-    2023-03-04 00:52:37,307 [INFO] idaes.core.dmf.dmfbase: Saving configuration location to: /home/runner/.dmf
+    2023-03-04 01:47:29,386 [WARNING] idaes.core.dmf.dmfbase: Unable to open global DMF configuration file for reading: File not found: /home/runner/.dmf. Using default configuration values.
+    2023-03-04 01:47:29,387 [INFO] idaes.core.dmf.workspace: Create new configuration at '/tmp/tmpr11nwzke/my_workspace/config.yaml'
+    2023-03-04 01:47:29,388 [INFO] idaes.core.dmf.dmfbase: Saving configuration location to: /home/runner/.dmf
 
 
 IDAES model setup
@@ -231,7 +231,7 @@ resources. First, the Flash code:
 
 .. parsed-literal::
 
-    '9363be5888f24e64a50e58beee341d13'
+    'ad990aa1680c4233b1250f695ba7ac9a'
 
 
 
@@ -259,7 +259,7 @@ into another resource.
 
 .. parsed-literal::
 
-    'de52c3901f144c2b8c8ffddbe50e0b5f'
+    '3a24e00189d0402486cf70b6afee7cc9'
 
 
 
@@ -362,7 +362,7 @@ relation.
       Termination condition: optimal
       Id: 0
       Error rc: 0
-      Time: 0.008424758911132812
+      Time: 0.00811314582824707
     Solution: 
     - number of solutions: 0
       number of solutions displayed: 0
@@ -470,12 +470,12 @@ it, without worrying about upper and lower case.
 
 .. parsed-literal::
 
-    {'id_': 'de52c3901f144c2b8c8ffddbe50e0b5f',
+    {'id_': '3a24e00189d0402486cf70b6afee7cc9',
      'type': 'data',
      'aliases': [],
      'collaborators': [],
-     'created': 1677891157.393428,
-     'modified': 1677891157.393428,
+     'created': 1677894449.474633,
+     'modified': 1677894449.474633,
      'creator': {'name': 'runner'},
      'data': {'unit': 'Flash',
       'inlet_values': {'flow_mol': 1,
@@ -486,10 +486,10 @@ it, without worrying about upper and lower case.
      'datafiles_dir': '',
      'desc': '',
      'relations': [{'predicate': 'uses',
-       'identifier': '9363be5888f24e64a50e58beee341d13',
+       'identifier': 'ad990aa1680c4233b1250f695ba7ac9a',
        'role': 'object'}],
      'tags': [],
-     'version_info': {'created': 1677891157.393428,
+     'version_info': {'created': 1677894449.474633,
       'version': [0, 0, 0],
       'name': ''},
      'doc_id': 2}
@@ -526,25 +526,25 @@ must match exactly what was placed there.
 
 .. parsed-literal::
 
-    {'id_': '9363be5888f24e64a50e58beee341d13',
+    {'id_': 'ad990aa1680c4233b1250f695ba7ac9a',
      'type': 'code',
      'aliases': ['flash_code'],
      'collaborators': [],
-     'created': 1677891157.385105,
-     'modified': 1677891157.385105,
+     'created': 1677894449.466004,
+     'modified': 1677894449.466004,
      'creator': {'name': 'runner'},
      'data': {},
      'datafiles': [],
      'datafiles_dir': '',
      'desc': '',
      'relations': [{'predicate': 'uses',
-       'identifier': 'de52c3901f144c2b8c8ffddbe50e0b5f',
+       'identifier': '3a24e00189d0402486cf70b6afee7cc9',
        'role': 'subject'},
       {'predicate': 'derived',
-       'identifier': 'f1516da9a6684741987e841f50499de0',
+       'identifier': '0fd9c8ea78714b8cb0833ea5287e4fd3',
        'role': 'subject'}],
      'tags': [],
-     'version_info': {'created': 1677891157.385105,
+     'version_info': {'created': 1677894449.466004,
       'version': [0, 0, 0],
       'name': ''},
      'codes': [{'type': 'block',
@@ -608,7 +608,7 @@ uses → Flash inlet parameters \* Flash code ─ derived → Status of solve
       Termination condition: optimal
       Id: 0
       Error rc: 0
-      Time: 0.008424758911132812
+      Time: 0.00811314582824707
     Solution: 
     - number of solutions: 0
       number of solutions displayed: 0
@@ -716,7 +716,7 @@ Path           Name Description
 
 .. parsed-literal::
 
-    2023-03-04 00:52:37,716 [INFO] idaes.core.dmf.dmfbase: Saving configuration location to: /home/runner/.dmf
+    2023-03-04 01:47:29,832 [INFO] idaes.core.dmf.dmfbase: Saving configuration location to: /home/runner/.dmf
 
 
 
@@ -732,9 +732,9 @@ Path           Name Description
 Configuration
 -------------
 
--  \_id: d2958d00860e4520b9f49a8001329ef3
--  created: 2023-03-04T00:52:37.716364
--  modified: 2023-03-04T00:52:37.716364
+-  \_id: bafee5c7bdaf4a9b9f742089eb6e6b45
+-  created: 2023-03-04T01:47:29.832220
+-  modified: 2023-03-04T01:47:29.832220
 -  name: my_workspace
 
 
@@ -748,137 +748,137 @@ Configuration
 | I | Name(s)      | Type   | Modified        | Description           |
 | D |              |        |                 |                       |
 +===+==============+========+=================+=======================+
-| 9 | flash_code   | code   | 16              |                       |
-| 3 |              |        | 77891157.385105 |                       |
+| a | flash_code   | code   | 16              |                       |
+| d |              |        | 77894449.466004 |                       |
+| 9 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 1 |              |        |                 |                       |
 | 6 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
 | 3 |              |        |                 |                       |
 | b |              |        |                 |                       |
-| e |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
 | 5 |              |        |                 |                       |
-| 8 |              |        |                 |                       |
-| 8 |              |        |                 |                       |
-| 8 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
 | f |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| a |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 3 |              | data   | 16              |                       |
+| a |              |        | 77894449.474633 |                       |
 | 2 |              |        |                 |                       |
 | 4 |              |        |                 |                       |
 | e |              |        |                 |                       |
-| 6 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 0 |              |        |                 |                       |
 | 4 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| f |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| a |              |        |                 |                       |
+| f |              |        |                 |                       |
+| e |              |        |                 |                       |
+| e |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 9 |              |        |                 |                       |
++---+--------------+--------+-----------------+-----------------------+
+| 0 |              | data   | 16              |                       |
+| f |              |        | 77894449.715906 |                       |
+| d |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 1 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| b |              |        |                 |                       |
+| 0 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| 3 |              |        |                 |                       |
+| e |              |        |                 |                       |
 | a |              |        |                 |                       |
 | 5 |              |        |                 |                       |
-| 0 |              |        |                 |                       |
-| e |              |        |                 |                       |
-| 5 |              |        |                 |                       |
+| 2 |              |        |                 |                       |
 | 8 |              |        |                 |                       |
-| b |              |        |                 |                       |
+| 7 |              |        |                 |                       |
 | e |              |        |                 |                       |
-| e |              |        |                 |                       |
-| e |              |        |                 |                       |
-| 3 |              |        |                 |                       |
 | 4 |              |        |                 |                       |
-| 1 |              |        |                 |                       |
+| f |              |        |                 |                       |
 | d |              |        |                 |                       |
-| 1 |              |        |                 |                       |
 | 3 |              |        |                 |                       |
 +---+--------------+--------+-----------------+-----------------------+
-| d |              | data   | 16              |                       |
-| e |              |        | 77891157.393428 |                       |
+| 4 |              | no     | 16              | data_manag            |
+| 8 |              | tebook | 77894449.761714 | ement_framework.ipynb |
+| d |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| d |              |        |                 |                       |
+| 6 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 8 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 5 |              |        |                 |                       |
+| 7 |              |        |                 |                       |
+| e |              |        |                 |                       |
+| a |              |        |                 |                       |
+| 4 |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 9 |              |        |                 |                       |
+| c |              |        |                 |                       |
+| 5 |              |        |                 |                       |
 | 5 |              |        |                 |                       |
 | 2 |              |        |                 |                       |
-| c |              |        |                 |                       |
-| 3 |              |        |                 |                       |
+| d |              |        |                 |                       |
 | 9 |              |        |                 |                       |
-| 0 |              |        |                 |                       |
-| 1 |              |        |                 |                       |
-| f |              |        |                 |                       |
-| 1 |              |        |                 |                       |
-| 4 |              |        |                 |                       |
-| 4 |              |        |                 |                       |
-| c |              |        |                 |                       |
-| 2 |              |        |                 |                       |
-| b |              |        |                 |                       |
-| 8 |              |        |                 |                       |
-| c |              |        |                 |                       |
-| 8 |              |        |                 |                       |
-| f |              |        |                 |                       |
-| f |              |        |                 |                       |
-| d |              |        |                 |                       |
-| d |              |        |                 |                       |
-| b |              |        |                 |                       |
+| a |              |        |                 |                       |
+| a |              |        |                 |                       |
 | e |              |        |                 |                       |
-| 5 |              |        |                 |                       |
-| 0 |              |        |                 |                       |
-| e |              |        |                 |                       |
-| 0 |              |        |                 |                       |
-| b |              |        |                 |                       |
-| 5 |              |        |                 |                       |
-| f |              |        |                 |                       |
-+---+--------------+--------+-----------------+-----------------------+
-| f |              | data   | 16              |                       |
-| 1 |              |        | 77891157.618728 |                       |
-| 5 |              |        |                 |                       |
-| 1 |              |        |                 |                       |
 | 6 |              |        |                 |                       |
-| d |              |        |                 |                       |
-| a |              |        |                 |                       |
 | 9 |              |        |                 |                       |
-| a |              |        |                 |                       |
-| 6 |              |        |                 |                       |
-| 6 |              |        |                 |                       |
-| 8 |              |        |                 |                       |
-| 4 |              |        |                 |                       |
-| 7 |              |        |                 |                       |
-| 4 |              |        |                 |                       |
-| 1 |              |        |                 |                       |
-| 9 |              |        |                 |                       |
-| 8 |              |        |                 |                       |
-| 7 |              |        |                 |                       |
-| e |              |        |                 |                       |
-| 8 |              |        |                 |                       |
-| 4 |              |        |                 |                       |
-| 1 |              |        |                 |                       |
-| f |              |        |                 |                       |
-| 5 |              |        |                 |                       |
-| 0 |              |        |                 |                       |
-| 4 |              |        |                 |                       |
-| 9 |              |        |                 |                       |
-| 9 |              |        |                 |                       |
-| d |              |        |                 |                       |
-| e |              |        |                 |                       |
-| 0 |              |        |                 |                       |
-+---+--------------+--------+-----------------+-----------------------+
-| b |              | no     | 16              | data_manag            |
-| 9 |              | tebook | 77891157.656352 | ement_framework.ipynb |
-| 3 |              |        |                 |                       |
-| 5 |              |        |                 |                       |
-| e |              |        |                 |                       |
-| 1 |              |        |                 |                       |
-| 1 |              |        |                 |                       |
-| 7 |              |        |                 |                       |
-| 7 |              |        |                 |                       |
-| 1 |              |        |                 |                       |
-| d |              |        |                 |                       |
-| 2 |              |        |                 |                       |
-| 4 |              |        |                 |                       |
-| f |              |        |                 |                       |
-| f |              |        |                 |                       |
-| e |              |        |                 |                       |
-| a |              |        |                 |                       |
-| c |              |        |                 |                       |
-| 5 |              |        |                 |                       |
-| 5 |              |        |                 |                       |
-| c |              |        |                 |                       |
-| d |              |        |                 |                       |
-| 3 |              |        |                 |                       |
-| 1 |              |        |                 |                       |
-| 4 |              |        |                 |                       |
-| 8 |              |        |                 |                       |
-| e |              |        |                 |                       |
-| 4 |              |        |                 |                       |
-| a |              |        |                 |                       |
-| a |              |        |                 |                       |
-| 0 |              |        |                 |                       |
-| a |              |        |                 |                       |
 +---+--------------+--------+-----------------+-----------------------+
 
 

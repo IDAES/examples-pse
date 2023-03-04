@@ -169,19 +169,19 @@ will be used later.
 
 .. parsed-literal::
 
-    2023-03-04 00:51:39 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output Steam_Flow trained successfully
-    2023-03-04 00:51:41 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output Reformer_Duty trained successfully
-    2023-03-04 00:51:42 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output AR trained successfully
-    2023-03-04 00:51:44 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output C2H6 trained successfully
-    2023-03-04 00:51:45 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output C3H8 trained successfully
-    2023-03-04 00:51:47 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output C4H10 trained successfully
-    2023-03-04 00:51:48 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output CH4 trained successfully
-    2023-03-04 00:51:50 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output CO trained successfully
-    2023-03-04 00:51:51 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output CO2 trained successfully
-    2023-03-04 00:51:53 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output H2 trained successfully
-    2023-03-04 00:51:54 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output H2O trained successfully
-    2023-03-04 00:51:56 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output N2 trained successfully
-    2023-03-04 00:51:57 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output O2 trained successfully
+    2023-03-04 01:46:31 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output Steam_Flow trained successfully
+    2023-03-04 01:46:32 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output Reformer_Duty trained successfully
+    2023-03-04 01:46:34 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output AR trained successfully
+    2023-03-04 01:46:35 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output C2H6 trained successfully
+    2023-03-04 01:46:37 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output C3H8 trained successfully
+    2023-03-04 01:46:38 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output C4H10 trained successfully
+    2023-03-04 01:46:40 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output CH4 trained successfully
+    2023-03-04 01:46:41 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output CO trained successfully
+    2023-03-04 01:46:43 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output CO2 trained successfully
+    2023-03-04 01:46:45 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output H2 trained successfully
+    2023-03-04 01:46:46 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output H2O trained successfully
+    2023-03-04 01:46:48 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output N2 trained successfully
+    2023-03-04 01:46:49 [INFO] idaes.core.surrogate.pysmo_surrogate: Model for output O2 trained successfully
     
     ===========================Polynomial Regression===============================================
     
@@ -193,16 +193,16 @@ will be used later.
     Number of adaptive samples (no_adaptive_samples) set at  4
     Maximum number of iterations (Max_iter) set at:  0
     
-    Initial surrogate model is of order 3  with a cross-val error of 0.000000
+    Initial surrogate model is of order 1  with a cross-val error of 0.000000
     Initial Regression Model Performance:
-    Order:  3  / MAE: 0.000000  / MSE: 0.000000  / R^2: 1.000000  / Adjusted R^2: 1.000000
+    Order:  1  / MAE: 0.000000  / MSE: 0.000000  / R^2: 1.000000  / Adjusted R^2: 1.000000
     
     Polynomial regression generates a good surrogate model for the input data.
     
     -------------------------------------------------
     -------------------------------------------------
     Best solution found:  
-    Order:  3  / MAE: 0.000000  / MSE: 0.000000  / R_sq: 1.000000  / Adjusted R^2: 1.000000
+    Order:  1  / MAE: 0.000000  / MSE: 0.000000  / R_sq: 1.000000  / Adjusted R^2: 1.000000
     
     ------------------------------------------------------------
     The final coefficients of the regression terms are: 
@@ -210,10 +210,6 @@ will be used later.
     k               | -0.0
     (x_ 1 )^ 1      | 0.0
     (x_ 2 )^ 1      | 1.211862
-    (x_ 1 )^ 2      | -0.0
-    (x_ 2 )^ 2      | -0.0
-    (x_ 1 )^ 3      | 0.0
-    (x_ 2 )^ 3      | 0.0
     x_ 1 .x_ 2      | -1.211862
     
     Results saved in  solution.pickle
@@ -230,25 +226,29 @@ will be used later.
     Number of adaptive samples (no_adaptive_samples) set at  4
     Maximum number of iterations (Max_iter) set at:  0
     
-    Initial surrogate model is of order 5  with a cross-val error of 13.861205
+    Initial surrogate model is of order 6  with a cross-val error of 41.885963
     Initial Regression Model Performance:
+    Order:  6  / MAE: 5.014706  / MSE: 37.089720  / R^2: 0.999999  / Adjusted R^2: 0.999999
+    
+    Polynomial regression generates a good surrogate model for the input data.
+    
     .
     .
     .
-    k               | -7.98549
-    (x_ 1 )^ 1      | -0.030081
-    (x_ 2 )^ 1      | 52.496513
-    (x_ 1 )^ 2      | -0.574604
-    (x_ 2 )^ 2      | -136.254476
-    (x_ 1 )^ 3      | 2.114089
-    (x_ 2 )^ 3      | 187.297008
-    (x_ 1 )^ 4      | -4.646893
-    (x_ 2 )^ 4      | -144.006732
-    (x_ 1 )^ 5      | 4.963575
-    (x_ 2 )^ 5      | 58.727754
-    (x_ 1 )^ 6      | -2.194329
-    (x_ 2 )^ 6      | -9.925309
-    x_ 1 .x_ 2      | 0.042314
+    The final coefficients of the regression terms are: 
+    
+    k               | -0.824545
+    (x_ 1 )^ 1      | -0.118322
+    (x_ 2 )^ 1      | 5.876537
+    (x_ 1 )^ 2      | 0.11258
+    (x_ 2 )^ 2      | -11.25678
+    (x_ 1 )^ 3      | -0.578794
+    (x_ 2 )^ 3      | 10.555034
+    (x_ 1 )^ 4      | 0.839237
+    (x_ 2 )^ 4      | -4.895373
+    (x_ 1 )^ 5      | -0.584919
+    (x_ 2 )^ 5      | 0.898329
+    x_ 1 .x_ 2      | 0.044771
     
     Results saved in  solution.pickle
     
@@ -266,21 +266,21 @@ will be used later.
     
     Initial surrogate model is of order 1  with a cross-val error of 0.000000
     Initial Regression Model Performance:
-    Order:  1  / MAE: 0.000000  / MSE: 0.000000  / R^2: -11239011920.262321  / Adjusted R^2: 0.000000
+    Order:  1  / MAE: 0.000000  / MSE: 0.000000  / R^2: -2481854771.585894  / Adjusted R^2: 0.000000
     
     Polynomial regression performs poorly for this dataset.
     
     -------------------------------------------------
     -------------------------------------------------
     Best solution found:  
-    Order:  1  / MAE: 0.000000  / MSE: 0.000000  / R_sq: -11239011920.262321  / Adjusted R^2: 0.000000
+    Order:  1  / MAE: 0.000000  / MSE: 0.000000  / R_sq: -2481854771.585894  / Adjusted R^2: 0.000000
     
     ------------------------------------------------------------
     The final coefficients of the regression terms are: 
     
-    k               | 0.0
+    k               | -0.0
     (x_ 1 )^ 1      | -0.0
-    (x_ 2 )^ 1      | -0.0
+    (x_ 2 )^ 1      | 0.0
     x_ 1 .x_ 2      | 0.0
     
     Results saved in  solution.pickle
@@ -908,7 +908,7 @@ Constraint() component.
 
 .. parsed-literal::
 
-    2023-03-04 00:52:25 [INFO] idaes.core.surrogate.pysmo_surrogate: Decode surrogate. type=poly
+    2023-03-04 01:47:17 [INFO] idaes.core.surrogate.pysmo_surrogate: Decode surrogate. type=poly
 
 
 Let’s print some model results:
@@ -932,19 +932,19 @@ Let’s print some model results:
 
 .. parsed-literal::
 
-    Steam flowrate =  0.6059308499352739
-    Reformer duty =  21067.12967377396
-    Mole Fraction Ar =  0.0036787272398790052
-    Mole Fraction C2H6 =  0.0041880322042084014
-    Mole Fraction C3H8 =  0.0005234923254505627
-    Mole Fraction C4H10 =  0.0009161321188840971
-    Mole Fraction CH4 =  0.12788100588008167
-    Mole Fraction CO =  0.0969331366071929
-    Mole Fraction CO2 =  0.04604511934648572
-    Mole Fraction H2 =  0.2938578671740972
-    Mole Fraction H2O =  0.11963160839746036
-    Mole Fraction N2 =  0.3063906757591268
-    Mole Fraction O2 =  -9.020562075079397e-17
+    Steam flowrate =  0.6059308500655748
+    Reformer duty =  21068.934870126322
+    Mole Fraction Ar =  0.003678774685576971
+    Mole Fraction C2H6 =  0.0041860257195832015
+    Mole Fraction C3H8 =  0.0005232493828583387
+    Mole Fraction C4H10 =  0.0009156910957147588
+    Mole Fraction CH4 =  0.1278211808733149
+    Mole Fraction CO =  0.09699532080829876
+    Mole Fraction CO2 =  0.046055094617887725
+    Mole Fraction H2 =  0.29384599523556965
+    Mole Fraction H2O =  0.11967108313128806
+    Mole Fraction N2 =  0.30639600651413346
+    Mole Fraction O2 =  -6.245004513516506e-17
 
 
 4.2 Optimizing the Autothermal Reformer
@@ -1021,44 +1021,43 @@ the list objects we created earlier.
             inequality constraints with only upper bounds:        1
     
     iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-       0 -2.9385787e-01 7.28e-12 2.37e-02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
-       1 -2.9584781e-01 1.33e+00 1.83e-03  -1.7 4.84e+02    -  1.00e+00 1.00e+00f  1
-       2 -3.1959517e-01 1.31e+02 9.71e-03  -2.5 5.93e+03    -  8.81e-01 1.00e+00h  1
-       3 -3.2540361e-01 1.21e+02 3.46e-03  -2.5 4.89e+03    -  1.00e+00 1.00e+00h  1
-       4 -3.2607025e-01 2.29e+01 3.39e-04  -2.5 1.88e+03    -  1.00e+00 1.00e+00h  1
-       5 -3.2610697e-01 1.25e-02 2.21e-06  -2.5 8.65e+01    -  1.00e+00 1.00e+00h  1
-       6 -3.3100850e-01 8.95e+01 4.51e-03  -3.8 3.84e+03    -  9.24e-01 1.00e+00h  1
-       7 -3.3149474e-01 3.74e+00 8.92e-04  -3.8 8.88e+02    -  1.00e+00 9.94e-01h  1
-       8 -3.3135665e-01 7.43e-01 2.07e-05  -3.8 3.02e+02    -  1.00e+00 1.00e+00f  1
-       9 -3.3135654e-01 8.74e-06 2.74e-09  -3.8 7.58e-01    -  1.00e+00 1.00e+00h  1
+       0 -2.9384600e-01 1.16e-10 2.23e-02  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1 -2.9583598e-01 1.25e+00 1.86e-03  -1.7 4.87e+02    -  1.00e+00 1.00e+00f  1
+       2 -3.1974183e-01 1.20e+02 9.88e-03  -2.5 6.01e+03    -  8.79e-01 1.00e+00h  1
+       3 -3.2534250e-01 1.18e+02 3.24e-03  -2.5 4.72e+03    -  1.00e+00 1.00e+00h  1
+       4 -3.2601714e-01 2.52e+01 3.47e-04  -2.5 1.93e+03    -  1.00e+00 1.00e+00h  1
+       5 -3.2606120e-01 1.73e-02 2.46e-06  -2.5 1.02e+02    -  1.00e+00 1.00e+00h  1
+       6 -3.3093615e-01 7.48e+01 5.61e-03  -3.8 3.90e+03    -  9.21e-01 1.00e+00h  1
+       7 -3.3143937e-01 8.58e-01 5.51e-04  -3.8 8.48e+02    -  1.00e+00 9.96e-01h  1
+       8 -3.3131035e-01 5.35e-01 1.48e-05  -3.8 2.98e+02    -  1.00e+00 1.00e+00f  1
+       9 -3.3159987e-01 1.62e-01 4.37e-04  -5.7 1.59e+02    -  1.00e+00 9.81e-01h  1
     iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
-      10 -3.3164311e-01 1.29e-02 1.65e-04  -5.7 1.53e+02    -  9.95e-01 9.88e-01f  1
-      11 -3.3164982e-01 6.52e-04 1.27e-08  -5.7 1.20e+01    -  1.00e+00 1.00e+00f  1
-      12 -3.3165349e-01 1.52e-05 4.57e-09  -8.6 1.57e+00    -  1.00e+00 1.00e+00h  1
-      13 -3.3165349e-01 2.91e-11 3.93e-14  -8.6 2.00e-03    -  1.00e+00 1.00e+00h  1
+      10 -3.3160769e-01 6.69e-04 2.53e-08  -5.7 1.16e+01    -  1.00e+00 1.00e+00h  1
+      11 -3.3161136e-01 3.74e-05 1.34e-09  -8.6 1.57e+00    -  1.00e+00 1.00e+00h  1
+      12 -3.3161136e-01 8.15e-10 2.51e-14  -8.6 2.25e-03    -  1.00e+00 1.00e+00h  1
     
-    Number of Iterations....: 13
+    Number of Iterations....: 12
     
                                        (scaled)                 (unscaled)
-    Objective...............:  -3.3165349314029280e-01   -3.3165349314029280e-01
-    Dual infeasibility......:   3.9322554092817511e-14    3.9322554092817511e-14
-    Constraint violation....:   7.7488743754092017e-14    2.9103830456733704e-11
-    Complementarity.........:   2.5059040643999781e-09    2.5059040643999781e-09
-    Overall NLP error.......:   2.5059040643999781e-09    2.5059040643999781e-09
+    Objective...............:  -3.3161135963434335e-01   -3.3161135963434335e-01
+    Dual infeasibility......:   2.5091040356528538e-14    2.5091040356528538e-14
+    Constraint violation....:   2.1654867248174827e-12    8.1490725278854360e-10
+    Complementarity.........:   2.5059039687044097e-09    2.5059039687044097e-09
+    Overall NLP error.......:   2.5059039687044097e-09    2.5059039687044097e-09
     
     
-    Number of objective function evaluations             = 14
-    Number of objective gradient evaluations             = 14
-    Number of equality constraint evaluations            = 14
-    Number of inequality constraint evaluations          = 14
-    Number of equality constraint Jacobian evaluations   = 14
-    Number of inequality constraint Jacobian evaluations = 14
-    Number of Lagrangian Hessian evaluations             = 13
+    Number of objective function evaluations             = 13
+    Number of objective gradient evaluations             = 13
+    Number of equality constraint evaluations            = 13
+    Number of inequality constraint evaluations          = 13
+    Number of equality constraint Jacobian evaluations   = 13
+    Number of inequality constraint Jacobian evaluations = 13
+    Number of Lagrangian Hessian evaluations             = 12
     Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
     Total CPU secs in NLP function evaluations           =      0.000
     
     EXIT: Optimal Solution Found.
-    [+   0.03] solve
+    [+   0.02] solve
     Model status:  
     Problem: 
     - Lower bound: -inf
@@ -1073,26 +1072,26 @@ the list objects we created earlier.
       Termination condition: optimal
       Id: 0
       Error rc: 0
-      Time: 0.01920318603515625
+      Time: 0.014290094375610352
     Solution: 
     - number of solutions: 0
       number of solutions displayed: 0
     
-    Solve time:  0.02652117609977722
-    fs.bypass_frac :  0.10000005923511933
-    fs.ng_steam_ratio :  1.1139541303590172
-    fs.steam_flowrate :  1.2149624314545804
-    fs.reformer_duty :  38893.99820319835
-    fs.AR :  0.004107109287201589
-    fs.C2H6 :  0.0005337383802607957
-    fs.C4H10 :  0.0001167557331341798
-    fs.C3H8 :  6.673059326224484e-05
-    fs.CH4 :  0.016641886826112683
-    fs.CO :  0.10492842899698003
-    fs.CO2 :  0.053396449961309496
-    fs.H2 :  0.3316534931402928
-    fs.H2O :  0.14825330312626392
-    fs.N2 :  0.3400000042990915
-    fs.O2 :  -9.132247841598793e-16
+    Solve time:  0.020360298454761505
+    fs.bypass_frac :  0.100000056641255
+    fs.ng_steam_ratio :  1.1153950501445273
+    fs.steam_flowrate :  1.2165340112955905
+    fs.reformer_duty :  38904.60680237562
+    fs.AR :  0.004107166080702205
+    fs.C2H6 :  0.0005384243882012041
+    fs.C4H10 :  0.00011778076439554834
+    fs.C3H8 :  6.732162415588166e-05
+    fs.CH4 :  0.016780367411664953
+    fs.CO :  0.10479875339689569
+    fs.CO2 :  0.05351771272215667
+    fs.H2 :  0.33161135963434335
+    fs.H2O :  0.14884403346323136
+    fs.N2 :  0.34000000421054993
+    fs.O2 :  2.909476692417341e-17
 
 

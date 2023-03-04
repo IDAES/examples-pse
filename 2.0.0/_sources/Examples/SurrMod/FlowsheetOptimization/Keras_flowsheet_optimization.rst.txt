@@ -84,15 +84,15 @@ First, let’s import the required Python, Pyomo and IDAES modules:
 
 .. parsed-literal::
 
-    2023-03-04 00:50:36.483584: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F AVX512_VNNI FMA
+    2023-03-04 01:45:28.716911: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F AVX512_VNNI FMA
     To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
-    2023-03-04 00:50:36.594466: I tensorflow/core/util/util.cc:169] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
-    2023-03-04 00:50:36.599386: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
-    2023-03-04 00:50:36.599398: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
-    2023-03-04 00:50:36.622218: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
-    2023-03-04 00:50:37.155818: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
-    2023-03-04 00:50:37.155869: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
-    2023-03-04 00:50:37.155874: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+    2023-03-04 01:45:28.833357: I tensorflow/core/util/util.cc:169] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+    2023-03-04 01:45:28.838425: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+    2023-03-04 01:45:28.838437: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+    2023-03-04 01:45:28.861571: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+    2023-03-04 01:45:29.401411: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
+    2023-03-04 01:45:29.401465: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
+    2023-03-04 01:45:29.401470: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
 
 
 3.1 Importing Training and Validation Datasets
@@ -226,10 +226,10 @@ will be used later.
 
 .. parsed-literal::
 
-    2023-03-04 00:50:39.399349: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: :/home/runner/.idaes/bin
-    2023-03-04 00:50:39.399372: W tensorflow/stream_executor/cuda/cuda_driver.cc:263] failed call to cuInit: UNKNOWN ERROR (303)
-    2023-03-04 00:50:39.399404: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (195bf9f4001e): /proc/driver/nvidia/version does not exist
-    2023-03-04 00:50:39.399608: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F AVX512_VNNI FMA
+    2023-03-04 01:45:31.667489: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: :/home/runner/.idaes/bin
+    2023-03-04 01:45:31.667513: W tensorflow/stream_executor/cuda/cuda_driver.cc:263] failed call to cuInit: UNKNOWN ERROR (303)
+    2023-03-04 01:45:31.667528: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (c046ea564732): /proc/driver/nvidia/version does not exist
+    2023-03-04 01:45:31.667743: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F AVX512_VNNI FMA
     To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
 
 
@@ -237,11 +237,11 @@ will be used later.
 
     INFO:tensorflow:Assets written to: keras_surrogate/assets
     Epoch 1/1000
-    3/3 [==============================] - 0s 73ms/step - loss: 0.3703 - mae: 0.5194 - mse: 0.3703 - val_loss: 0.3230 - val_mae: 0.4945 - val_mse: 0.3230
+    3/3 [==============================] - 0s 76ms/step - loss: 0.3703 - mae: 0.5194 - mse: 0.3703 - val_loss: 0.3230 - val_mae: 0.4945 - val_mse: 0.3230
     Epoch 2/1000
     3/3 [==============================] - 0s 16ms/step - loss: 0.3078 - mae: 0.4684 - mse: 0.3078 - val_loss: 0.2686 - val_mae: 0.4450 - val_mse: 0.2686
     Epoch 3/1000
-    3/3 [==============================] - 0s 15ms/step - loss: 0.2556 - mae: 0.4217 - mse: 0.2556 - val_loss: 0.2235 - val_mae: 0.3991 - val_mse: 0.2235
+    3/3 [==============================] - 0s 16ms/step - loss: 0.2556 - mae: 0.4217 - mse: 0.2556 - val_loss: 0.2235 - val_mae: 0.3991 - val_mse: 0.2235
     Epoch 4/1000
     3/3 [==============================] - 0s 16ms/step - loss: 0.2136 - mae: 0.3798 - mse: 0.2136 - val_loss: 0.1862 - val_mae: 0.3568 - val_mse: 0.1862
     Epoch 5/1000
@@ -249,25 +249,25 @@ will be used later.
     Epoch 6/1000
     3/3 [==============================] - 0s 16ms/step - loss: 0.1512 - mae: 0.3100 - mse: 0.1512 - val_loss: 0.1303 - val_mae: 0.2857 - val_mse: 0.1303
     Epoch 7/1000
-    3/3 [==============================] - 0s 15ms/step - loss: 0.1286 - mae: 0.2829 - mse: 0.1286 - val_loss: 0.1099 - val_mae: 0.2583 - val_mse: 0.1099
+    3/3 [==============================] - 0s 16ms/step - loss: 0.1286 - mae: 0.2829 - mse: 0.1286 - val_loss: 0.1099 - val_mae: 0.2583 - val_mse: 0.1099
     Epoch 8/1000
     3/3 [==============================] - 0s 16ms/step - loss: 0.1108 - mae: 0.2615 - mse: 0.1108 - val_loss: 0.0935 - val_mae: 0.2381 - val_mse: 0.0935
     Epoch 9/1000
-    3/3 [==============================] - 0s 15ms/step - loss: 0.0969 - mae: 0.2445 - mse: 0.0969 - val_loss: 0.0810 - val_mae: 0.2227 - val_mse: 0.0810
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0969 - mae: 0.2445 - mse: 0.0969 - val_loss: 0.0810 - val_mae: 0.2227 - val_mse: 0.0810
     Epoch 10/1000
-    3/3 [==============================] - 0s 15ms/step - loss: 0.0870 - mae: 0.2324 - mse: 0.0870 - val_loss: 0.0717 - val_mae: 0.2123 - val_mse: 0.0717
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0870 - mae: 0.2324 - mse: 0.0870 - val_loss: 0.0717 - val_mae: 0.2123 - val_mse: 0.0717
     Epoch 11/1000
     3/3 [==============================] - 0s 16ms/step - loss: 0.0795 - mae: 0.2228 - mse: 0.0795 - val_loss: 0.0650 - val_mae: 0.2041 - val_mse: 0.0650
     Epoch 12/1000
-    3/3 [==============================] - 0s 15ms/step - loss: 0.0745 - mae: 0.2165 - mse: 0.0745 - val_loss: 0.0599 - val_mae: 0.1972 - val_mse: 0.0599
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0745 - mae: 0.2165 - mse: 0.0745 - val_loss: 0.0599 - val_mae: 0.1972 - val_mse: 0.0599
     Epoch 13/1000
-    3/3 [==============================] - 0s 15ms/step - loss: 0.0703 - mae: 0.2108 - mse: 0.0703 - val_loss: 0.0565 - val_mae: 0.1925 - val_mse: 0.0565
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0703 - mae: 0.2108 - mse: 0.0703 - val_loss: 0.0565 - val_mae: 0.1925 - val_mse: 0.0565
     Epoch 14/1000
-    3/3 [==============================] - 0s 15ms/step - loss: 0.0670 - mae: 0.2056 - mse: 0.0670 - val_loss: 0.0534 - val_mae: 0.1879 - val_mse: 0.0534
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0670 - mae: 0.2056 - mse: 0.0670 - val_loss: 0.0534 - val_mae: 0.1879 - val_mse: 0.0534
     Epoch 15/1000
-    3/3 [==============================] - 0s 15ms/step - loss: 0.0640 - mae: 0.2005 - mse: 0.0640 - val_loss: 0.0506 - val_mae: 0.1828 - val_mse: 0.0506
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0640 - mae: 0.2005 - mse: 0.0640 - val_loss: 0.0506 - val_mae: 0.1828 - val_mse: 0.0506
     Epoch 16/1000
-    3/3 [==============================] - 0s 15ms/step - loss: 0.0611 - mae: 0.1949 - mse: 0.0611 - val_loss: 0.0477 - val_mae: 0.1767 - val_mse: 0.0477
+    3/3 [==============================] - 0s 16ms/step - loss: 0.0611 - mae: 0.1949 - mse: 0.0611 - val_loss: 0.0477 - val_mae: 0.1767 - val_mse: 0.0477
     Epoch 17/1000
     3/3 [==============================] - 0s 15ms/step - loss: 0.0582 - mae: 0.1889 - mse: 0.0582 - val_loss: 0.0454 - val_mae: 0.1711 - val_mse: 0.0454
     Epoch 18/1000
@@ -281,11 +281,11 @@ will be used later.
     Epoch 22/1000
     3/3 [==============================] - 0s 16ms/step - loss: 0.0479 - mae: 0.1630 - mse: 0.0479 - val_loss: 0.0370 - val_mae: 0.1437 - val_mse: 0.0370
     Epoch 23/1000
-    3/3 [==============================] - 0s 16ms/step - loss: 0.0464 - mae: 0.1589 - mse: 0.0464 - val_loss: 0.0359 - val_mae: 0.1404 - val_mse: 0.0359
+    3/3 [==============================] - 0s 15ms/step - loss: 0.0464 - mae: 0.1589 - mse: 0.0464 - val_loss: 0.0359 - val_mae: 0.1404 - val_mse: 0.0359
     Epoch 24/1000
     3/3 [==============================] - 0s 16ms/step - loss: 0.0449 - mae: 0.1550 - mse: 0.0449 - val_loss: 0.0347 - val_mae: 0.1372 - val_mse: 0.0347
     Epoch 25/1000
-    3/3 [==============================] - 0s 16ms/step - loss: 0.0433 - mae: 0.1511 - mse: 0.0433 - val_loss: 0.0335 - val_mae: 0.1347 - val_mse: 0.0335
+    3/3 [==============================] - 0s 15ms/step - loss: 0.0433 - mae: 0.1511 - mse: 0.0433 - val_loss: 0.0335 - val_mae: 0.1347 - val_mse: 0.0335
     .
     .
     .
@@ -295,11 +295,11 @@ will be used later.
     Epoch 978/1000
     3/3 [==============================] - 0s 11ms/step - loss: 1.3646e-04 - mae: 0.0087 - mse: 1.3646e-04 - val_loss: 9.1711e-05 - val_mae: 0.0071 - val_mse: 9.1711e-05
     Epoch 979/1000
-    3/3 [==============================] - 0s 17ms/step - loss: 1.3732e-04 - mae: 0.0087 - mse: 1.3732e-04 - val_loss: 8.2200e-05 - val_mae: 0.0067 - val_mse: 8.2200e-05
+    3/3 [==============================] - 0s 15ms/step - loss: 1.3732e-04 - mae: 0.0087 - mse: 1.3732e-04 - val_loss: 8.2200e-05 - val_mae: 0.0067 - val_mse: 8.2200e-05
     Epoch 980/1000
-    3/3 [==============================] - 0s 12ms/step - loss: 1.2526e-04 - mae: 0.0082 - mse: 1.2526e-04 - val_loss: 1.0392e-04 - val_mae: 0.0074 - val_mse: 1.0392e-04
+    3/3 [==============================] - 0s 11ms/step - loss: 1.2526e-04 - mae: 0.0082 - mse: 1.2526e-04 - val_loss: 1.0392e-04 - val_mae: 0.0074 - val_mse: 1.0392e-04
     Epoch 981/1000
-    3/3 [==============================] - 0s 16ms/step - loss: 1.3412e-04 - mae: 0.0082 - mse: 1.3412e-04 - val_loss: 8.1916e-05 - val_mae: 0.0065 - val_mse: 8.1916e-05
+    3/3 [==============================] - 0s 15ms/step - loss: 1.3412e-04 - mae: 0.0082 - mse: 1.3412e-04 - val_loss: 8.1916e-05 - val_mae: 0.0065 - val_mse: 8.1916e-05
     Epoch 982/1000
     3/3 [==============================] - 0s 16ms/step - loss: 1.3123e-04 - mae: 0.0085 - mse: 1.3123e-04 - val_loss: 8.0986e-05 - val_mae: 0.0067 - val_mse: 8.0986e-05
     Epoch 983/1000
@@ -307,7 +307,7 @@ will be used later.
     Epoch 984/1000
     3/3 [==============================] - 0s 11ms/step - loss: 1.2770e-04 - mae: 0.0082 - mse: 1.2770e-04 - val_loss: 8.4017e-05 - val_mae: 0.0066 - val_mse: 8.4017e-05
     Epoch 985/1000
-    3/3 [==============================] - 0s 16ms/step - loss: 1.2767e-04 - mae: 0.0081 - mse: 1.2767e-04 - val_loss: 7.7591e-05 - val_mae: 0.0064 - val_mse: 7.7591e-05
+    3/3 [==============================] - 0s 15ms/step - loss: 1.2767e-04 - mae: 0.0081 - mse: 1.2767e-04 - val_loss: 7.7591e-05 - val_mae: 0.0064 - val_mse: 7.7591e-05
     Epoch 986/1000
     3/3 [==============================] - 0s 11ms/step - loss: 1.2811e-04 - mae: 0.0085 - mse: 1.2811e-04 - val_loss: 7.8276e-05 - val_mae: 0.0066 - val_mse: 7.8276e-05
     Epoch 987/1000
@@ -329,7 +329,7 @@ will be used later.
     Epoch 995/1000
     3/3 [==============================] - 0s 12ms/step - loss: 1.1739e-04 - mae: 0.0079 - mse: 1.1739e-04 - val_loss: 8.5978e-05 - val_mae: 0.0066 - val_mse: 8.5978e-05
     Epoch 996/1000
-    3/3 [==============================] - 0s 12ms/step - loss: 1.1918e-04 - mae: 0.0078 - mse: 1.1918e-04 - val_loss: 7.7404e-05 - val_mae: 0.0062 - val_mse: 7.7404e-05
+    3/3 [==============================] - 0s 11ms/step - loss: 1.1918e-04 - mae: 0.0078 - mse: 1.1918e-04 - val_loss: 7.7404e-05 - val_mae: 0.0062 - val_mse: 7.7404e-05
     Epoch 997/1000
     3/3 [==============================] - 0s 11ms/step - loss: 1.1708e-04 - mae: 0.0080 - mse: 1.1708e-04 - val_loss: 7.7886e-05 - val_mae: 0.0064 - val_mse: 7.7886e-05
     Epoch 998/1000
@@ -361,7 +361,7 @@ predict new output values.
 
 .. parsed-literal::
 
-    3/3 [==============================] - 0s 2ms/step
+    3/3 [==============================] - 0s 1ms/step
 
 
 
@@ -470,7 +470,7 @@ predict new output values.
 
 .. parsed-literal::
 
-    3/3 [==============================] - 0s 2ms/step
+    3/3 [==============================] - 0s 1ms/step
 
 
 
@@ -527,7 +527,7 @@ predict new output values.
 
 .. parsed-literal::
 
-    3/3 [==============================] - 0s 2ms/step
+    3/3 [==============================] - 0s 1ms/step
 
 
 
@@ -647,7 +647,7 @@ predict new output values.
 
 .. parsed-literal::
 
-    1/1 [==============================] - 0s 20ms/step
+    1/1 [==============================] - 0s 19ms/step
 
 
 
@@ -813,7 +813,7 @@ predict new output values.
 
 .. parsed-literal::
 
-    1/1 [==============================] - 0s 20ms/step
+    1/1 [==============================] - 0s 19ms/step
 
 
 
@@ -1121,11 +1121,11 @@ the list objects we created earlier.
     Number of equality constraint Jacobian evaluations   = 16
     Number of inequality constraint Jacobian evaluations = 16
     Number of Lagrangian Hessian evaluations             = 15
-    Total CPU secs in IPOPT (w/o function evaluations)   =      0.029
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.028
     Total CPU secs in NLP function evaluations           =      0.001
     
     EXIT: Optimal Solution Found.
-    [+   0.08] solve
+    [+   0.07] solve
     Model status:  
     Problem: 
     - Lower bound: -inf
@@ -1140,12 +1140,12 @@ the list objects we created earlier.
       Termination condition: optimal
       Id: 0
       Error rc: 0
-      Time: 0.059576988220214844
+      Time: 0.05062150955200195
     Solution: 
     - number of solutions: 0
       number of solutions displayed: 0
     
-    Solve time:  0.08013391494750977
+    Solve time:  0.06980162858963013
     fs.bypass_frac :  0.10000021929964276
     fs.ng_steam_ratio :  1.1046793527270153
     fs.steam_flowrate :  1.1959736366236289

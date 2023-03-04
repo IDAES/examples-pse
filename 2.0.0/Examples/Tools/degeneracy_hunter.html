@@ -263,7 +263,7 @@ larger than <code class="docutils literal notranslate"><span class="pre">0.1</sp
 <span class="mi">1</span>    <span class="n">con3</span>    <span class="mf">1.0</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa2c7bf3c80</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa2c7ba20b0</span><span class="o">&gt;</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa36d0afc10</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa36d058040</span><span class="o">&gt;</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>Important: Ipopt does several preprocessing steps when we executed it
@@ -282,7 +282,7 @@ syntax:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">No</span> <span class="n">variables</span> <span class="n">within</span> <span class="mf">1.0</span> <span class="p">(</span><span class="n">absolute</span><span class="p">)</span> <span class="n">of</span> <span class="n">their</span> <span class="n">bounds</span><span class="o">.</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">component_set</span><span class="o">.</span><span class="n">ComponentSet</span> <span class="n">at</span> <span class="mh">0x7fa2c7b4f100</span><span class="o">&gt;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">component_set</span><span class="o">.</span><span class="n">ComponentSet</span> <span class="n">at</span> <span class="mh">0x7fa36d05aac0</span><span class="o">&gt;</span>
 </pre></div>
 </div>
 </section>
@@ -369,7 +369,7 @@ Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
 Total CPU secs in NLP function evaluations           =      0.000
 
 EXIT: Optimal Solution Found.</pre>
-<pre class="literal-block">{'Problem': [{'Lower bound': -inf, 'Upper bound': inf, 'Number of objectives': 1, 'Number of constraints': 3, 'Number of variables': 5, 'Sense': 'unknown'}], 'Solver': [{'Status': 'ok', 'Message': 'Ipopt 3.13.2\x3a Optimal Solution Found', 'Termination condition': 'optimal', 'Id': 0, 'Error rc': 0, 'Time': 0.00984644889831543}], 'Solution': [OrderedDict([('number of solutions', 0), ('number of solutions displayed', 0)])]}</pre>
+<pre class="literal-block">{'Problem': [{'Lower bound': -inf, 'Upper bound': inf, 'Number of objectives': 1, 'Number of constraints': 3, 'Number of variables': 5, 'Sense': 'unknown'}], 'Solver': [{'Status': 'ok', 'Message': 'Ipopt 3.13.2\x3a Optimal Solution Found', 'Termination condition': 'optimal', 'Id': 0, 'Error rc': 0, 'Time': 0.01409149169921875}], 'Solution': [OrderedDict([('number of solutions', 0), ('number of solutions displayed', 0)])]}</pre>
 <p>As expected, Ipopt has no trouble solving this optimization problem.</p>
 </section>
 <section id="check-if-any-constraint-residuals-are-large-than-1e-14">
@@ -386,7 +386,7 @@ have residuals larger than 10<span class="math notranslate nohighlight">\(^{-14}
 <span class="mi">2</span>    <span class="n">con3</span>    <span class="mf">2.2426505097428162e-14</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa2c7bf3c80</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa2c7ba2040</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa2c7ba20b0</span><span class="o">&gt;</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa36d0afc10</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa36d0aff90</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa36d058040</span><span class="o">&gt;</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>As expected, all of the constraints are satisfied, even with this fairly
@@ -402,7 +402,7 @@ the new solution.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">No</span> <span class="n">variables</span> <span class="n">within</span> <span class="mf">1e-05</span> <span class="p">(</span><span class="n">absolute</span><span class="p">)</span> <span class="n">of</span> <span class="n">their</span> <span class="n">bounds</span><span class="o">.</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">component_set</span><span class="o">.</span><span class="n">ComponentSet</span> <span class="n">at</span> <span class="mh">0x7fa2c7b88a30</span><span class="o">&gt;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">component_set</span><span class="o">.</span><span class="n">ComponentSet</span> <span class="n">at</span> <span class="mh">0x7fa464a63370</span><span class="o">&gt;</span>
 </pre></div>
 </div>
 <p>Great, no variables are near their bounds. If a variable was at its
@@ -616,7 +616,7 @@ WARNING: Loading a SolverResults object with a warning status into
 <span class="mi">1</span>    <span class="n">con5</span>    <span class="mf">2.0</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa2c7ba2dd0</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa3d1583200</span><span class="o">&gt;</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa36d058d60</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">pyomo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">ScalarConstraint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fa464a7c190</span><span class="o">&gt;</span><span class="p">])</span>
 </pre></div>
 </div>
 </section>
@@ -704,7 +704,7 @@ Number of inequality constraint evaluations          = 111
 Number of equality constraint Jacobian evaluations   = 17
 Number of inequality constraint Jacobian evaluations = 17
 Number of Lagrangian Hessian evaluations             = 16
-Total CPU secs in IPOPT (w/o function evaluations)   =      0.002
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.003
 Total CPU secs in NLP function evaluations           =      0.000
 
 EXIT: Optimal Solution Found.
@@ -728,7 +728,7 @@ converge to the solution.</p>
 <span class="n">Model</span> <span class="n">contains</span> <span class="mi">2</span> <span class="n">equality</span> <span class="n">constraints</span> <span class="ow">and</span> <span class="mi">3</span> <span class="n">variables</span><span class="o">.</span>
 <span class="n">Computing</span> <span class="n">the</span> <span class="mi">1</span> <span class="n">smallest</span> <span class="n">singular</span> <span class="n">value</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 <span class="n">Smallest</span> <span class="n">singular</span> <span class="n">value</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
-<span class="mf">3.846E-16</span>
+<span class="mf">0.000E+00</span>
 </pre></div>
 </div>
 <p>A singular value near 0 indicates the Jacobian of the equality
@@ -779,7 +779,7 @@ Welcome to the CBC MILP Solver
 Version: 2.10.8
 Build Date: Feb  3 2023
 
-command line - /home/runner/.idaes/bin/cbc -printingOptions all -import /tmp/tmp3bcw9soy.pyomo.lp -stat=1 -solve -solu /tmp/tmp3bcw9soy.pyomo.soln (default strategy 1)
+command line - /home/runner/.idaes/bin/cbc -printingOptions all -import /tmp/tmpt7tvowll.pyomo.lp -stat=1 -solve -solu /tmp/tmpt7tvowll.pyomo.soln (default strategy 1)
 Option for printingOptions changed from normal to all
 Presolve 9 (-8) rows, 7 (-2) columns and 20 (-15) elements
 Statistics for presolved model
