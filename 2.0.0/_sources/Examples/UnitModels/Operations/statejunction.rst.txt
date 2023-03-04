@@ -1,0 +1,384 @@
+Tutorial: StateJunction with Modular Property Package
+=====================================================
+
+.. image:: statejunction.svg
+
+Learning Outcomes
+-----------------
+
+-  Demonstrate use of the StateJunction in IDAES
+-  Demonstrate different options available
+
+Problem Statement
+-----------------
+
+In this example, we will be passing a mixed benzene-toluene stream and a
+mixed H2O-NaOH stream through a StateJunction. The IDAES StateJunction
+is a pass-through block or simple pipe that is primarily used to link
+streams to/from different process alternatives in conceptual design
+applications. The inlet conditions are as follows:
+
+**Case 1:**
+
+Molar Flow Rate = 100 mol/s
+
+Temperature = 298.15 K
+
+Pressure = 101325 Pa
+
+Mole Fraction (benzene) = 0.6
+
+Mole Fraction (toluene) = 0.4
+
+**Case 2**
+
+Volumetric Flow Rate = 10 m^3/s
+
+H2O Concentration = 5000 mol/m^3
+
+NaOH Concentration = 25 mol/m^3
+
+Temperature = 298.15 K
+
+Pressure = 101325 Pa
+
+We will look at two cases in this tutorial:
+
+-  Case 1: Use the StateJunction to solve a problem with constraints
+   (requires a flowsheet-level solver).
+
+-  Case 2: Use the StateJunction to solve a problem without constraints
+   (does not require a flowsheet-level solver).
+
+For more details, please refer to the IDAES documentation:
+https://idaes-pse.readthedocs.io/en/stable
+
+Importing necessary tools
+-------------------------
+
+In the following cell, we will be importing the necessary components
+from Pyomo and IDAES.
+
+.. code:: ipython3
+
+    # Import objects from pyomo package 
+    from pyomo.environ import ConcreteModel, Constraint, value, SolverFactory
+    
+    # Import the solver
+    from idaes.core.solvers import get_solver
+    
+    # Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model
+    from idaes.core import FlowsheetBlock
+    
+    # Import the StateJunction block
+    from idaes.models.unit_models import StateJunction
+    
+    # Import idaes logger to set output levels
+    import idaes.logger as idaeslog
+    
+    # Import the modular property package to create a property block for the case 1 flowsheet
+    from idaes.models.properties.modular_properties.base.generic_property import GenericParameterBlock
+    
+    # Import the BT_ideal property package to create a configuration file for the GenericParameterBlock based on the ideal eos
+    from idaes.models.properties.modular_properties.examples.BT_ideal import configuration as configuration
+    
+    # Import the saponification property package to create a property block for the case 2 flowsheet
+    from idaes.models.properties.examples.saponification_thermo import SaponificationParameterBlock
+    
+    # Import the degrees_of_freedom function from the idaes.core.util.model_statistics package
+    # DOF = Number of Model Variables - Number of Model Constraints
+    from idaes.core.util.model_statistics import degrees_of_freedom
+
+Setting up the flowsheet
+------------------------
+
+In the following cell, we will create the ``ConcreteModel`` foundation,
+attach the steady state flowsheet, and declare the property parameter
+block that will used for each of the cases.
+
+More information on this general workflow can be found here:
+https://idaes-pse.readthedocs.io/en/stable/how_to_guides/workflow/general.html
+
+.. code:: ipython3
+
+    m = ConcreteModel()
+    
+    m.fs = FlowsheetBlock(dynamic=False) # dynamic or ss flowsheet needs to be specified here
+    
+    m.fs.properties_1 = GenericParameterBlock(**configuration) # Case 1
+    
+    m.fs.properties_2 = SaponificationParameterBlock() # Case 2
+
+Case 1:
+-------
+
+In the following cell, we will be creating the StateJunction block,
+assigning the appropriate property package to it, and determining the
+initial degrees of freedom associated with the StateJunction.
+
+.. code:: ipython3
+
+    m.fs.statejunction_1 = StateJunction(property_package=m.fs.properties_1)
+    
+    DOF_initial = degrees_of_freedom(m)
+    print('The initial degrees of freedom is: {0}'.format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial degrees of freedom is: 5
+
+
+Fixing input specifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, we will be specifying the inlet conditions for
+the StateJunction block and re-evaluating the degrees of freedom to
+ensure the problem is square (i.e. DOF=0).
+
+.. code:: ipython3
+
+    m.fs.statejunction_1.inlet.flow_mol.fix(100) # converting to mol/s as unit basis is mol/s
+    m.fs.statejunction_1.inlet.mole_frac_comp[0, "benzene"].fix(0.6)
+    m.fs.statejunction_1.inlet.mole_frac_comp[0, "toluene"].fix(0.4)
+    m.fs.statejunction_1.inlet.pressure.fix(101325) # Pa
+    m.fs.statejunction_1.inlet.temperature.fix(298.15) # K
+    
+    DOF_final = degrees_of_freedom(m)
+    print('The final degrees of freedom is: {0}'.format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final degrees of freedom is: 0
+
+
+Flowsheet Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.
+
+More information on these levels can be found in the IDAES
+documentation:
+https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html
+
+.. code:: ipython3
+
+    m.fs.statejunction_1.initialize(outlvl=idaeslog.WARNING)
+
+Obtaining Simulation Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, the flowsheet will be solved using the IDAES
+``get_solver`` tool. Setting ``tee=True`` will display the solver
+output.
+
+.. code:: ipython3
+
+    solver = get_solver()
+    result = solver.solve(m, tee=True)
+
+
+.. parsed-literal::
+
+    Ipopt 3.13.2: nlp_scaling_method=gradient-based
+    tol=1e-06
+    max_iter=200
+    
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit http://projects.coin-or.org/Ipopt
+    
+    This version of Ipopt was compiled from source code available at
+        https://github.com/IDAES/Ipopt as part of the Institute for the Design of
+        Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+        Framework) Copyright (c) 2018-2019. See https://github.com/IDAES/idaes-pse.
+    
+    This version of Ipopt was compiled using HSL, a collection of Fortran codes
+        for large-scale scientific computation.  All technical papers, sales and
+        publicity material resulting from use of the HSL codes within IPOPT must
+        contain the following acknowledgement:
+            HSL, a collection of Fortran codes for large-scale scientific
+            computation. See http://www.hsl.rl.ac.uk.
+    ******************************************************************************
+    
+    This is Ipopt version 3.13.2, running with linear solver ma27.
+    
+    Number of nonzeros in equality constraint Jacobian...:       39
+    Number of nonzeros in inequality constraint Jacobian.:        0
+    Number of nonzeros in Lagrangian Hessian.............:       13
+    
+    Total number of variables............................:       16
+                         variables with only lower bounds:        6
+                    variables with lower and upper bounds:        8
+                         variables with only upper bounds:        0
+    Total number of equality constraints.................:       16
+    Total number of inequality constraints...............:        0
+            inequality constraints with only lower bounds:        0
+       inequality constraints with lower and upper bounds:        0
+            inequality constraints with only upper bounds:        0
+    
+    iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+       0  0.0000000e+00 9.90e-01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+       1  0.0000000e+00 9.89e-03 3.42e-01  -1.0 1.00e-02    -  9.90e-01 9.90e-01h  1
+       2  0.0000000e+00 9.07e-05 9.17e+00  -1.0 9.99e-05    -  1.00e+00 9.91e-01h  1
+       3  0.0000000e+00 7.28e-11 1.34e-03  -2.5 9.16e-07    -  1.00e+00 1.00e+00h  1
+    
+    Number of Iterations....: 3
+    
+                                       (scaled)                 (unscaled)
+    Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+    Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+    Constraint violation....:   5.4495236394249097e-14    7.2759576141834259e-11
+    Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+    Overall NLP error.......:   5.4495236394249097e-14    7.2759576141834259e-11
+    
+    
+    Number of objective function evaluations             = 4
+    Number of objective gradient evaluations             = 4
+    Number of equality constraint evaluations            = 4
+    Number of inequality constraint evaluations          = 0
+    Number of equality constraint Jacobian evaluations   = 4
+    Number of inequality constraint Jacobian evaluations = 0
+    Number of Lagrangian Hessian evaluations             = 3
+    Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+    Total CPU secs in NLP function evaluations           =      0.000
+    
+    EXIT: Optimal Solution Found.
+
+
+View Results
+~~~~~~~~~~~~
+
+As expected of a pass-through block, the report will show that stream
+composition of the outlet is identical to that of the inlet.
+
+.. code:: ipython3
+
+    m.fs.statejunction_1.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.statejunction_1                                                  Time: 0.0
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                        Units         Inlet     Outlet  
+        Total Molar Flowrate         mole / second     100.00     100.00
+        Total Mole Fraction benzene  dimensionless    0.60000    0.60000
+        Total Mole Fraction toluene  dimensionless    0.40000    0.40000
+        Temperature                         kelvin     298.15     298.15
+        Pressure                            pascal 1.0132e+05 1.0132e+05
+    ====================================================================================
+
+
+Case 2:
+-------
+
+In the following cell, we will be creating the StateJunction block,
+assigning the appropriate property package to it, and determining the
+initial degrees of freedom associated with the StateJunction.
+
+.. code:: ipython3
+
+    m.fs.statejunction_2 = StateJunction(property_package=m.fs.properties_2)
+    
+    DOF_initial = degrees_of_freedom(m)
+    print('The initial degrees of freedom is: {0}'.format(DOF_initial))
+
+
+.. parsed-literal::
+
+    The initial degrees of freedom is: 0
+
+
+Fixing input specifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the following cell, we will be specifying the inlet conditions for
+the StateJunction block and re-evaluating the degrees of freedom to
+ensure the problem is square (i.e. DOF=0).
+
+.. code:: ipython3
+
+    m.fs.statejunction_2.inlet.flow_vol.fix(10) # m^3/s
+    
+    m.fs.statejunction_2.inlet.conc_mol_comp[0, "H2O"].fix(5000) # mol/m^3
+    m.fs.statejunction_2.inlet.conc_mol_comp[0, "NaOH"].fix(25)  # mol/m^3
+    m.fs.statejunction_2.inlet.conc_mol_comp[0, "EthylAcetate"].fix(50)  # mol/m^3
+    m.fs.statejunction_2.inlet.conc_mol_comp[0, "SodiumAcetate"].fix(100)  # mol/m^3
+    m.fs.statejunction_2.inlet.conc_mol_comp[0, "Ethanol"].fix(200)  # mol/m^3
+    
+    m.fs.statejunction_2.inlet.pressure.fix(101325) # Pa
+    m.fs.statejunction_2.inlet.temperature.fix(298.15) # K
+    
+    DOF_final = degrees_of_freedom(m)
+    print('The final degrees of freedom is: {0}'.format(DOF_final))
+
+
+.. parsed-literal::
+
+    The final degrees of freedom is: 0
+
+
+Flowsheet Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+IDAES includes pre-written initialization routines for all unit models.
+Failing to initialize or having a poor intialization of a flowsheet may
+result in the problem being unsolvable. The output from initialization
+can be set to 7 different levels depending on the details required by
+the user. In general, when a particular output level is set, any
+information at that level and above gets picked up by logger. The
+default level taken by the logger is INFO.
+
+More information on these levels can be found in the IDAES
+documentation:
+https://idaes-pse.readthedocs.io/en/stable/reference_guides/logging.html
+
+.. code:: ipython3
+
+    m.fs.statejunction_2.initialize(outlvl=idaeslog.WARNING)
+
+View Results
+~~~~~~~~~~~~
+
+Since this problem has no constraints, an additional solver is not
+required to compute the properties of the outlet stream. As the
+following report will show, the stream composition of the inlet is
+identical to that of the outlet.
+
+.. code:: ipython3
+
+    m.fs.statejunction_2.report()
+
+
+.. parsed-literal::
+
+    
+    ====================================================================================
+    Unit : fs.statejunction_2                                                  Time: 0.0
+    ------------------------------------------------------------------------------------
+        Stream Table
+                                                 Units            Inlet     Outlet  
+        Volumetric Flowrate                meter ** 3 / second     10.000     10.000
+        Molar Concentration H2O              mole / meter ** 3     5000.0     5000.0
+        Molar Concentration NaOH             mole / meter ** 3     25.000     25.000
+        Molar Concentration EthylAcetate     mole / meter ** 3     50.000     50.000
+        Molar Concentration SodiumAcetate    mole / meter ** 3     100.00     100.00
+        Molar Concentration Ethanol          mole / meter ** 3     200.00     200.00
+        Temperature                                     kelvin     298.15     298.15
+        Pressure                                        pascal 1.0132e+05 1.0132e+05
+    ====================================================================================
+
+

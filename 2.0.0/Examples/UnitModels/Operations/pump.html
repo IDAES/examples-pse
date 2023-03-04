@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial: Pump Unit Model with IAPWS Property Package &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Tutorial: Pump Unit Model with IAPWS Property Package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/UnitModels/Operations/pump.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorial-pump-unit-model-with-iapws-property-package">
+<h1>Tutorial: Pump Unit Model with IAPWS Property Package<a class="headerlink" href="#tutorial-pump-unit-model-with-iapws-property-package" title="Permalink to this heading">¶</a></h1>
+<section id="learning-outcomes">
+<h2>Learning Outcomes<a class="headerlink" href="#learning-outcomes" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Demonstrate use of the Pump unit model in IDAES</p></li>
+<li><p>Demonstrate different simulation options available</p></li>
+</ul>
+</section>
+<section id="problem-statement">
+<h2>Problem Statement<a class="headerlink" href="#problem-statement" title="Permalink to this heading">¶</a></h2>
+<p>In this example, we will pump a stream of water at atmospheric pressure
+to a pressure of 201325 Pa using a simple pump unit model. We will be
+using the IAPWS property package for the water properties. It is assumed
+that the pump operates at steady state.</p>
+<p>The inlet specifications are as follows:</p>
+<ul class="simple">
+<li><p>Flow Rate = 100 mol/s</p></li>
+<li><p>Mole fraction (H2O) = 1</p></li>
+<li><p>Pressure = 101325 Pa</p></li>
+<li><p>Temperature = 298.15 K</p></li>
+</ul>
+<p>We will simulate 2 different cases, depending on the operating
+specifications by the user:</p>
+<p><strong>Case 1</strong>:In this case, we will specify the pump efficiency and the
+pressure increase variable on the pump unit model.</p>
+<ul class="simple">
+<li><p>Pressure Increase = 100000 Pa</p></li>
+<li><p>Pump Efficiency = 0.8</p></li>
+</ul>
+<p><strong>Case 2</strong>: In this case, we will specify the pump efficiency but will
+specify the pressure of the outlet stream directly. * Outlet Pressure =
+201325 Pa * Pump efficiency = 0.8</p>
+<p>IDAES documentation reference for pump model:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/stable/">https://idaes-pse.readthedocs.io/en/stable/</a></p>
+</section>
+<section id="setting-up-the-problem-in-idaes">
+<h2>Setting up the problem in IDAES<a class="headerlink" href="#setting-up-the-problem-in-idaes" title="Permalink to this heading">¶</a></h2>
+<p>In the following cell, we will be importing the necessary components
+from Pyomo and IDAES.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import objects from pyomo package</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">SolverFactory</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">units</span>
+
+<span class="c1"># Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+
+<span class="c1"># Import idaes logger to set output levels</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+
+<span class="c1"># Create the ConcreteModel and the FlowsheetBlock, and attach the flowsheet block to it.</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="c1"># dynamic or ss flowsheet needs to be specified here</span>
+
+
+<span class="c1"># Import the IAPWS property package to create a properties block for the flowsheet</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties</span> <span class="kn">import</span> <span class="n">iapws95</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties.helmholtz.helmholtz</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PhaseType</span>
+<span class="p">)</span>
+
+<span class="c1"># Add properties parameter block to the flowsheet with specifications</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">iapws95</span><span class="o">.</span><span class="n">Iapws95ParameterBlock</span><span class="p">(</span><span class="n">phase_presentation</span><span class="o">=</span><span class="n">PhaseType</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="case-1-fix-pressure-change-and-pump-efficiency">
+<h2>Case 1: Fix pressure change and pump efficiency<a class="headerlink" href="#case-1-fix-pressure-change-and-pump-efficiency" title="Permalink to this heading">¶</a></h2>
+<section id="add-pump-unit-model">
+<h3>Add Pump Unit Model<a class="headerlink" href="#add-pump-unit-model" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import pump unit model from the model library</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models.pressure_changer</span> <span class="kn">import</span> <span class="n">Pump</span>
+
+<span class="c1"># Create an instance of the pump unit, attaching it to the flowsheet</span>
+<span class="c1"># Specify that the property package to be used with the pump is the one we created earlier.</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span> <span class="o">=</span> <span class="n">Pump</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import the degrees_of_freedom function from the idaes.core.util.model_statistics package</span>
+<span class="c1"># DOF = Number of Model Variables - Number of Model Constraints</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+
+<span class="c1"># Call the degrees_of_freedom function, get intitial DOF</span>
+<span class="n">DOF_initial</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The initial DOF is </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_initial</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">initial</span> <span class="n">DOF</span> <span class="ow">is</span> <span class="mi">5</span>
+</pre></div>
+</div>
+</section>
+<section id="fix-inlet-stream-conditions">
+<h3>Fix Inlet Stream Conditions<a class="headerlink" href="#fix-inlet-stream-conditions" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fix the stream inlet conditions</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="c1">#mol/s</span>
+
+<span class="c1"># Use the htpx method to obtain the molar enthalpy of inlet stream based on given conditions of temperature and pressure</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">enth_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">iapws95</span><span class="o">.</span><span class="n">htpx</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="mf">298.15</span><span class="o">*</span><span class="n">units</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="mi">101325</span><span class="o">*</span><span class="n">units</span><span class="o">.</span><span class="n">Pa</span><span class="p">)))</span> <span class="c1">#J/mol</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span> <span class="c1">#Pa</span>
+</pre></div>
+</div>
+</section>
+<section id="fix-pressure-change-and-pump-efficiency">
+<h3>Fix Pressure Change and Pump Efficiency<a class="headerlink" href="#fix-pressure-change-and-pump-efficiency" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fix pump conditions</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span><span class="o">.</span><span class="n">deltaP</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">100000</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span><span class="o">.</span><span class="n">efficiency_pump</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># Call the degrees_of_freedom function, get final DOF</span>
+<span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The final DOF is </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_final</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">DOF</span> <span class="ow">is</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="initialization">
+<h3>Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize the flowsheet, and set the logger level to INFO</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">37</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">37</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+</pre></div>
+</div>
+</section>
+<section id="solve-model">
+<h3>Solve Model<a class="headerlink" href="#solve-model" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Solve the simulation using ipopt</span>
+<span class="c1"># Note: If the degrees of freedom = 0, we have a square problem</span>
+<span class="n">opt</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">solve_status</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       14
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:        6
+
+Total number of variables............................:        6
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        2
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        6
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 7.89e-07 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 2.38e-08 5.16e-07  -1.0 9.86e-07    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 1
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.2580136100548369e-09    2.3806933313608170e-08
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.2580136100548369e-09    2.3806933313608170e-08
+
+
+Number of objective function evaluations             = 2
+Number of objective gradient evaluations             = 2
+Number of equality constraint evaluations            = 2
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 2
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 1
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.007
+Total CPU secs in NLP function evaluations           =      0.003
+
+EXIT: Optimal Solution Found.
+</pre>
+</section>
+<section id="view-results">
+<h3>View Results<a class="headerlink" href="#view-results" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display a readable report</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">pump_case_1</span>                                                      <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>             <span class="p">:</span> <span class="n">Value</span>      <span class="p">:</span> <span class="n">Units</span>         <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+         <span class="n">Efficiency</span> <span class="p">:</span>    <span class="mf">0.80000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Mechanical</span> <span class="n">Work</span> <span class="p">:</span>     <span class="mf">225.85</span> <span class="p">:</span>          <span class="n">watt</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Pressure</span> <span class="n">Change</span> <span class="p">:</span> <span class="mf">1.0000e+05</span> <span class="p">:</span>        <span class="n">pascal</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+     <span class="n">Pressure</span> <span class="n">Ratio</span> <span class="p">:</span>     <span class="mf">1.9869</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                         <span class="n">Units</span>           <span class="n">Inlet</span>     <span class="n">Outlet</span>
+    <span class="n">Molar</span> <span class="n">Flow</span>          <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>     <span class="mf">100.00</span>     <span class="mf">100.00</span>
+    <span class="n">Mass</span> <span class="n">Flow</span>       <span class="n">kilogram</span> <span class="o">/</span> <span class="n">second</span>     <span class="mf">1.8015</span>     <span class="mf">1.8015</span>
+    <span class="n">T</span>                          <span class="n">kelvin</span>     <span class="mf">298.15</span>     <span class="mf">298.16</span>
+    <span class="n">P</span>                          <span class="n">pascal</span> <span class="mf">1.0132e+05</span> <span class="mf">2.0132e+05</span>
+    <span class="n">Vapor</span> <span class="n">Fraction</span>      <span class="n">dimensionless</span>     <span class="mf">0.0000</span>     <span class="mf">0.0000</span>
+    <span class="n">Molar</span> <span class="n">Enthalpy</span>       <span class="n">joule</span> <span class="o">/</span> <span class="n">mole</span>     <span class="mf">1890.2</span>     <span class="mf">1892.4</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="case-2-fix-outlet-pressure-and-pump-efficiency">
+<h2>Case 2: Fix outlet pressure and pump efficiency<a class="headerlink" href="#case-2-fix-outlet-pressure-and-pump-efficiency" title="Permalink to this heading">¶</a></h2>
+<section id="id1">
+<h3>Add Pump Unit Model<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create an instance of another pump unit, attaching it to the same flowsheet</span>
+<span class="c1"># Specify that the property package to be used with the pump is the one we created earlier.</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span> <span class="o">=</span> <span class="n">Pump</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+
+<span class="c1"># Call the degrees_of_freedom function, get intitial DOF</span>
+<span class="n">DOF_initial</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The initial DOF is </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_initial</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">initial</span> <span class="n">DOF</span> <span class="ow">is</span> <span class="mi">5</span>
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h3>Fix Inlet Stream Conditions<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fix the stream inlet conditions</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># mol/s</span>
+
+<span class="c1"># Use the htpx method to obtain the molar enthalpy of inlet stream based on given conditions of temperature and pressure</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">enth_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">iapws95</span><span class="o">.</span><span class="n">htpx</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="mf">298.15</span><span class="o">*</span><span class="n">units</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="mi">101325</span><span class="o">*</span><span class="n">units</span><span class="o">.</span><span class="n">Pa</span><span class="p">)))</span> <span class="c1"># J/mol</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span> <span class="c1"># Pa</span>
+</pre></div>
+</div>
+</section>
+<section id="fix-outlet-pressure-pump-efficiency">
+<h3>Fix Outlet Pressure &amp; Pump Efficiency<a class="headerlink" href="#fix-outlet-pressure-pump-efficiency" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fix outlet stream conditions</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">201325</span><span class="p">)</span>
+
+<span class="c1"># Fix pump efficiency</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="o">.</span><span class="n">efficiency_pump</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The final degrees of freedom is: </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_final</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="ow">is</span><span class="p">:</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>Initialization<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize the flowsheet, and set the logger level to INFO</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">37</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">37</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h3>Solve Model<a class="headerlink" href="#id4" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Solve the simulation using ipopt</span>
+<span class="c1"># Note: If the degrees of freedom = 0, we have a square problem</span>
+<span class="n">opt</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">solve_status</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       11
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:        3
+
+Total number of variables............................:        6
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:        1
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        6
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 7.89e-07 0.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  0.0000000e+00 2.38e-08 5.16e-07  -1.0 9.86e-07    -  9.90e-01 1.00e+00h  1
+
+Number of Iterations....: 1
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.2580136100548369e-09    2.3806933313608170e-08
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.2580136100548369e-09    2.3806933313608170e-08
+
+
+Number of objective function evaluations             = 2
+Number of objective gradient evaluations             = 2
+Number of equality constraint evaluations            = 2
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 2
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 1
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.007
+Total CPU secs in NLP function evaluations           =      0.003
+
+EXIT: Optimal Solution Found.
+</pre>
+</section>
+<section id="id5">
+<h3>View Results<a class="headerlink" href="#id5" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display a readable report</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">pump_case_2</span>                                                      <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>             <span class="p">:</span> <span class="n">Value</span>      <span class="p">:</span> <span class="n">Units</span>         <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+         <span class="n">Efficiency</span> <span class="p">:</span>    <span class="mf">0.80000</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Mechanical</span> <span class="n">Work</span> <span class="p">:</span>     <span class="mf">225.85</span> <span class="p">:</span>          <span class="n">watt</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">Pressure</span> <span class="n">Change</span> <span class="p">:</span> <span class="mf">1.0000e+05</span> <span class="p">:</span>        <span class="n">pascal</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+     <span class="n">Pressure</span> <span class="n">Ratio</span> <span class="p">:</span>     <span class="mf">1.9869</span> <span class="p">:</span> <span class="n">dimensionless</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                         <span class="n">Units</span>           <span class="n">Inlet</span>     <span class="n">Outlet</span>
+    <span class="n">Molar</span> <span class="n">Flow</span>          <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>     <span class="mf">100.00</span>     <span class="mf">100.00</span>
+    <span class="n">Mass</span> <span class="n">Flow</span>       <span class="n">kilogram</span> <span class="o">/</span> <span class="n">second</span>     <span class="mf">1.8015</span>     <span class="mf">1.8015</span>
+    <span class="n">T</span>                          <span class="n">kelvin</span>     <span class="mf">298.15</span>     <span class="mf">298.16</span>
+    <span class="n">P</span>                          <span class="n">pascal</span> <span class="mf">1.0132e+05</span> <span class="mf">2.0132e+05</span>
+    <span class="n">Vapor</span> <span class="n">Fraction</span>      <span class="n">dimensionless</span>     <span class="mf">0.0000</span>     <span class="mf">0.0000</span>
+    <span class="n">Molar</span> <span class="n">Enthalpy</span>       <span class="n">joule</span> <span class="o">/</span> <span class="n">mole</span>     <span class="mf">1890.2</span>     <span class="mf">1892.4</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

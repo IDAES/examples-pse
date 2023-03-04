@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOFC Power Plant Example &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">SOFC Power Plant Example</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/Examples/Flowsheets/power_generation/sofc/sofc.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sofc-power-plant-example">
+<h1>SOFC Power Plant Example<a class="headerlink" href="#sofc-power-plant-example" title="Permalink to this heading">¶</a></h1>
+<p>This notebook runs the SOFC power plant model over a range of net power
+outputs from 650 MW to 200 MW. The SOFC model is based on case ANGFC3B
+in the NETL report “Techno-Economic Analysis of Natural Gas Fuel Cell
+Plant Configurations” April 2022
+<a class="reference external" href="https://www.netl.doe.gov/projects/files/TechnoEconomicAnalysisofNaturalGasFuelCellPlantConfigurations_043022.pdf">https://www.netl.doe.gov/projects/files/TechnoEconomicAnalysisofNaturalGasFuelCellPlantConfigurations_043022.pdf</a></p>
+<section id="module-imports">
+<h2>Module Imports<a class="headerlink" href="#module-imports" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">from</span> <span class="nn">IPython.core.display</span> <span class="kn">import</span> <span class="n">SVG</span>
+
+<span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">pyunits</span>
+<span class="kn">from</span> <span class="nn">pyomo.util.infeasible</span> <span class="kn">import</span> <span class="n">log_infeasible_constraints</span>
+
+<span class="kn">import</span> <span class="nn">idaes</span>
+<span class="kn">from</span> <span class="nn">idaes.core.solvers</span> <span class="kn">import</span> <span class="n">use_idaes_solver_configuration_defaults</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util</span> <span class="k">as</span> <span class="nn">iutil</span>
+
+<span class="kn">from</span> <span class="nn">sofc</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_model</span><span class="p">,</span>
+    <span class="n">initialize</span><span class="p">,</span>
+    <span class="n">add_tags</span><span class="p">,</span>
+    <span class="n">write_pfd</span><span class="p">,</span>
+    <span class="n">make_stream_table</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sofc_costing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_capital_cost</span><span class="p">,</span>
+    <span class="n">get_fixed_costs</span><span class="p">,</span>
+    <span class="n">get_variable_costs</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="make-output-directories">
+<h2>Make Output Directories<a class="headerlink" href="#make-output-directories" title="Permalink to this heading">¶</a></h2>
+<p>This notebook can produce a large number of output files. To make it
+easier to manage, some subdirectories are used to organize output. This
+ensures that the directories exist.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make a directory if it doesn&#39;t exist</span>
+<span class="k">def</span> <span class="nf">make_directory</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_pfds&quot;</span><span class="p">)</span>
+<span class="n">make_directory</span><span class="p">(</span><span class="s2">&quot;data_tabulated&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="global-solver-settings">
+<h2>Global Solver Settings<a class="headerlink" href="#global-solver-settings" title="Permalink to this heading">¶</a></h2>
+<p>Use the IDAES configuration system for solver settings. These will apply
+to all Ipopt instances created, including the ones created in
+initialization methods.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">use_idaes_solver_configuration_defaults</span><span class="p">()</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">nlp_scaling_method</span> <span class="o">=</span> <span class="s2">&quot;user-scaling&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">linear_solver</span> <span class="o">=</span> <span class="s2">&quot;ma57&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">OF_ma57_automatic_scaling</span> <span class="o">=</span> <span class="s2">&quot;yes&quot;</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ma57_pivtol</span> <span class="o">=</span> <span class="mf">1e-5</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ma57_pivtolmax</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">bound_push</span> <span class="o">=</span> <span class="mf">1e-20</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s2">&quot;ipopt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="create-the-sofc-model">
+<h2>Create the SOFC model<a class="headerlink" href="#create-the-sofc-model" title="Permalink to this heading">¶</a></h2>
+<p>Create the SOFC model and initialize it or read the saved initialization
+if available. The base SOFC model is configured to match the NGFC
+report.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_base_sofc_model</span><span class="p">():</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">get_model</span><span class="p">()</span>
+    <span class="n">save_name</span> <span class="o">=</span> <span class="s2">&quot;sofc_init.json.gz&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_name</span><span class="p">):</span>
+        <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_name</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading initialized model from json&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">initialize</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_name</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solving initialized model&quot;</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">m</span>
+</pre></div>
+</div>
+</section>
+<section id="design-optimization">
+<h2>Design Optimization<a class="headerlink" href="#design-optimization" title="Permalink to this heading">¶</a></h2>
+<p>Optimize the heat exchanger sizes at the nameplate capacity of 650 MW.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">get_base_sofc_model</span><span class="p">()</span>
+
+<span class="c1"># add costs</span>
+<span class="n">get_capital_cost</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="n">get_fixed_costs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="n">get_variable_costs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+<span class="c1"># setup design optimization problem</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span>
+    <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">annualized_tasc</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_fixed_OM_cost</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_variable_OM_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># unfix decision vars</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">anode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cathode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">air_blower</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cathode_recycle</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;recycle_outlet&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc</span><span class="o">.</span><span class="n">OTC</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc</span><span class="o">.</span><span class="n">OTC</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mf">2.099</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc</span><span class="o">.</span><span class="n">OTC</span><span class="o">.</span><span class="n">setub</span><span class="p">(</span><span class="mf">2.2</span><span class="p">)</span>
+
+<span class="c1"># add sofc operational constraints</span>
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">maximum_cell_temperature</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc</span><span class="o">.</span><span class="n">max_cell_temperature</span> <span class="o">&lt;=</span> <span class="mi">750</span>
+
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">maximum_cell_temperature_change</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc</span><span class="o">.</span><span class="n">deltaT_cell</span> <span class="o">&lt;=</span> <span class="mi">100</span>
+
+<span class="c1"># enforce net power = 650 MW</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_MW</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+    <span class="n">initialize</span><span class="o">=</span><span class="mi">650</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">900</span><span class="p">),</span>
+    <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">MW</span><span class="p">)</span>
+
+<span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">net_power_constraint</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">fs</span><span class="o">.</span><span class="n">net_power_MW</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">MW</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">anode_mix</span><span class="o">.</span><span class="n">feed_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_MW</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">650</span><span class="p">)</span>
+
+<span class="n">save_name</span> <span class="o">=</span> <span class="s2">&quot;sofc_design_opt.json.gz&quot;</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_name</span><span class="p">):</span>
+    <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_name</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading optimized design from json&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">save_name</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Loading initialized model from json
+Solving initialized model
+WARNING: model contains export suffix
+    'fs.flash.control_volume.properties_out[0.0].scaling_factor' that contains
+    12 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.flash.control_volume.properties_in[0.0].scaling_factor' that contains
+    10 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.condenser.control_volume.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.condenser.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.condenser.control_volume.scaling_factor' that contains 1 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.flue_gas_translator.properties_out[0.0].scaling_factor' that contains
+    6 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.flue_gas_translator.properties_in[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_HRSG.control_volume.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_HRSG.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_HRSG.control_volume.scaling_factor' that contains 1 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor.control_volume.properties_out[0.0].scaling_factor' that
+    contains 13 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor.control_volume.scaling_factor' that contains 1 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.combustor_mix.mixed_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.combustor_mix.oxygen_inlet_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.combustor_mix.anode_inlet_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor_translator.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor_translator.properties_in[0.0].scaling_factor' that
+    contains 5 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.ASU_O2_outlet.control_volume.properties_out[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.ASU_O2_outlet.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.asu.O2_outlet_state[0.0].scaling_factor' that contains 7 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.asu.N2_outlet_state[0.0].scaling_factor' that contains 5 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.asu.mixed_state[0.0].scaling_factor'
+    that contains 5 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s2.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s2.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s2.control_volume.scaling_factor' that contains 1
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s2.properties_isentropic[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s2.control_volume.properties_out[0.0].scaling_factor'
+    that contains 8 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s2.control_volume.properties_in[0.0].scaling_factor'
+    that contains 9 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s1.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s1.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s1.control_volume.scaling_factor' that contains 1
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s1.properties_isentropic[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s1.control_volume.properties_out[0.0].scaling_factor'
+    that contains 8 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s1.control_volume.properties_in[0.0].scaling_factor'
+    that contains 16 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hrsg.control_volume.properties_out[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hrsg.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hrsg.control_volume.scaling_factor' that contains 1 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_blower.properties_isentropic[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_blower.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_blower.control_volume.properties_in[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_recycle.recycle_outlet_state[0.0].scaling_factor' that
+    contains 5 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_recycle.exhaust_outlet_state[0.0].scaling_factor' that
+    contains 5 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_recycle.mixed_state[0.0].scaling_factor' that contains 5
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_heat.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_heat.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_translator.properties_out[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_translator.properties_in[0.0].scaling_factor' that contains 5
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode.ion_outlet_state[0.0].scaling_factor' that contains 5
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode.air_outlet_state[0.0].scaling_factor' that contains 5
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode.mixed_state[0.0].scaling_factor' that contains 5 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_mix.mixed_state[0.0].scaling_factor' that contains 7 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_mix.recycle_inlet_state[0.0].scaling_factor' that contains 7
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_mix.air_inlet_state[0.0].scaling_factor' that contains 7
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hx.cold_side.properties_out[0.0].scaling_factor' that contains
+    8 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hx.cold_side.properties_in[0.0].scaling_factor' that contains
+    7 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hx.hot_side.properties_out[0.0].scaling_factor' that contains
+    7 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hx.hot_side.properties_in[0.0].scaling_factor' that contains 7
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.cathode_hx.hot_side.scaling_factor'
+    that contains 1 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix 'fs.cathode_hx.scaling_factor' that
+    contains 3 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.air_blower.properties_isentropic[0.0].scaling_factor' that contains 9
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_blower.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.air_blower.control_volume.properties_in[0.0].scaling_factor' that
+    contains 17 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.recycle_translator.properties_out[0.0].scaling_factor' that contains 9
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.recycle_translator.properties_in[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_blower.properties_isentropic[0.0].scaling_factor' that contains
+    12 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_blower.control_volume.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_blower.control_volume.properties_in[0.0].scaling_factor' that
+    contains 12 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_recycle.recycle_outlet_state[0.0].scaling_factor' that contains
+    8 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_recycle.exhaust_outlet_state[0.0].scaling_factor' that contains
+    8 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_recycle.mixed_state[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode.control_volume.properties_out[0.0].scaling_factor' that contains
+    11 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode.control_volume.properties_in[0.0].scaling_factor' that contains
+    10 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.anode.control_volume.scaling_factor'
+    that contains 10 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix 'fs.anode.scaling_factor' that contains
+    4 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.fuel_cell_mix.mixed_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.fuel_cell_mix.ion_inlet_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.fuel_cell_mix.fuel_inlet_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_translator.properties_out[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_translator.properties_in[0.0].scaling_factor' that contains 9
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.prereformer.control_volume.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.prereformer.control_volume.properties_in[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.prereformer.control_volume.scaling_factor' that contains 9 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.prereformer.scaling_factor' that
+    contains 2 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_hx.cold_side.properties_out[0.0].scaling_factor' that contains
+    11 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_hx.cold_side.properties_in[0.0].scaling_factor' that contains 11
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.anode_hx.cold_side.scaling_factor'
+    that contains 1 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_hx.hot_side.properties_out[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_hx.hot_side.properties_in[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.anode_hx.hot_side.scaling_factor'
+    that contains 1 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix 'fs.anode_hx.scaling_factor' that
+    contains 3 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_mix.mixed_state[0.0].scaling_factor' that contains 11 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_mix.recycle_inlet_state[0.0].scaling_factor' that contains 11
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_mix.feed_inlet_state[0.0].scaling_factor' that contains 24
+    component keys that are not exported as part of the NL file.  Skipping.
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+max_iter=200
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+bound_push=1e-20
+option_file_name=/tmp/tmpj3ptwy5h_ipopt.opt
+
+Using option file &quot;/tmp/tmpj3ptwy5h_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:   116906
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:     4832
+
+Total number of variables............................:     3173
+                     variables with only lower bounds:      109
+                variables with lower and upper bounds:     1426
+                     variables with only upper bounds:        5
+Total number of equality constraints.................:     3173
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 3.51e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+Reallocating memory for MA57: lfact (5856712)
+   1  0.0000000e+00 2.27e+01 7.25e+06  -1.0 2.10e+01    -  2.84e-01 1.00e+00H  1
+   2  0.0000000e+00 8.82e-02 3.36e+05  -1.0 1.00e+00    -  9.53e-01 1.00e+00h  1
+   3  0.0000000e+00 1.75e-07 2.37e+03  -1.0 1.00e+00    -  9.93e-01 1.00e+00h  1
+
+Number of Iterations....: 3
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   1.7455749912187457e-07    1.7455749912187457e-07
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   1.7455749912187457e-07    1.7455749912187457e-07
+
+
+Number of objective function evaluations             = 5
+Number of objective gradient evaluations             = 4
+Number of equality constraint evaluations            = 5
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 4
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 3
+Total CPU secs in IPOPT (w/o function evaluations)   =      2.416
+Total CPU secs in NLP function evaluations           =      0.061
+
+EXIT: Optimal Solution Found.
+WARNING: model contains export suffix
+    'fs.flash.control_volume.properties_out[0.0].scaling_factor' that contains
+    12 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.flash.control_volume.properties_in[0.0].scaling_factor' that contains
+    10 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.condenser.control_volume.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.condenser.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.condenser.control_volume.scaling_factor' that contains 1 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.flue_gas_translator.properties_out[0.0].scaling_factor' that contains
+    6 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.flue_gas_translator.properties_in[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_HRSG.control_volume.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_HRSG.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_HRSG.control_volume.scaling_factor' that contains 1 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor.control_volume.properties_out[0.0].scaling_factor' that
+    contains 13 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor.control_volume.properties_in[0.0].scaling_factor' that
+    contains 10 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor.control_volume.scaling_factor' that contains 1 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.combustor_mix.mixed_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.combustor_mix.oxygen_inlet_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.combustor_mix.anode_inlet_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor_translator.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.oxycombustor_translator.properties_in[0.0].scaling_factor' that
+    contains 5 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.ASU_O2_outlet.control_volume.properties_out[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.ASU_O2_outlet.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.asu.O2_outlet_state[0.0].scaling_factor' that contains 7 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.asu.N2_outlet_state[0.0].scaling_factor' that contains 5 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.asu.mixed_state[0.0].scaling_factor'
+    that contains 5 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s2.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s2.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s2.control_volume.scaling_factor' that contains 1
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s2.properties_isentropic[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s2.control_volume.properties_out[0.0].scaling_factor'
+    that contains 8 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s2.control_volume.properties_in[0.0].scaling_factor'
+    that contains 9 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s1.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s1.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.intercooler_s1.control_volume.scaling_factor' that contains 1
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s1.properties_isentropic[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s1.control_volume.properties_out[0.0].scaling_factor'
+    that contains 8 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_compressor_s1.control_volume.properties_in[0.0].scaling_factor'
+    that contains 16 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hrsg.control_volume.properties_out[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hrsg.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hrsg.control_volume.scaling_factor' that contains 1 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_blower.properties_isentropic[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_blower.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_blower.control_volume.properties_in[0.0].scaling_factor' that
+    contains 9 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_recycle.recycle_outlet_state[0.0].scaling_factor' that
+    contains 5 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_recycle.exhaust_outlet_state[0.0].scaling_factor' that
+    contains 5 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_recycle.mixed_state[0.0].scaling_factor' that contains 5
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_heat.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_heat.control_volume.properties_in[0.0].scaling_factor' that
+    contains 7 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_translator.properties_out[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_translator.properties_in[0.0].scaling_factor' that contains 5
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode.ion_outlet_state[0.0].scaling_factor' that contains 5
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode.air_outlet_state[0.0].scaling_factor' that contains 5
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode.mixed_state[0.0].scaling_factor' that contains 5 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_mix.mixed_state[0.0].scaling_factor' that contains 7 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_mix.recycle_inlet_state[0.0].scaling_factor' that contains 7
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_mix.air_inlet_state[0.0].scaling_factor' that contains 7
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hx.cold_side.properties_out[0.0].scaling_factor' that contains
+    8 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hx.cold_side.properties_in[0.0].scaling_factor' that contains
+    7 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hx.hot_side.properties_out[0.0].scaling_factor' that contains
+    7 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.cathode_hx.hot_side.properties_in[0.0].scaling_factor' that contains 7
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.cathode_hx.hot_side.scaling_factor'
+    that contains 1 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix 'fs.cathode_hx.scaling_factor' that
+    contains 2 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.air_blower.properties_isentropic[0.0].scaling_factor' that contains 9
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.air_blower.control_volume.properties_out[0.0].scaling_factor' that
+    contains 8 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.air_blower.control_volume.properties_in[0.0].scaling_factor' that
+    contains 16 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.recycle_translator.properties_out[0.0].scaling_factor' that contains 9
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.recycle_translator.properties_in[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_blower.properties_isentropic[0.0].scaling_factor' that contains
+    12 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_blower.control_volume.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_blower.control_volume.properties_in[0.0].scaling_factor' that
+    contains 12 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_recycle.recycle_outlet_state[0.0].scaling_factor' that contains
+    8 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_recycle.exhaust_outlet_state[0.0].scaling_factor' that contains
+    8 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_recycle.mixed_state[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode.control_volume.properties_out[0.0].scaling_factor' that contains
+    11 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode.control_volume.properties_in[0.0].scaling_factor' that contains
+    10 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.anode.control_volume.scaling_factor'
+    that contains 10 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix 'fs.anode.scaling_factor' that contains
+    4 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.fuel_cell_mix.mixed_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.fuel_cell_mix.ion_inlet_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.fuel_cell_mix.fuel_inlet_state[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_translator.properties_out[0.0].scaling_factor' that contains 8
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_translator.properties_in[0.0].scaling_factor' that contains 9
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.prereformer.control_volume.properties_out[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.prereformer.control_volume.properties_in[0.0].scaling_factor' that
+    contains 11 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.prereformer.control_volume.scaling_factor' that contains 9 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.prereformer.scaling_factor' that
+    contains 2 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_hx.cold_side.properties_out[0.0].scaling_factor' that contains
+    11 component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_hx.cold_side.properties_in[0.0].scaling_factor' that contains 11
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.anode_hx.cold_side.scaling_factor'
+    that contains 1 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_hx.hot_side.properties_out[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_hx.hot_side.properties_in[0.0].scaling_factor' that contains 10
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix 'fs.anode_hx.hot_side.scaling_factor'
+    that contains 1 component keys that are not exported as part of the NL
+    file.  Skipping.
+WARNING: model contains export suffix 'fs.anode_hx.scaling_factor' that
+    contains 2 component keys that are not exported as part of the NL file.
+    Skipping.
+WARNING: model contains export suffix
+    'fs.anode_mix.mixed_state[0.0].scaling_factor' that contains 11 component
+    keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_mix.recycle_inlet_state[0.0].scaling_factor' that contains 11
+    component keys that are not exported as part of the NL file.  Skipping.
+WARNING: model contains export suffix
+    'fs.anode_mix.feed_inlet_state[0.0].scaling_factor' that contains 23
+    component keys that are not exported as part of the NL file.  Skipping.
+Ipopt 3.13.2: nlp_scaling_method=user-scaling
+tol=1e-06
+max_iter=200
+linear_solver=ma57
+ma57_pivtol=1e-05
+ma57_pivtolmax=0.1
+bound_push=1e-20
+option_file_name=/tmp/tmpu9qne57e_ipopt.opt
+
+Using option file &quot;/tmp/tmpu9qne57e_ipopt.opt&quot;.
+
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:   117767
+Number of nonzeros in inequality constraint Jacobian.:        2
+Number of nonzeros in Lagrangian Hessian.............:     5258
+
+Reallocating memory for MA57: lfact (5856694)
+Total number of variables............................:     3310
+                     variables with only lower bounds:      111
+                variables with lower and upper bounds:     1553
+                     variables with only upper bounds:        5
+Total number of equality constraints.................:     3305
+Total number of inequality constraints...............:        2
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        2
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  2.5930054e+02 1.64e+01 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  2.5696055e+02 4.83e-01 3.28e+06  -1.0 2.04e+01    -  6.72e-01 1.00e+00h  1
+   2  2.5702844e+02 3.67e+00 4.71e+05  -1.0 4.43e+00    -  8.56e-01 1.00e+00h  1
+   3  2.5777344e+02 3.68e+02 1.56e+05  -1.0 3.24e+01    -  6.68e-01 1.00e+00f  1
+   4  2.5896506e+02 5.52e+01 3.85e+05  -1.0 1.81e+01    -  9.90e-01 1.00e+00h  1
+   5  2.6073340e+02 1.66e+02 1.00e+06  -1.0 3.07e+01    -  1.00e+00 1.00e+00h  1
+   6  2.6093255e+02 4.46e-01 4.19e+05  -1.0 4.18e+00    -  1.00e+00 1.00e+00h  1
+   7  2.6090517e+02 3.35e-02 1.18e+05  -1.0 1.07e+00    -  1.00e+00 1.00e+00h  1
+   8  2.5624596e+02 6.01e+02 1.93e+06  -2.5 1.03e+02    -  6.38e-01 8.37e-01f  1
+   9  2.5599592e+02 5.55e+02 1.51e+06  -2.5 9.99e+01    -  4.38e-01 8.25e-02h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  2.5533660e+02 5.35e+02 6.22e+05  -2.5 3.23e+01    -  1.00e+00 1.00e+00h  1
+  11  2.5536750e+02 4.49e+02 5.11e+05  -2.5 2.39e+01    -  7.12e-01 1.74e-01h  1
+  12  2.5567715e+02 8.68e+01 5.22e+05  -2.5 1.43e+01    -  7.35e-01 8.10e-01h  1
+  13  2.5578515e+02 9.29e-01 5.40e+05  -2.5 4.40e+00    -  1.00e+00 1.00e+00h  1
+  14  2.5578143e+02 1.42e-01 3.17e+05  -2.5 1.35e+00    -  1.00e+00 1.00e+00h  1
+  15  2.5578163e+02 3.06e-03 1.13e+05  -2.5 1.00e+00    -  1.00e+00 1.00e+00h  1
+  16  2.5577315e+02 2.10e-02 1.86e+05  -3.8 1.00e+00    -  1.00e+00 6.13e-01h  1
+  17  2.5577142e+02 3.06e-03 3.69e+05  -3.8 1.00e+00    -  1.00e+00 1.00e+00h  1
+  18  2.5577134e+02 6.78e-04 2.58e+04  -3.8 1.00e+00    -  1.00e+00 1.00e+00h  1
+  19  2.5577134e+02 5.41e-07 2.34e+03  -3.8 1.00e+00    -  1.00e+00 1.00e+00h  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  20  2.5577090e+02 1.64e-04 9.58e+04  -5.7 9.99e-01    -  9.88e-01 9.82e-01h  1
+  21  2.5577089e+02 1.15e-05 7.86e+02  -5.7 9.98e-01    -  1.00e+00 1.00e+00h  1
+  22  2.5577089e+02 5.17e-10 7.93e+00  -5.7 9.95e-01    -  1.00e+00 1.00e+00h  1
+  23  2.5577089e+02 5.63e-08 1.46e+03  -7.0 9.86e-01    -  1.00e+00 1.00e+00h  1
+  24  2.5577089e+02 1.16e-10 2.38e-01  -7.0 9.63e-01    -  1.00e+00 1.00e+00h  1
+  25  2.5577089e+02 1.16e-10 8.64e-02  -7.0 9.04e-01    -  1.00e+00 1.00e+00h  1
+  26  2.5577089e+02 1.67e-10 3.19e-03  -7.0 7.63e-01    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 26
+
+                                   (scaled)                 (unscaled)
+Objective...............:   2.5577088635098298e+02    2.5577088635098298e+02
+Dual infeasibility......:   3.1924724990009057e-03    3.1924724990009057e-01
+Constraint violation....:   1.6734702512621880e-10    1.6734702512621880e-10
+Complementarity.........:   9.0909091118737816e-08    9.0909091118737816e-08
+Overall NLP error.......:   9.0909091118737816e-08    3.1924724990009057e-01
+
+
+Number of objective function evaluations             = 27
+Number of objective gradient evaluations             = 27
+Number of equality constraint evaluations            = 27
+Number of inequality constraint evaluations          = 27
+Number of equality constraint Jacobian evaluations   = 27
+Number of inequality constraint Jacobian evaluations = 27
+Number of Lagrangian Hessian evaluations             = 26
+Total CPU secs in IPOPT (w/o function evaluations)   =      9.800
+Total CPU secs in NLP function evaluations           =      0.522
+
+EXIT: Optimal Solution Found.</pre>
+</section>
+<section id="show-pfds-with-design-optimization-results">
+<h2>Show PFDs with design optimization results<a class="headerlink" href="#show-pfds-with-design-optimization-results" title="Permalink to this heading">¶</a></h2>
+<p>This displays PFDs in the notebook, and saves them to files.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">write_pfd</span><span class="p">(</span><span class="n">m</span><span class="p">)))</span>
+<span class="n">write_pfd</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s2">&quot;data_pfds/sofc_results.svg&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../../../_images/output_12_01.svg" src="../../../../_images/output_12_01.svg" /><div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># record and display results</span>
+<span class="n">optimal_anode_hx_area</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">anode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span>
+<span class="n">optimal_cathode_hx_area</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cathode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span>
+
+<span class="c1"># assert that flowsheet values have not changed from prior runs</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">anode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">2683.16</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cathode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">15135.97</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cathode_recycle</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;recycle_outlet&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.2828</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">air_blower</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">11.007</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decision Variable Results&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Anode hx area = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">anode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> ft^2&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cathode hx area = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cathode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> ft^2&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cathode recirculation fraction = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cathode_recycle</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;recycle_outlet&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cathode air flowrate = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">air_blower</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> kmol/s&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Capital Costs&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOFC modules = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc_modules</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SOFC balance of plant = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">sofc_bop_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Oxycombustor = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">oxycombustor</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Air separation unit = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">asu</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Carbon purification unit = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cpu_cost</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_plant_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feedwater and misc. BOP systems = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">feedwater_bop_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HRSG, ductwork, and stack = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">hrsg_ductwork_and_stack_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Steam turbine generator = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">steam_turbine_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cooling water system = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">cooling_water_system_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Electric equipment = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">accessory_electric_plant_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Instrumentation and control = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">instrumentation_and_control_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Improvements to site = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">improvements_to_site_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Buildings and structures = MM$</span><span class="si">{</span><span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">buildings_and_structures_cost</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Plant Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_TPC</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Overnight Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_overnight_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total As Spent Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_as_spent_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annualized TASC = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">annualized_tasc</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fixed and Variable O&amp;M Costs&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annual operating labor = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">annual_operating_labor_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Maintenance labor = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">maintenance_labor_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Admin &amp; support labor = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">admin_and_support_labor_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Property taxes &amp; insurance = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">property_taxes_and_insurance</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Maintenance material cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">maintenance_material_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stack replacement cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">stack_replacement_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Fixed O&amp;M Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_fixed_OM_cost</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Variable O&amp;M Cost = MM$</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_variable_OM_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">/year&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>------------------------------------------
+Decision Variable Results
+------------------------------------------
+Anode hx area = 2683.1608147162365 ft^2
+Cathode hx area = 15135.972121851768 ft^2
+Cathode recirculation fraction = 0.28286078699179706
+Cathode air flowrate = 11.007126050466491 kmol/s
+
+
+------------------------------------------
+Capital Costs
+------------------------------------------
+SOFC modules = MM$216.351206607107
+SOFC balance of plant = MM$22.168198605873528
+Oxycombustor = MM$17.25766113649775
+Air separation unit = MM$75.16656941296873
+Carbon purification unit = MM$80.17568164876174
+Feedwater and misc. BOP systems = MM$78.41974917660707
+HRSG, ductwork, and stack = MM$44.92390515296145
+Steam turbine generator = MM$50.98302022038936
+Cooling water system = MM$32.59760880545278
+Electric equipment = MM$67.15738319049805
+Instrumentation and control = MM$20.48747362755321
+Improvements to site = MM$28.837921346638318
+Buildings and structures = MM$12.805970619738078
+
+
+Total Plant Cost = MM$747.3323495510471
+Total Overnight Cost = MM$904.272142956767
+Total As Spent Cost = MM$988.3694522517463
+Annualized TASC = MM$69.87772027419845/year
+
+
+------------------------------------------
+Fixed and Variable O&amp;M Costs
+------------------------------------------
+Annual operating labor = MM$2.6306279999999997/year
+Maintenance labor = MM$5.679725856587957/year
+Admin &amp; support labor = MM$2.0775884641469893/year
+Property taxes &amp; insurance = MM$14.946646991020941/year
+Maintenance material cost = MM$8.519588784881934/year
+Stack replacement cost = MM$15.27286975208992/year
+Total Fixed O&amp;M Cost = MM$49.12704784872775/year
+Total Variable O&amp;M Cost = MM$136.76611822805677/year
+</pre></div>
+</div>
+</section>
+<section id="run-sofc-partial-load">
+<h2>Run SOFC Partial Load<a class="headerlink" href="#run-sofc-partial-load" title="Permalink to this heading">¶</a></h2>
+<p>This runs the SOFC model at partial load from 650 MW to 200 MW at 5 MW
+intervals. Results are tabulated for tags in the tags_output tag group
+in a Pandas data frame.</p>
+<p>To run the series, change run_series to True. Running the turndown
+series takes a while, unless previous saved results are available.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">run_series</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">if</span> <span class="n">run_series</span><span class="p">:</span>
+    <span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="mf">1e-6</span>
+    <span class="n">idaes</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">ipopt</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mu_init</span> <span class="o">=</span> <span class="mf">1e-3</span>
+    <span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s2">&quot;ipopt&quot;</span><span class="p">)</span>
+
+    <span class="c1"># reload the model since capital costs are not important here</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">get_base_sofc_model</span><span class="p">()</span>
+    <span class="n">get_variable_costs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">add_tags</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+    <span class="c1"># setup operation optimization problem</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Objective</span><span class="p">(</span>
+        <span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">costing</span><span class="o">.</span><span class="n">total_variable_OM_cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># fix hx areas to their optimal values</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">anode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">optimal_anode_hx_area</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cathode_hx</span><span class="o">.</span><span class="n">area</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">optimal_cathode_hx_area</span><span class="p">)</span>
+
+    <span class="c1"># unfix operating decision vars</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">air_blower</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cathode_recycle</span><span class="o">.</span><span class="n">split_fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;recycle_outlet&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+
+    <span class="c1"># add sofc operational constraints</span>
+    <span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">maximum_cell_temperature</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc</span><span class="o">.</span><span class="n">max_cell_temperature</span> <span class="o">&lt;=</span> <span class="mi">750</span>
+
+    <span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">maximum_cell_temperature_change</span><span class="p">(</span><span class="n">fs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc</span><span class="o">.</span><span class="n">deltaT_cell</span> <span class="o">&lt;=</span> <span class="mi">100</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc</span><span class="o">.</span><span class="n">current_density</span><span class="o">.</span><span class="n">setlb</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+
+    <span class="c1"># create var to enforce net power</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_MW</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+        <span class="n">initialize</span><span class="o">=</span><span class="mi">650</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">900</span><span class="p">),</span>
+        <span class="n">units</span><span class="o">=</span><span class="n">pyunits</span><span class="o">.</span><span class="n">MW</span><span class="p">)</span>
+
+    <span class="nd">@m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">net_power_constraint</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fs</span><span class="o">.</span><span class="n">net_power_MW</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">pyunits</span><span class="o">.</span><span class="n">MW</span><span class="p">)</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">anode_mix</span><span class="o">.</span><span class="n">feed_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_tags_output</span><span class="o">.</span><span class="n">table_heading</span><span class="p">())</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">650</span><span class="p">,</span> <span class="mi">199</span><span class="p">,</span> <span class="o">-</span><span class="mi">20</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Solving for </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> MW net power&quot;</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">net_power_MW</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+        <span class="n">turndown_ratio</span> <span class="o">=</span> <span class="n">p</span><span class="o">/</span><span class="mi">650</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">sofc</span><span class="o">.</span><span class="n">current_density</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">turndown_ratio</span><span class="o">*</span><span class="mi">4000</span><span class="p">)</span>
+
+        <span class="n">fname</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;data/sofc_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="si">}</span><span class="s2">.json.gz&quot;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+            <span class="n">iutil</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span> <span class="n">wts</span><span class="o">=</span><span class="n">iutil</span><span class="o">.</span><span class="n">StoreSpec</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">symbolic_solver_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">iutil</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">)</span>
+
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">_tags_output</span><span class="p">[</span><span class="s2">&quot;net_power&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_tags_output</span><span class="o">.</span><span class="n">table_row</span><span class="p">(</span><span class="n">numeric</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;data_tabulated/sofc.csv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

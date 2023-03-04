@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial: Heater Unit Model with Ideal Property Package &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Tutorial: Heater Unit Model with Ideal Property Package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/UnitModels/Operations/heater.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorial-heater-unit-model-with-ideal-property-package">
+<h1>Tutorial: Heater Unit Model with Ideal Property Package<a class="headerlink" href="#tutorial-heater-unit-model-with-ideal-property-package" title="Permalink to this heading">¶</a></h1>
+<img alt="../../../_images/heater_2.svg" src="../../../_images/heater_2.svg" /><p>In this tutorial, we will heat a liquid mixture of benzene-toluene using
+a simple heater unit model, and an ideal property package with the
+phases specified to liquid apriori. The inlet specifications are as
+follows:</p>
+<ul class="simple">
+<li><p>Flow Rate = 1 kmol/hr</p></li>
+<li><p>Mole fraction (Benzene) = 0.4</p></li>
+<li><p>Mole fraction (Toluene) = 0.6</p></li>
+<li><p>Pressure = 101325 Pa</p></li>
+<li><p>Temperature = 353 K</p></li>
+</ul>
+<p>In addition to the inlet specifications, there is one additional unit
+level specification that needs to be set: * Option 1: Specify the
+outlet temperature * Option 2: Specify the heat duty</p>
+<p>Therefore, in this tutorial, we will simulate the following cases:</p>
+<ul class="simple">
+<li><p>Case 1: Compute the heat duty (J/s) required to heat the mixture to
+363 K.</p></li>
+<li><p>Case 2: Compute the outlet temperature of the mixture when fixing the
+heat duty to 2 J/s.</p></li>
+</ul>
+<p>IDAES documentation reference for heater model:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/latest/technical_specs/model_libraries/generic/unit_models/heater.html">https://idaes-pse.readthedocs.io/en/latest/technical_specs/model_libraries/generic/unit_models/heater.html</a></p>
+<section id="setting-up-the-problem-in-idaes">
+<h2>Setting up the problem in IDAES<a class="headerlink" href="#setting-up-the-problem-in-idaes" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import objects from pyomo package</span>
+<span class="kn">from</span> <span class="nn">pyomo.environ</span> <span class="kn">import</span> <span class="n">ConcreteModel</span><span class="p">,</span> <span class="n">SolverFactory</span><span class="p">,</span> <span class="n">value</span>
+<span class="kn">from</span> <span class="nn">pyomo.opt</span> <span class="kn">import</span> <span class="n">TerminationCondition</span><span class="p">,</span> <span class="n">SolverStatus</span>
+
+<span class="c1"># Import the main FlowsheetBlock from IDAES. The flowsheet block will contain the unit model</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+
+<span class="c1"># Import idaes logger to set output levels</span>
+<span class="kn">import</span> <span class="nn">idaes.logger</span> <span class="k">as</span> <span class="nn">idaeslog</span>
+
+<span class="c1"># Create the ConcreteModel and the FlowsheetBlock, and attach the flowsheet block to it.</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConcreteModel</span><span class="p">()</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="c1"># dynamic or ss flowsheet needs to be specified here</span>
+
+
+<span class="c1"># Import the BTX_ideal property package to create a properties block for the flowsheet</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties.activity_coeff_models</span> <span class="kn">import</span> <span class="n">BTX_activity_coeff_VLE</span>
+
+<span class="c1"># Add properties parameter block to the flowsheet with specifications</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">BTX_activity_coeff_VLE</span><span class="o">.</span><span class="n">BTXParameterBlock</span><span class="p">(</span>
+    <span class="n">valid_phase</span><span class="o">=</span><span class="s1">&#39;Liq&#39;</span><span class="p">,</span>
+    <span class="n">activity_coeff_model</span><span class="o">=</span><span class="s2">&quot;Ideal&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import heater unit model from the model library</span>
+<span class="kn">from</span> <span class="nn">idaes.models.unit_models.heater</span> <span class="kn">import</span> <span class="n">Heater</span>
+
+<span class="c1"># Create an instance of the heater unit, attaching it to the flowsheet</span>
+<span class="c1"># Specify that the property package to be used with the heater is the one we created earlier.</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span> <span class="o">=</span> <span class="n">Heater</span><span class="p">(</span><span class="n">property_package</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+
+<span class="c1"># Import the degrees_of_freedom function from the idaes.core.util.model_statistics package</span>
+<span class="c1"># DOF = Number of Model Variables - Number of Model Constraints</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.model_statistics</span> <span class="kn">import</span> <span class="n">degrees_of_freedom</span>
+
+
+<span class="c1"># Call the degrees_of_freedom function, get intitial DOF</span>
+<span class="n">DOF_initial</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The initial DOF is </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_initial</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">initial</span> <span class="n">DOF</span> <span class="ow">is</span> <span class="mi">6</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fix the BT stream inlet conditions</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="mi">1000</span><span class="o">/</span><span class="mi">3600</span><span class="p">)</span> <span class="c1"># converting to mol/s as unit basis is mol/s</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;benzene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.4</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">mole_frac_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;toluene&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.6</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">101325</span><span class="p">)</span> <span class="c1"># Pa</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">inlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">353</span><span class="p">)</span> <span class="c1"># K</span>
+</pre></div>
+</div>
+</section>
+<section id="case-1-fix-outlet-temperature">
+<h2>Case 1: Fix Outlet Temperature<a class="headerlink" href="#case-1-fix-outlet-temperature" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">363</span><span class="p">)</span>
+<span class="c1"># Call the degrees_of_freedom function, get final DOF</span>
+<span class="n">DOF_final</span> <span class="o">=</span> <span class="n">degrees_of_freedom</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The final DOF is </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">DOF_final</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">final</span> <span class="n">DOF</span> <span class="ow">is</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<section id="flowsheet-initialization">
+<h3>Flowsheet Initialization<a class="headerlink" href="#flowsheet-initialization" title="Permalink to this heading">¶</a></h3>
+<p>IDAES includes pre-written initialization routines for all unit models.
+The output from initialization can be set to 7 different levels
+depending on the details required by the user. In general, when a
+particular output level is set, any information at that level and above
+gets picked up by logger. The default level taken by the logger is INFO.
+More information on these levels can be found in the IDAES
+documentation:
+<a class="reference external" href="https://idaes-pse.readthedocs.io/en/latest/user_guide/logging.html">https://idaes-pse.readthedocs.io/en/latest/user_guide/logging.html</a></p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize the flowsheet, and set the output at WARNING</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+<span class="c1"># From the output it can be inferred that since there are no errors or warnings encountered during initialization, nothing is displayed</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize the flowsheet, and set the output at INFO_HIGH</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">outlvl</span><span class="o">=</span><span class="n">idaeslog</span><span class="o">.</span><span class="n">INFO_HIGH</span><span class="p">)</span>
+<span class="c1"># At INFO_HIGH level, details of all the initialization steps are displayed</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">1</span> <span class="n">skipped</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">3</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">4</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">5</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">1</span> <span class="n">skipped</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">3</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">4</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">5</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">:</span> <span class="n">State</span> <span class="n">Released</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">1</span> <span class="n">Complete</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Step</span> <span class="mi">2</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_in</span><span class="p">:</span> <span class="n">State</span> <span class="n">Released</span><span class="o">.</span>
+<span class="mi">2023</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">24</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">idaes</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="p">:</span> <span class="n">Initialization</span> <span class="n">Complete</span><span class="p">:</span> <span class="n">optimal</span> <span class="o">-</span> <span class="n">Optimal</span> <span class="n">Solution</span> <span class="n">Found</span>
+</pre></div>
+</div>
+</section>
+<section id="obtaining-simulation-results">
+<h3>Obtaining Simulation Results<a class="headerlink" href="#obtaining-simulation-results" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Solve the simulation using ipopt</span>
+<span class="c1"># Note: If the degrees of freedom = 0, we have a square problem</span>
+<span class="n">opt</span> <span class="o">=</span> <span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="n">solve_status</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       45
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       20
+
+Total number of variables............................:       17
+                     variables with only lower bounds:        2
+                variables with lower and upper bounds:        6
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       17
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 0.00e+00 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   0.0000000000000000e+00    0.0000000000000000e+00
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   0.0000000000000000e+00    0.0000000000000000e+00
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 1
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 1
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+</pre>
+</section>
+<section id="view-results">
+<h3>View Results<a class="headerlink" href="#view-results" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display Heat Duty only</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">heat_duty</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">_time</span><span class="p">,</span> <span class="n">ReferenceTo</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">heat</span>
+    <span class="n">Key</span> <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Value</span>              <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Stale</span> <span class="p">:</span> <span class="n">Domain</span>
+    <span class="mf">0.0</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="mf">459.10147722222246</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span>  <span class="n">Reals</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display a readable report</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">heater</span>                                                           <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>       <span class="p">:</span> <span class="n">Value</span>  <span class="p">:</span> <span class="n">Units</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+    <span class="n">Heat</span> <span class="n">Duty</span> <span class="p">:</span> <span class="mf">459.10</span> <span class="p">:</span>  <span class="n">watt</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                               <span class="n">Units</span>         <span class="n">Inlet</span>     <span class="n">Outlet</span>
+    <span class="n">flow_mol</span>                <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.27778</span>    <span class="mf">0.27778</span>
+    <span class="n">mole_frac_comp</span> <span class="n">benzene</span>  <span class="n">dimensionless</span>    <span class="mf">0.40000</span>    <span class="mf">0.40000</span>
+    <span class="n">mole_frac_comp</span> <span class="n">toluene</span>  <span class="n">dimensionless</span>    <span class="mf">0.60000</span>    <span class="mf">0.60000</span>
+    <span class="n">temperature</span>                    <span class="n">kelvin</span>     <span class="mf">353.00</span>     <span class="mf">363.00</span>
+    <span class="n">pressure</span>                       <span class="n">pascal</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="case-2-fix-heat-duty">
+<h2>Case 2: Fix Heat Duty<a class="headerlink" href="#case-2-fix-heat-duty" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fix heat duty and solve the model</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">459.10147722222354</span><span class="p">)</span>
+<span class="n">solve_status</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tee</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre class="literal-block">Ipopt 3.13.2:
+
+<strong>**************************************************************************</strong>
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit <a class="reference external" href="http://projects.coin-or.org/Ipopt">http://projects.coin-or.org/Ipopt</a>
+
+This version of Ipopt was compiled from source code available at
+    <a class="reference external" href="https://github.com/IDAES/Ipopt">https://github.com/IDAES/Ipopt</a> as part of the Institute for the Design of
+    Advanced Energy Systems Process Systems Engineering Framework (IDAES PSE
+    Framework) Copyright (c) 2018-2019. See <a class="reference external" href="https://github.com/IDAES/idaes-pse">https://github.com/IDAES/idaes-pse</a>.
+
+This version of Ipopt was compiled using HSL, a collection of Fortran codes
+    for large-scale scientific computation.  All technical papers, sales and
+    publicity material resulting from use of the HSL codes within IPOPT must
+    contain the following acknowledgement:
+        HSL, a collection of Fortran codes for large-scale scientific
+        computation. See <a class="reference external" href="http://www.hsl.rl.ac.uk">http://www.hsl.rl.ac.uk</a>.
+<strong>**************************************************************************</strong>
+
+This is Ipopt version 3.13.2, running with linear solver ma27.
+
+Number of nonzeros in equality constraint Jacobian...:       46
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:       21
+
+Total number of variables............................:       17
+                     variables with only lower bounds:        3
+                variables with lower and upper bounds:        6
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:       17
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  0.0000000e+00 7.28e-12 1.00e+00  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   0.0000000000000000e+00    0.0000000000000000e+00
+Dual infeasibility......:   0.0000000000000000e+00    0.0000000000000000e+00
+Constraint violation....:   4.7656100143311205e-12    7.2759576141834259e-12
+Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
+Overall NLP error.......:   4.7656100143311205e-12    7.2759576141834259e-12
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 1
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 1
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.000
+Total CPU secs in NLP function evaluations           =      0.000
+
+EXIT: Optimal Solution Found.
+</pre>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display outlet temperature only</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_temperature_outlet_ref</span> <span class="p">:</span> <span class="n">Size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Index</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">_time</span><span class="p">,</span> <span class="n">ReferenceTo</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">control_volume</span><span class="o">.</span><span class="n">properties_out</span><span class="p">[</span><span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">component</span><span class="p">(</span><span class="s1">&#39;temperature&#39;</span><span class="p">)</span>
+    <span class="n">Key</span> <span class="p">:</span> <span class="n">Lower</span> <span class="p">:</span> <span class="n">Value</span> <span class="p">:</span> <span class="n">Upper</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Stale</span> <span class="p">:</span> <span class="n">Domain</span>
+    <span class="mf">0.0</span> <span class="p">:</span>     <span class="mi">0</span> <span class="p">:</span> <span class="mf">363.0</span> <span class="p">:</span>  <span class="kc">None</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="kc">False</span> <span class="p">:</span> <span class="n">NonNegativeReals</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Display a readable report</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">====================================================================================</span>
+<span class="n">Unit</span> <span class="p">:</span> <span class="n">fs</span><span class="o">.</span><span class="n">heater</span>                                                           <span class="n">Time</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Unit</span> <span class="n">Performance</span>
+
+    <span class="n">Variables</span><span class="p">:</span>
+
+    <span class="n">Key</span>       <span class="p">:</span> <span class="n">Value</span>  <span class="p">:</span> <span class="n">Units</span> <span class="p">:</span> <span class="n">Fixed</span> <span class="p">:</span> <span class="n">Bounds</span>
+    <span class="n">Heat</span> <span class="n">Duty</span> <span class="p">:</span> <span class="mf">459.10</span> <span class="p">:</span>  <span class="n">watt</span> <span class="p">:</span>  <span class="kc">True</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="o">------------------------------------------------------------------------------------</span>
+    <span class="n">Stream</span> <span class="n">Table</span>
+                               <span class="n">Units</span>         <span class="n">Inlet</span>     <span class="n">Outlet</span>
+    <span class="n">flow_mol</span>                <span class="n">mole</span> <span class="o">/</span> <span class="n">second</span>    <span class="mf">0.27778</span>    <span class="mf">0.27778</span>
+    <span class="n">mole_frac_comp</span> <span class="n">benzene</span>  <span class="n">dimensionless</span>    <span class="mf">0.40000</span>    <span class="mf">0.40000</span>
+    <span class="n">mole_frac_comp</span> <span class="n">toluene</span>  <span class="n">dimensionless</span>    <span class="mf">0.60000</span>    <span class="mf">0.60000</span>
+    <span class="n">temperature</span>                    <span class="n">kelvin</span>     <span class="mf">353.00</span>     <span class="mf">363.00</span>
+    <span class="n">pressure</span>                       <span class="n">pascal</span> <span class="mf">1.0132e+05</span> <span class="mf">1.0132e+05</span>
+<span class="o">====================================================================================</span>
+</pre></div>
+</div>
+</section>
+<section id="plotting-q-vs-outlet-temperature">
+<h2>Plotting Q vs. Outlet Temperature<a class="headerlink" href="#plotting-q-vs-outlet-temperature" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Heat Duty vs Outlet Temperature</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># Unfix the heat duty from case 2</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">heat_duty</span><span class="o">.</span><span class="n">unfix</span><span class="p">()</span>
+
+<span class="c1"># Create a list of outlet temperatures for which corresponding heat duty values need to be obtained</span>
+<span class="n">outlet_temp_fixed</span> <span class="o">=</span> <span class="p">[</span><span class="mf">91.256405</span><span class="o">+</span><span class="mf">273.15</span><span class="p">,</span>
+<span class="mf">90.828456</span><span class="o">+</span><span class="mf">273.15</span><span class="p">,</span>
+<span class="mf">86.535145</span><span class="o">+</span><span class="mf">273.15</span><span class="p">,</span>
+<span class="mf">89.383218</span><span class="o">+</span><span class="mf">273.15</span><span class="p">,</span>
+<span class="mf">93.973657</span><span class="o">+</span><span class="mf">273.15</span><span class="p">,</span>
+<span class="mf">85.377274</span><span class="o">+</span><span class="mf">273.15</span><span class="p">,</span>
+<span class="mf">92.399101</span><span class="o">+</span><span class="mf">273.15</span><span class="p">,</span>
+<span class="mf">94.151562</span><span class="o">+</span><span class="mf">273.15</span><span class="p">,</span>
+<span class="mf">87.564579</span><span class="o">+</span><span class="mf">273.15</span><span class="p">,</span>
+<span class="mf">88.767855</span><span class="o">+</span><span class="mf">273.15</span><span class="p">]</span>
+
+<span class="c1"># Fix the outlet temperature values and solve the model to obtain the heat duties</span>
+<span class="n">heat_duty</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">temp</span> <span class="ow">in</span> <span class="n">outlet_temp_fixed</span><span class="p">:</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">outlet</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+    <span class="n">solve_status</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">solve_status</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">termination_condition</span> <span class="o">==</span> <span class="n">TerminationCondition</span><span class="o">.</span><span class="n">optimal</span><span class="p">:</span>
+        <span class="n">heat_duty</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">heater</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plotting the results</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="s2">&quot;Q vs. Temperature&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">outlet_temp_fixed</span><span class="p">,</span><span class="n">heat_duty</span><span class="p">,</span><span class="s1">&#39;bo&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mf">358.15</span><span class="p">,</span><span class="mf">368.15</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">250</span><span class="p">,</span><span class="mi">700</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Outlet Temperature (K)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Heat Duty (W)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_21_01.png" src="../../../_images/output_21_01.png" />
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>

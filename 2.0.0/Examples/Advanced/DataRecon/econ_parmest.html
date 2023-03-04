@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Parameter Estimation for a Single Unit - Economizer &mdash; IDAES v2.0.0 Examples</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<!-- Add Google fonts -->
+<link href="https://fonts.googleapis.com/css?family=Arimo|Roboto&display=swap"
+      rel="stylesheet">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            IDAES Examples
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">IDAES Tutorials</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">IDAES Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Data Parameter Estimation for a Single Unit - Economizer</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/Examples/Advanced/DataRecon/econ_parmest.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data-parameter-estimation-for-a-single-unit-economizer">
+<h1>Data Parameter Estimation for a Single Unit - Economizer<a class="headerlink" href="#data-parameter-estimation-for-a-single-unit-economizer" title="Permalink to this heading">¶</a></h1>
+<p>This notebook demonstrates parameter estimation continuing from the data
+reconciliation results in <code class="docutils literal notranslate"><span class="pre">econ_recon.ipynb</span></code> or
+<code class="docutils literal notranslate"><span class="pre">boiler_recon.ipynb</span></code>.</p>
+<section id="read-data">
+<h2>1. Read Data<a class="headerlink" href="#read-data" title="Permalink to this heading">¶</a></h2>
+<p>The data used here is produced by the data reconciliation step. The data
+tags are mostly systematically generated from stream names to minimize
+effort in mapping data to the model. The same model is used for
+parameter reconciliation and data reconciliation, so the stream names
+are consistent and any data mapping can be reused. The bin information
+columns where included in the data reconciliation output, so there is no
+need to bin the data again here.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">idaes.core.dmf.model_data</span> <span class="k">as</span> <span class="nn">da</span>
+<span class="kn">from</span> <span class="nn">idaes.logger</span> <span class="kn">import</span> <span class="n">getLogger</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;idaes.core&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Either economizer only or full boiler data reconciliation results can be
+used here. You can select below.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recon_data</span> <span class="o">=</span> <span class="s2">&quot;econ_recon.csv&quot;</span>
+
+<span class="c1">#Uncomment the next line to use boiler recon data.</span>
+<span class="c1">#recon_data = &quot;boiler_recon.csv&quot;</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Since the data is already tagged to match the model and in the correct units, we directly read the data</span>
+<span class="c1"># into a Pandas data frame, and there is no need to use the data processing functions that were used in the</span>
+<span class="c1"># data reconciliation notebook (although they could be used here).</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">recon_data</span><span class="p">)</span>
+
+<span class="c1"># Calculate the standard deviations of the binned data</span>
+<span class="n">bin_stdev</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">bin_stdev</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">bin_no</span><span class="o">=</span><span class="s2">&quot;bin_no&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">runner</span><span class="o">/.</span><span class="n">conda</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">idaes</span><span class="o">-</span><span class="n">env</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.8</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">idaes</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">dmf</span><span class="o">/</span><span class="n">model_data</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">475</span><span class="p">:</span> <span class="ne">FutureWarning</span><span class="p">:</span> <span class="n">Dropping</span> <span class="n">of</span> <span class="n">nuisance</span> <span class="n">columns</span> <span class="ow">in</span> <span class="n">DataFrame</span> <span class="n">reductions</span> <span class="p">(</span><span class="k">with</span> <span class="s1">&#39;numeric_only=None&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="n">deprecated</span><span class="p">;</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">future</span> <span class="n">version</span> <span class="n">this</span> <span class="n">will</span> <span class="k">raise</span> <span class="ne">TypeError</span><span class="o">.</span>  <span class="n">Select</span> <span class="n">only</span> <span class="n">valid</span> <span class="n">columns</span> <span class="n">before</span> <span class="n">calling</span> <span class="n">the</span> <span class="n">reduction</span><span class="o">.</span>
+  <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Create a function to set the model data. In this case, we take the data
+reconciliation results for model input to be correct and set those in
+the model. Another approach would be to also estimate model inputs given
+that there is some uncertainty in their measurements.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># The &#39;set_data&#39; function below takes data from the DataFrame and updates the model data parameters.</span>
+<span class="k">def</span> <span class="nf">set_data</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">data_tags</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dft</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">transpose</span><span class="p">()[</span><span class="n">index</span><span class="p">]</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">bin_no</span> <span class="o">=</span> <span class="n">dft</span><span class="p">[</span><span class="s2">&quot;bin_no&quot;</span><span class="p">]</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">store_values</span><span class="p">(</span><span class="n">dft</span><span class="p">[</span><span class="n">data_tags</span><span class="p">])</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">data_stdev</span><span class="o">.</span><span class="n">store_values</span><span class="p">(</span><span class="n">bin_stdev</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">bin_no</span><span class="p">][</span><span class="n">data_tags</span><span class="p">])</span>
+    <span class="c1"># Set the inlet streams from the data.</span>
+    <span class="n">input_tags</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;BFW_h&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;BFW_P&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;BFW_F&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FG_2_ECON_T&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FG_2_ECON_P&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FG_2_ECON_F[O2]&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FG_2_ECON_F[NO]&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FG_2_ECON_F[N2]&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FG_2_ECON_F[SO2]&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FG_2_ECON_F[CO2]&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FG_2_ECON_F[H2O]&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">input_tags</span><span class="p">:</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">expression</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">dft</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="create-model-generator-function">
+<h2>2. Create Model Generator Function<a class="headerlink" href="#create-model-generator-function" title="Permalink to this heading">¶</a></h2>
+<p>We use the Parmest tool from Pyomo to do the parameter estimation here,
+which requires a function to generate a model for each case. The cases
+are put together by Parmest to set up a parameter estimation problem.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import models</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pyomo.environ</span> <span class="k">as</span> <span class="nn">pyo</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util</span> <span class="kn">import</span> <span class="n">model_serializer</span> <span class="k">as</span> <span class="n">ms</span>
+<span class="kn">from</span> <span class="nn">idaes.core</span> <span class="kn">import</span> <span class="n">FlowsheetBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models_extra.power_generation.properties.flue_gas_ideal</span> <span class="kn">import</span> <span class="n">FlueGasParameterBlock</span>
+<span class="kn">from</span> <span class="nn">idaes.models_extra.power_generation.unit_models.boiler_heat_exchanger</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BoilerHeatExchanger</span><span class="p">,</span>
+    <span class="n">TubeArrangement</span><span class="p">,</span>
+    <span class="n">HeatExchangerFlowPattern</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">idaes.models.properties</span> <span class="kn">import</span> <span class="n">iapws95</span>
+<span class="kn">import</span> <span class="nn">idaes.core.util.tables</span> <span class="k">as</span> <span class="nn">ta</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.tags</span> <span class="kn">import</span> <span class="n">ModelTagGroup</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add a function to get an instance of the economizer model.</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">ConcreteModel</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">FlowsheetBlock</span><span class="p">(</span><span class="n">dynamic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">time_units</span><span class="o">=</span><span class="n">pyo</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">prop_water</span> <span class="o">=</span> <span class="n">iapws95</span><span class="o">.</span><span class="n">Iapws95ParameterBlock</span><span class="p">()</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">prop_fluegas</span> <span class="o">=</span> <span class="n">FlueGasParameterBlock</span><span class="p">()</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span> <span class="o">=</span> <span class="n">BoilerHeatExchanger</span><span class="p">(</span>
+        <span class="n">cold_side</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">prop_water</span><span class="p">,</span>
+                   <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">hot_side</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;property_package&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">prop_fluegas</span><span class="p">,</span>
+                  <span class="s2">&quot;has_pressure_change&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">has_holdup</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">flow_pattern</span><span class="o">=</span><span class="n">HeatExchangerFlowPattern</span><span class="o">.</span><span class="n">countercurrent</span><span class="p">,</span>
+        <span class="n">tube_arrangement</span><span class="o">=</span><span class="n">TubeArrangement</span><span class="o">.</span><span class="n">inLine</span><span class="p">,</span>
+        <span class="n">cold_side_water_phase</span><span class="o">=</span><span class="s2">&quot;Liq&quot;</span><span class="p">,</span>
+        <span class="n">has_radiation</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="c1"># Set inputs and initialize.  Since the initialization is repeated each time a</span>
+    <span class="c1"># model is created, we&#39;ll save the results and reload them.</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;econ_init.json.gz&quot;</span><span class="p">):</span>
+        <span class="n">ms</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s2">&quot;econ_init.json.gz&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">iapws95</span><span class="o">.</span><span class="n">htpx</span><span class="p">(</span><span class="mf">563.706</span><span class="o">*</span><span class="n">pyo</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="mf">2.5449e7</span><span class="o">*</span><span class="n">pyo</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">Pa</span><span class="p">))</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">cold_side_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">24678.26</span><span class="p">)</span> <span class="c1"># mol/s</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">cold_side_inlet</span><span class="o">.</span><span class="n">enth_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="c1">#J/mol</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">cold_side_inlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">2.5449e7</span><span class="p">)</span> <span class="c1"># Pa</span>
+
+        <span class="c1"># Set the flue gas flow and composition</span>
+        <span class="n">fg_rate</span> <span class="o">=</span> <span class="mf">28.3876e3</span>  <span class="c1"># mol/s equivalent of ~1930.08 klb/hr</span>
+        <span class="n">fg_comp</span> <span class="o">=</span> <span class="p">{</span> <span class="c1"># mol fraction of flue gas components</span>
+            <span class="s2">&quot;H2O&quot;</span><span class="p">:</span><span class="mf">8.69</span><span class="o">/</span><span class="mi">100</span><span class="p">,</span>
+            <span class="s2">&quot;CO2&quot;</span><span class="p">:</span><span class="mf">14.49</span><span class="o">/</span><span class="mi">100</span><span class="p">,</span>
+            <span class="s2">&quot;O2&quot;</span><span class="p">:</span><span class="mf">2.47</span><span class="o">/</span><span class="mi">100</span><span class="p">,</span>
+            <span class="s2">&quot;NO&quot;</span><span class="p">:</span><span class="mf">0.0006</span><span class="p">,</span>
+            <span class="s2">&quot;SO2&quot;</span><span class="p">:</span><span class="mf">0.002</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="c1"># The rest is N2</span>
+        <span class="n">fg_comp</span><span class="p">[</span><span class="s2">&quot;N2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">fg_comp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">fg_comp</span><span class="p">)</span>
+
+        <span class="c1"># Set economizer inlets</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">fg_comp</span><span class="p">:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side</span><span class="o">.</span><span class="n">properties_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flow_mol_comp</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">fg_rate</span><span class="o">*</span><span class="n">fg_comp</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">682.335</span><span class="p">)</span>  <span class="c1"># K</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">100145</span><span class="p">)</span>  <span class="c1"># Pa</span>
+
+        <span class="c1"># Set economizer design variables and parameters</span>
+        <span class="n">ITM</span> <span class="o">=</span> <span class="mf">0.0254</span>  <span class="c1"># inch to meter conversion</span>
+        <span class="c1"># Based on NETL Baseline Report Rev4</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">tube_thickness</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">0.188</span><span class="o">*</span><span class="n">ITM</span><span class="p">)</span>  <span class="c1"># tube thickness</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">tube_di</span><span class="o">.</span><span class="n">fix</span><span class="p">((</span><span class="mf">2.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="mf">0.188</span><span class="p">)</span><span class="o">*</span><span class="n">ITM</span><span class="p">)</span> <span class="c1"># calc inner diameter</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">pitch_x</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">3.5</span><span class="o">*</span><span class="n">ITM</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">pitch_y</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">5.03</span><span class="o">*</span><span class="n">ITM</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">tube_length</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">53.41</span><span class="o">*</span><span class="mi">12</span><span class="o">*</span><span class="n">ITM</span><span class="p">)</span>  <span class="c1"># use tube length (53.41 ft)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">tube_nrow</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">36</span><span class="o">*</span><span class="mf">2.5</span><span class="p">)</span> <span class="c1"># use to match baseline performance</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">tube_ncol</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">130</span><span class="p">)</span> <span class="c1"># 130 from thermoflow</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">nrow_inlet</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">delta_elevation</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">tube_r_fouling</span> <span class="o">=</span> <span class="mf">0.000176</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">shell_r_fouling</span> <span class="o">=</span> <span class="mf">0.00088</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1.5</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+            <span class="n">state_args_1</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;flow_mol&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">cold_side_inlet</span><span class="o">.</span><span class="n">flow_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">cold_side_inlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;enth_mol&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">cold_side_inlet</span><span class="o">.</span><span class="n">enth_mol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">state_args_2</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;flow_component&quot;</span><span class="p">:{</span>
+                    <span class="s2">&quot;H2O&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">flow_mol_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;H2O&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="s2">&quot;CO2&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">flow_mol_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;CO2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="s2">&quot;N2&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">flow_mol_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;N2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="s2">&quot;O2&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">flow_mol_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;O2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="s2">&quot;NO&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">flow_mol_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;NO&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="s2">&quot;SO2&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">flow_mol_comp</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;SO2&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">ms</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s2">&quot;econ_init.json.gz&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Add tags and data parameters</span>
+    <span class="n">stream_dict</span> <span class="o">=</span> <span class="n">ta</span><span class="o">.</span><span class="n">arcs_to_stream_dict</span><span class="p">(</span>
+        <span class="n">m</span><span class="p">,</span>
+        <span class="n">additional</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;BFW&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">cold_side_inlet</span><span class="p">,</span>
+            <span class="s2">&quot;ECON_OUT&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">cold_side_outlet</span><span class="p">,</span>
+            <span class="s2">&quot;FG_2_ECON&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_inlet</span><span class="p">,</span>
+            <span class="s2">&quot;FG_2_AIRPH&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">hot_side_outlet</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">sort</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">state_dict</span> <span class="o">=</span> <span class="n">ta</span><span class="o">.</span><span class="n">stream_states_dict</span><span class="p">(</span><span class="n">stream_dict</span><span class="p">,</span> <span class="n">time_point</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">data_tags</span> <span class="o">=</span> <span class="n">ModelTagGroup</span><span class="p">()</span>
+
+    <span class="n">prop_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;flow_mass&quot;</span><span class="p">:</span> <span class="s2">&quot;_Fm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;flow_mol&quot;</span><span class="p">:</span> <span class="s2">&quot;_F&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;enth_mol&quot;</span><span class="p">:</span> <span class="s2">&quot;_h&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="s2">&quot;_T&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="s2">&quot;_P&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">comp_list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;O2&quot;</span><span class="p">,</span> <span class="s2">&quot;NO&quot;</span><span class="p">,</span> <span class="s2">&quot;N2&quot;</span><span class="p">,</span> <span class="s2">&quot;SO2&quot;</span><span class="p">,</span> <span class="s2">&quot;CO2&quot;</span><span class="p">,</span> <span class="s2">&quot;H2O&quot;</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">state</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">prop</span><span class="p">,</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="n">prop_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">comp</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">prop</span><span class="p">)</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">comp</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">state</span><span class="o">+</span><span class="n">suffix</span><span class="p">,</span> <span class="n">format_string</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{:.3f}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># Add tags for molar flow rates of each component</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">comp_list</span><span class="p">:</span>
+            <span class="c1"># Not all components appear in all streams</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">comp</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">flow_mol_comp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">comp</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">state</span><span class="si">}</span><span class="s2">_F[</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">format_string</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{:.3f}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">heat_duty</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ECON_Q&quot;</span><span class="p">,</span> <span class="n">format_string</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{:.3f}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Param</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="p">,</span> <span class="n">mutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;Process data for a specific point in time.&quot;</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">data_stdev</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">Param</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="p">,</span> <span class="n">mutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;Process data standard deviation.&quot;</span><span class="p">)</span>
+    <span class="nd">@m</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">err</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">expression</span><span class="p">)</span><span class="o">/</span><span class="n">m</span><span class="o">.</span><span class="n">data_stdev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="c1"># Set the data</span>
+    <span class="n">set_data</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">data_tags</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">m</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Try the get model function</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">pyo</span><span class="o">.</span><span class="n">SolverFactory</span><span class="p">(</span><span class="s1">&#39;ipopt&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">get_model</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+<span class="c1"># Solve the model at the first data point</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RangeIndex</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show the model result at the first data point</span>
+<span class="kn">from</span> <span class="nn">idaes.core.util.tags</span> <span class="kn">import</span> <span class="n">svg_tag</span>  <span class="c1"># utility to place numbers/text in an SVG</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">SVG</span><span class="p">,</span> <span class="n">display</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;econ.svg&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">svg_tag</span><span class="p">(</span><span class="n">svg</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">tag_group</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">data_tags</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="s2">&quot;econ_init.svg&quot;</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">SVG</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+</pre></div>
+</div>
+<img alt="../../../_images/output_12_0.svg" src="../../../_images/output_12_0.svg" /></section>
+<section id="set-up-parameter-estimation">
+<h2>3. Set Up Parameter Estimation<a class="headerlink" href="#set-up-parameter-estimation" title="Permalink to this heading">¶</a></h2>
+<p>Here we use the Parmest tool to solve the parameter estimation problem.
+The theta_names list is a list of parameters to estimate. The theta
+names strings are the location of the parameters in the model. A
+function <code class="docutils literal notranslate"><span class="pre">sse()</span></code> is also defined that creates the objective function
+for each model instance. The objective from the individual cases is
+summed to produce the overall parameter estimation objective.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># List of parameters to estimate</span>
+<span class="n">theta_names</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;fs.econ.fcorrection_htc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fs.econ.fcorrection_dp_tube&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fs.econ.fcorrection_dp_shell&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># Tags to include in the objective</span>
+<span class="n">objective_tags</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;ECON_OUT_P&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ECON_OUT_T&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FG_2_AIRPH_T&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FG_2_AIRPH_P&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># Return expressions for the objective</span>
+<span class="k">def</span> <span class="nf">sse</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">((</span><span class="n">model</span><span class="o">.</span><span class="n">err</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">objective_tags</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Run Parmest and record the results. Here we group the data by bin. Each
+parameter in theta_names will be estimated based on all the points in a
+bin. This will allow us to examine whether the parameters have a
+dependence on load.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyomo.contrib.parmest.parmest</span> <span class="k">as</span> <span class="nn">parmest</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">parmest_results</span><span class="o">=</span><span class="p">{}</span>
+<span class="c1"># run parmest tool for each power bin</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;bin_no&quot;</span><span class="p">):</span>
+    <span class="n">pest</span> <span class="o">=</span> <span class="n">parmest</span><span class="o">.</span><span class="n">Estimator</span><span class="p">(</span><span class="n">get_model</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">theta_names</span><span class="p">,</span> <span class="n">sse</span><span class="p">)</span>
+    <span class="n">obj</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">pest</span><span class="o">.</span><span class="n">theta_est</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bin number: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">,  objective: </span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+    <span class="n">parmest_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;obj&#39;</span><span class="p">:</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="n">theta</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">56.88787898021291</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.532104</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.013116</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">0.041279</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">21.51752854506753</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.620108</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.023475</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">5.095174</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">19.55193297281552</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.403364</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.007417</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">4.023197</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">31.341519211230683</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.488449</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.024826</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>   <span class="o">-</span><span class="mf">1.136839</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">35.22657753921361</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.523593</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.008824</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">2.957272</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">30.922514712010702</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.453714</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.990926</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">1.437973</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">25.17887968888114</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.607288</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.970936</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">1.678398</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">7.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">37.128481066239424</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.406821</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.985352</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">1.630442</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">8.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">30.15994939625863</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.423817</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.995257</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">1.439381</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">9.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">19.21014008235651</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.416077</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.020699</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>   <span class="o">-</span><span class="mf">4.030140</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">18.51197163707855</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.456900</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.976124</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">5.150877</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">11.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">14.444938559454606</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.530069</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.975966</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">0.186283</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">12.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">30.45905713087232</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.558721</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.987269</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">1.126607</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">13.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">29.77552090067474</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.417847</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.003869</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">0.022246</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">14.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">15.123952519399507</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.503236</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.990504</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">3.266237</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">15.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">24.573988522418002</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.532600</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.975000</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>   <span class="o">-</span><span class="mf">1.351039</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">16.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">38.82304204800615</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.439329</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.993712</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">1.731306</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">17.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">44.031072148825295</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.482328</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.979370</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>   <span class="o">-</span><span class="mf">0.289788</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">18.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">17.725898359651953</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.521001</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.032675</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">3.487472</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">19.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">36.148849640454415</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.394337</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.988983</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">1.909361</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">18.598319352194842</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.533059</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.021520</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>   <span class="o">-</span><span class="mf">1.701380</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">21.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">21.8753175842971</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.448586</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.968747</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>   <span class="o">-</span><span class="mf">3.492656</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">22.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">17.52506314196856</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.488911</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.992928</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">0.734506</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">23.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">46.65107742687482</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.505589</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.979993</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>   <span class="o">-</span><span class="mf">1.566051</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">24.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">214.69292769842443</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.435322</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">1.022724</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">0.201852</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+<span class="n">Bin</span> <span class="n">number</span><span class="p">:</span> <span class="mf">25.0</span><span class="p">,</span>  <span class="n">objective</span><span class="p">:</span> <span class="mf">58.698744443973155</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_htc</span>         <span class="mf">1.392669</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_tube</span>     <span class="mf">0.952199</span>
+<span class="n">fs</span><span class="o">.</span><span class="n">econ</span><span class="o">.</span><span class="n">fcorrection_dp_shell</span>    <span class="mf">2.976371</span>
+<span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright DOE Institute for the Design of Advanced Energy Systems (IDAES), 2018-2020.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+<div id="bottombanner">
+    The IDAES team:
+    <ul>
+        <li>National Energy Technology Laboratory (Lead)</li>
+        <li>Sandia National Laboratory</li>
+        <li>Lawrence Berkeley National Laboratory</li>
+        <li>Carnegie-Mellon University (subcontract to LBNL)</li>
+        <li>West Virginia University (subcontract to LBNL)</li>
+    </ul>
+    <div id="contactinfo">
+        General, background and overview information<br/> is available at the
+        <a href="https://www.idaes.org>">IDAES main website</a>
+    </div>
+</div>
+
+
+</body>
+</html>
