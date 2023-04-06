@@ -1,4 +1,6 @@
-# IDAES Examples
+# ARCHIVED - Use [IDAES/examples](https://github.com/IDAES/examples) instead
+
+<details><summary>Click to expand outdated content</summary>
 
 This Git repository contains the example notebooks and scripts for
 the IDAES-PSE code. Some examples are Jupyter Notebooks, and
@@ -43,3 +45,5 @@ at the top-level in a notebook "notebook_index.ipynb". To use this, run:
 or open the file from the desktop with the Jupyter program by double-clicking.
 
 You can also, of course, browse to specific notebooks and open them directly, in the same manner described above.
+
+</details>
