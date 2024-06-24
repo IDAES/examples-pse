@@ -66,6 +66,7 @@ import argparse
 from collections import namedtuple
 from datetime import datetime
 import glob
+import json
 from io import StringIO
 import logging
 import os
@@ -111,6 +112,18 @@ _hnd.setFormatter(logging.Formatter("%(asctime)s %(levelname)s - %(message)s"))
 _log.addHandler(_hnd)
 _log.propagate = False
 _log.setLevel(logging.INFO)
+
+
+def _log_json(path='build-log.jsonl', **kwargs):
+    import platform
+    data = dict(
+        kwargs,
+        platform=platform.platform(),
+        python_version=platform.python_version(),
+    )
+    json_str = json.dumps(data, default=str)
+    with Path(path).open('a') as f:
+        print(json_str, file=f, sep='\n')
 
 
 # This is a workaround for a bug in some versions of Tornado on Windows for Python 3.8
@@ -737,6 +750,12 @@ class ParallelNotebookWorker:
         duration = time_end - time_start
         self.log_info(
             f"Convert notebook name={job.nb}: end, ok={ok} duration={duration:.1f}s"
+        )
+        _log_json(
+            id=id_,
+            notebook=job.nb,
+            ok=ok,
+            duration=duration,
         )
 
         return self.ConversionResult(id_, ok, converted, why, job.nb, duration)
